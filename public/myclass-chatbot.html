@@ -22,7 +22,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-  button{color:inherit;font-family:inherit;-webkit-appearance:none;appearance:none;cursor:pointer}
+  button{color:inherit;font-family:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;touch-action:manipulation}
   ::selection{background:#16161626;color:#161616}
   .card a,.guide a,.krow a{color:inherit;text-decoration:none}
   .chip:focus-visible,.mtile:focus-visible,.iconbtn:focus-visible,.viewswitch button:focus-visible{outline:2px solid #161616;outline-offset:2px}
@@ -142,14 +142,14 @@
   .src{font-size:11px;color:var(--helper);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
-  .chip{border:1px solid var(--gray20);background:var(--bg);color:var(--text);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:.12s;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
+  .chip{border:1px solid var(--gray20);background:var(--bg);color:var(--text);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .12s,transform .12s,border-color .12s,box-shadow .12s;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
   .chip:hover{background:var(--surface)}
   .chip:active{transform:translateY(1px)}
   .chip .ms{font-size:17px}
   .chip.primary{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700}
   .chip.ghost{color:var(--helper)}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 12px}
-  .mtile{display:flex;align-items:center;gap:10px;border:1px solid var(--gray20);border-radius:var(--r-card);padding:13px 12px;cursor:pointer;background:#fff;transition:.12s;text-align:left}
+  .mtile{display:flex;align-items:center;gap:10px;border:1px solid var(--gray20);border-radius:var(--r-card);padding:13px 12px;cursor:pointer;background:#fff;transition:background-color .12s,transform .12s,border-color .12s;text-align:left}
   .mtile:hover{background:var(--surface);border-color:#161616}
   .mtile:active{transform:translateY(1px)}
   .mtile .ms{font-size:22px;color:#161616}
@@ -162,6 +162,7 @@
   .send .ms{font-size:20px}
   .fadein{animation:fi .26s ease both}
   @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
   /* ── 뷰 전환: 모바일 / 태블릿 / 데스크탑 ── */
   .viewswitch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:4px;background:#fff;border:1px solid var(--gray20);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.14)}
   .viewswitch button{border:none;background:none;padding:7px 15px;border-radius:999px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--helper);cursor:pointer}
@@ -341,10 +342,16 @@ function handoff(reason){
   quick([
    {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
      botSay('대치 캠퍼스 고3 상담실(02-552-2373)로 전화를 연결할게요.');
-     card(`<div class="ct">${ms('call')}전화 연결 중</div><div class="guide">대치 캠퍼스 고3 상담실 직통으로 연결됩니다.<br><span style="color:var(--helper)">통화가 어려우면 문자(010-5423-2378)로 남기거나 챗봇에서 다른 메뉴를 이용하실 수 있어요.</span></div>`);
+     card(`<div class="ct">${ms('call')}전화 연결 중…</div><div class="guide">대치 캠퍼스 고3 상담실 직통으로 연결됩니다.<br><span style="color:var(--helper)">통화가 어려우면 문자(010-5423-2378)로 남기거나 챗봇에서 다른 메뉴를 이용하실 수 있어요.</span></div>`);
      endActions();}},
    {t:'처음으로',go:'home',ghost:true},
   ]);
+}
+/* 영상 재생 문제 — 실제 myclass FAQ(Player) 자가해결법 근거. 안 되면 1:1 문의로 안내 */
+function handoffTech(reason){
+  botSay('해결되지 않으면 앱에서 <b>전체메뉴 → 고객센터 → 1:1 문의</b>로 접수해 주세요. 빠른 확인을 위해 아래 내용을 함께 적어주시면 좋아요.');
+  card(`<div class="ct">${ms('support_agent')}1:1 문의 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지<br>· 기기·OS 버전</div>`);
+  endActions();
 }
 
 const NODES={
@@ -414,13 +421,20 @@ const NODES={
   /* 4. 라이브·교재·배송 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
     quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. 상담원이 신청을 도와드려요.');quick([{t:'라이브 입반 상담',primary:true,act:()=>handoff('라이브 입반 신청')},back('m_live')]);}},
-      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 내 강의실 → 수업 자료</b>에서 볼 수 있어요. 보통 수업 다음 날 올라와요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',act:()=>handoff('복습·추가영상 재생 오류')},back('m_live')]);}},
+      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 내 강의실 → 수업 자료</b>에서 볼 수 있어요. 보통 수업 다음 날 올라와요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
       {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
       {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
       {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
       {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 → ② 수강료</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정산은 상담원이 도와드려요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
       {t:'라이브→현강 이동',ic:'sync_alt',act:()=>{botSay('현장 강의로 옮길 수 있어요. 라이브 환불과 같이 <b>① 교재비 → ② 수강료</b>로 정리한 뒤 현강에 입반해요. 절차는 상담원이 도와드려요.');quick([{t:'이동 상담 연결',primary:true,act:()=>handoff('라이브→현강 이동')},back('m_live')]);}},
       back('home')]);},
+
+  live_video(){botSay('영상이 안 나오는 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
+    quick([{t:"'라이선스 정보 없음'·재생 안 됨",act:()=>{botSay('모바일 웹브라우저에서는 영상이 막힐 수 있어요. <b>마이클래스 앱</b>을 설치하거나 <b>PC(myclass.sdij.com)</b>로 접속해 주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('영상 재생 오류(라이선스)')},back('live_video')]);}},
+      {t:'버퍼링·자꾸 끊겨요',act:()=>{botSay('① 와이파이 ↔ LTE/5G로 <b>네트워크를 바꿔</b> 보고 ② 앱·휴대폰 OS를 <b>최신으로 업데이트</b>해 주세요. VPN을 쓰면 꺼주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('영상 버퍼링')},back('live_video')]);}},
+      {t:'PC 크롬에서 안 열려요',act:()=>{botSay('PC 크롬은 ① <b>하드웨어 가속 끄기</b> → ② 브라우저 초기화 → ③ 업데이트 순으로 시도해 주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('PC 크롬 영상 오류')},back('live_video')]);}},
+      {t:'앱이 자꾸 꺼져요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하거나, 앱을 <b>삭제 후 재설치</b>해 주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('앱 종료 오류')},back('live_video')]);}},
+      back('m_live')]);},
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
