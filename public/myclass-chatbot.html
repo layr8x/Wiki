@@ -58,9 +58,9 @@
   .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
   .classwrap{padding:0 24px 24px}
   .tabs{display:flex;border-left:1px solid var(--gray20);border-right:1px solid var(--gray20)}
-  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border-top:1px solid var(--border)}
   .tab.on{background:#fff;color:#161616;border-left:1px solid var(--border);border-right:1px solid var(--border)}
-  .tab.off{background:var(--surface);color:var(--helper)}
+  .tab.off{background:var(--surface);color:var(--helper);border-bottom:1px solid var(--border)}
   .citem{padding:24px 0;border-bottom:1px solid var(--border)}
   .cinfo{display:flex;gap:8px;align-items:center;padding-bottom:16px}
   .tag{background:var(--tag-bg);border:.8px solid var(--tag-border);border-radius:var(--r-tag);padding:2px 6px;font-size:14px;color:var(--tag-text);line-height:24px}
@@ -76,9 +76,11 @@
   .navitem .ms{font-size:28px}
   .navitem.on{color:#161616}
   /* 브라우저 하단 chrome */
-  .chrome-bot{height:48px;flex-shrink:0;background:#fff;box-shadow:0 -.4px 0 #c1c1c1;display:flex;align-items:center;justify-content:space-between;padding:0 22px;color:#80858a}
+  .chrome-bot{height:48px;flex-shrink:0;background:#f8f8f8;border-top:.5px solid #d6d6d6;display:flex;align-items:center;justify-content:space-between;padding:0 26px;color:#3c5cf6}
   .chrome-bot .ms{font-size:24px}
-  .chrome-bot .tabs-count{border:2px solid #80858a;border-radius:6px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .chrome-bot .tabs-count{border:2px solid #3c5cf6;border-radius:6px;min-width:22px;height:22px;padding:0 3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .home-indicator{height:22px;flex-shrink:0;background:#f8f8f8;display:flex;align-items:flex-start;justify-content:center;padding-top:9px}
+  .home-indicator span{width:140px;height:5px;border-radius:3px;background:#161616}
 
   /* ── 챗봇 모달(바텀시트) ── */
   .scrim{position:absolute;inset:0;background:rgba(22,22,22,.32);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
@@ -153,7 +155,11 @@
 <body>
 <div class="phone" id="phone">
   <!-- 상태바 -->
-  <div class="statusbar"><span>9:41</span><span class="right">●●●&nbsp;&nbsp;<span class="ms" style="font-size:15px">wifi</span>&nbsp;<span class="ms" style="font-size:16px">battery_full</span></span></div>
+  <div class="statusbar"><span class="time">9:41</span><span class="right">
+    <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1" fill="#161616"/><rect x="5" y="5" width="3" height="7" rx="1" fill="#161616"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="#161616"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#161616"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true" fill="#161616"><path d="M8 2.6c2.5 0 4.8 1 6.5 2.6l-1.45 1.45C11.75 5.35 10 4.5 8 4.5S4.25 5.35 2.95 6.65L1.5 5.2C3.2 3.6 5.5 2.6 8 2.6Z"/><path d="M8 6.3c1.35 0 2.55.55 3.45 1.45l-1.45 1.45C9.5 8.65 8.8 8.35 8 8.35s-1.5.3-2 .85L4.55 7.75C5.45 6.85 6.65 6.3 8 6.3Z"/><circle cx="8" cy="10.4" r="1.35"/></svg>
+    <svg width="27" height="13" viewBox="0 0 27 13" aria-hidden="true"><rect x="0.5" y="0.9" width="22" height="11" rx="3" fill="none" stroke="#161616" stroke-opacity="0.35"/><rect x="2" y="2.4" width="17" height="8" rx="1.5" fill="#161616"/><rect x="24" y="4.4" width="1.6" height="4" rx="0.8" fill="#161616" fill-opacity="0.35"/></svg>
+  </span></div>
   <!-- 브라우저 주소창 -->
   <div class="chrome-top">
     <div class="chrome-bar"><span class="ms">lock</span> myclass.sdij.com</div>
@@ -206,9 +212,10 @@
   <!-- 브라우저 하단 chrome -->
   <div class="chrome-bot">
     <span class="ms">arrow_back_ios</span><span class="ms">arrow_forward_ios</span>
-    <span class="ms" style="font-size:30px">add_circle</span>
+    <span class="ms" style="font-size:30px">add_box</span>
     <span class="tabs-count">4</span><span class="ms">more_horiz</span>
   </div>
+  <div class="home-indicator"><span></span></div>
 
   <!-- 챗봇 모달 -->
   <div class="scrim" id="scrim"></div>
@@ -255,7 +262,7 @@ function handoff(reason){
    <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px"><input type="checkbox" checked> 위 내용 전달에 동의해요</label></div>`);
   quick([
    {t:'이대로 연결하기',primary:true,act:()=>{botSay('접수됐어요. 접수번호는 <b>#A-2026-0617-031</b>이에요. 순서대로 연결해 드릴게요.');
-     card(`<div class="ct">${ms('schedule')}연결 대기</div><div class="guide">지금은 <b>평일 10–20시</b> 운영 중이라 바로 연결돼요. 평균 <b>3분</b> 정도 기다리시면 돼요.</div>`);endActions();}},
+     card(`<div class="ct">${ms('schedule')}연결 안내</div><div class="guide">순서대로 상담원에게 연결해 드릴게요. 접수하신 내용은 그대로 전달돼요.</div>`);endActions();}},
    {t:'내용 수정하기',ghost:true,act:()=>{botSay('어떤 내용을 바꿀까요? 아래에 입력하시면 그대로 전달할게요.');quick([{t:'수정 없이 연결하기',primary:true,act:()=>handoff(reason)},back('home')]);}},
   ]);
 }
@@ -266,13 +273,11 @@ const NODES={
   /* 1. 계정·로그인·앱 — 근거: 통합회원 안내 736 / 비밀번호 재설정은 실제 기능 / 앱오류는 데이터 없어 지어내지 않고 접수 */
   m_account(){botSay('괜찮아요, 금방 풀려요. 어디서 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
-  ac_login(){card(`<div class="ct">${ms('login')}로그인, 이렇게 해보세요</div><div class="guide">
-     ① 가입할 때 쓴 방법으로 로그인 — <b>휴대폰 · 카카오 · 네이버</b> 중 무엇으로 시작했는지 확인<br>
-     ② 비밀번호를 잊으셨다면 재설정<br>③ 그래도 안 되면 ‘통합회원’ 연결이 필요할 수 있어요</div>`);
-    quick([{t:'비밀번호 재설정하기',primary:true,act:()=>{botSay('비밀번호 재설정 화면으로 이동할게요.');endActions();}},{t:'통합회원 연결로',go:'ac_unify'},{t:'그래도 안 돼요',act:()=>handoff('로그인 실패')},back('m_account')]);},
+  ac_login(){botSay('로그인 문제는 통합회원 연결이 안 됐거나 계정 확인이 필요한 경우가 많아요. 어떻게 도와드릴까요?');
+    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'상담원에게 문의',act:()=>handoff('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 거예요. (상담 736건 중 다수가 이 안내로 해결됐어요)');
-    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">마이페이지 › 계정 관리 › 통합회원에서<br>① 본인확인 ② 연결할 계정 로그인 ③ 확인</div>`);
-    quick([{t:'통합 연결하러 가기',primary:true,act:()=>{botSay('통합회원 화면으로 이동할게요.');endActions();}},{t:'자녀 계정 연결',act:()=>{card(`<div class="ct">${ms('family_restroom')}자녀 계정 연결</div><div class="guide">마이페이지 › 가족 연결에서 학생 정보를 입력하고 학생이 승인하면 연결돼요.</div>`);endActions();}},{t:'상담원 연결',act:()=>handoff('통합회원·계정 연결')},back('m_account')]);},
+    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">통합회원 연결은 ① 본인확인 ② 연결할 계정 로그인 ③ 확인 순서로 진행돼요. 정확한 위치·절차는 상담원이 안내해 드릴게요.</div>`);
+    quick([{t:'상담원에게 통합 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 상담원이 안전하게 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
   ac_app(){botSay('앱 오류는 바로 확인해 드릴게요. (정확한 원인 진단이 필요해, 추측 안내 대신 담당자가 빠르게 도와드려요)');
     quick([{t:'기기 정보와 함께 접수하기',primary:true,act:()=>{botSay('지금 보고 계신 기기·앱 버전을 자동으로 첨부해 접수할게요.');handoff('앱 오류(기기정보 첨부)');}},back('m_account')]);},
 
@@ -317,10 +322,10 @@ const NODES={
 
   /* 4. 라이브·교재·배송 — 근거: 대치 라이브센터 안내, 반납처 안내, 배송, 카톡 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
-    quick([{t:'복습·추가영상',ic:'smart_display',act:()=>{card(`<div class="ct">${ms('smart_display')}복습 영상 보는 법</div><div class="guide">앱 › 내 강의실 › 수업 자료<br>수업 다음 날 <b>오전 9시</b>에 열리고 <b>7일간</b> 볼 수 있어요.</div>`);quick([{t:'영상이 안 열려요',go:'m_account'},back('m_live')]);}},
+    quick([{t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 강좌마다 안내가 달라요. 정확한 시청 방법은 상담원이 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'m_account'},{t:'상담원에게 확인',act:()=>handoff('복습·추가영상 안내')},back('m_live')]);}},
       {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 출발</span></div><div class="krow"><span class="k">송장</span><span class="v">CJ ****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
-      {t:'교재 반납처',ic:'assignment_return',act:()=>{card(`<div class="ct">${ms('assignment_return')}교재 반납 안내</div><div class="guide">반납처는 <b>대치 라이브센터</b>로 안내드려요. 현장 반납 또는 선불 택배로 보내실 수 있어요.</div>`);quick([{t:'상담원 연결',act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
-      {t:'라이브 환불·취소',ic:'undo',act:()=>{card(`<div class="ct">${ms('undo')}라이브 환불 순서</div><div class="guide"><b>① 교재비 환불 → ② 수강료 환불</b> 순서로 진행돼요. 교재 반납 후 처리돼요.<div class="src">정확한 기간·차감 기준은 상담원이 확정해요.</div></div>`);quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
+      {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
+      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 교재 반납·정산이 함께 진행돼요. 상담원이 순서대로 정확히 안내해 드릴게요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
       {t:'라이브 수업 문의',ic:'live_tv',act:()=>{botSay('라이브 수업은 <b>대치 라이브센터</b>에서 안내·신청을 도와드려요. 연결해 드릴까요?');quick([{t:'대치 라이브센터 안내 받기',primary:true,act:()=>handoff('라이브 수업 문의')},back('m_live')]);}},
       back('home')]);},
 
@@ -330,8 +335,8 @@ const NODES={
       {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('어떤 수업을 결석/지각 예정으로 신고할까요? 접수하면 담임 선생님 확인 후 처리돼요.');quick([{t:'7/20 지학 결석 예정',act:()=>{botSay('접수됐어요. 담임 선생님 확인 후 처리돼요.');endActions();}},back('m_attend')]);}},back('home')]);},
   at_makeup(){botSay('어떤 강좌 보강인가요? (강좌·주차 단위로 바로 조회·신청돼요)');
     quick([{t:'이신혁T 지학Ⅰ',primary:true,act:()=>{botSay('몇 주차 보강인가요?');quick([
-      {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 7일</span></div><div class="krow"><span class="k">남은 보강</span><span class="v">2회</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
-      {t:'4주차',act:()=>{meSay('4주차');botSay('4주차 영상은 내일 오전 9시에 열려요. 열리면 문자로 알려드릴까요?');quick([{t:'열리면 문자 받기',primary:true,act:()=>{botSay('알림 신청됐어요.');endActions();}},back('m_attend')]);}},
+      {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div><div class="krow"><span class="k">남은 보강</span><span class="v">2회</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
+      {t:'4주차',act:()=>{meSay('4주차');botSay('4주차 영상은 아직 열리지 않았어요. 열리면 문자로 알려드릴까요?');quick([{t:'열리면 문자 받기',primary:true,act:()=>{botSay('알림 신청됐어요.');endActions();}},back('m_attend')]);}},
       {t:'5주차',act:()=>{meSay('5주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 5주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('5주차 보강이 신청됐어요.');endActions();}},back('m_attend')]);}},
     ]);}},back('m_attend')]);},
 
