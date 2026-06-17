@@ -2,7 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no, address=no, email=no">
 <title>마이클래스 챗봇 — 자가해결 프로토타입</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
@@ -20,14 +21,18 @@
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-  button{color:inherit;font-family:inherit}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  button{color:inherit;font-family:inherit;-webkit-appearance:none;appearance:none;cursor:pointer}
+  ::selection{background:#16161626;color:#161616}
+  .card a,.guide a,.krow a{color:inherit;text-decoration:none}
+  .chip:focus-visible,.mtile:focus-visible,.iconbtn:focus-visible,.viewswitch button:focus-visible{outline:2px solid #161616;outline-offset:2px}
   .ms{font-family:'Material Symbols Sharp';font-weight:normal;font-style:normal;line-height:1;
     letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;
     -webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 200,'opsz' 24,'GRAD' 0}
   .ms.fill{font-variation-settings:'FILL' 1,'wght' 200,'opsz' 24,'GRAD' 0}
-  body{font-family:var(--font);color:var(--text);background:#d7d9dd;
-    display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
-  .phone{position:relative;width:430px;max-width:100vw;height:932px;max-height:97vh;background:var(--bg);
+  body{font-family:var(--font);color:var(--text);background:#d7d9dd;overscroll-behavior:none;
+    display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+  .phone{position:relative;width:430px;max-width:100vw;height:932px;max-height:97vh;max-height:97dvh;background:var(--bg);
     border-radius:24px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.28);border:1px solid var(--gray20);display:flex;flex-direction:column}
 
   /* ── 상태바 + 브라우저 주소창 ── */
@@ -56,7 +61,7 @@
   .userrow .ms{font-size:24px;color:#161616}
 
   /* ── 본문 ── */
-  .scroll{flex:1;overflow:auto;background:#fff}
+  .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
   .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
   .classwrap{padding:0 24px 24px}
   .tabs{display:flex}
@@ -181,7 +186,7 @@
   .deskonly{display:none}
 
   /* ── 태블릿 (768×1024) ── */
-  body[data-view="tablet"] .phone{width:768px;height:min(1024px,94vh)}
+  body[data-view="tablet"] .phone{width:768px;height:min(1024px,94dvh)}
   body[data-view="tablet"] .statusbar,body[data-view="tablet"] .chrome-top,body[data-view="tablet"] .home-indicator,body[data-view="tablet"] .chrome-bot{display:none}
   body[data-view="tablet"] .mac-chrome{display:flex}
   body[data-view="tablet"] .apphead{height:64px;padding:0 40px}
@@ -191,7 +196,7 @@
   body[data-view="tablet"] .bottomnav{height:76px;align-items:center}
 
   /* ── 데스크탑 (1440×1024): 좌측 세로 내비 + 우측 콘텐츠 2단 ── */
-  body[data-view="desktop"] .phone{width:min(1440px,96vw);height:min(920px,92vh)}
+  body[data-view="desktop"] .phone{width:min(1440px,96vw);height:min(920px,92dvh)}
   body[data-view="desktop"] .statusbar,body[data-view="desktop"] .chrome-top,body[data-view="desktop"] .home-indicator,body[data-view="desktop"] .chrome-bot,body[data-view="desktop"] .bottomnav{display:none}
   body[data-view="desktop"] .mac-chrome{display:flex}
   body[data-view="desktop"] .apphead{height:64px;padding:0 128px}
