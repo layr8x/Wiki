@@ -6,6 +6,10 @@
   "regions": ["icn1"],
   "rewrites": [
     {
+      "source": "/chatbot",
+      "destination": "/myclass-chatbot.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
