@@ -16,10 +16,14 @@ name: 카카오 상담 수집 (5분마다)
 # 쿠키가 만료되면 이 워크플로가 "실패"로 끝나며 GitHub 이 저장소 소유자에게 알림 메일을
 # 보낸다 → 그때 KAKAO_PARTNER_COOKIE Secret 만 새 값으로 갱신하면 된다.
 
+# ✅ 실제 "5분마다"의 신뢰성 트리거는 Supabase pg_cron 이 담당한다(항상 켜진 DB → 정확).
+#    Supabase 가 5분마다 아래 workflow_dispatch 를 호출(pg_net)해 이 워크플로를 깨운다.
+#    설정: supabase/migrations/20260617_kakao_collect_pg_cron_dispatch.sql, 문서: docs §12.
+#    아래 schedule(GitHub 자체 cron)은 베스트에포트 백업으로 남겨둔다(중복은 멱등 upsert 로 무해).
 on:
   schedule:
-    - cron: '*/5 * * * *'   # 5분마다 (GitHub Actions 최소 주기; 부하에 따라 지연될 수 있음)
-  workflow_dispatch: {}     # 수동 실행 버튼 (Actions 탭)
+    - cron: '*/5 * * * *'   # 백업용 (GitHub 자체 cron; 부하 시 지연·누락 가능 → Supabase 가 보완)
+  workflow_dispatch: {}     # 수동 실행 버튼 + Supabase pg_cron 이 호출하는 진입점
 
 # 이전 실행이 안 끝났으면 새 실행을 대기시켜 중복 수집 방지.
 concurrency:
