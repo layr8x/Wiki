@@ -37,8 +37,24 @@ const LOGS_SIZE = Number(process.env.KAKAO_PARTNER_LOGS_SIZE || 200);
 const isAuthError = (e) => e && (e.status === 401 || e.status === 403);
 const log = (...a) => console.log(`[${new Date().toISOString()}]`, ...a);
 
-if (!COOKIE) { console.error('KAKAO_PARTNER_COOKIE 가 비어있음'); process.exit(1); }
-if (IDS.length === 0) { console.error('KAKAO_PARTNER_PROFILE_IDS / KAKAO_PARTNER_PROFILE_ID 가 비어있음'); process.exit(1); }
+// 필수 시크릿 미설정 시(머지 직후 ~ 사용자가 Secret 등록 전)에는 "실패"가 아니라
+// "스킵"으로 처리해, 5분마다 실패 알림이 쏟아지는 것을 막는다. Secret 등록 후 다음
+// 실행부터 자동으로 수집이 시작된다. (쿠키 '만료'는 실제 시도 중 401/403 → exit 1 로 알림)
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const missing = [
+  ['KAKAO_PARTNER_COOKIE', COOKIE],
+  ['SUPABASE_URL', SUPABASE_URL],
+  ['SUPABASE_SERVICE_ROLE_KEY', SUPABASE_KEY],
+].filter(([, v]) => !v).map(([k]) => k);
+if (missing.length) {
+  console.log(`[skip] 필수 시크릿 미설정(${missing.join(', ')}) — 수집 건너뜀. GitHub Secrets 등록 후 자동 시작.`);
+  process.exit(0);
+}
+if (IDS.length === 0) {
+  console.log('[skip] 수집할 채널 ID 없음 (KAKAO_PARTNER_PROFILE_IDS / KAKAO_PARTNER_PROFILE_ID).');
+  process.exit(0);
+}
 
 const supabase = getAdminClient();
 
