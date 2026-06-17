@@ -131,8 +131,8 @@
   .krow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
   .krow:last-child{border-bottom:none}
   .krow .k{font-size:14px;color:#393939}
-  .krow .v{font-size:15px;font-weight:700;text-align:right}
-  .big{font-size:22px;font-weight:800;letter-spacing:-.4px}
+  .krow .v{font-size:15px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .big{font-size:22px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
   .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
   .pill.ok{background:#16161610;color:#161616}
   .pill.due{background:#161616;color:#fff}
@@ -144,12 +144,14 @@
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
   .chip{border:1px solid var(--gray20);background:var(--bg);color:var(--text);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:.12s;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
   .chip:hover{background:var(--surface)}
+  .chip:active{transform:translateY(1px)}
   .chip .ms{font-size:17px}
   .chip.primary{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700}
   .chip.ghost{color:var(--helper)}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 12px}
   .mtile{display:flex;align-items:center;gap:10px;border:1px solid var(--gray20);border-radius:var(--r-card);padding:13px 12px;cursor:pointer;background:#fff;transition:.12s;text-align:left}
-  .mtile:hover{background:var(--surface)}
+  .mtile:hover{background:var(--surface);border-color:#161616}
+  .mtile:active{transform:translateY(1px)}
   .mtile .ms{font-size:22px;color:#161616}
   .mtile .l{font-size:14px;font-weight:700;line-height:1.3}
 
@@ -212,7 +214,7 @@
   body[data-view="tablet"] .userrow,body[data-view="desktop"] .userrow{margin:0}
 
   /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 */
-  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s,opacity .26s,visibility .26s}
+  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
   body[data-view="tablet"] .sheet{bottom:92px;height:min(560px,64%)}
   body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,82%)}
   body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
@@ -324,8 +326,9 @@ function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scroll
 function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
-function quick(opts){const w=el(`<div class="qr fadein"></div>`);opts.forEach(o=>{const c=el(`<button class="chip ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();(o.act?o.act:()=>go(o.go))();};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function menuGrid(){const g=el(`<div class="menu-grid fadein"></div>`);MENU.forEach(m=>{const t=el(`<button class="mtile">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.onclick=()=>{meSay(m.l);g.remove();go('m_'+m.k);};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();(o.act?o.act:()=>go(o.go))();};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*40)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();go('m_'+m.k);};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>botSay('고마워요! 또 필요하면 언제든 불러주세요.')},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
 function handoff(reason){
@@ -345,7 +348,7 @@ function handoff(reason){
 }
 
 const NODES={
-  home(){botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
+  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
 
   /* 1. 계정·로그인·앱 */
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
