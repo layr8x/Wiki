@@ -445,7 +445,7 @@ const NODES={
   /* 4. 라이브·교재·배송 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
     quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. 상담원이 신청을 도와드려요.');quick([{t:'라이브 입반 상담',primary:true,act:()=>handoff('라이브 입반 신청')},back('m_live')]);}},
-      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 수강 강좌 → 강좌 상세보기</b>에서 회차별로 볼 수 있어요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
+      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 수강 강좌 → 강좌 상세보기 → 강의 목록</b>에서 회차별로 볼 수 있어요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
       {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
       {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
       {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
