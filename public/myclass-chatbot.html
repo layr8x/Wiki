@@ -16,6 +16,7 @@
     --primary:#161616; --on-primary:#ffffff;
     --r-tag:2px; --r-btn:2px; --r-card:4px; --r-pill:999px; --r-bubble:16px; --r-sheet:12px;
     --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.06),0 8px 8px rgba(0,0,0,.04),0 16px 8px rgba(0,0,0,.02);
+    --shadow-2:0 1px 2px rgba(22,22,22,.06),0 4px 16px rgba(22,22,22,.06);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
     --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
@@ -94,7 +95,7 @@
   .scrim{position:absolute;inset:0;background:rgba(22,22,22,.32);opacity:0;pointer-events:none;transition:opacity .25s;z-index:40}
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet{position:absolute;left:0;right:0;bottom:0;height:90%;background:var(--bg);border-radius:var(--r-sheet) var(--r-sheet) 0 0;
-    box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .32s cubic-bezier(.22,.61,.36,1);
+    box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .42s cubic-bezier(.32,.72,0,1);
     display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none}
   .sheet.open{transform:translateY(0)}
   .grab{width:40px;height:4px;background:#c6c6c6;border-radius:2px;margin:8px auto 4px}
@@ -125,14 +126,14 @@
   .bot .msg{background:var(--surface);color:#161616;border-bottom-left-radius:4px}
   .me .msg{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
 
-  .card{max-width:90%;background:var(--bg);border:1px solid var(--gray20);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2)}
+  .card{max-width:90%;background:var(--bg);border:1px solid var(--gray20);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2)}
   .card .ct{font-size:13px;color:var(--helper);margin-bottom:8px;display:flex;align-items:center;gap:6px}
   .card .ct .ms{font-size:16px}
   .krow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
   .krow:last-child{border-bottom:none}
   .krow .k{font-size:14px;color:#393939}
   .krow .v{font-size:15px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
-  .big{font-size:22px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+  .big{font-size:22px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums;display:inline-block;animation:num-pop .26s cubic-bezier(.23,1,.32,1) both}
   .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
   .pill.ok{background:#16161610;color:#161616}
   .pill.due{background:#161616;color:#fff}
@@ -142,7 +143,7 @@
   .src{font-size:11px;color:var(--helper);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
-  .chip{border:1px solid var(--gray20);background:var(--bg);color:var(--text);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .12s,transform .12s,border-color .12s,box-shadow .12s;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
+  .chip{border:1px solid var(--gray20);background:var(--bg);color:var(--text);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .12s,transform .12s cubic-bezier(.23,1,.32,1),border-color .12s,box-shadow .12s;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
   .chip:hover{background:var(--surface)}
   .chip:active{transform:translateY(1px)}
   .chip .ms{font-size:17px}
@@ -168,7 +169,12 @@
   .copybtn{margin-left:6px;border:none;background:none;color:var(--helper);cursor:pointer;display:inline-flex;vertical-align:middle;padding:2px;touch-action:manipulation}
   .copybtn .ms{font-size:15px}
   .copybtn.copied{color:#161616}
+  .toast{position:absolute;left:16px;right:16px;bottom:16px;z-index:60;background:#161616;color:#fff;border-radius:8px;padding:12px 14px;font-size:14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(22,22,22,.18),0 1px 3px rgba(22,22,22,.12);transform:translateY(140%);opacity:0;transition:transform .4s ease,opacity .4s ease}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast .ms{font-size:18px;animation:check-pop .34s cubic-bezier(.23,1,.32,1) both}
   @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes num-pop{from{opacity:0;transform:scale(.96) translateY(2px)}to{opacity:1;transform:none}}
+  @keyframes check-pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
   @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
   /* ── 뷰 전환: 모바일 / 태블릿 / 데스크탑 ── */
   .viewswitch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:4px;background:#fff;border:1px solid var(--gray20);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.14)}
@@ -330,16 +336,17 @@ const log=document.getElementById('log'),scrim=document.getElementById('scrim'),
 let ctx='normal';
 const ms=n=>`<span class="ms">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
+function toast(msg){const t=el(`<div class="toast">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
 function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
 function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
 let RM=false;try{RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
 function typingBubble(){const r=el(`<div class="row bot typing fadein"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
 function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
-log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
+log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*40)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>botSay('고마워요! 또 필요하면 언제든 불러주세요.')},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
@@ -372,12 +379,16 @@ const NODES={
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
   ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
-    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'상담원에게 문의',act:()=>handoff('로그인 실패')},back('m_account')]);},
+    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'어느 걸로 가입했는지 모르겠어요',act:()=>{botSay('마이클래스는 <b>카카오·구글·네이버</b> 간편 로그인으로 가입돼요. 평소 자주 쓰는 것부터 눌러보면 대개 바로 들어가져요. 그래도 안 되면 가입 정보를 상담원이 확인해 드려요.');quick([{t:'상담원에게 확인',primary:true,act:()=>handoff('소셜 가입수단 확인')},back('ac_login')]);}},{t:'상담원에게 문의',act:()=>handoff('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요. (상담 736건 중 다수가 이 안내로 해결됐어요)');
     card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">① 본인확인 → ② 연결할 계정 로그인 → ③ 확인 순서로 진행돼요. 정확한 위치·절차는 상담원이 안내해 드려요.</div>`);
     quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 상담원이 안전하게 도와드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
-  ac_app(){botSay('앱 오류는 추측 안내 대신 담당자가 정확히 확인해 드려요. 지금 기기·앱 버전을 함께 첨부해 접수할까요?');
-    quick([{t:'기기 정보와 함께 접수',primary:true,act:()=>{botSay('기기·앱 버전을 자동으로 첨부해 접수할게요.');handoff('앱 오류(기기정보 첨부)');}},back('m_account')]);},
+  ac_app(){botSay('앱이 어떻게 안 되나요? 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
+    quick([{t:'흰 화면만 떠요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하고, 앱을 완전히 종료한 뒤 다시 열어주세요. 그래도 흰 화면이면 <b>삭제 후 재설치</b>가 가장 확실해요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 흰 화면')},back('ac_app')]);}},
+      {t:'자꾸 튕겨요·꺼져요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하거나 앱을 <b>삭제 후 재설치</b>해 주세요. 저장공간이 부족하면 더 자주 꺼질 수 있어요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 튕김·종료')},back('ac_app')]);}},
+      {t:'업데이트 후 안 돼요',act:()=>{botSay('업데이트 직후엔 앱을 완전히 <b>종료했다 다시 실행</b>하면 대부분 정상화돼요. 그래도 안 되면 <b>삭제 후 재설치</b>해 주세요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('업데이트 후 앱 오류')},back('ac_app')]);}},
+      {t:'설치가 안 돼요',act:()=>{botSay('앱스토어·플레이스토어에서 <b>마이클래스</b>를 검색해 설치하거나, 휴대폰 저장공간을 확보한 뒤 다시 시도해 주세요. 계속 막히면 기기 정보와 함께 접수해 드릴게요.');quick([{t:'기기 정보와 함께 접수',primary:true,act:()=>handoffTech('앱 설치 불가')},back('ac_app')]);}},
+      back('m_account')]);},
 
   /* 2. 미납·결제·환불 */
   m_pay(){botSay('결제·납부, 무엇을 도와드릴까요?');
@@ -411,7 +422,7 @@ const NODES={
 
   /* 3. 입반·등록·대기·전반 */
   m_enroll(){botSay('입반·등록, 무엇을 도와드릴까요?');
-    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 번호 확인',ic:'pin',go:'en_wait'},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
+    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 번호 확인',ic:'pin',go:'en_wait'},{t:'특강 신청 본인인증이 안 돼요',ic:'sms',act:()=>{botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');quick([{t:'그래도 안 와요',primary:true,act:()=>handoff('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);}},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
   en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요.');
     card(`<div class="ct">${ms('event')}강기원T 수학 서바이벌 미적정규</div><div class="krow"><span class="k">일 09:00-12:35 · 본관 101호</span><span class="v"><span class="pill due">잔여 2석</span></span></div>`);
     quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
@@ -434,7 +445,7 @@ const NODES={
   /* 4. 라이브·교재·배송 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
     quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. 상담원이 신청을 도와드려요.');quick([{t:'라이브 입반 상담',primary:true,act:()=>handoff('라이브 입반 신청')},back('m_live')]);}},
-      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 내 강의실 → 수업 자료</b>에서 볼 수 있어요. 보통 수업 다음 날 올라와요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
+      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 수강 강좌 → 강좌 상세보기</b>에서 회차별로 볼 수 있어요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
       {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
       {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
       {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
@@ -477,7 +488,7 @@ const NODES={
   help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
     quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);},
   help_faq(){botSay('자주 묻는 것을 골라보세요. 못 찾으면 상담원이 도와드려요.');
-    quick([{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'상담원 연결',act:()=>handoff('FAQ 미해결')},back('m_help')]);},
+    quick([{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'앱이 안 돼요',go:'ac_app'},{t:'대기 충원은 언제 돼요?',go:'en_wait'},{t:'상담원 연결',act:()=>handoff('FAQ 미해결')},back('m_help')]);},
 
   /* 8. 퇴원·전반 */
   m_quit(){botSay('어떤 점이 어려우셨어요? 더 나은 방법을 먼저 찾아드릴게요.');
