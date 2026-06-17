@@ -334,3 +334,63 @@ GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신
   보관함 쿠키가 갱신된다. 수집 자체는 노트북과 무관하게 GitHub 에서 계속된다.
 - 맥북이 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
 - 배달되는 쿠키는 계정 로그인 권한과 동등 → 테이블은 RLS 로 service_role 외 접근 차단(위 1번).
+
+---
+
+## 12. ✅ Supabase 예약 트리거 (GitHub cron 지연 보완 — 더 확실한 자동장치)
+
+**문제**: §10 의 GitHub Actions `schedule` 은 무료 러너 부하에 따라 첫 실행이 수십 분~수
+시간 밀리거나 건너뛰는 경우가 있다(특히 새로 머지된 워크플로). "5분마다"가 보장되지 않는다.
+
+**해결**: 항상 켜져 있고 분 단위로 정확한 **Supabase pg_cron** 이 5분마다 GitHub 의
+`workflow_dispatch` 를 직접 호출해 수집 워크플로를 깨운다. GitHub 자체 cron 은 백업으로 둔다.
+
+```
+Supabase pg_cron(*/5)  ──▶  pg_net.http_post  ──▶  GitHub workflow_dispatch  ──▶  kakao-collect.yml 실행
+   (항상 켜진 DB)          (Vault 의 PAT 로 인증)        (204 = 접수 성공)            (검증된 수집 1사이클)
+```
+
+설정 SQL: `supabase/migrations/20260617_kakao_collect_pg_cron_dispatch.sql`
+(확장 `pg_cron`/`pg_net` 활성 + `kakao-collect-dispatch` 잡 등록. 멱등.)
+
+### 12-1. 설치 (1회)
+
+1. **GitHub Fine-grained PAT 발급** — https://github.com/settings/personal-access-tokens/new
+   - Repository access: **Only select repositories → `sdij-wiki`**
+   - Permissions → Repository permissions → **`Actions`: Read and write**
+   - Generate → `github_pat_...` 복사(이 화면에서만 보임).
+2. **PAT 를 Supabase Vault 에 저장**(값은 저장소에 두지 않는다) — Dashboard → SQL Editor:
+   ```sql
+   select vault.create_secret(
+     '여기에_PAT_붙여넣기', 'github_actions_pat', 'kakao-collect 5분 디스패치용 GitHub PAT');
+   ```
+   이미 있으면 교체:
+   ```sql
+   select vault.update_secret(
+     (select id from vault.secrets where name = 'github_actions_pat'),
+     '여기에_새_PAT', 'github_actions_pat', 'kakao-collect 5분 디스패치용 GitHub PAT');
+   ```
+3. **마이그레이션 적용**(잡 등록) — 위 SQL 파일 전체를 SQL Editor 에 붙여넣고 RUN.
+   잡은 Vault 에 PAT 가 있을 때만 호출하므로 2↔3 순서는 무관하다.
+
+### 12-2. 동작/점검
+
+```sql
+-- 잡 실행 이력(5분 간격으로 succeeded 가 쌓이면 정상)
+select status, return_message, start_time
+from cron.job_run_details
+where jobid = (select jobid from cron.job where jobname='kakao-collect-dispatch')
+order by start_time desc limit 10;
+
+-- GitHub 호출 응답(204 = dispatch 접수 성공)
+select id, status_code, created from net._http_response order by created desc limit 10;
+```
+GitHub 쪽은 Actions 탭에 `event: workflow_dispatch` 실행이 5분 간격으로 찍힌다.
+
+### 12-3. 일시중지 / 토큰 만료
+
+- **중지**: `select cron.unschedule('kakao-collect-dispatch');`
+- **PAT 만료**(발급 시 만료기한 지정한 경우): dispatch 응답이 **401** 로 바뀌고 수집이
+  멈춘다 → §12-1 의 `update_secret` 으로 새 PAT 로 교체. (만료 없는 PAT 를 쓰면 무인 운영.)
+- §10 의 GitHub 자체 schedule 백업은 그대로라, Supabase 트리거가 멈춰도 GitHub 이
+  (지연은 있어도) 최소한의 수집은 이어간다.
