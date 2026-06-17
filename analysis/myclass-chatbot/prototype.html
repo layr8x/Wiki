@@ -350,6 +350,7 @@ function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>botSay('고마워요! 또 필요하면 언제든 불러주세요.')},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
+function offHours(){const h=new Date().getHours();return h>=22||h<8;}
 function handoff(reason){
   botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
   card(`<div class="ct">${ms('support_agent')}대치 캠퍼스 고3 상담실</div><div class="guide">
@@ -357,6 +358,7 @@ function handoff(reason){
    <div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div>
    <div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div>
    <span style="color:var(--helper)">문자로 남길 땐 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</span></div>`);
+  if(offHours())botSay('지금은 상담원 응답이 어려운 늦은 시간이에요. 전화가 안 되면 <b>문자로 남겨</b> 두시면 운영 시작 시 가장 먼저 연락드려요. 급한 자가해결은 제가 지금 도와드릴 수 있어요.');
   quick([
    {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
      botSay('대치 캠퍼스 고3 상담실(02-552-2373)로 전화를 연결할게요.');
@@ -365,11 +367,11 @@ function handoff(reason){
    {t:'처음으로',go:'home',ghost:true},
   ]);
 }
-/* 영상 재생 문제 — 실제 myclass FAQ(Player) 자가해결법 근거. 안 되면 1:1 문의로 안내 */
+/* 기술 문제(앱·계정·로그인·영상·인증) — 마이클래스 카카오톡 기술 상담채널로 안내. 자가해결법은 실제 myclass FAQ 근거 */
 function handoffTech(reason){
-  botSay('해결되지 않으면 앱에서 <b>전체메뉴 → 고객센터 → 1:1 문의</b>로 접수해 주세요. 빠른 확인을 위해 아래 내용을 함께 적어주시면 좋아요.');
-  card(`<div class="ct">${ms('support_agent')}1:1 문의 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지<br>· 기기·OS 버전</div>`);
-  endActions();
+  botSay('이건 <b>마이클래스 카카오톡 상담채널</b>에서 기술 담당자가 가장 빠르게 도와드려요. 앱에서는 <b>전체메뉴 → 고객센터 → 1:1 문의</b>로도 접수할 수 있어요.');
+  card(`<div class="ct">${ms('forum')}마이클래스 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지(가능하면 화면 캡처)<br>· 기기·OS 버전</div>`);
+  quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('마이클래스 카카오톡 상담채널로 연결할게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 
 const NODES={
@@ -379,10 +381,10 @@ const NODES={
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
   ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
-    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'어느 걸로 가입했는지 모르겠어요',act:()=>{botSay('마이클래스는 <b>카카오·구글·네이버</b> 간편 로그인으로 가입돼요. 평소 자주 쓰는 것부터 눌러보면 대개 바로 들어가져요. 그래도 안 되면 가입 정보를 상담원이 확인해 드려요.');quick([{t:'상담원에게 확인',primary:true,act:()=>handoff('소셜 가입수단 확인')},back('ac_login')]);}},{t:'상담원에게 문의',act:()=>handoff('로그인 실패')},back('m_account')]);},
+    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'어느 걸로 가입했는지 모르겠어요',act:()=>{botSay('마이클래스는 <b>카카오·구글·네이버</b> 간편 로그인으로 가입돼요. 평소 자주 쓰는 것부터 눌러보면 대개 바로 들어가져요. 그래도 안 되면 가입 정보를 상담원이 확인해 드려요.');quick([{t:'카카오톡 상담으로 확인',primary:true,act:()=>handoffTech('소셜 가입수단 확인')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요. (상담 736건 중 다수가 이 안내로 해결됐어요)');
     card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">① 본인확인 → ② 연결할 계정 로그인 → ③ 확인 순서로 진행돼요. 정확한 위치·절차는 상담원이 안내해 드려요.</div>`);
-    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 상담원이 안전하게 도와드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
+    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoffTech('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 카카오톡 상담채널에서 안전하게 도와드려요.');quick([{t:'카카오톡 상담 연결',primary:true,act:()=>handoffTech('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
   ac_app(){botSay('앱이 어떻게 안 되나요? 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
     quick([{t:'흰 화면만 떠요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하고, 앱을 완전히 종료한 뒤 다시 열어주세요. 그래도 흰 화면이면 <b>삭제 후 재설치</b>가 가장 확실해요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 흰 화면')},back('ac_app')]);}},
       {t:'자꾸 튕겨요·꺼져요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하거나 앱을 <b>삭제 후 재설치</b>해 주세요. 저장공간이 부족하면 더 자주 꺼질 수 있어요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 튕김·종료')},back('ac_app')]);}},
@@ -422,7 +424,7 @@ const NODES={
 
   /* 3. 입반·등록·대기·전반 */
   m_enroll(){botSay('입반·등록, 무엇을 도와드릴까요?');
-    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 번호 확인',ic:'pin',go:'en_wait'},{t:'특강 신청 본인인증이 안 돼요',ic:'sms',act:()=>{botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');quick([{t:'그래도 안 와요',primary:true,act:()=>handoff('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);}},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
+    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 접수 현황',ic:'pin',go:'en_wait'},{t:'특강 신청 본인인증이 안 돼요',ic:'sms',act:()=>{botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);}},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
   en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요.');
     card(`<div class="ct">${ms('event')}강기원T 수학 서바이벌 미적정규</div><div class="krow"><span class="k">일 09:00-12:35 · 본관 101호</span><span class="v"><span class="pill due">잔여 2석</span></span></div>`);
     quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
@@ -431,12 +433,13 @@ const NODES={
      <div class="krow"><span class="k">강은양T 국어</span><span class="v"><span class="pill due">결제대기</span></span></div>
      <div class="krow"><span class="k">다음 결제 예정</span><span class="v">7/19</span></div>`);
     quick([{t:'결제대기 건 지금 결제',primary:true,go:'pay_status'},back('m_enroll')]);},
-  en_wait(){card(`<div class="ct">${ms('pin')}대기 현황</div>
+  en_wait(){card(`<div class="ct">${ms('pin')}대기 접수 현황</div>
      <div class="krow"><span class="k">강은양T 국어</span><span class="v">대기 3번</span></div>
      <div class="krow"><span class="k">접수일</span><span class="v">7/10</span></div>
-     <div class="src">※ 자리가 나면 바로 문자로 안내해 드려요.</div>`);
-    quick([{t:'충원되면 문자 받기',primary:true,act:()=>{botSay('자리가 나면 바로 010-****-1234로 문자 보내드릴게요.');endActions();}},back('m_enroll')]);},
-  en_waitset(){botSay('어떤 강좌를 대기할까요?');quick([{t:'강은양T 국어 대기',primary:true,act:()=>{botSay('대기 접수됐어요. 충원되면 바로 문자로 안내해요.');endActions();}},back('m_enroll')]);},
+     <div class="src">※ 자리가 나면 대기 순번대로 문자로 안내해 드려요.</div>`);
+    botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요. 알림만 켜두고 기다리시면 돼요.');
+    quick([{t:'충원되면 문자 받기',primary:true,act:()=>{botSay('자리가 나면 바로 010-****-1234로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
+  en_waitset(){botSay('마감된 강좌도 대기를 걸어두면 충원 시 순서대로 기회가 와요. 어떤 강좌를 대기할까요?');quick([{t:'강은양T 국어 대기',primary:true,act:()=>{botSay('대기 접수됐어요. 충원되면 순번대로 문자로 안내해요. 한 번만 신청해두면 됩니다.');endActions();}},back('m_enroll')]);},
   en_transfer(){botSay('반 변경은 어떤 이유인가요? 더 나은 자리를 먼저 찾아드릴게요.');
     quick([{t:'시간대를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('schedule')}같은 강사 다른 시간</div><div class="krow"><span class="k">강기원T 수학 · 토 14:00</span><span class="v"><span class="pill due">잔여 3석</span></span></div>`);quick([{t:'이 시간으로 변경',primary:true,act:()=>handoff('전반(시간 변경)')},back('en_transfer')]);}},
       {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
