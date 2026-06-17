@@ -14,7 +14,7 @@
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
     --primary:#161616; --on-primary:#ffffff;
     --r-tag:2px; --r-btn:2px; --r-card:4px; --r-pill:999px; --r-bubble:16px; --r-sheet:12px;
-    --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.04);
+    --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.06),0 8px 8px rgba(0,0,0,.04),0 16px 8px rgba(0,0,0,.02);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
     --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
@@ -23,7 +23,7 @@
   .ms{font-family:'Material Symbols Sharp';font-weight:normal;font-style:normal;line-height:1;
     letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;direction:ltr;
     -webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;font-variation-settings:'FILL' 0,'wght' 200,'opsz' 24,'GRAD' 0}
-  .ms.fill{font-variation-settings:'FILL' 1,'wght' 200}
+  .ms.fill{font-variation-settings:'FILL' 1,'wght' 200,'opsz' 24,'GRAD' 0}
   body{font-family:var(--font);color:var(--text);background:#d7d9dd;
     display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}
   .phone{position:relative;width:430px;max-width:100vw;height:932px;max-height:97vh;background:var(--bg);
@@ -57,9 +57,10 @@
   .scroll{flex:1;overflow:auto;background:#fff}
   .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
   .classwrap{padding:0 24px 24px}
-  .tabs{display:flex;border-left:1px solid var(--gray20);border-right:1px solid var(--gray20)}
-  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border-top:1px solid var(--border)}
-  .tab.on{background:#fff;color:#161616;border-left:1px solid var(--border);border-right:1px solid var(--border)}
+  .tabs{display:flex}
+  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border:1px solid var(--border);border-bottom:none}
+  .tab+.tab{border-left:none}
+  .tab.on{background:#fff;color:#161616}
   .tab.off{background:var(--surface);color:var(--helper);border-bottom:1px solid var(--border)}
   .citem{padding:24px 0;border-bottom:1px solid var(--border)}
   .cinfo{display:flex;gap:8px;align-items:center;padding-bottom:16px}
@@ -76,9 +77,9 @@
   .navitem .ms{font-size:28px}
   .navitem.on{color:#161616}
   /* 브라우저 하단 chrome */
-  .chrome-bot{height:48px;flex-shrink:0;background:#f8f8f8;border-top:.5px solid #d6d6d6;display:flex;align-items:center;justify-content:space-between;padding:0 26px;color:#3c5cf6}
+  .chrome-bot{height:48px;flex-shrink:0;background:#f8f8f8;border-top:.5px solid #d6d6d6;display:flex;align-items:center;justify-content:space-between;padding:0 26px;color:#5f6368}
   .chrome-bot .ms{font-size:24px}
-  .chrome-bot .tabs-count{border:2px solid #3c5cf6;border-radius:6px;min-width:22px;height:22px;padding:0 3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .chrome-bot .tabs-count{border:2px solid #5f6368;border-radius:6px;min-width:22px;height:22px;padding:0 3px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
   .home-indicator{height:22px;flex-shrink:0;background:#f8f8f8;display:flex;align-items:flex-start;justify-content:center;padding-top:9px}
   .home-indicator span{width:140px;height:5px;border-radius:3px;background:#161616}
 
@@ -89,7 +90,7 @@
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .32s cubic-bezier(.22,.61,.36,1);
     display:flex;flex-direction:column;overflow:hidden;z-index:41}
   .sheet.open{transform:translateY(0)}
-  .grab{width:40px;height:4px;background:var(--gray20);border-radius:2px;margin:8px auto 4px}
+  .grab{width:40px;height:4px;background:#c6c6c6;border-radius:2px;margin:8px auto 4px}
   .chead{display:flex;align-items:center;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--border)}
   .avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .avatar .ms{font-size:22px}
@@ -103,7 +104,11 @@
   .banner b{font-weight:700}
   .banner .x{margin-left:auto;opacity:.7}
 
-  .log{flex:1;overflow:auto;padding:14px 16px 8px}
+  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#16161626 transparent}
+  .log::-webkit-scrollbar{width:6px}
+  .log::-webkit-scrollbar-track{background:transparent}
+  .log::-webkit-scrollbar-thumb{background:#16161626;border-radius:99px}
+  .log::-webkit-scrollbar-thumb:hover{background:#16161640}
   .row{display:flex;margin-bottom:10px;gap:8px}
   .row.bot{justify-content:flex-start}
   .row.me{justify-content:flex-end}
@@ -148,12 +153,71 @@
   .send .ms{font-size:20px}
   .fadein{animation:fi .26s ease both}
   @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* ── 뷰 전환: 모바일 / 태블릿 / 데스크탑 ── */
+  .viewswitch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:4px;background:#fff;border:1px solid var(--gray20);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.14)}
+  .viewswitch button{border:none;background:none;padding:7px 15px;border-radius:999px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--helper);cursor:pointer}
+  .viewswitch button.on{background:#161616;color:#fff}
+  .fab{display:none}
+  body[data-view="tablet"] .phone{width:834px;height:min(1112px,94vh)}
+  body[data-view="tablet"] .chrome-bot{display:none}
+  body[data-view="tablet"] .apphead,body[data-view="tablet"] .sectiontitle,body[data-view="tablet"] .classwrap{max-width:600px;margin-left:auto;margin-right:auto;width:100%}
+  body[data-view="desktop"] .phone{width:min(1180px,96vw);height:min(760px,94vh)}
+  body[data-view="desktop"] .statusbar,body[data-view="desktop"] .chrome-top,body[data-view="desktop"] .home-indicator,body[data-view="desktop"] .chrome-bot,body[data-view="desktop"] .bottomnav{display:none}
+  body[data-view="desktop"] .apphead,body[data-view="desktop"] .sectiontitle,body[data-view="desktop"] .classwrap{max-width:720px;margin-left:auto;margin-right:auto;width:100%}
+  body[data-view="desktop"] .apphead{padding-top:22px}
+  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s,opacity .26s,visibility .26s}
+  body[data-view="tablet"] .sheet{bottom:40px;height:min(620px,76%)}
+  body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,86%)}
+  body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
+  body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:transparent}
+  body[data-view="tablet"] .fab,body[data-view="desktop"] .fab{display:flex;position:absolute;right:24px;width:56px;height:56px;border-radius:50%;background:#161616;color:#fff;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.26);z-index:30}
+  body[data-view="tablet"] .fab{bottom:40px}
+  body[data-view="desktop"] .fab{bottom:24px}
+  body[data-view="tablet"] .fab .ms,body[data-view="desktop"] .fab .ms{font-size:26px}
+  body.chat-open .fab{display:none!important}
+  /* macOS Chrome 프레임 */
+  .mac-chrome{display:none;flex-direction:column;flex-shrink:0;background:#dee1e6}
+  .mc-bar{height:36px;display:flex;align-items:center;gap:6px;padding:0 12px}
+  .mc-dots{display:flex;gap:8px;margin-right:10px}
+  .mc-dots i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .mc-dots i:nth-child(1){background:#ff5f57}.mc-dots i:nth-child(2){background:#febc2e}.mc-dots i:nth-child(3){background:#28c840}
+  .mc-tab{display:flex;align-items:center;gap:10px;font-size:13px;color:#3c4043;background:#f1f3f4;border-radius:9px 9px 0 0;padding:8px 14px;white-space:nowrap}
+  .mc-tab.on{background:#fff}
+  .mc-tab b{font-weight:400;color:#9aa0a6}
+  .mc-plus{color:#5f6368;font-size:17px;padding:0 8px}
+  .mc-addr{height:44px;display:flex;align-items:center;gap:16px;padding:0 16px;background:#fff;border-bottom:1px solid #e6e8eb}
+  .mc-nav{color:#5f6368;font-size:14px;letter-spacing:3px}
+  .mc-url{flex:1;background:#f1f3f4;border-radius:20px;height:32px;display:flex;align-items:center;justify-content:center;color:#202124;font-size:14px}
+  .mc-ext{color:#5f6368;letter-spacing:4px;font-size:15px}
+  body[data-view="tablet"] .mac-chrome,body[data-view="desktop"] .mac-chrome{display:flex}
+  /* 태블릿: iOS 크롬 숨김, 단일컬럼 + 하단탭 유지 */
+  body[data-view="tablet"] .statusbar,body[data-view="tablet"] .chrome-top,body[data-view="tablet"] .home-indicator,body[data-view="tablet"] .chrome-bot{display:none}
+  body[data-view="tablet"] .phone{width:768px;height:min(1024px,94vh)}
+  body[data-view="tablet"] .apphead,body[data-view="tablet"] .sectiontitle,body[data-view="tablet"] .classwrap{max-width:none;margin-left:0;margin-right:0;padding-left:40px;padding-right:40px}
+  /* 데스크탑: 좌측 세로 내비 + 우측 콘텐츠 컬럼 */
+  body[data-view="desktop"] .phone{width:min(1120px,96vw);height:min(780px,94vh)}
+  body[data-view="desktop"] .sectiontitle{display:none}
+  body[data-view="desktop"] .classwrap{max-width:544px;margin-left:auto;margin-right:80px}
+  .desknav{display:none}
+  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:14px;position:absolute;left:80px;top:196px;z-index:5}
+  .desknav a{font-size:24px;line-height:1.2;color:var(--helper);font-weight:300;cursor:pointer}
+  .desknav a.on{color:#161616;width:fit-content;border-bottom:2px solid #161616;padding-bottom:2px}
+  .deskonly{display:none}
+  body[data-view="desktop"] .deskonly{display:inline-block}
+  .xtab{display:none}
+  body[data-view="tablet"] .xtab{display:block}
   .tip{position:absolute;top:104px;right:20px;background:#161616;color:#fff;font-size:12px;padding:7px 11px;border-radius:8px;opacity:0;transition:.3s;z-index:30;pointer-events:none}
   .tip::after{content:"";position:absolute;top:-5px;right:18px;border:5px solid transparent;border-bottom-color:#161616;border-top:0}
 </style>
 </head>
 <body>
+<div class="viewswitch" id="viewswitch"><button data-v="mobile" class="on">모바일</button><button data-v="tablet">태블릿</button><button data-v="desktop">데스크탑</button></div>
 <div class="phone" id="phone">
+  <!-- macOS Chrome 프레임 (태블릿·데스크탑) -->
+  <div class="mac-chrome">
+    <div class="mc-bar"><span class="mc-dots"><i></i><i></i><i></i></span><span class="mc-tab on">마이클래스 <b>×</b></span><span class="mc-tab">Landing Page <b>×</b></span><span class="mc-plus">+</span></div>
+    <div class="mc-addr"><span class="mc-nav">←&nbsp;→&nbsp;⟳</span><span class="mc-url">🔒 myclass.sdij.com</span><span class="mc-ext">⊞&nbsp;⋮</span></div>
+  </div>
   <!-- 상태바 -->
   <div class="statusbar"><span class="time">9:41</span><span class="right">
     <svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1" fill="#161616"/><rect x="5" y="5" width="3" height="7" rx="1" fill="#161616"/><rect x="10" y="2.5" width="3" height="9.5" rx="1" fill="#161616"/><rect x="15" y="0" width="3" height="12" rx="1" fill="#161616"/></svg>
@@ -172,6 +236,7 @@
       <div class="headicons">
         <span class="ms" id="openBtn" role="button" aria-label="문의 챗봇 열기" title="문의 챗봇">forum</span>
         <span class="ms bell" aria-label="알림">notifications</span>
+        <span class="ms deskonly" aria-label="전체메뉴">menu</span>
       </div>
     </div>
     <div class="userrow">
@@ -181,10 +246,11 @@
     </div>
   </div>
   <!-- 본문 -->
+  <nav class="desknav"><a class="on">수업관리</a><a>출결과제</a><a>납부하기</a></nav>
   <div class="scroll">
     <div class="sectiontitle">수업관리</div>
     <div class="classwrap">
-      <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div></div>
+      <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div><div class="tab off xtab">Label</div><div class="tab off xtab">Label</div><div class="tab off xtab">Label</div><div class="tab off xtab">Label</div></div>
       <div class="citem">
         <div class="cinfo"><span class="tag">과학영역</span><span class="status">수강중</span></div>
         <div class="cdesc">이신혁T 지학Ⅰ 서바이벌<br>금 13:30-17:00 W관 201호</div>
@@ -212,13 +278,14 @@
   <!-- 브라우저 하단 chrome -->
   <div class="chrome-bot">
     <span class="ms">arrow_back_ios</span><span class="ms">arrow_forward_ios</span>
-    <span class="ms" style="font-size:30px">add_box</span>
+    <span class="ms" style="font-size:25px">ios_share</span>
     <span class="tabs-count">4</span><span class="ms">more_horiz</span>
   </div>
   <div class="home-indicator"><span></span></div>
 
   <!-- 챗봇 모달 -->
   <div class="scrim" id="scrim"></div>
+  <button class="fab" id="fab" aria-label="문의 챗봇 열기"><span class="ms">forum</span></button>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="마이클래스 도우미 챗봇" tabindex="-1">
     <div class="grab"></div>
     <div class="chead">
@@ -248,7 +315,7 @@ const log=document.getElementById('log'),scrim=document.getElementById('scrim'),
 let ctx='normal';
 const ms=n=>`<span class="ms">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
-function scrollEnd(){requestAnimationFrame(()=>{log.scrollTop=log.scrollHeight;});}
+function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
 function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
@@ -257,13 +324,18 @@ function menuGrid(){const g=el(`<div class="menu-grid fadein"></div>`);MENU.forE
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>botSay('도움이 됐다니 다행이에요. 또 필요하면 언제든 불러주세요!')}]);}
 function handoff(reason){
-  card(`<div class="ct">${ms('support_agent')}상담원 연결 — 전달 내용</div><div class="guide">
-   · 학생: <b>김시대</b> · 지점: <b>대치</b><br>· 문의: <b>${reason}</b><br>· 직전 시도: 챗봇 자가해결 안내
-   <label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px"><input type="checkbox" checked> 위 내용 전달에 동의해요</label></div>`);
+  botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
+  card(`<div class="ct">${ms('support_agent')}대치 캠퍼스 고3 상담실</div><div class="guide">
+   · 학생 <b>김시대</b> · 지점 <b>대치 캠퍼스(고3)</b><br>· 문의 <b>${reason}</b>
+   <div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373</span></div>
+   <div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378</span></div>
+   <span style="color:var(--helper)">문자로 남길 땐 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</span></div>`);
   quick([
-   {t:'이대로 연결하기',primary:true,act:()=>{botSay('접수됐어요. 접수번호는 <b>#A-2026-0617-031</b>이에요. 순서대로 연결해 드릴게요.');
-     card(`<div class="ct">${ms('schedule')}연결 안내</div><div class="guide">순서대로 상담원에게 연결해 드릴게요. 접수하신 내용은 그대로 전달돼요.</div>`);endActions();}},
-   {t:'내용 수정하기',ghost:true,act:()=>{botSay('어떤 내용을 바꿀까요? 아래에 입력하시면 그대로 전달할게요.');quick([{t:'수정 없이 연결하기',primary:true,act:()=>handoff(reason)},back('home')]);}},
+   {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
+     botSay('대치 캠퍼스 고3 상담실(02-552-2373)로 전화를 연결할게요.');
+     card(`<div class="ct">${ms('call')}전화 연결 중</div><div class="guide">대치 캠퍼스 고3 상담실 직통으로 연결됩니다.<br><span style="color:var(--helper)">통화가 어려우면 문자(010-5423-2378)로 남기거나 챗봇에서 다른 메뉴를 이용하실 수 있어요.</span></div>`);
+     endActions();}},
+   {t:'처음으로',go:'home',ghost:true},
   ]);
 }
 
@@ -273,7 +345,7 @@ const NODES={
   /* 1. 계정·로그인·앱 — 근거: 통합회원 안내 736 / 비밀번호 재설정은 실제 기능 / 앱오류는 데이터 없어 지어내지 않고 접수 */
   m_account(){botSay('괜찮아요, 금방 풀려요. 어디서 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
-  ac_login(){botSay('로그인 문제는 통합회원 연결이 안 됐거나 계정 확인이 필요한 경우가 많아요. 어떻게 도와드릴까요?');
+  ac_login(){botSay('로그인이 안 되는 원인은 여러 가지라 정확히 확인이 필요해요. 어떻게 도와드릴까요?');
     quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'상담원에게 문의',act:()=>handoff('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 거예요. (상담 736건 중 다수가 이 안내로 해결됐어요)');
     card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">통합회원 연결은 ① 본인확인 ② 연결할 계정 로그인 ③ 확인 순서로 진행돼요. 정확한 위치·절차는 상담원이 안내해 드릴게요.</div>`);
@@ -293,11 +365,10 @@ const NODES={
   pay_sms(){botSay('등록된 번호 <b>010-****-1234</b>로 결제 링크를 다시 보내드렸어요. (상담에서도 가장 많이 쓰는 해결 방법이에요)');endActions();},
   pay_fail(){botSay('결제창은 외부 결제(시대인재 결제)로 잠깐 이동했다 돌아와요. 한 번 더 시도하면 되는 경우가 많아요. 그래도 안 되면 결제 링크를 문자로 다시 보내드릴게요.');
     quick([{t:'결제 다시 시도',primary:true,act:()=>{botSay('결제창을 다시 열게요.');endActions();}},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'그래도 안 돼요',act:()=>handoff('결제 진행 불가')},back('m_pay')]);},
-  pay_refund(){botSay('환불은 <b>이용한 회차</b>를 기준으로 계산돼요. 예상 금액을 먼저 보여드릴게요.');
-    card(`<div class="ct">${ms('undo')}예상 환불 (참고)</div>
-     <div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div>
-     <div class="krow"><span class="k">남은 회차 환불</span><span class="big">약 210,000원</span></div>
-     <div class="src">※ 정확한 금액·규정은 상담원이 확정해요. (상담 기록상 ‘회차 기준 환불 처리’가 표준)</div>`);
+  pay_refund(){botSay('환불은 <b>이용한 회차</b>를 기준으로 계산돼요. 다만 강좌·교재 반납 여부에 따라 달라져서, 정확한 금액은 상담원이 확정해 드려요.');
+    card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div>
+     <div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div>
+     <div class="src">※ 정확한 환불 금액·규정은 대치 캠퍼스 상담실에서 확정해 드려요. (상담 기록상 ‘회차 기준 환불 처리’가 표준)</div>`);
     quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('환불(회차 기준)')},back('m_pay')]);},
 
   /* 3. 입반·등록·대기 — 근거: 입반은 문자/링크로 신청 처리, 대기 접수/번호/충원 */
@@ -322,20 +393,20 @@ const NODES={
 
   /* 4. 라이브·교재·배송 — 근거: 대치 라이브센터 안내, 반납처 안내, 배송, 카톡 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
-    quick([{t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 강좌마다 안내가 달라요. 정확한 시청 방법은 상담원이 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'m_account'},{t:'상담원에게 확인',act:()=>handoff('복습·추가영상 안내')},back('m_live')]);}},
+    quick([{t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 내 강의실 → 수업 자료</b>에서 볼 수 있어요. 보통 수업 다음 날 올라오고, 일정 기간 동안 볼 수 있어요. 안 열리면 상담원이 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',act:()=>handoff('복습·추가영상 재생 오류')},back('m_live')]);}},
       {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 출발</span></div><div class="krow"><span class="k">송장</span><span class="v">CJ ****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
       {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
-      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 교재 반납·정산이 함께 진행돼요. 상담원이 순서대로 정확히 안내해 드릴게요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
+      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 환불 → ② 수강료 환불</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정확한 정산은 상담원이 도와드릴게요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
       {t:'라이브 수업 문의',ic:'live_tv',act:()=>{botSay('라이브 수업은 <b>대치 라이브센터</b>에서 안내·신청을 도와드려요. 연결해 드릴까요?');quick([{t:'대치 라이브센터 안내 받기',primary:true,act:()=>handoff('라이브 수업 문의')},back('m_live')]);}},
       back('home')]);},
 
   /* 5. 출결·보강 — 근거(가장 강함): N주차/회차 동영상보강 신청 + 동보자료 + 결석예정 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
     quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{card(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},
-      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('어떤 수업을 결석/지각 예정으로 신고할까요? 접수하면 담임 선생님 확인 후 처리돼요.');quick([{t:'7/20 지학 결석 예정',act:()=>{botSay('접수됐어요. 담임 선생님 확인 후 처리돼요.');endActions();}},back('m_attend')]);}},back('home')]);},
+      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정은 대치 캠퍼스 상담실에서 확인해 정확히 처리해 드려요. 어떤 수업인가요?');quick([{t:'7/20 지학Ⅰ 결석 예정',act:()=>handoff('결석·지각 예정 신고(7/20 지학Ⅰ)')},back('m_attend')]);}},back('home')]);},
   at_makeup(){botSay('어떤 강좌 보강인가요? (강좌·주차 단위로 바로 조회·신청돼요)');
     quick([{t:'이신혁T 지학Ⅰ',primary:true,act:()=>{botSay('몇 주차 보강인가요?');quick([
-      {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div><div class="krow"><span class="k">남은 보강</span><span class="v">2회</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
+      {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청 접수됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
       {t:'4주차',act:()=>{meSay('4주차');botSay('4주차 영상은 아직 열리지 않았어요. 열리면 문자로 알려드릴까요?');quick([{t:'열리면 문자 받기',primary:true,act:()=>{botSay('알림 신청됐어요.');endActions();}},back('m_attend')]);}},
       {t:'5주차',act:()=>{meSay('5주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 5주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('5주차 보강이 신청됐어요.');endActions();}},back('m_attend')]);}},
     ]);}},back('m_attend')]);},
@@ -344,7 +415,7 @@ const NODES={
   m_time(){botSay('어떤 걸 볼까요?');
     quick([{t:'내 시간표',ic:'calendar_month',act:()=>{card(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div>`);endActions();}},
       {t:'강의실 위치',ic:'meeting_room',act:()=>{card(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div>`);endActions();}},
-      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br>7월 휴강: 없음</div>`);endActions();}},back('home')]);},
+      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--helper)">휴강 등 변동 일정은 대치 캠퍼스 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정 확인')},back('m_time')]);}},back('home')]);},
 
   /* 7. 상담원·자주묻는것 — 근거: FAQ 흡수 + 사람 연결 3단계 + 교재수령/설명회 */
   m_help(){botSay('무엇을 도와드릴까요?');
@@ -355,8 +426,8 @@ const NODES={
 
   /* 8. 퇴원·전반 — 근거: 사유→대안(반/선택과목 변경)→문자요청 접수→환불처리 */
   m_quit(){botSay('어떤 점이 어려우셨나요? 더 나은 방법을 먼저 찾아드릴게요.');
-    quick([{t:'시간이 안 맞아요',act:()=>{card(`<div class="ct">${ms('schedule')}같은 강사 다른 시간</div><div class="krow"><span class="k">강기원T 수학 · 토 14:00</span><span class="v"><span class="pill due">잔여 3석</span></span></div>`);quick([{t:'이 시간으로 반 변경',primary:true,act:()=>handoff('반 변경(시간)')},{t:'그래도 퇴원',go:'quit_refund'}]);}},
-      {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초/심화 반으로 옮길 수 있어요. (상담에서도 ‘선택과목·반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'}]);}},
+    quick([{t:'시간이 안 맞아요',act:()=>{card(`<div class="ct">${ms('schedule')}같은 강사 다른 시간</div><div class="krow"><span class="k">강기원T 수학 · 토 14:00</span><span class="v"><span class="pill due">잔여 3석</span></span></div>`);quick([{t:'이 시간으로 반 변경',primary:true,act:()=>handoff('반 변경(시간)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
+      {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초/심화 반으로 옮길 수 있어요. (상담에서도 ‘선택과목·반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
       {t:'라이브로 옮길래요',go:'m_live'},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
   quit_refund(){botSay('알겠어요. 퇴원은 문자 요청으로 접수되고, 환불은 이용 회차 기준으로 처리돼요.');
     card(`<div class="ct">${ms('undo')}예상 환불 (참고)</div><div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div><div class="krow"><span class="k">예상 환불</span><span class="big">약 210,000원</span></div><div class="src">※ 정확한 금액·규정은 상담원이 확정해요.</div>`);
@@ -372,8 +443,8 @@ function setBanner(){bannerSlot.innerHTML='';
 /* 포커스 트랩 */
 let lastFocus=null;
 function trapFocus(e){if(e.key!=='Tab')return;const list=[...sheet.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];if(!list.length)return;const f=list[0],l=list[list.length-1];if(e.shiftKey&&document.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&document.activeElement===l){e.preventDefault();f.focus();}}
-function openChat(c){ctx=c||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus();NODES.home();},300);}
-function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+function openChat(c){ctx=c||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus();NODES.home();},300);}
+function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');document.body.classList.remove('chat-open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 document.getElementById('openBtn').onclick=()=>openChat('normal');
 document.getElementById('closeBtn').onclick=closeChat;
 document.getElementById('scrim').onclick=closeChat;
@@ -381,6 +452,9 @@ document.getElementById('homeBtn').onclick=()=>{log.innerHTML='';setBanner();NOD
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChat();});
 
 document.addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')openChat('payment');if(e.key==='a'||e.key==='A')openChat('auth');});
+const _vs=document.getElementById('viewswitch');document.body.dataset.view='mobile';
+_vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.dataset.view=b.dataset.v;_vs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
+const _fab=document.getElementById('fab');if(_fab)_fab.onclick=()=>openChat('normal');
 </script>
 </body>
 </html>
