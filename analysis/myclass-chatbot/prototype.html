@@ -316,7 +316,7 @@
       <button class="iconbtn" id="closeBtn" aria-label="닫기"><span class="ms">close</span></button>
     </div>
     <div id="bannerSlot"></div>
-    <div class="log" id="log"></div>
+    <div class="log" id="log" role="log" aria-live="polite" aria-relevant="additions" aria-atomic="false"></div>
   </div>
 </div>
 
@@ -334,14 +334,14 @@ const MENU=[
 ];
 const log=document.getElementById('log'),scrim=document.getElementById('scrim'),sheet=document.getElementById('sheet'),bannerSlot=document.getElementById('bannerSlot');
 let ctx='normal';
-const ms=n=>`<span class="ms">${n}</span>`;
+const ms=n=>`<span class="ms" aria-hidden="true">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
-function toast(msg){const t=el(`<div class="toast">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
+function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
 function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
 function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
 let RM=false;try{RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
-function typingBubble(){const r=el(`<div class="row bot typing fadein"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
+function typingBubble(){const r=el(`<div class="row bot typing fadein" aria-hidden="true"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
 function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
@@ -432,7 +432,7 @@ const NODES={
 
   /* 3. 입반·등록·대기·전반 */
   m_enroll(){botSay('입반·등록, 무엇을 도와드릴까요?');
-    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 접수 현황',ic:'pin',go:'en_wait'},{t:'특강 신청 본인인증이 안 돼요',ic:'sms',act:()=>{botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);}},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
+    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 접수 현황',ic:'pin',go:'en_wait'},{t:'특강 신청 본인인증이 안 돼요',ic:'sms',go:'en_special'},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
   en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요.');
     card(`<div class="ct">${ms('event')}강기원T 수학 서바이벌 미적정규</div><div class="krow"><span class="k">일 09:00-12:35 · 본관 101호</span><span class="v"><span class="pill due">잔여 2석</span></span></div>`);
     quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
@@ -448,6 +448,8 @@ const NODES={
     botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요. 알림만 켜두고 기다리시면 돼요.');
     quick([{t:'충원되면 문자 받기',primary:true,act:()=>{botSay('자리가 나면 바로 010-****-1234로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
   en_waitset(){botSay('마감된 강좌도 대기를 걸어두면 충원 시 순서대로 기회가 와요. 어떤 강좌를 대기할까요?');quick([{t:'강은양T 국어 대기',primary:true,act:()=>{botSay('대기 접수됐어요. 충원되면 순번대로 문자로 안내해요. 한 번만 신청해두면 됩니다.');endActions();}},back('m_enroll')]);},
+  en_special(){botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');
+    quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);},
   en_transfer(){botSay('반 변경은 어떤 이유인가요? 더 나은 자리를 먼저 찾아드릴게요.');
     quick([{t:'시간대를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('schedule')}같은 강사 다른 시간</div><div class="krow"><span class="k">강기원T 수학 · 토 14:00</span><span class="v"><span class="pill due">잔여 3석</span></span></div>`);quick([{t:'이 시간으로 변경',primary:true,act:()=>handoff('전반(시간 변경)')},back('en_transfer')]);}},
       {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
@@ -517,6 +519,7 @@ function go(k){if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.
 function setBanner(){bannerSlot.innerHTML='';
   if(ctx==='payment'){const b=el(`<div class="banner fadein">${ms('credit_card')}<div><b>결제가 안 되시나요?</b> 바로 도와드릴게요.</div><span class="ms x">close</span></div>`);b.onclick=(e)=>{if(e.target.classList.contains('x')){b.remove();return;}b.remove();meSay('결제가 안 돼요');go('pay_fail');};bannerSlot.appendChild(b);}
   if(ctx==='auth'){const b=el(`<div class="banner fadein">${ms('key')}<div><b>로그인이 안 되시나요?</b> 바로 도와드릴게요.</div><span class="ms x">close</span></div>`);b.onclick=(e)=>{if(e.target.classList.contains('x')){b.remove();return;}b.remove();go('m_account');};bannerSlot.appendChild(b);}
+  if(ctx==='recruitment'){const b=el(`<div class="banner fadein">${ms('sms')}<div><b>특강 신청이 어려우신가요?</b> 본인인증 문자부터 도와드릴게요.</div><span class="ms x">close</span></div>`);b.onclick=(e)=>{if(e.target.classList.contains('x')){b.remove();return;}b.remove();meSay('특강 신청이 안 돼요');go('en_special');};bannerSlot.appendChild(b);}
 }
 /* 포커스 트랩 */
 let lastFocus=null;
@@ -529,7 +532,7 @@ document.getElementById('scrim').onclick=closeChat;
 document.getElementById('homeBtn').onclick=()=>{log.innerHTML='';setBanner();NODES.home();};
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChat();});
 
-document.addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')openChat('payment');if(e.key==='a'||e.key==='A')openChat('auth');});
+document.addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')openChat('payment');if(e.key==='a'||e.key==='A')openChat('auth');if(e.key==='r'||e.key==='R')openChat('recruitment');});
 const _vs=document.getElementById('viewswitch');document.body.dataset.view='mobile';
 _vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.dataset.view=b.dataset.v;_vs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
 </script>
