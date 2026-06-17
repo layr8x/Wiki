@@ -83,6 +83,11 @@ export class KakaoPartnerClient {
     return this._fetch(`/api/profiles/${this.profileId}/chats/${chatId}`);
   }
 
+  // 단일 채팅의 최신 메시지 페이지(size 건). REST 증분 수집/백필 공통 경로.
+  chatLogs(chatId, { size = 200 } = {}) {
+    return this._fetch(`/api/profiles/${this.profileId}/chats/${chatId}/chatlogs?size=${size}`);
+  }
+
   // 진행 중 상담 (assignment 상태 확인용)
   getConsult() {
     return this._fetch(`/api/profiles/${this.profileId}/chats/consult`);
@@ -121,5 +126,29 @@ export function chatToRow(item, profileId) {
     assignee_id: item.assignee_id ?? 0,
     raw: item,
     remote_version: item.version ?? null,
+  };
+}
+
+// ─── 카카오 chatlogs item → kakao_partner_messages row 매핑 ────────────────
+// REST 조회 경로(증분 폴링/백필) 공통. 상시 데몬과 1회성 수집기가 동일 row 를
+// 생성하도록 단일 정의로 유지한다. source 는 항상 'rest_backfill'.
+export function logToRow(item, chatId, profileId) {
+  const isManager = !!item.manager;
+  const author = item.author || {};
+  const senderType = isManager ? 'manager' : (author.user_type === 0 ? 'user' : 'system');
+  const senderId = isManager ? String(item.manager?.id ?? '') : String(author.id ?? '');
+  return {
+    log_id: String(item.id),
+    chat_id: String(chatId),
+    profile_id: profileId,
+    sender_type: senderType,
+    sender_id: senderId || null,
+    message: item.message ?? item.text ?? item.content ?? null,
+    message_type: item.type ?? null,
+    attachments: item.attachment && Object.keys(item.attachment).length ? item.attachment : null,
+    sent_at: item.send_at ? new Date(item.send_at).toISOString()
+      : item.created_at ? new Date(item.created_at).toISOString() : new Date().toISOString(),
+    raw: item,
+    source: 'rest_backfill',
   };
 }

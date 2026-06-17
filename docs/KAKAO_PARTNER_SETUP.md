@@ -120,6 +120,10 @@ select count(*), max(last_log_send_at) from kakao_partner_chats;
 
 ## 5. 실시간 스트림 (상시)
 
+> 💡 이 launchd 데몬은 **켜져 있는 맥북에서만** 돈다. 노트북을 닫거나 잠자기/종료하면
+> 수집이 멈춰 매일 갭이 생긴다. **노트북과 무관하게 24시간 끊김 없이** 수집하려면
+> 아래 **§10 GitHub Actions 상시 수집(권장)** 을 사용한다.
+
 ### 5-1. 포그라운드로 먼저 검증
 
 ```bash
@@ -231,3 +235,63 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 2. `useCSInsightsLive` (PR #36) 에 `kakao_partner_messages` 소스 추가
 3. 메시지 첨부파일 (이미지) 의 카카오 CDN 만료 대응 — Supabase Storage 미러링
 4. 갭 백필: `last_seen_log_id` 와 REST `last_log_id` 비교해서 누락 감지 시 알림
+
+---
+
+## 10. ✅ GitHub Actions 상시 수집 (노트북 없이 — 권장)
+
+launchd 데몬은 맥북이 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
+**100% REST 증분 폴링** 으로만 이뤄지므로(WS push 적재 0건), 그 폴링 1사이클을 떼어낸
+`scripts/kakao-partner-collect-once.mjs` 를 **항상 켜진 GitHub Actions 가 5분마다 호출**하면
+노트북 상태와 무관하게 끊김 없이 수집된다. (public 저장소라 Actions 무료·무제한)
+
+워크플로: `.github/workflows/kakao-collect.yml`
+
+### 10-1. 저장소 Secret 등록 (1회)
+
+GitHub → 저장소 → **Settings → Secrets and variables → Actions → New repository secret** 에서 3개 추가:
+
+| 이름 | 값 | 비고 |
+|---|---|---|
+| `KAKAO_PARTNER_COOKIE` | 파트너센터 로그인 쿠키 (§3-1 방식으로 추출) | 보통 1~4주마다 갱신 필요 |
+| `SUPABASE_URL` | `https://xxxx.supabase.co` | |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 (§3-3) | **절대 공개 금지** |
+
+채널이 기본 3개(`_VGAQn,_TkpPG,_xfxilXn`)와 다르면 **Variables** 탭에
+`KAKAO_PARTNER_PROFILE_IDS` 를 CSV 로 추가(코드 수정 불필요).
+
+### 10-2. 가동
+
+- 워크플로는 **`main` 브랜치에 머지된 뒤부터** 5분마다 자동 실행된다.
+- 즉시 1회 테스트: Actions 탭 → "카카오 상담 수집 (5분마다)" → **Run workflow**.
+- 수집 확인: `npm run kakao:status` 또는 §6 SQL.
+
+### 10-3. 쿠키 만료 시 알림 → 갱신
+
+쿠키가 만료되면 수집기가 `me()` 에서 401/403 을 받아 **워크플로가 "실패"로 끝난다.**
+GitHub 이 저장소 소유자에게 **실패 알림 메일**을 보내므로(조용히 멈추지 않음), 그때:
+
+1. Chrome 으로 business.kakao.com 재로그인 → §3-1 방식으로 새 쿠키 추출
+2. **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 값만 새로 붙여넣기 (Update)
+
+다음 실행부터 자동 정상화된다. (Slack 등 별도 알림을 원하면 워크플로에 실패 시 webhook
+step 을 추가하면 됨.)
+
+### 10-4. launchd 데몬 정리
+
+GitHub 수집이 며칠간 정상 확인되면, 맥북의 데몬은 더 이상 필요 없다(둘 다 켜둬도 멱등
+upsert 라 데이터 중복은 없음):
+```bash
+launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
+launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
+```
+
+### 10-5. 한계 / 주의
+
+- **주기**: GitHub Actions cron 최소 간격은 5분이며, 깃허브 부하 시 더 지연될 수 있다
+  (분 단위 실시간은 아님). 증분 폴링이 변경 채팅의 최근 200건을 재수집하므로 5~15분
+  지연은 데이터 누락 없이 메워진다.
+- **IP**: GitHub 데이터센터 IP 로 접속하므로, 카카오 어뷰즈 탐지에 걸리면 차단될 소지가
+  주거용 IP 보다 약간 높다. 차단 시 `me()` 가 403 → 위 알림 메일로 감지된다.
+- **쿠키 갱신 자동화 불가**: 맥북의 Chrome 자동 재추출(§7)은 클라우드에선 못 쓴다.
+  쿠키 갱신은 만료 시 위 10-3 절차로 수동(월 1회 안팎).

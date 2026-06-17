@@ -24,6 +24,7 @@
     "kakao:bootstrap": "node --env-file=.env.local scripts/kakao-partner-bootstrap.mjs",
     "kakao:backfill": "node --env-file=.env.local scripts/kakao-partner-backfill.mjs",
     "kakao:stream": "node --env-file=.env.local scripts/kakao-partner-stream.mjs",
+    "kakao:collect-once": "node --env-file=.env.local scripts/kakao-partner-collect-once.mjs",
     "kakao:bootstrap:all": "node --env-file=.env.local scripts/kakao-partner-run-all.mjs kakao-partner-bootstrap.mjs",
     "kakao:backfill:all": "node --env-file=.env.local scripts/kakao-partner-run-all.mjs kakao-partner-backfill.mjs",
     "kakao:stream:all": "node --env-file=.env.local scripts/kakao-partner-multi-stream.mjs",
