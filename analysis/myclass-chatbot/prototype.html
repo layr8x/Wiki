@@ -339,53 +339,53 @@ function handoff(reason){
 }
 
 const NODES={
-  home(){botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요.\n문제를 직접 해결하실 수 있게 도와드릴게요. 무엇을 도와드릴까요?');menuGrid();},
+  home(){botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
 
-  /* 1. 계정·로그인·앱 — 근거: 통합회원 안내 736 / 비밀번호 재설정은 실제 기능 / 앱오류는 데이터 없어 지어내지 않고 접수 */
-  m_account(){botSay('괜찮아요, 금방 풀려요. 어디서 막히셨나요?');
+  /* 1. 계정·로그인·앱 */
+  m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
-  ac_login(){botSay('로그인이 안 되는 원인은 여러 가지라 정확히 확인이 필요해요. 어떻게 도와드릴까요?');
+  ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
     quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'상담원에게 문의',act:()=>handoff('로그인 실패')},back('m_account')]);},
-  ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 거예요. (상담 736건 중 다수가 이 안내로 해결됐어요)');
-    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">통합회원 연결은 ① 본인확인 ② 연결할 계정 로그인 ③ 확인 순서로 진행돼요. 정확한 위치·절차는 상담원이 안내해 드릴게요.</div>`);
-    quick([{t:'상담원에게 통합 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 상담원이 안전하게 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
-  ac_app(){botSay('앱 오류는 바로 확인해 드릴게요. (정확한 원인 진단이 필요해, 추측 안내 대신 담당자가 빠르게 도와드려요)');
-    quick([{t:'기기 정보와 함께 접수하기',primary:true,act:()=>{botSay('지금 보고 계신 기기·앱 버전을 자동으로 첨부해 접수할게요.');handoff('앱 오류(기기정보 첨부)');}},back('m_account')]);},
+  ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요. (상담 736건 중 다수가 이 안내로 해결됐어요)');
+    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">① 본인확인 → ② 연결할 계정 로그인 → ③ 확인 순서로 진행돼요. 정확한 위치·절차는 상담원이 안내해 드려요.</div>`);
+    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 상담원이 안전하게 도와드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
+  ac_app(){botSay('앱 오류는 추측 안내 대신 담당자가 정확히 확인해 드려요. 지금 기기·앱 버전을 함께 첨부해 접수할까요?');
+    quick([{t:'기기 정보와 함께 접수',primary:true,act:()=>{botSay('기기·앱 버전을 자동으로 첨부해 접수할게요.');handoff('앱 오류(기기정보 첨부)');}},back('m_account')]);},
 
-  /* 2. 미납·결제·환불 — 근거: 미납 문자/결제창 링크 재발송(수천), 환불=회차 기준 계산 */
+  /* 2. 미납·결제·환불 */
   m_pay(){botSay('결제·납부, 무엇을 도와드릴까요?');
     quick([{t:'미납·납부 현황',ic:'receipt_long',go:'pay_status'},{t:'결제 문자 다시 받기',ic:'sms',go:'pay_sms'},{t:'결제가 안 돼요',ic:'help',go:'pay_fail'},{t:'환불 알아보기',ic:'undo',go:'pay_refund'},back('home')]);},
   pay_status(){card(`<div class="ct">${ms('receipt_long')}납부 현황 · 김시대님</div>
      <div class="krow"><span class="k">7월 수강료</span><span class="v"><span class="pill due">미납</span> 360,000원</span></div>
      <div class="krow"><span class="k">7월 교재비</span><span class="v">완납</span></div>
-     <div class="krow"><span class="k">납부 기한</span><span class="v">D-2 (7/19)</span></div>
+     <div class="krow"><span class="k">납부 기한</span><span class="v">7/19</span></div>
      <div class="krow"><span class="k">합계 미납</span><span class="big">360,000원</span></div>`);
-    quick([{t:'지금 결제하기',ic:'payment',primary:true,act:()=>{botSay('결제창으로 이동할게요. 결제는 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'가상계좌 확인',ic:'account_balance',go:'pay_va'},{t:'납입증명서 발급',ic:'description',go:'pay_cert'},{t:'결제 문자 다시 받기',go:'pay_sms'},back('m_pay')]);},
-  pay_sms(){botSay('등록된 번호 <b>010-****-1234</b>로 결제 링크를 다시 보내드렸어요. (상담에서도 가장 많이 쓰는 해결 방법이에요)');endActions();},
-  pay_va(){card(`<div class="ct">${ms('account_balance')}가상계좌 안내 · 김시대님</div>
+    quick([{t:'지금 결제하기',ic:'payment',primary:true,act:()=>{botSay('결제창으로 이동할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'가상계좌 확인',ic:'account_balance',go:'pay_va'},{t:'납입증명서 발급',ic:'description',go:'pay_cert'},{t:'결제 문자 다시 받기',go:'pay_sms'},back('m_pay')]);},
+  pay_sms(){botSay('등록된 번호 <b>010-****-1234</b>로 결제 링크를 다시 보내드렸어요. 문자 속 링크에서 결제하면 돼요.');endActions();},
+  pay_va(){card(`<div class="ct">${ms('account_balance')}가상계좌 · 김시대님</div>
      <div class="krow"><span class="k">입금 은행</span><span class="v">신한은행</span></div>
      <div class="krow"><span class="k">계좌번호</span><span class="v">110-***-******</span></div>
      <div class="krow"><span class="k">예금주</span><span class="v">(주)시대인재</span></div>
      <div class="krow"><span class="k">입금 기한</span><span class="v">7/19</span></div>
      <div class="krow"><span class="k">입금 금액</span><span class="big">360,000원</span></div>
-     <div class="src">※ 김시대님 전용 가상계좌예요. 입금하면 자동으로 납부 처리돼요.</div>`);
+     <div class="src">※ 김시대님 전용 계좌예요. 입금하면 자동으로 납부 처리돼요.</div>`);
     quick([{t:'결제 문자 다시 받기',go:'pay_sms'},back('pay_status')]);},
-  pay_cert(){botSay('납입증명서 발급을 도와드릴게요. 어떤 항목으로 발급할까요?');
-    quick([{t:'7월 수강료 납입증명서',primary:true,act:()=>{botSay('납입증명서 발급 신청이 접수됐어요. 1~2 영업일 안에 처리해서 문자로 안내해 드릴게요.');endActions();}},back('pay_status')]);},
-  pay_fail(){botSay('결제창은 외부 결제(시대인재 결제)로 잠깐 이동했다 돌아와요. 한 번 더 시도하면 되는 경우가 많아요. 그래도 안 되면 결제 링크를 문자로 다시 보내드릴게요.');
+  pay_cert(){botSay('납입증명서, 어떤 항목으로 발급할까요?');
+    quick([{t:'7월 수강료 납입증명서',primary:true,act:()=>{botSay('발급 신청이 접수됐어요. 1~2 영업일 안에 처리해 문자로 보내드릴게요.');endActions();}},back('pay_status')]);},
+  pay_fail(){botSay('결제창은 외부 결제로 잠깐 이동했다 돌아와요. 한 번 더 시도하면 되는 경우가 많고, 안 되면 결제 링크를 문자로 다시 보내드려요.');
     quick([{t:'결제 다시 시도',primary:true,act:()=>{botSay('결제창을 다시 열게요.');endActions();}},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'그래도 안 돼요',act:()=>handoff('결제 진행 불가')},back('m_pay')]);},
-  pay_refund(){botSay('환불은 <b>이용한 회차</b>를 기준으로 계산돼요. 다만 강좌·교재 반납 여부에 따라 달라져서, 정확한 금액은 상담원이 확정해 드려요.');
+  pay_refund(){botSay('환불은 <b>이용한 회차</b> 기준으로 계산돼요. 강좌·교재 반납 여부에 따라 달라져서, 정확한 금액은 상담원이 확정해 드려요.');
     card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div>
      <div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div>
-     <div class="src">※ 정확한 환불 금액·규정은 대치 캠퍼스 상담실에서 확정해 드려요. (상담 기록상 ‘회차 기준 환불 처리’가 표준)</div>`);
+     <div class="src">※ 정확한 금액·규정은 대치 캠퍼스 상담실에서 확정해 드려요. (상담 기록상 ‘회차 기준 환불’이 표준)</div>`);
     quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('환불(회차 기준)')},back('m_pay')]);},
 
-  /* 3. 입반·등록·대기 — 근거: 입반은 문자/링크로 신청 처리, 대기 접수/번호/충원 */
-  m_enroll(){botSay('입반·대기, 무엇을 도와드릴까요?');
-    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록·재수강 확인',ic:'task_alt',go:'en_check'},{t:'대기 번호 확인',ic:'pin',go:'en_wait'},{t:'충원됐어요',ic:'celebration',go:'en_fill'},back('home')]);},
-  en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요. (실제 입반 처리 방식 그대로예요)');
+  /* 3. 입반·등록·대기·전반 */
+  m_enroll(){botSay('입반·등록, 무엇을 도와드릴까요?');
+    quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 번호 확인',ic:'pin',go:'en_wait'},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
+  en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요.');
     card(`<div class="ct">${ms('event')}강기원T 수학 서바이벌 미적정규</div><div class="krow"><span class="k">일 09:00-12:35 · 본관 101호</span><span class="v"><span class="pill due">잔여 2석</span></span></div>`);
-    quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('입반 신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 완료하면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
+    quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
   en_check(){card(`<div class="ct">${ms('task_alt')}내 등록 현황</div>
      <div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v"><span class="pill ok">등록완료</span></span></div>
      <div class="krow"><span class="k">강은양T 국어</span><span class="v"><span class="pill due">결제대기</span></span></div>
@@ -393,56 +393,63 @@ const NODES={
     quick([{t:'결제대기 건 지금 결제',primary:true,go:'pay_status'},back('m_enroll')]);},
   en_wait(){card(`<div class="ct">${ms('pin')}대기 현황</div>
      <div class="krow"><span class="k">강은양T 국어</span><span class="v">대기 3번</span></div>
-     <div class="krow"><span class="k">등록일</span><span class="v">7/10</span></div>`);
+     <div class="krow"><span class="k">접수일</span><span class="v">7/10</span></div>
+     <div class="src">※ 자리가 나면 바로 문자로 안내해 드려요.</div>`);
     quick([{t:'충원되면 문자 받기',primary:true,act:()=>{botSay('자리가 나면 바로 010-****-1234로 문자 보내드릴게요.');endActions();}},back('m_enroll')]);},
   en_waitset(){botSay('어떤 강좌를 대기할까요?');quick([{t:'강은양T 국어 대기',primary:true,act:()=>{botSay('대기 접수됐어요. 충원되면 바로 문자로 안내해요.');endActions();}},back('m_enroll')]);},
-  en_fill(){botSay('축하해요, 자리가 났어요! 결제까지 마치면 입반이 확정돼요.');
-    card(`<div class="ct">${ms('celebration')}충원 입반 안내</div><div class="krow"><span class="k">강좌</span><span class="v">강은양T 국어</span></div><div class="krow"><span class="k">시작일</span><span class="v">7/20</span></div><div class="krow"><span class="k">결제 금액</span><span class="v">360,000원</span></div>`);
-    quick([{t:'지금 결제하고 확정',primary:true,act:()=>{botSay('결제창으로 이동할게요.');endActions();}},back('m_enroll')]);},
+  en_transfer(){botSay('반 변경은 어떤 이유인가요? 더 나은 자리를 먼저 찾아드릴게요.');
+    quick([{t:'시간대를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('schedule')}같은 강사 다른 시간</div><div class="krow"><span class="k">강기원T 수학 · 토 14:00</span><span class="v"><span class="pill due">잔여 3석</span></span></div>`);quick([{t:'이 시간으로 변경',primary:true,act:()=>handoff('전반(시간 변경)')},back('en_transfer')]);}},
+      {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
+      {t:'강사를 바꾸고 싶어요',act:()=>handoff('전반(강사 변경)')},back('m_enroll')]);},
 
-  /* 4. 라이브·교재·배송 — 근거: 대치 라이브센터 안내, 반납처 안내, 배송, 카톡 */
+  /* 4. 라이브·교재·배송 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
-    quick([{t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 내 강의실 → 수업 자료</b>에서 볼 수 있어요. 보통 수업 다음 날 올라오고, 일정 기간 동안 볼 수 있어요. 안 열리면 상담원이 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',act:()=>handoff('복습·추가영상 재생 오류')},back('m_live')]);}},
-      {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 출발</span></div><div class="krow"><span class="k">송장</span><span class="v">CJ ****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
-      {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
-      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 환불 → ② 수강료 환불</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정확한 정산은 상담원이 도와드릴게요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
-      {t:'라이브 수업 문의',ic:'live_tv',act:()=>{botSay('라이브 수업은 <b>대치 라이브센터</b>에서 안내·신청을 도와드려요. 연결해 드릴까요?');quick([{t:'대치 라이브센터 안내 받기',primary:true,act:()=>handoff('라이브 수업 문의')},back('m_live')]);}},
-      {t:'라이브→현강 이동',ic:'sync_alt',act:()=>{botSay('라이브에서 현장 강의로 옮기는 것도 가능해요. 이때는 라이브 환불과 같이 <b>① 교재비 환불 → ② 수강료 환불</b>로 정리한 뒤 현강으로 입반해요. 정확한 절차는 상담원이 도와드릴게요.');quick([{t:'이동 상담 연결',primary:true,act:()=>handoff('라이브→현강 이동')},back('m_live')]);}},
+    quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. 상담원이 신청을 도와드려요.');quick([{t:'라이브 입반 상담',primary:true,act:()=>handoff('라이브 입반 신청')},back('m_live')]);}},
+      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 내 강의실 → 수업 자료</b>에서 볼 수 있어요. 보통 수업 다음 날 올라와요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',act:()=>handoff('복습·추가영상 재생 오류')},back('m_live')]);}},
+      {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
+      {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
+      {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
+      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 → ② 수강료</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정산은 상담원이 도와드려요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
+      {t:'라이브→현강 이동',ic:'sync_alt',act:()=>{botSay('현장 강의로 옮길 수 있어요. 라이브 환불과 같이 <b>① 교재비 → ② 수강료</b>로 정리한 뒤 현강에 입반해요. 절차는 상담원이 도와드려요.');quick([{t:'이동 상담 연결',primary:true,act:()=>handoff('라이브→현강 이동')},back('m_live')]);}},
       back('home')]);},
 
-  /* 5. 출결·보강 — 근거(가장 강함): N주차/회차 동영상보강 신청 + 동보자료 + 결석예정 */
+  /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
     quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{card(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},
-      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정은 대치 캠퍼스 상담실에서 확인해 정확히 처리해 드려요. 어떤 수업인가요?');quick([{t:'7/20 지학Ⅰ 결석 예정',act:()=>handoff('결석·지각 예정 신고(7/20 지학Ⅰ)')},back('m_attend')]);}},
-      {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감된 반은 수업 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 정확히 확인해 드려요.');quick([{t:'현장 보강 상담 연결',primary:true,act:()=>handoff('현장 보강 가능 여부 확인')},back('m_attend')]);}},back('home')]);},
-  at_makeup(){botSay('어떤 강좌 보강인가요? 강좌·주차 단위로 조회·신청할 수 있어요.\n동영상 보강은 신청 시 수강료가 차감될 수 있어요(연속 동보 허용 등 일부 제외).');
+      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정은 상담실에서 확인해 정확히 처리해 드려요. 어떤 수업인가요?');quick([{t:'7/20 지학Ⅰ 결석 예정',act:()=>handoff('결석·지각 예정 신고(7/20 지학Ⅰ)')},back('m_attend')]);}},
+      {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
+  at_makeup(){botSay('어떤 강좌 보강인가요? 강좌·주차 단위로 조회·신청할 수 있어요.\n신청 시 수강료가 차감될 수 있어요(연속 동보 허용 등 일부 제외).');
     quick([{t:'이신혁T 지학Ⅰ',primary:true,act:()=>{botSay('몇 주차 보강인가요?');quick([
-      {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청 접수됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
+      {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청 접수됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
       {t:'4주차',act:()=>{meSay('4주차');botSay('4주차 영상은 아직 열리지 않았어요. 열리면 문자로 알려드릴까요?');quick([{t:'열리면 문자 받기',primary:true,act:()=>{botSay('알림 신청됐어요.');endActions();}},back('m_attend')]);}},
-      {t:'5주차',act:()=>{meSay('5주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 5주차 보강</div><div class="krow"><span class="k">보강 상태</span><span class="v"><span class="pill due">신청 가능</span></span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('5주차 보강이 신청됐어요.');endActions();}},back('m_attend')]);}},
+      {t:'5주차',act:()=>{meSay('5주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 5주차 보강</div><div class="krow"><span class="k">상태</span><span class="v"><span class="pill due">신청 가능</span></span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('5주차 보강이 신청 접수됐어요.');endActions();}},back('m_attend')]);}},
     ]);}},back('m_attend')]);},
 
-  /* 6. 수업·시간표 — 근거: 강의실 안내, 종강일·휴강 안내 */
-  m_time(){botSay('어떤 걸 볼까요?');
-    quick([{t:'내 시간표',ic:'calendar_month',act:()=>{card(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div>`);endActions();}},
-      {t:'강의실 위치',ic:'meeting_room',act:()=>{card(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div>`);endActions();}},
-      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--helper)">휴강 등 변동 일정은 대치 캠퍼스 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정 확인')},back('m_time')]);}},back('home')]);},
+  /* 6. 수업·시간표 */
+  m_time(){botSay('수업·시간표, 무엇을 볼까요?');
+    quick([{t:'내 시간표',ic:'calendar_month',act:()=>{card(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div><div class="krow"><span class="k">일 18:30</span><span class="v">강은양T 국어 · 엣지관 601</span></div>`);endActions();}},
+      {t:'강의실 위치',ic:'meeting_room',act:()=>{card(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
+      {t:'서바이벌 교재 구성',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 커리큘럼 (상반기)</div><div class="guide">강좌별 강의교재·선택교재가 매주 제공돼요. 예) 지학 엑셀러레이터·서바이벌 모의고사, 수학 브릿지 모의고사·VORTEX 등.<br><span style="color:var(--helper)">강좌별 정확한 구성·수량은 상담원이 안내해 드려요.</span></div>`);quick([{t:'교재 구성 상담',act:()=>handoff('서바이벌 교재 구성')},back('m_time')]);}},
+      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--helper)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
 
-  /* 7. 상담원·자주묻는것 — 근거: FAQ 흡수 + 사람 연결 3단계 + 교재수령/설명회 */
+  /* 7. 상담원·자주묻는것 */
   m_help(){botSay('무엇을 도와드릴까요?');
-    quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'상담원 연결',ic:'support_agent',act:()=>handoff('일반 상담')},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 안내 · 대치</div><div class="guide">대치 캠퍼스 강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치 조회',primary:true,act:()=>{card(`<div class="krow"><span class="k">이신혁T 지학Ⅰ 교재</span><span class="v">대치 본관 1층 데스크</span></div>`);endActions();}},back('m_help')]);}},
-      {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'예약 변경·취소',act:()=>handoff('컨설팅 변경')},back('m_help')]);}},
-      {t:'전화·상담 연락처',ic:'call',act:()=>{card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373</span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378</span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);}},back('home')]);},
+    quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 · 대치</div><div class="guide">강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치',primary:true,act:()=>{card(`<div class="krow"><span class="k">이신혁T 지학Ⅰ 교재</span><span class="v">대치 본관 1층 데스크</span></div>`);endActions();}},back('m_help')]);}},
+      {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'예약 변경·취소',act:()=>handoff('컨설팅 예약 변경')},back('m_help')]);}},
+      {t:'상담원 연결',ic:'support_agent',act:()=>handoff('일반 상담')},back('home')]);},
+  help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373</span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378</span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
+    quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);},
   help_faq(){botSay('자주 묻는 것을 골라보세요. 못 찾으면 상담원이 도와드려요.');
-    quick([{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결제 문자 다시',go:'pay_sms'},{t:'상담원 연결',act:()=>handoff('FAQ 미해결')},back('m_help')]);},
+    quick([{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'상담원 연결',act:()=>handoff('FAQ 미해결')},back('m_help')]);},
 
-  /* 8. 퇴원·전반 — 근거: 사유→대안(반/선택과목 변경)→문자요청 접수→환불처리 */
-  m_quit(){botSay('어떤 점이 어려우셨나요? 더 나은 방법을 먼저 찾아드릴게요.');
+  /* 8. 퇴원·전반 */
+  m_quit(){botSay('어떤 점이 어려우셨어요? 더 나은 방법을 먼저 찾아드릴게요.');
     quick([{t:'시간이 안 맞아요',act:()=>{card(`<div class="ct">${ms('schedule')}같은 강사 다른 시간</div><div class="krow"><span class="k">강기원T 수학 · 토 14:00</span><span class="v"><span class="pill due">잔여 3석</span></span></div>`);quick([{t:'이 시간으로 반 변경',primary:true,act:()=>handoff('반 변경(시간)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
-      {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초/심화 반으로 옮길 수 있어요. (상담에서도 ‘선택과목·반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
-      {t:'라이브로 옮길래요',go:'m_live'},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
-  quit_refund(){botSay('알겠어요. 퇴원은 문자 요청으로 접수되고, 환불은 이용 회차 기준으로 처리돼요.');
-    card(`<div class="ct">${ms('undo')}예상 환불 (참고)</div><div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div><div class="krow"><span class="k">예상 환불</span><span class="big">약 210,000원</span></div><div class="src">※ 정확한 금액·규정은 상담원이 확정해요.</div>`);
+      {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. (상담에서도 ‘반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
+      {t:'강사를 바꾸고 싶어요',act:()=>{botSay('강사 변경도 가능해요. 남은 자리·교재 정리는 상담원이 도와드려요.');quick([{t:'강사 변경 상담',primary:true,act:()=>handoff('강사 변경')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
+      {t:'라이브로 옮길래요',go:'m_live'},{t:'수강 계획이 바뀌었어요',act:()=>handoff('수강 계획 변경')},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
+  quit_refund(){botSay('알겠어요. 퇴원은 문자 요청으로 접수되고, 환불은 이용 회차 기준으로 처리돼요. 정확한 금액은 상담원이 확정해 드려요.');
+    card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div><div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div><div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div><div class="src">※ 교육청 환불 규정에 따라 상담원이 확인 후 확정해요.</div>`);
     quick([{t:'퇴원·환불 접수하기',primary:true,act:()=>handoff('퇴원·환불')},back('m_quit')]);},
 };
 function go(k){if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
