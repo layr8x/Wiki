@@ -98,8 +98,9 @@
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .42s cubic-bezier(.32,.72,0,1);
     display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none}
   .sheet.open{transform:translateY(0)}
-  .grab{width:40px;height:4px;background:#c6c6c6;border-radius:2px;margin:8px auto 4px}
-  .chead{display:flex;align-items:center;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--border)}
+  .grab{width:40px;height:4px;background:#c6c6c6;border-radius:2px;margin:8px auto 4px;cursor:grab;touch-action:none}
+  .sheet.dragging{transition:none}
+  .chead{display:flex;align-items:center;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--border);touch-action:none}
   .avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .avatar .ms{font-size:22px}
   .chead .t{font-size:16px;font-weight:700;line-height:1.25}
@@ -126,7 +127,12 @@
   .bot .msg{background:var(--surface);color:#161616;border-bottom-left-radius:4px}
   .me .msg{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
 
-  .card{max-width:90%;background:var(--bg);border:1px solid var(--gray20);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2)}
+  .card{max-width:90%;background:var(--bg);border:1px solid var(--gray20);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s ease,opacity .32s ease}
+  .card.revealing{filter:blur(3px);opacity:.5}
+  .skelwrap{display:flex;flex-direction:column;gap:10px;width:230px;max-width:72vw}
+  .skel{height:13px;border-radius:4px;background:linear-gradient(90deg,#f1f1f1 25%,#e6e6e6 37%,#f1f1f1 63%);background-size:400px 100%;animation:shimmer 1.15s infinite linear}
+  .skel:nth-child(2){width:78%}.skel:nth-child(3){width:55%}
+  @keyframes shimmer{from{background-position:-180px 0}to{background-position:180px 0}}
   .card .ct{font-size:13px;color:var(--helper);margin-bottom:8px;display:flex;align-items:center;gap:6px}
   .card .ct .ms{font-size:16px}
   .krow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -143,6 +149,7 @@
   .src{font-size:11px;color:var(--helper);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
+  .qlabel{flex-basis:100%;font-size:12px;color:var(--helper);margin:6px 2px 0}
   .chip{border:1px solid var(--gray20);background:var(--bg);color:var(--text);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .12s,transform .12s cubic-bezier(.23,1,.32,1),border-color .12s,box-shadow .12s;display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
   .chip:hover{background:var(--surface)}
   .chip:active{transform:translateY(1px)}
@@ -345,8 +352,10 @@ function typingBubble(){const r=el(`<div class="row bot typing fadein" aria-hidd
 function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
+function cardLoad(h,rows){rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'앱이 안 돼요',go:'ac_app'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>botSay('고마워요! 또 필요하면 언제든 불러주세요.')},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
@@ -383,7 +392,7 @@ function handoffLive(reason){
   quick([{t:'LIVE 카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 LIVE 기술지원</b> 카카오톡 채널을 열게요. 남겨주시면 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_LIVE,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 const NODES={
-  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
+  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();},
 
   /* 1. 계정·로그인·앱 */
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
@@ -405,14 +414,14 @@ const NODES={
     quick([{t:'미납·납부 현황',ic:'receipt_long',go:'pay_status'},{t:'결제 문자 다시 받기',ic:'sms',go:'pay_sms'},{t:'결제가 안 돼요',ic:'help',go:'pay_fail'},{t:'환불 알아보기',ic:'undo',go:'pay_refund'},{t:'영수증·결제수단',ic:'description',go:'pay_etc'},back('home')]);},
   pay_etc(){botSay('어떤 걸 도와드릴까요?');
     quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 <b>전체메뉴 → 납부·결제 → 계좌 정보 관리</b>에서 바꾸거나, 상담원이 도와드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('결제수단 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
-  pay_status(){card(`<div class="ct">${ms('receipt_long')}납부 현황 · 김시대님</div>
+  pay_status(){cardLoad(`<div class="ct">${ms('receipt_long')}납부 현황 · 김시대님</div>
      <div class="krow"><span class="k">7월 수강료</span><span class="v"><span class="pill due">미납</span> 360,000원</span></div>
      <div class="krow"><span class="k">7월 교재비</span><span class="v">완납</span></div>
      <div class="krow"><span class="k">납부 기한</span><span class="v">7/19</span></div>
      <div class="krow"><span class="k">합계 미납</span><span class="big">360,000원</span></div>`);
     quick([{t:'지금 결제하기',ic:'payment',primary:true,act:()=>{botSay('결제창으로 이동할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'가상계좌 확인',ic:'account_balance',go:'pay_va'},{t:'납입증명서 발급',ic:'description',go:'pay_cert'},{t:'결제 문자 다시 받기',go:'pay_sms'},back('m_pay')]);},
   pay_sms(){botSay('등록된 번호 <b>010-****-1234</b>로 결제 링크를 다시 보내드렸어요. 문자 속 링크에서 결제하면 돼요.');endActions();},
-  pay_va(){card(`<div class="ct">${ms('account_balance')}가상계좌 · 김시대님</div>
+  pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · 김시대님</div>
      <div class="krow"><span class="k">입금 은행</span><span class="v">신한은행</span></div>
      <div class="krow"><span class="k">계좌번호</span><span class="v">110-***-******</span></div>
      <div class="krow"><span class="k">예금주</span><span class="v">(주)시대인재</span></div>
@@ -436,12 +445,12 @@ const NODES={
   en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요.');
     card(`<div class="ct">${ms('event')}강기원T 수학 서바이벌 미적정규</div><div class="krow"><span class="k">일 09:00-12:35 · 본관 101호</span><span class="v"><span class="pill due">잔여 2석</span></span></div>`);
     quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
-  en_check(){card(`<div class="ct">${ms('task_alt')}내 등록 현황</div>
+  en_check(){cardLoad(`<div class="ct">${ms('task_alt')}내 등록 현황</div>
      <div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v"><span class="pill ok">등록완료</span></span></div>
      <div class="krow"><span class="k">강은양T 국어</span><span class="v"><span class="pill due">결제대기</span></span></div>
      <div class="krow"><span class="k">다음 결제 예정</span><span class="v">7/19</span></div>`);
     quick([{t:'결제대기 건 지금 결제',primary:true,go:'pay_status'},back('m_enroll')]);},
-  en_wait(){card(`<div class="ct">${ms('pin')}대기 접수 현황</div>
+  en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황</div>
      <div class="krow"><span class="k">강은양T 국어</span><span class="v">대기 3번</span></div>
      <div class="krow"><span class="k">접수일</span><span class="v">7/10</span></div>
      <div class="src">※ 자리가 나면 대기 순번대로 문자로 안내해 드려요.</div>`);
@@ -459,7 +468,7 @@ const NODES={
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
     quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. <b>시대인재 LIVE</b>에서 신청을 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 입반 신청')},back('m_live')]);}},
       {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 수강 강좌 → 강좌 상세보기 → 강의 목록</b>에서 회차별로 볼 수 있어요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
-      {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
+      {t:'교재 배송 조회',ic:'local_shipping',act:()=>{cardLoad(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
       {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('라이브 교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 <b>시대인재 LIVE</b>에서 정확히 안내해 드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 교재 반납')},back('m_live')]);}},
       {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
       {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 → ② 수강료</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정산은 <b>시대인재 LIVE</b>에서 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 환불')},back('m_live')]);}},
@@ -475,7 +484,7 @@ const NODES={
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
-    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{card(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},
+    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},
       {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정을 미리 알려주시면 좋아요. 빠진 수업은 <b>동영상 보강</b>으로 들을 수 있고, 회차 자료도 문자로 받을 수 있어요.');quick([{t:'동영상 보강 신청하기',primary:true,go:'at_makeup'},{t:'결석·지각 상담원에게 접수',act:()=>handoff('결석·지각 예정 신고')},back('m_attend')]);}},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
   at_makeup(){botSay('어떤 강좌 보강인가요? 강좌·주차 단위로 조회·신청할 수 있어요.\n신청 시 수강료가 차감될 수 있어요(연속 동보 허용 등 일부 제외).');
@@ -487,8 +496,8 @@ const NODES={
 
   /* 6. 수업·시간표 */
   m_time(){botSay('수업·시간표, 무엇을 볼까요?');
-    quick([{t:'내 시간표',ic:'calendar_month',act:()=>{card(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div><div class="krow"><span class="k">일 18:30</span><span class="v">강은양T 국어 · 엣지관 601</span></div>`);endActions();}},
-      {t:'강의실 위치',ic:'meeting_room',act:()=>{card(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
+    quick([{t:'내 시간표',ic:'calendar_month',act:()=>{cardLoad(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div><div class="krow"><span class="k">일 18:30</span><span class="v">강은양T 국어 · 엣지관 601</span></div>`);endActions();}},
+      {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
       {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼 (상반기)</div><div class="guide">강좌별 강의교재·선택교재가 매주 제공돼요. 예) 지학 엑셀러레이터·서바이벌 모의고사, 수학 브릿지 모의고사·VORTEX 등.<br><span style="color:var(--helper)">앱에서는 전체메뉴 → 납부·결제 → 서바이벌 선택 커리큘럼에서 볼 수 있어요. 강좌별 정확한 구성은 상담원이 안내해 드려요.</span></div>`);quick([{t:'커리큘럼 상담',act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
       {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--helper)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
 
@@ -526,6 +535,13 @@ let lastFocus=null;
 function trapFocus(e){if(e.key!=='Tab')return;const list=[...sheet.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];if(!list.length)return;const f=list[0],l=list[list.length-1];if(e.shiftKey&&document.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&document.activeElement===l){e.preventDefault();f.focus();}}
 function openChat(c){ctx=c||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus({preventScroll:true});NODES.home();},300);}
 function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');document.body.classList.remove('chat-open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+/* 바텀시트 드래그로 닫기 (모바일) — Vaul 임계값: 높이 25% 또는 속도 0.4 */
+(function(){const grab=sheet.querySelector('.grab'),chead=sheet.querySelector('.chead');let y0=0,t0=0,h=0,drag=false;
+ function s(e){if(document.body.dataset.view!=='mobile')return;if(e.target.closest&&e.target.closest('button'))return;drag=true;y0=(e.touches?e.touches[0]:e).clientY;t0=Date.now();h=sheet.offsetHeight||600;sheet.classList.add('dragging');}
+ function m(e){if(!drag)return;const dy=Math.max(0,(e.touches?e.touches[0]:e).clientY-y0);sheet.style.transform='translateY('+dy+'px)';}
+ function en(e){if(!drag)return;drag=false;sheet.classList.remove('dragging');const cy=(e.changedTouches?e.changedTouches[0]:e).clientY;const dy=Math.max(0,cy-y0),v=dy/Math.max(1,Date.now()-t0);sheet.style.transform='';if(dy>h*0.25||v>0.4)closeChat();}
+ [grab,chead].forEach(elm=>{if(!elm)return;elm.addEventListener('touchstart',s,{passive:true});elm.addEventListener('mousedown',s);});
+ window.addEventListener('touchmove',m,{passive:true});window.addEventListener('touchend',en);window.addEventListener('mousemove',m);window.addEventListener('mouseup',en);})();
 document.getElementById('openBtn').onclick=()=>openChat('normal');
 document.getElementById('closeBtn').onclick=closeChat;
 document.getElementById('scrim').onclick=closeChat;
