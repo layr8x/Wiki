@@ -381,7 +381,9 @@ const NODES={
 
   /* 2. 미납·결제·환불 */
   m_pay(){botSay('결제·납부, 무엇을 도와드릴까요?');
-    quick([{t:'미납·납부 현황',ic:'receipt_long',go:'pay_status'},{t:'결제 문자 다시 받기',ic:'sms',go:'pay_sms'},{t:'결제가 안 돼요',ic:'help',go:'pay_fail'},{t:'환불 알아보기',ic:'undo',go:'pay_refund'},back('home')]);},
+    quick([{t:'미납·납부 현황',ic:'receipt_long',go:'pay_status'},{t:'결제 문자 다시 받기',ic:'sms',go:'pay_sms'},{t:'결제가 안 돼요',ic:'help',go:'pay_fail'},{t:'환불 알아보기',ic:'undo',go:'pay_refund'},{t:'영수증·결제수단',ic:'description',go:'pay_etc'},back('home')]);},
+  pay_etc(){botSay('어떤 걸 도와드릴까요?');
+    quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 <b>전체메뉴 → 납부·결제 → 계좌 정보 관리</b>에서 바꾸거나, 상담원이 도와드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('결제수단 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
   pay_status(){card(`<div class="ct">${ms('receipt_long')}납부 현황 · 김시대님</div>
      <div class="krow"><span class="k">7월 수강료</span><span class="v"><span class="pill due">미납</span> 360,000원</span></div>
      <div class="krow"><span class="k">7월 교재비</span><span class="v">완납</span></div>
@@ -450,7 +452,7 @@ const NODES={
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
     quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{card(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},
-      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정은 상담실에서 확인해 정확히 처리해 드려요. 어떤 수업인가요?');quick([{t:'7/20 지학Ⅰ 결석 예정',act:()=>handoff('결석·지각 예정 신고(7/20 지학Ⅰ)')},back('m_attend')]);}},
+      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정을 미리 알려주시면 좋아요. 빠진 수업은 <b>동영상 보강</b>으로 들을 수 있고, 회차 자료도 문자로 받을 수 있어요.');quick([{t:'동영상 보강 신청하기',primary:true,go:'at_makeup'},{t:'결석·지각 상담원에게 접수',act:()=>handoff('결석·지각 예정 신고')},back('m_attend')]);}},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
   at_makeup(){botSay('어떤 강좌 보강인가요? 강좌·주차 단위로 조회·신청할 수 있어요.\n신청 시 수강료가 차감될 수 있어요(연속 동보 허용 등 일부 제외).');
     quick([{t:'이신혁T 지학Ⅰ',primary:true,act:()=>{botSay('몇 주차 보강인가요?');quick([
@@ -463,13 +465,14 @@ const NODES={
   m_time(){botSay('수업·시간표, 무엇을 볼까요?');
     quick([{t:'내 시간표',ic:'calendar_month',act:()=>{card(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div><div class="krow"><span class="k">일 18:30</span><span class="v">강은양T 국어 · 엣지관 601</span></div>`);endActions();}},
       {t:'강의실 위치',ic:'meeting_room',act:()=>{card(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
-      {t:'서바이벌 교재 구성',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 커리큘럼 (상반기)</div><div class="guide">강좌별 강의교재·선택교재가 매주 제공돼요. 예) 지학 엑셀러레이터·서바이벌 모의고사, 수학 브릿지 모의고사·VORTEX 등.<br><span style="color:var(--helper)">강좌별 정확한 구성·수량은 상담원이 안내해 드려요.</span></div>`);quick([{t:'교재 구성 상담',act:()=>handoff('서바이벌 교재 구성')},back('m_time')]);}},
+      {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼 (상반기)</div><div class="guide">강좌별 강의교재·선택교재가 매주 제공돼요. 예) 지학 엑셀러레이터·서바이벌 모의고사, 수학 브릿지 모의고사·VORTEX 등.<br><span style="color:var(--helper)">앱에서는 전체메뉴 → 납부·결제 → 서바이벌 선택 커리큘럼에서 볼 수 있어요. 강좌별 정확한 구성은 상담원이 안내해 드려요.</span></div>`);quick([{t:'커리큘럼 상담',act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
       {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--helper)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
 
   /* 7. 상담원·자주묻는것 */
   m_help(){botSay('무엇을 도와드릴까요?');
-    quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 · 대치</div><div class="guide">강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치',primary:true,act:()=>{card(`<div class="krow"><span class="k">이신혁T 지학Ⅰ 교재</span><span class="v">대치 본관 1층 데스크</span></div>`);endActions();}},back('m_help')]);}},
-      {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'예약 변경·취소',act:()=>handoff('컨설팅 예약 변경')},back('m_help')]);}},
+    quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 · 대치</div><div class="guide">강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치',primary:true,act:()=>{card(`<div class="krow"><span class="k">이신혁T 지학Ⅰ 교재</span><span class="v">대치 본관 1층 데스크</span></div>`);endActions();}},{t:'연구소 교재·교재비',act:()=>{botSay('연구소에서 받는 교재(강사 교재비)는 연구소에서 안내·정산해요. 상담원이 연구소로 연결해 드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('연구소 교재·교재비')},back('m_help')]);}},back('m_help')]);}},
+      {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'제출 서류 안내',act:()=>{botSay('컨설팅에 필요한 제출 서류는 예약일 전에 준비하시면 좋아요. 정확한 서류 목록은 상담원이 안내해 드릴게요.');quick([{t:'서류 안내 상담원',primary:true,act:()=>handoff('컨설팅 제출 서류')},back('m_help')]);}},{t:'예약 변경·취소',act:()=>handoff('컨설팅 예약 변경')},back('m_help')]);}},
+      {t:'자습실 이용',ic:'local_library',act:()=>{botSay('자습실(부엉이 라이브러리) 신청·대기·연장을 도와드려요. 좌석·대기 현황과 연장 규칙은 그날그날 달라서, 상담원이 바로 확인해 신청을 도와드릴게요.');quick([{t:'자습실 상담원 연결',primary:true,act:()=>handoff('자습실 신청·대기')},back('m_help')]);}},
       {t:'상담원 연결',ic:'support_agent',act:()=>handoff('일반 상담')},back('home')]);},
   help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
     quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);},
