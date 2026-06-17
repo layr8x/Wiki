@@ -369,12 +369,19 @@ function handoff(reason){
 }
 /* 기술 문제(앱·계정·로그인·영상·인증) — '시대인재 마이클래스' 카카오톡 채널로 안내. 자가해결법은 실제 myclass FAQ 근거 */
 const KAKAO_MYCLASS='https://pf.kakao.com/_VGAQn/chat'; /* 시대인재 마이클래스 카카오톡 채널 (수집 데이터 검증) */
+const KAKAO_LIVE='https://pf.kakao.com/_TkpPG/chat'; /* 시대인재 LIVE(기술지원) — 라이브 강의는 별도 서비스 */
 function handoffTech(reason){
   botSay('이건 <b>시대인재 마이클래스</b> 카카오톡 상담채널에서 기술 담당자가 가장 빠르게 도와드려요. 앱에서는 <b>전체메뉴 → 고객센터 → 1:1 문의</b>로도 접수할 수 있어요.');
   card(`<div class="ct">${ms('forum')}시대인재 마이클래스 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지(가능하면 화면 캡처)<br>· 기기·OS 버전</div>`);
   quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 마이클래스</b> 카카오톡 상담채널을 열게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_MYCLASS,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 
+/* 라이브 강의(별도 서비스) — 시대인재 LIVE 기술지원 카카오톡 채널로 안내 */
+function handoffLive(reason){
+  botSay('라이브 강의는 <b>시대인재 LIVE</b> 별도 서비스라, <b>시대인재 LIVE 기술지원</b> 카카오톡 채널에서 가장 정확히 도와드려요.');
+  card(`<div class="ct">${ms('forum')}시대인재 LIVE 기술지원 카카오톡 상담</div><div class="guide">· 문의 내용·발생 시점<br>· 강좌·콘텐츠명<br>· 화면 캡처(있으면)<br>· 기기·OS 버전</div>`);
+  quick([{t:'LIVE 카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 LIVE 기술지원</b> 카카오톡 채널을 열게요. 남겨주시면 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_LIVE,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
+}
 const NODES={
   home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
 
@@ -448,13 +455,13 @@ const NODES={
 
   /* 4. 라이브·교재·배송 */
   m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
-    quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. 상담원이 신청을 도와드려요.');quick([{t:'라이브 입반 상담',primary:true,act:()=>handoff('라이브 입반 신청')},back('m_live')]);}},
+    quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. <b>시대인재 LIVE</b>에서 신청을 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 입반 신청')},back('m_live')]);}},
       {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 수강 강좌 → 강좌 상세보기 → 강의 목록</b>에서 회차별로 볼 수 있어요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
       {t:'교재 배송 조회',ic:'local_shipping',act:()=>{card(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
-      {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 상담원이 정확히 안내해 드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('라이브 교재 반납')},back('m_live')]);}},
+      {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('라이브 교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 <b>시대인재 LIVE</b>에서 정확히 안내해 드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 교재 반납')},back('m_live')]);}},
       {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
-      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 → ② 수강료</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정산은 상담원이 도와드려요.');quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('라이브 환불')},back('m_live')]);}},
-      {t:'라이브→현강 이동',ic:'sync_alt',act:()=>{botSay('현장 강의로 옮길 수 있어요. 라이브 환불과 같이 <b>① 교재비 → ② 수강료</b>로 정리한 뒤 현강에 입반해요. 절차는 상담원이 도와드려요.');quick([{t:'이동 상담 연결',primary:true,act:()=>handoff('라이브→현강 이동')},back('m_live')]);}},
+      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 → ② 수강료</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정산은 <b>시대인재 LIVE</b>에서 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 환불')},back('m_live')]);}},
+      {t:'라이브→현강 이동',ic:'sync_alt',act:()=>{botSay('현장 강의로 옮길 수 있어요. 라이브 환불과 같이 <b>① 교재비 → ② 수강료</b>로 정리한 뒤 현강에 입반해요. 라이브 정산은 <b>시대인재 LIVE</b>에서 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브→현강 이동')},back('m_live')]);}},
       back('home')]);},
 
   live_video(){botSay('영상이 안 나오는 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
