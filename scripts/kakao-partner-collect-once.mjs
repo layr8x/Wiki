@@ -28,22 +28,22 @@ import { KakaoPartnerClient, chatToRow, logToRow } from './lib/kakao-partner-cli
 import { getAdminClient } from './lib/supabase-admin.mjs';
 import { sanitizeMessageRow, sanitizeChatRow } from './lib/kakao-sanitize.mjs';
 
-const COOKIE = process.env.KAKAO_PARTNER_COOKIE;
+const COOKIE_ENV = process.env.KAKAO_PARTNER_COOKIE; // 폴백/시드용 (1차 출처는 Supabase 보관함)
 const IDS = (process.env.KAKAO_PARTNER_PROFILE_IDS || process.env.KAKAO_PARTNER_PROFILE_ID || '')
   .split(',').map((s) => s.trim()).filter(Boolean);
+const COOKIE_KEY = 'kakao_partner_cookie'; // kakao_partner_secrets.key
 const PAGE_SIZE = Number(process.env.KAKAO_PARTNER_PAGE_SIZE || 100);
 const LOGS_SIZE = Number(process.env.KAKAO_PARTNER_LOGS_SIZE || 200);
 
 const isAuthError = (e) => e && (e.status === 401 || e.status === 403);
 const log = (...a) => console.log(`[${new Date().toISOString()}]`, ...a);
 
-// 필수 시크릿 미설정 시(머지 직후 ~ 사용자가 Secret 등록 전)에는 "실패"가 아니라
-// "스킵"으로 처리해, 5분마다 실패 알림이 쏟아지는 것을 막는다. Secret 등록 후 다음
-// 실행부터 자동으로 수집이 시작된다. (쿠키 '만료'는 실제 시도 중 401/403 → exit 1 로 알림)
+// 필수 시크릿(Supabase 자격증명) 미설정 시(머지 직후 ~ 사용자가 Secret 등록 전)에는
+// "실패"가 아니라 "스킵"으로 처리해, 5분마다 실패 알림이 쏟아지는 것을 막는다.
+// (쿠키 '만료'는 실제 시도 중 401/403 → exit 1 로 알림)
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const missing = [
-  ['KAKAO_PARTNER_COOKIE', COOKIE],
   ['SUPABASE_URL', SUPABASE_URL],
   ['SUPABASE_SERVICE_ROLE_KEY', SUPABASE_KEY],
 ].filter(([, v]) => !v).map(([k]) => k);
@@ -57,6 +57,27 @@ if (IDS.length === 0) {
 }
 
 const supabase = getAdminClient();
+
+// 쿠키 출처: ① Supabase 보관함(맥북 Chrome 이 6시간마다 자동 배달) 우선 → ② GitHub Secret 폴백.
+// 맥북이 가끔만 켜져 있어도 보관함 쿠키가 항상 최신이라 만료 수동 갱신이 사라진다.
+async function resolveCookie() {
+  try {
+    const { data, error } = await supabase
+      .from('kakao_partner_secrets')
+      .select('value, updated_at')
+      .eq('key', COOKIE_KEY)
+      .maybeSingle();
+    if (!error && data?.value) {
+      log(`cookie source: supabase (updated ${data.updated_at})`);
+      return data.value;
+    }
+  } catch { /* 테이블 미적용 등 → env 폴백 */ }
+  if (COOKIE_ENV) {
+    log('cookie source: env secret (fallback)');
+    return COOKIE_ENV;
+  }
+  return null;
+}
 
 // DB 의 채팅별 last_log_id 를 메모리 커서로 적재 (변경 감지 기준).
 async function primeCursors(profileId) {
@@ -117,8 +138,8 @@ async function persistHeartbeat(profileId, lastSeenLogId, lastError) {
 }
 
 // 채널 1개 1회 수집. 쿠키 만료면 authExpired=true 로 throw (상위에서 종료코드 결정).
-async function collectChannel(profileId) {
-  const client = new KakaoPartnerClient({ cookie: COOKIE, profileId });
+async function collectChannel(profileId, cookie) {
+  const client = new KakaoPartnerClient({ cookie, profileId });
 
   // 1) 인증 확인 — 만료면 즉시 throw (모든 채널 동일 쿠키라 더 진행 의미 없음)
   try {
@@ -169,10 +190,16 @@ async function collectChannel(profileId) {
   log(`[${profileId}] done: scanned=${items.length} changed=${changed} upserted=${upserted}`);
 }
 
+const cookie = await resolveCookie();
+if (!cookie) {
+  console.log('[skip] 사용할 쿠키 없음 (Supabase 보관함·KAKAO_PARTNER_COOKIE 모두 비어있음) — 건너뜀.');
+  process.exit(0);
+}
+
 let authExpired = false;
 for (const pid of IDS) {
   try {
-    await collectChannel(pid);
+    await collectChannel(pid, cookie);
   } catch (e) {
     if (e.authExpired) { authExpired = true; log(`[${pid}] ${e.message}`); break; }
     // 일시적 채널 오류는 다음 실행에서 재시도 → 워크플로는 성공 처리(오탐 알림 방지)
@@ -181,7 +208,7 @@ for (const pid of IDS) {
 }
 
 if (authExpired) {
-  console.error('❌ 카카오 쿠키 만료 — GitHub 저장소 Secrets 의 KAKAO_PARTNER_COOKIE 를 갱신하세요.');
+  console.error('❌ 카카오 쿠키 만료 — 맥북 Chrome 재로그인(자동 배달, 다음 6h 주기 픽업) 또는 GitHub Secrets 의 KAKAO_PARTNER_COOKIE 수동 갱신 필요.');
   process.exit(1);
 }
 process.exit(0);

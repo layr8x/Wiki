@@ -21,6 +21,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/usr/local/bin/node</string>
+    <string>--env-file=.env.local</string>
     <string>scripts/kakao-partner-refresh-cookie.mjs</string>
   </array>
 
