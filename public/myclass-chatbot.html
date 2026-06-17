@@ -367,11 +367,12 @@ function handoff(reason){
    {t:'처음으로',go:'home',ghost:true},
   ]);
 }
-/* 기술 문제(앱·계정·로그인·영상·인증) — 마이클래스 카카오톡 기술 상담채널로 안내. 자가해결법은 실제 myclass FAQ 근거 */
+/* 기술 문제(앱·계정·로그인·영상·인증) — '시대인재 마이클래스' 카카오톡 채널로 안내. 자가해결법은 실제 myclass FAQ 근거 */
+const KAKAO_MYCLASS='https://pf.kakao.com/_VGAQn/chat'; /* 시대인재 마이클래스 카카오톡 채널 (수집 데이터 검증) */
 function handoffTech(reason){
-  botSay('이건 <b>마이클래스 카카오톡 상담채널</b>에서 기술 담당자가 가장 빠르게 도와드려요. 앱에서는 <b>전체메뉴 → 고객센터 → 1:1 문의</b>로도 접수할 수 있어요.');
-  card(`<div class="ct">${ms('forum')}마이클래스 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지(가능하면 화면 캡처)<br>· 기기·OS 버전</div>`);
-  quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('마이클래스 카카오톡 상담채널로 연결할게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');endActions();}},{t:'처음으로',go:'home',ghost:true}]);
+  botSay('이건 <b>시대인재 마이클래스</b> 카카오톡 상담채널에서 기술 담당자가 가장 빠르게 도와드려요. 앱에서는 <b>전체메뉴 → 고객센터 → 1:1 문의</b>로도 접수할 수 있어요.');
+  card(`<div class="ct">${ms('forum')}시대인재 마이클래스 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지(가능하면 화면 캡처)<br>· 기기·OS 버전</div>`);
+  quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 마이클래스</b> 카카오톡 상담채널을 열게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_MYCLASS,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 
 const NODES={
