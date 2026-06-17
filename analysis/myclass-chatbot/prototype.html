@@ -38,17 +38,18 @@
   .chrome-top .share{position:absolute;right:24px;color:#5f6368;font-size:21px}
 
   /* ── 앱 헤더 (Figma Header 100% 재현) ── */
-  .apphead{padding:18px 24px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;background:#fff}
-  .brandrow{display:flex;align-items:center;justify-content:space-between}
-  .brand{display:flex;align-items:center;color:#161616}
+  /* 모바일: 1행=브랜드+아이콘, 2행=사용자정보 */
+  .apphead{padding:18px 24px 14px;display:grid;grid-template-columns:1fr auto;grid-template-areas:"brand icons" "user user";align-items:center;row-gap:10px;flex-shrink:0;background:#fff}
+  .brand{grid-area:brand;display:flex;align-items:center;color:#161616}
   .brand svg{height:22px;width:auto;display:block}
-  .headicons{display:flex;gap:16px;align-items:center}
+  .headicons{grid-area:icons;display:flex;gap:16px;align-items:center}
   .headicons .ms{font-size:24px;color:#161616;cursor:pointer}
   .bell{position:relative}
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
   #openBtn{border-radius:50%;animation:nudge 1.9s ease-in-out 3}
   @keyframes nudge{0%,80%,100%{transform:scale(1)}88%{transform:scale(1.22)}94%{transform:scale(1)}}
-  .userrow{display:flex;align-items:center;gap:8px}
+  .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
   .userrow .name{font-weight:400;font-size:16px}
   .userrow .ms{font-size:24px;color:#161616}
@@ -88,7 +89,7 @@
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet{position:absolute;left:0;right:0;bottom:0;height:90%;background:var(--bg);border-radius:var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .32s cubic-bezier(.22,.61,.36,1);
-    display:flex;flex-direction:column;overflow:hidden;z-index:41}
+    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none}
   .sheet.open{transform:translateY(0)}
   .grab{width:40px;height:4px;background:#c6c6c6;border-radius:2px;margin:8px auto 4px}
   .chead{display:flex;align-items:center;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--border)}
@@ -157,25 +158,7 @@
   .viewswitch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:4px;background:#fff;border:1px solid var(--gray20);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.14)}
   .viewswitch button{border:none;background:none;padding:7px 15px;border-radius:999px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--helper);cursor:pointer}
   .viewswitch button.on{background:#161616;color:#fff}
-  .fab{display:none}
-  body[data-view="tablet"] .phone{width:834px;height:min(1112px,94vh)}
-  body[data-view="tablet"] .chrome-bot{display:none}
-  body[data-view="tablet"] .apphead,body[data-view="tablet"] .sectiontitle,body[data-view="tablet"] .classwrap{max-width:600px;margin-left:auto;margin-right:auto;width:100%}
-  body[data-view="desktop"] .phone{width:min(1180px,96vw);height:min(760px,94vh)}
-  body[data-view="desktop"] .statusbar,body[data-view="desktop"] .chrome-top,body[data-view="desktop"] .home-indicator,body[data-view="desktop"] .chrome-bot,body[data-view="desktop"] .bottomnav{display:none}
-  body[data-view="desktop"] .apphead,body[data-view="desktop"] .sectiontitle,body[data-view="desktop"] .classwrap{max-width:720px;margin-left:auto;margin-right:auto;width:100%}
-  body[data-view="desktop"] .apphead{padding-top:22px}
-  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s,opacity .26s,visibility .26s}
-  body[data-view="tablet"] .sheet{bottom:40px;height:min(620px,76%)}
-  body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,86%)}
-  body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
-  body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:transparent}
-  body[data-view="tablet"] .fab,body[data-view="desktop"] .fab{display:flex;position:absolute;right:24px;width:56px;height:56px;border-radius:50%;background:#161616;color:#fff;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.26);z-index:30}
-  body[data-view="tablet"] .fab{bottom:40px}
-  body[data-view="desktop"] .fab{bottom:24px}
-  body[data-view="tablet"] .fab .ms,body[data-view="desktop"] .fab .ms{font-size:26px}
-  body.chat-open .fab{display:none!important}
-  /* macOS Chrome 프레임 */
+  /* macOS Chrome 브라우저 프레임 (태블릿·데스크탑 공통, 높이 76) */
   .mac-chrome{display:none;flex-direction:column;flex-shrink:0;background:#dee1e6}
   .mc-bar{height:36px;display:flex;align-items:center;gap:6px;padding:0 12px}
   .mc-dots{display:flex;gap:8px;margin-right:10px}
@@ -185,27 +168,50 @@
   .mc-tab.on{background:#fff}
   .mc-tab b{font-weight:400;color:#9aa0a6}
   .mc-plus{color:#5f6368;font-size:17px;padding:0 8px}
-  .mc-addr{height:44px;display:flex;align-items:center;gap:16px;padding:0 16px;background:#fff;border-bottom:1px solid #e6e8eb}
+  .mc-addr{height:40px;display:flex;align-items:center;gap:16px;padding:0 16px;background:#fff;border-bottom:1px solid #e6e8eb}
   .mc-nav{color:#5f6368;font-size:14px;letter-spacing:3px}
-  .mc-url{flex:1;background:#f1f3f4;border-radius:20px;height:32px;display:flex;align-items:center;justify-content:center;color:#202124;font-size:14px}
+  .mc-url{flex:1;background:#f1f3f4;border-radius:20px;height:28px;display:flex;align-items:center;justify-content:center;color:#202124;font-size:14px}
   .mc-ext{color:#5f6368;letter-spacing:4px;font-size:15px}
-  body[data-view="tablet"] .mac-chrome,body[data-view="desktop"] .mac-chrome{display:flex}
-  /* 태블릿: iOS 크롬 숨김, 단일컬럼 + 하단탭 유지 */
-  body[data-view="tablet"] .statusbar,body[data-view="tablet"] .chrome-top,body[data-view="tablet"] .home-indicator,body[data-view="tablet"] .chrome-bot{display:none}
-  body[data-view="tablet"] .phone{width:768px;height:min(1024px,94vh)}
-  body[data-view="tablet"] .apphead,body[data-view="tablet"] .sectiontitle,body[data-view="tablet"] .classwrap{max-width:none;margin-left:0;margin-right:0;padding-left:40px;padding-right:40px}
-  /* 데스크탑: 좌측 세로 내비 + 우측 콘텐츠 컬럼 */
-  body[data-view="desktop"] .phone{width:min(1120px,96vw);height:min(780px,94vh)}
-  body[data-view="desktop"] .sectiontitle{display:none}
-  body[data-view="desktop"] .classwrap{max-width:544px;margin-left:auto;margin-right:80px}
+
+  /* 데스크탑 좌측 세로 내비 (기본 숨김) */
   .desknav{display:none}
-  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:14px;position:absolute;left:80px;top:196px;z-index:5}
-  .desknav a{font-size:24px;line-height:1.2;color:var(--helper);font-weight:300;cursor:pointer}
+  .desknav a{font-size:32px;line-height:40px;color:var(--helper);font-weight:200;letter-spacing:-.5px;cursor:pointer}
   .desknav a.on{color:#161616;width:fit-content;border-bottom:2px solid #161616;padding-bottom:2px}
   .deskonly{display:none}
+
+  /* ── 태블릿 (768×1024) ── */
+  body[data-view="tablet"] .phone{width:768px;height:min(1024px,94vh)}
+  body[data-view="tablet"] .statusbar,body[data-view="tablet"] .chrome-top,body[data-view="tablet"] .home-indicator,body[data-view="tablet"] .chrome-bot{display:none}
+  body[data-view="tablet"] .mac-chrome{display:flex}
+  body[data-view="tablet"] .apphead{height:64px;padding:0 40px}
+  body[data-view="tablet"] .sectiontitle{display:none}
+  body[data-view="tablet"] .scroll{padding-top:8px}
+  body[data-view="tablet"] .classwrap{padding:8px 40px 24px;max-width:none;margin:0}
+  body[data-view="tablet"] .bottomnav{height:76px;align-items:center}
+
+  /* ── 데스크탑 (1440×1024): 좌측 세로 내비 + 우측 콘텐츠 2단 ── */
+  body[data-view="desktop"] .phone{width:min(1440px,96vw);height:min(920px,92vh)}
+  body[data-view="desktop"] .statusbar,body[data-view="desktop"] .chrome-top,body[data-view="desktop"] .home-indicator,body[data-view="desktop"] .chrome-bot,body[data-view="desktop"] .bottomnav{display:none}
+  body[data-view="desktop"] .mac-chrome{display:flex}
+  body[data-view="desktop"] .apphead{height:64px;padding:0 128px}
   body[data-view="desktop"] .deskonly{display:inline-block}
-  .xtab{display:none}
-  body[data-view="tablet"] .xtab{display:block}
+  body[data-view="desktop"] .sectiontitle{display:none}
+  body[data-view="desktop"] .scroll{display:flex;flex-direction:row;align-items:flex-start;padding:48px 128px 0}
+  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:24px;width:50%;flex-shrink:0;position:sticky;top:0;align-self:flex-start}
+  body[data-view="desktop"] .classwrap{width:50%;max-width:none;margin:0;padding:0 0 40px 48px}
+
+  /* 헤더: 태블릿·데스크탑 = 한 줄(브랜드 왼쪽 · 사용자정보+아이콘 오른쪽) */
+  body[data-view="tablet"] .apphead,body[data-view="desktop"] .apphead{display:flex;flex-direction:row;align-items:center;gap:40px;row-gap:0}
+  body[data-view="tablet"] .apphead .brand,body[data-view="desktop"] .apphead .brand{margin-right:auto}
+  body[data-view="tablet"] .userrow,body[data-view="desktop"] .userrow{margin:0}
+
+  /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 */
+  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s,opacity .26s,visibility .26s}
+  body[data-view="tablet"] .sheet{bottom:92px;height:min(560px,64%)}
+  body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,82%)}
+  body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
+  body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:transparent}
+
   .tip{position:absolute;top:104px;right:20px;background:#161616;color:#fff;font-size:12px;padding:7px 11px;border-radius:8px;opacity:0;transition:.3s;z-index:30;pointer-events:none}
   .tip::after{content:"";position:absolute;top:-5px;right:18px;border:5px solid transparent;border-bottom-color:#161616;border-top:0}
 </style>
@@ -231,26 +237,20 @@
   </div>
   <!-- 앱 헤더 (Figma 100% 재현) -->
   <div class="apphead">
-    <div class="brandrow">
-      <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
-      <div class="headicons">
-        <span class="ms" id="openBtn" role="button" aria-label="문의 챗봇 열기" title="문의 챗봇">forum</span>
-        <span class="ms bell" aria-label="알림">notifications</span>
-        <span class="ms deskonly" aria-label="전체메뉴">menu</span>
-      </div>
-    </div>
-    <div class="userrow">
-      <span class="branch">대치</span><span class="name">김시대 님</span>
-      <span class="ms">keyboard_arrow_down</span>
-      <span class="ms" style="margin-left:2px">cached</span>
+    <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
+    <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">김시대 님</span><span class="ms">keyboard_arrow_down</span></span><span class="ms cached">cached</span></div>
+    <div class="headicons">
+      <span class="ms" id="openBtn" role="button" aria-label="문의 챗봇 열기" title="문의 챗봇">forum</span>
+      <span class="ms bell" aria-label="알림">notifications</span>
+      <span class="ms deskonly" aria-label="전체메뉴">menu</span>
     </div>
   </div>
   <!-- 본문 -->
-  <nav class="desknav"><a class="on">수업관리</a><a>출결과제</a><a>납부하기</a></nav>
   <div class="scroll">
+    <nav class="desknav"><a class="on">수업관리</a><a>출결과제</a><a>납부하기</a></nav>
     <div class="sectiontitle">수업관리</div>
     <div class="classwrap">
-      <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div><div class="tab off xtab">Label</div><div class="tab off xtab">Label</div><div class="tab off xtab">Label</div><div class="tab off xtab">Label</div></div>
+      <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div></div>
       <div class="citem">
         <div class="cinfo"><span class="tag">과학영역</span><span class="status">수강중</span></div>
         <div class="cdesc">이신혁T 지학Ⅰ 서바이벌<br>금 13:30-17:00 W관 201호</div>
@@ -285,7 +285,6 @@
 
   <!-- 챗봇 모달 -->
   <div class="scrim" id="scrim"></div>
-  <button class="fab" id="fab" aria-label="문의 챗봇 열기"><span class="ms">forum</span></button>
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="마이클래스 도우미 챗봇" tabindex="-1">
     <div class="grab"></div>
     <div class="chead">
@@ -443,7 +442,7 @@ function setBanner(){bannerSlot.innerHTML='';
 /* 포커스 트랩 */
 let lastFocus=null;
 function trapFocus(e){if(e.key!=='Tab')return;const list=[...sheet.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];if(!list.length)return;const f=list[0],l=list[list.length-1];if(e.shiftKey&&document.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&document.activeElement===l){e.preventDefault();f.focus();}}
-function openChat(c){ctx=c||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus();NODES.home();},300);}
+function openChat(c){ctx=c||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus({preventScroll:true});NODES.home();},300);}
 function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');document.body.classList.remove('chat-open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 document.getElementById('openBtn').onclick=()=>openChat('normal');
 document.getElementById('closeBtn').onclick=closeChat;
@@ -454,7 +453,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChat();});
 document.addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')openChat('payment');if(e.key==='a'||e.key==='A')openChat('auth');});
 const _vs=document.getElementById('viewswitch');document.body.dataset.view='mobile';
 _vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.dataset.view=b.dataset.v;_vs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
-const _fab=document.getElementById('fab');if(_fab)_fab.onclick=()=>openChat('normal');
 </script>
 </body>
 </html>
