@@ -215,7 +215,6 @@
   <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="마이클래스 도우미 챗봇" tabindex="-1">
     <div class="grab"></div>
     <div class="chead">
-      <div class="avatar"><span class="ms">support_agent</span></div>
       <div><div class="t">마이클래스 도우미</div><div class="s">문제를 바로 해결하도록 도와드려요</div></div>
       <div class="sp"></div>
       <button class="iconbtn" id="homeBtn" aria-label="처음으로"><span class="ms">home</span></button>
@@ -243,9 +242,9 @@ let ctx='normal';
 const ms=n=>`<span class="ms">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function scrollEnd(){requestAnimationFrame(()=>{log.scrollTop=log.scrollHeight;});}
-function botSay(h){const r=el(`<div class="row bot fadein"><div class="bav">${ms('support_agent')}</div><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
+function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
-function card(h){const r=el(`<div class="row bot fadein"><div class="bav" style="opacity:0"></div><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
+function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function quick(opts){const w=el(`<div class="qr fadein"></div>`);opts.forEach(o=>{const c=el(`<button class="chip ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();(o.act?o.act:()=>go(o.go))();};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid fadein"></div>`);MENU.forEach(m=>{const t=el(`<button class="mtile">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.onclick=()=>{meSay(m.l);g.remove();go('m_'+m.k);};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function back(k){return {t:'이전',go:k,ghost:true};}
