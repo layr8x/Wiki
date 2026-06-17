@@ -95,8 +95,8 @@ flowchart TD
 | 4 | **라이브·교재·배송** | live_tv | `m_live`(입반·복습영상·배송·반납·결제·환불·현강이동) · `live_video`(영상 4갈래) |
 | 5 | **출결·보강** | fact_check | `at_makeup`(동영상 보강) · 현장보강 · 결석 사전신고 |
 | 6 | **수업·시간표** | calendar_month | 시간표·강의실·서바이벌 커리큘럼·종강/휴강 |
-| 7 | **상담원·자주묻는것** | support_agent | `help_faq` · `help_contact` · 교재수령·연구소교재비·설명회·자습실 |
-| 8 | **퇴원·전반** | logout | `m_quit`(시간·난이도·강사·라이브·계획) · `quit_refund`(2단계 확인) |
+| 7 | **퇴원·전반** | logout | `m_quit`(시간·난이도·강사·라이브·계획) · `quit_refund`(2단계 확인) |
+| 8 | **상담원·자주묻는것** | support_agent | `help_faq` · `help_contact` · 교재수령·연구소교재비·설명회·자습실 (사람 연결은 맨 끝에 배치) |
 
 전체 노드(30): `home, m_account, ac_login, ac_unify, ac_app, m_pay, pay_etc, pay_status, pay_sms, pay_va, pay_cert, pay_fail, pay_refund, m_enroll, en_reg, en_check, en_wait, en_waitset, en_special, en_transfer, m_live, live_video, m_attend, at_makeup, m_time, m_help, help_contact, help_faq, m_quit, quit_refund`.
 
