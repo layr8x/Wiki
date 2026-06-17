@@ -161,6 +161,13 @@
   .send{width:44px;height:44px;border-radius:50%;border:none;background:var(--primary);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .send .ms{font-size:20px}
   .fadein{animation:fi .26s ease both}
+  .typing .msg{display:inline-flex;gap:5px;align-items:center}
+  .td{width:6px;height:6px;border-radius:50%;background:#16161666;animation:blink 1.3s infinite}
+  .td:nth-child(2){animation-delay:.18s}.td:nth-child(3){animation-delay:.36s}
+  @keyframes blink{0%,70%,100%{opacity:.25}35%{opacity:1}}
+  .copybtn{margin-left:6px;border:none;background:none;color:var(--helper);cursor:pointer;display:inline-flex;vertical-align:middle;padding:2px;touch-action:manipulation}
+  .copybtn .ms{font-size:15px}
+  .copybtn.copied{color:#161616}
   @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
   /* ── 뷰 전환: 모바일 / 태블릿 / 데스크탑 ── */
@@ -326,9 +333,13 @@ function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return
 function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
 function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
+let RM=false;try{RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
+function typingBubble(){const r=el(`<div class="row bot typing fadein"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
+function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
+log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
-function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();(o.act?o.act:()=>go(o.go))();};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*40)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();go('m_'+m.k);};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*40)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>botSay('고마워요! 또 필요하면 언제든 불러주세요.')},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
@@ -336,8 +347,8 @@ function handoff(reason){
   botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
   card(`<div class="ct">${ms('support_agent')}대치 캠퍼스 고3 상담실</div><div class="guide">
    · 학생 <b>김시대</b> · 지점 <b>대치 캠퍼스(고3)</b><br>· 문의 <b>${reason}</b>
-   <div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373</span></div>
-   <div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378</span></div>
+   <div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div>
+   <div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div>
    <span style="color:var(--helper)">문자로 남길 땐 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</span></div>`);
   quick([
    {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
@@ -460,7 +471,7 @@ const NODES={
     quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 · 대치</div><div class="guide">강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치',primary:true,act:()=>{card(`<div class="krow"><span class="k">이신혁T 지학Ⅰ 교재</span><span class="v">대치 본관 1층 데스크</span></div>`);endActions();}},back('m_help')]);}},
       {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'예약 변경·취소',act:()=>handoff('컨설팅 예약 변경')},back('m_help')]);}},
       {t:'상담원 연결',ic:'support_agent',act:()=>handoff('일반 상담')},back('home')]);},
-  help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373</span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378</span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
+  help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
     quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);},
   help_faq(){botSay('자주 묻는 것을 골라보세요. 못 찾으면 상담원이 도와드려요.');
     quick([{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'상담원 연결',act:()=>handoff('FAQ 미해결')},back('m_help')]);},
@@ -473,7 +484,7 @@ const NODES={
       {t:'라이브로 옮길래요',go:'m_live'},{t:'수강 계획이 바뀌었어요',act:()=>handoff('수강 계획 변경')},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
   quit_refund(){botSay('알겠어요. 퇴원은 문자 요청으로 접수되고, 환불은 이용 회차 기준으로 처리돼요. 정확한 금액은 상담원이 확정해 드려요.');
     card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div><div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div><div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div><div class="src">※ 교육청 환불 규정에 따라 상담원이 확인 후 확정해요.</div>`);
-    quick([{t:'퇴원·환불 접수하기',primary:true,act:()=>handoff('퇴원·환불')},back('m_quit')]);},
+    quick([{t:'퇴원·환불 접수하기',primary:true,act:()=>{botSay('퇴원·환불 접수를 진행할까요? 접수하면 대치 캠퍼스 상담실에서 확인 연락을 드려요.');quick([{t:'네, 접수할게요',primary:true,act:()=>handoff('퇴원·환불')},{t:'조금 더 생각할래요',go:'m_quit'}]);}},back('m_quit')]);},
 };
 function go(k){if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
 
