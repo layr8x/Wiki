@@ -18,7 +18,7 @@
 import WebSocket from 'ws';
 import fs from 'node:fs';
 import path from 'node:path';
-import { KakaoPartnerClient, chatToRow } from './lib/kakao-partner-client.mjs';
+import { KakaoPartnerClient, chatToRow, logToRow } from './lib/kakao-partner-client.mjs';
 import { getAdminClient } from './lib/supabase-admin.mjs';
 import { readCookieFromEnvFile, maybeRefreshCookie, envFilePath } from './lib/kakao-cookie.mjs';
 import { sanitizeMessageRow, sanitizeChatRow } from './lib/kakao-sanitize.mjs';
@@ -390,35 +390,13 @@ class KakaoStream {
     this.log(`primed ${this.lastLogByChat.size} chat cursors`);
   }
 
-  _logToRow(item, chatId) {
-    const isManager = !!item.manager;
-    const author = item.author || {};
-    const senderType = isManager ? 'manager' : (author.user_type === 0 ? 'user' : 'system');
-    const senderId = isManager ? String(item.manager?.id ?? '') : String(author.id ?? '');
-    return {
-      log_id: String(item.id),
-      chat_id: String(chatId),
-      profile_id: PROFILE_ID,
-      sender_type: senderType,
-      sender_id: senderId || null,
-      message: item.message ?? item.text ?? item.content ?? null,
-      message_type: item.type ?? null,
-      attachments: item.attachment && Object.keys(item.attachment).length ? item.attachment : null,
-      sent_at: item.send_at ? new Date(item.send_at).toISOString()
-        : item.created_at ? new Date(item.created_at).toISOString() : new Date().toISOString(),
-      raw: item,
-      // source CHECK 제약 허용값('rest_backfill','ws_push') 중 사용. 증분도 REST 조회라 rest_backfill.
-      source: 'rest_backfill',
-    };
-  }
-
   // 변경된 채팅의 최신 메시지 페이지(no-since=최신 N건)를 가져와 upsert (idempotent)
   async _fetchRecent(chatId) {
     try {
-      const res = await this.client._fetch(`/api/profiles/${PROFILE_ID}/chats/${chatId}/chatlogs?size=200`);
+      const res = await this.client.chatLogs(chatId, { size: 200 });
       const items = res?.items || [];
       if (!items.length) return 0;
-      const rows = items.map((it) => sanitizeMessageRow(this._logToRow(it, chatId)));
+      const rows = items.map((it) => sanitizeMessageRow(logToRow(it, chatId, PROFILE_ID)));
       const { error } = await this.supabase
         .from('kakao_partner_messages').upsert(rows, { onConflict: 'log_id' });
       if (error) { this.log(`upsert ${chatId} fail:`, error.message); return -1; }
