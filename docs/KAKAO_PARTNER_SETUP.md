@@ -266,25 +266,27 @@ GitHub → 저장소 → **Settings → Secrets and variables → Actions → Ne
 - 즉시 1회 테스트: Actions 탭 → "카카오 상담 수집 (5분마다)" → **Run workflow**.
 - 수집 확인: `npm run kakao:status` 또는 §6 SQL.
 
-### 10-3. 쿠키 만료 시 알림 → 갱신
+### 10-3. 쿠키 출처 & 만료 대응
 
-쿠키가 만료되면 수집기가 `me()` 에서 401/403 을 받아 **워크플로가 "실패"로 끝난다.**
-GitHub 이 저장소 소유자에게 **실패 알림 메일**을 보내므로(조용히 멈추지 않음), 그때:
+수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 맥북 Chrome 이 자동
+배달 — **§11**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
 
-1. Chrome 으로 business.kakao.com 재로그인 → §3-1 방식으로 새 쿠키 추출
-2. **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 값만 새로 붙여넣기 (Update)
-
-다음 실행부터 자동 정상화된다. (Slack 등 별도 알림을 원하면 워크플로에 실패 시 webhook
-step 을 추가하면 됨.)
+- **§11 자동 배달을 켜두면** 맥북이 가끔만 켜져 있어도 보관함 쿠키가 항상 최신이라
+  **수동 갱신이 사실상 사라진다.**
+- 둘 다 만료된 경우에만 수집기가 `me()` 에서 401/403 → **워크플로 "실패" → 알림 메일**.
+  그때 Chrome 으로 재로그인하면(맥북) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
+  **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 를 수동 갱신한다.
 
 ### 10-4. launchd 데몬 정리
 
-GitHub 수집이 며칠간 정상 확인되면, 맥북의 데몬은 더 이상 필요 없다(둘 다 켜둬도 멱등
-upsert 라 데이터 중복은 없음):
+GitHub 수집이 며칠간 정상 확인되면 **상시 수집 데몬은 꺼도 된다**(둘 다 켜둬도 멱등
+upsert 라 중복 없음):
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
-launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
 ```
+단, **쿠키 자동 배달(§11)을 쓴다면 `com.amswiki.kakao-cookie-refresh` 는 끄지 말 것** —
+이 6시간 잡이 최신 쿠키를 Supabase 로 배달하는 "쿠키 배달부"다. (만료 시 수동 갱신만 할
+거라면 이 잡도 꺼도 된다.)
 
 ### 10-5. 한계 / 주의
 
@@ -293,5 +295,42 @@ launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
   지연은 데이터 누락 없이 메워진다.
 - **IP**: GitHub 데이터센터 IP 로 접속하므로, 카카오 어뷰즈 탐지에 걸리면 차단될 소지가
   주거용 IP 보다 약간 높다. 차단 시 `me()` 가 403 → 위 알림 메일로 감지된다.
-- **쿠키 갱신 자동화 불가**: 맥북의 Chrome 자동 재추출(§7)은 클라우드에선 못 쓴다.
-  쿠키 갱신은 만료 시 위 10-3 절차로 수동(월 1회 안팎).
+- **쿠키 갱신**: §11 자동 배달을 켜면 거의 무인 운영. 안 켜면 만료 시 §10-3 으로 수동(월 1회 안팎).
+
+---
+
+## 11. ✅ 쿠키 자동 배달 (만료 수동 갱신 제거)
+
+**문제**: GitHub Secret 의 쿠키는 1~4주면 만료 → 수동 교체가 번거롭다.
+**해결**: 맥북 Chrome 은 로그인이 살아있는 한 항상 유효한 쿠키를 갖는다. 이를 6시간마다
+꺼내 **Supabase 보관함(`kakao_partner_secrets`)에 자동 배달**하고, GitHub 수집기가 매 실행 시
+거기서 최신 쿠키를 읽는다. → 쿠키 복사 작업이 사라진다.
+
+```
+맥북 Chrome(로그인 유지) ──6h──▶ kakao-partner-refresh-cookie.mjs
+                                  ├─ .env.local 갱신 (로컬 데몬용)
+                                  └─ Supabase kakao_partner_secrets 로 upsert   ← 자동 배달
+                                                   │
+GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신 쿠키 read → 사용
+```
+
+### 켜는 법
+
+1. **마이그레이션 적용**(1회): `supabase/migrations/20260617_kakao_partner_secrets.sql`
+   (Supabase Dashboard → SQL Editor 붙여넣고 RUN). RLS 활성 + 정책 0 → **service_role 전용**(외부 접근 차단).
+2. **맥북에 6시간 쿠키 잡 설치/유지**:
+   ```bash
+   cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
+   launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
+   ```
+   전제: Chrome 으로 business.kakao.com 로그인 유지 + 최초 1회 "Chrome Safe Storage" 키체인 허용.
+3. **즉시 첫 배달**(선택): `npm run kakao:refresh-cookie`
+   → 로그에 `Supabase 보관함에 쿠키 배달 완료` 가 뜨면 성공. 이후 GitHub 실행 로그엔
+   `cookie source: supabase (updated …)` 로 찍힌다.
+
+### 동작 보장
+
+- 맥북이 **24시간 켜질 필요 없음** — 쿠키 수명(1~4주) 안에 한 번이라도 켜져 6시간 잡이 돌면
+  보관함 쿠키가 갱신된다. 수집 자체는 노트북과 무관하게 GitHub 에서 계속된다.
+- 맥북이 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
+- 배달되는 쿠키는 계정 로그인 권한과 동등 → 테이블은 RLS 로 service_role 외 접근 차단(위 1번).

@@ -15,6 +15,41 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+// 추출한 쿠키를 Supabase 보관함(kakao_partner_secrets)에 upsert → GitHub Actions 수집기가
+// 매 실행 시 최신 쿠키를 읽어감(쿠키 만료 수동 갱신 제거). .env.local 의 service_role 자격증명 사용.
+// best-effort: 실패해도 .env.local 갱신/데몬 동작에는 영향 없음.
+async function pushCookieToSupabase(envText, cookie) {
+  const pick = (k) => {
+    const m = envText.match(new RegExp('^' + k + '=(.*)$', 'm'));
+    if (!m) return '';
+    let v = m[1].trim();
+    if ((v.startsWith("'") && v.endsWith("'")) || (v.startsWith('"') && v.endsWith('"'))) v = v.slice(1, -1);
+    return v;
+  };
+  const url = pick('SUPABASE_URL') || pick('VITE_SUPABASE_URL');
+  const key = pick('SUPABASE_SERVICE_ROLE_KEY');
+  if (!url || !key) {
+    console.log('[refresh] SUPABASE_URL/SERVICE_ROLE_KEY 미설정 → Supabase 배달 생략 (.env.local 만 갱신)');
+    return;
+  }
+  try {
+    const res = await fetch(`${url.replace(/\/$/, '')}/rest/v1/kakao_partner_secrets`, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        authorization: `Bearer ${key}`,
+        'content-type': 'application/json',
+        prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify([{ key: 'kakao_partner_cookie', value: cookie, updated_at: new Date().toISOString() }]),
+    });
+    if (res.ok) console.log('[refresh] Supabase 보관함에 쿠키 배달 완료 (GitHub 수집기가 픽업)');
+    else console.log(`[refresh] Supabase 배달 실패 HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 160)}`);
+  } catch (e) {
+    console.log('[refresh] Supabase 배달 오류:', e.message);
+  }
+}
+
 const HOME = os.homedir();
 const CHROME = path.join(HOME, 'Library/Application Support/Google/Chrome');
 
@@ -87,6 +122,10 @@ console.log(`[refresh] profile="${best.name}" cookies=${best.map.size} length=${
 const envPath = path.join(process.cwd(), '.env.local');
 let env = fs.readFileSync(envPath, 'utf8');
 const newVal = cookieStr.replace(/'/g, '');
+
+// Supabase 보관함으로 자동 배달 (GitHub Actions 수집기의 1차 쿠키 출처).
+// 변경 여부와 무관하게 매번 갱신해 보관함을 항상 최신으로 유지(만료 자동 예방).
+await pushCookieToSupabase(env, newVal);
 
 // 기존 값과 동일하면 쓰기/재시작 생략 → 주기적 cron 실행이 데몬을 헛되이 끊지 않게 함.
 const prev = env.match(/^KAKAO_PARTNER_COOKIE='?([^'\n]*)'?$/m);
