@@ -192,7 +192,7 @@
 
   <!-- 모달 -->
   <div class="scrim" id="scrim"></div>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="마이클래스 도우미 챗봇">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="마이클래스 도우미 챗봇" tabindex="-1">
     <div class="grab"></div>
     <div class="chead">
       <div class="avatar">🦉</div>
@@ -252,12 +252,11 @@ function handoff(reason){
   quick([
     {t:'이대로 연결하기',primary:true,act:()=>{
       botSay('접수됐어요. 접수번호는 <b>#A-2026-0617-031</b>이에요. 순서대로 연결해 드릴게요.');
-      const open=(new Date().getDay()%6!==0)&&true;
       card(`<div class="ct">⏳ 연결 대기</div><div class="krow"><span class="k">접수번호</span><span class="v">#A-2026-0617-031</span></div><div class="krow"><span class="k">내 앞 대기</span><span class="v">약 2명</span></div><div class="krow"><span class="k">예상 대기</span><span class="v">약 3분</span></div>`);
       botSay('지금 상담 가능해요. 평균 약 3분 정도 기다리시면 돼요.');
       quick([{t:'급하면 전화 걸기',act:()=>{botSay('📞 1522-**** 로 연결해 드릴게요.');endActions();}},{t:'처음으로',go:'home',ghost:true}]);
     }},
-    {t:'내용 수정하기',ghost:true,act:()=>botSay('어떤 내용을 바꿀까요? 아래에 입력해 주세요.')},
+    {t:'내용 수정하기',ghost:true,act:()=>{botSay('어떤 내용을 바꿀까요? 아래에 입력하시면 그대로 전달할게요.');quick([{t:'수정 없이 연결하기',primary:true,act:()=>handoff(reason)},{t:'처음으로',go:'home',ghost:true}]);}},
   ]);
 }
 
@@ -357,8 +356,10 @@ function setBanner(){bannerSlot.innerHTML='';
   if(ctx==='payment'){const b=el(`<div class="banner fadein">💳<div><b>결제가 안 되시나요?</b> 바로 도와드릴게요.</div><span class="x">✕</span></div>`);b.querySelector('.x').onclick=e=>{e.stopPropagation();b.remove();};b.onclick=()=>{b.remove();meSay('결제가 안 돼요');go('pay_fail');};bannerSlot.appendChild(b);}
   if(ctx==='auth'){const b=el(`<div class="banner fadein">🔑<div><b>로그인이 안 되시나요?</b> 바로 도와드릴게요.</div><span class="x">✕</span></div>`);b.querySelector('.x').onclick=e=>{e.stopPropagation();b.remove();};b.onclick=()=>{b.remove();go('m_account');};bannerSlot.appendChild(b);}}
 
-function openChat(context){ctx=context||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');setTimeout(()=>NODES.home(),300);}
-function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');}
+let lastFocus=null;
+function trapFocus(e){if(e.key!=='Tab')return;const list=[...sheet.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];if(!list.length)return;const first=list[0],last=list[list.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+function openChat(context){ctx=context||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus();NODES.home();},300);}
+function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 document.getElementById('openBtn').onclick=()=>openChat('normal');
 document.getElementById('closeBtn').onclick=closeChat;
 document.getElementById('scrim').onclick=closeChat;
