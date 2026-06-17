@@ -120,6 +120,10 @@ select count(*), max(last_log_send_at) from kakao_partner_chats;
 
 ## 5. 실시간 스트림 (상시)
 
+> 💡 이 launchd 데몬은 **켜져 있는 맥북에서만** 돈다. 노트북을 닫거나 잠자기/종료하면
+> 수집이 멈춰 매일 갭이 생긴다. **노트북과 무관하게 24시간 끊김 없이** 수집하려면
+> 아래 **§10 GitHub Actions 상시 수집(권장)** 을 사용한다.
+
 ### 5-1. 포그라운드로 먼저 검증
 
 ```bash
@@ -231,3 +235,162 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 2. `useCSInsightsLive` (PR #36) 에 `kakao_partner_messages` 소스 추가
 3. 메시지 첨부파일 (이미지) 의 카카오 CDN 만료 대응 — Supabase Storage 미러링
 4. 갭 백필: `last_seen_log_id` 와 REST `last_log_id` 비교해서 누락 감지 시 알림
+
+---
+
+## 10. ✅ GitHub Actions 상시 수집 (노트북 없이 — 권장)
+
+launchd 데몬은 맥북이 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
+**100% REST 증분 폴링** 으로만 이뤄지므로(WS push 적재 0건), 그 폴링 1사이클을 떼어낸
+`scripts/kakao-partner-collect-once.mjs` 를 **항상 켜진 GitHub Actions 가 5분마다 호출**하면
+노트북 상태와 무관하게 끊김 없이 수집된다. (public 저장소라 Actions 무료·무제한)
+
+워크플로: `.github/workflows/kakao-collect.yml`
+
+### 10-1. 저장소 Secret 등록 (1회)
+
+GitHub → 저장소 → **Settings → Secrets and variables → Actions → New repository secret** 에서 3개 추가:
+
+| 이름 | 값 | 비고 |
+|---|---|---|
+| `KAKAO_PARTNER_COOKIE` | 파트너센터 로그인 쿠키 (§3-1 방식으로 추출) | 보통 1~4주마다 갱신 필요 |
+| `SUPABASE_URL` | `https://xxxx.supabase.co` | |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 (§3-3) | **절대 공개 금지** |
+
+채널이 기본 3개(`_VGAQn,_TkpPG,_xfxilXn`)와 다르면 **Variables** 탭에
+`KAKAO_PARTNER_PROFILE_IDS` 를 CSV 로 추가(코드 수정 불필요).
+
+### 10-2. 가동
+
+- 워크플로는 **`main` 브랜치에 머지된 뒤부터** 5분마다 자동 실행된다.
+- 즉시 1회 테스트: Actions 탭 → "카카오 상담 수집 (5분마다)" → **Run workflow**.
+- 수집 확인: `npm run kakao:status` 또는 §6 SQL.
+
+### 10-3. 쿠키 출처 & 만료 대응
+
+수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 맥북 Chrome 이 자동
+배달 — **§11**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
+
+- **§11 자동 배달을 켜두면** 맥북이 가끔만 켜져 있어도 보관함 쿠키가 항상 최신이라
+  **수동 갱신이 사실상 사라진다.**
+- 둘 다 만료된 경우에만 수집기가 `me()` 에서 401/403 → **워크플로 "실패" → 알림 메일**.
+  그때 Chrome 으로 재로그인하면(맥북) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
+  **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 를 수동 갱신한다.
+
+### 10-4. launchd 데몬 정리
+
+GitHub 수집이 며칠간 정상 확인되면 **상시 수집 데몬은 꺼도 된다**(둘 다 켜둬도 멱등
+upsert 라 중복 없음):
+```bash
+launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
+```
+단, **쿠키 자동 배달(§11)을 쓴다면 `com.amswiki.kakao-cookie-refresh` 는 끄지 말 것** —
+이 6시간 잡이 최신 쿠키를 Supabase 로 배달하는 "쿠키 배달부"다. (만료 시 수동 갱신만 할
+거라면 이 잡도 꺼도 된다.)
+
+### 10-5. 한계 / 주의
+
+- **주기**: GitHub Actions cron 최소 간격은 5분이며, 깃허브 부하 시 더 지연될 수 있다
+  (분 단위 실시간은 아님). 증분 폴링이 변경 채팅의 최근 200건을 재수집하므로 5~15분
+  지연은 데이터 누락 없이 메워진다.
+- **IP**: GitHub 데이터센터 IP 로 접속하므로, 카카오 어뷰즈 탐지에 걸리면 차단될 소지가
+  주거용 IP 보다 약간 높다. 차단 시 `me()` 가 403 → 위 알림 메일로 감지된다.
+- **쿠키 갱신**: §11 자동 배달을 켜면 거의 무인 운영. 안 켜면 만료 시 §10-3 으로 수동(월 1회 안팎).
+
+---
+
+## 11. ✅ 쿠키 자동 배달 (만료 수동 갱신 제거)
+
+**문제**: GitHub Secret 의 쿠키는 1~4주면 만료 → 수동 교체가 번거롭다.
+**해결**: 맥북 Chrome 은 로그인이 살아있는 한 항상 유효한 쿠키를 갖는다. 이를 6시간마다
+꺼내 **Supabase 보관함(`kakao_partner_secrets`)에 자동 배달**하고, GitHub 수집기가 매 실행 시
+거기서 최신 쿠키를 읽는다. → 쿠키 복사 작업이 사라진다.
+
+```
+맥북 Chrome(로그인 유지) ──6h──▶ kakao-partner-refresh-cookie.mjs
+                                  ├─ .env.local 갱신 (로컬 데몬용)
+                                  └─ Supabase kakao_partner_secrets 로 upsert   ← 자동 배달
+                                                   │
+GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신 쿠키 read → 사용
+```
+
+### 켜는 법
+
+1. **마이그레이션 적용**(1회): `supabase/migrations/20260617_kakao_partner_secrets.sql`
+   (Supabase Dashboard → SQL Editor 붙여넣고 RUN). RLS 활성 + 정책 0 → **service_role 전용**(외부 접근 차단).
+2. **맥북에 6시간 쿠키 잡 설치/유지**:
+   ```bash
+   cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
+   launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
+   ```
+   전제: Chrome 으로 business.kakao.com 로그인 유지 + 최초 1회 "Chrome Safe Storage" 키체인 허용.
+3. **즉시 첫 배달**(선택): `npm run kakao:refresh-cookie`
+   → 로그에 `Supabase 보관함에 쿠키 배달 완료` 가 뜨면 성공. 이후 GitHub 실행 로그엔
+   `cookie source: supabase (updated …)` 로 찍힌다.
+
+### 동작 보장
+
+- 맥북이 **24시간 켜질 필요 없음** — 쿠키 수명(1~4주) 안에 한 번이라도 켜져 6시간 잡이 돌면
+  보관함 쿠키가 갱신된다. 수집 자체는 노트북과 무관하게 GitHub 에서 계속된다.
+- 맥북이 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
+- 배달되는 쿠키는 계정 로그인 권한과 동등 → 테이블은 RLS 로 service_role 외 접근 차단(위 1번).
+
+---
+
+## 12. ✅ Supabase 예약 트리거 (GitHub cron 지연 보완 — 더 확실한 자동장치)
+
+**문제**: §10 의 GitHub Actions `schedule` 은 무료 러너 부하에 따라 첫 실행이 수십 분~수
+시간 밀리거나 건너뛰는 경우가 있다(특히 새로 머지된 워크플로). "5분마다"가 보장되지 않는다.
+
+**해결**: 항상 켜져 있고 분 단위로 정확한 **Supabase pg_cron** 이 5분마다 GitHub 의
+`workflow_dispatch` 를 직접 호출해 수집 워크플로를 깨운다. GitHub 자체 cron 은 백업으로 둔다.
+
+```
+Supabase pg_cron(*/5)  ──▶  pg_net.http_post  ──▶  GitHub workflow_dispatch  ──▶  kakao-collect.yml 실행
+   (항상 켜진 DB)          (Vault 의 PAT 로 인증)        (204 = 접수 성공)            (검증된 수집 1사이클)
+```
+
+설정 SQL: `supabase/migrations/20260617_kakao_collect_pg_cron_dispatch.sql`
+(확장 `pg_cron`/`pg_net` 활성 + `kakao-collect-dispatch` 잡 등록. 멱등.)
+
+### 12-1. 설치 (1회)
+
+1. **GitHub Fine-grained PAT 발급** — https://github.com/settings/personal-access-tokens/new
+   - Repository access: **Only select repositories → `sdij-wiki`**
+   - Permissions → Repository permissions → **`Actions`: Read and write**
+   - Generate → `github_pat_...` 복사(이 화면에서만 보임).
+2. **PAT 를 Supabase Vault 에 저장**(값은 저장소에 두지 않는다) — Dashboard → SQL Editor:
+   ```sql
+   select vault.create_secret(
+     '여기에_PAT_붙여넣기', 'github_actions_pat', 'kakao-collect 5분 디스패치용 GitHub PAT');
+   ```
+   이미 있으면 교체:
+   ```sql
+   select vault.update_secret(
+     (select id from vault.secrets where name = 'github_actions_pat'),
+     '여기에_새_PAT', 'github_actions_pat', 'kakao-collect 5분 디스패치용 GitHub PAT');
+   ```
+3. **마이그레이션 적용**(잡 등록) — 위 SQL 파일 전체를 SQL Editor 에 붙여넣고 RUN.
+   잡은 Vault 에 PAT 가 있을 때만 호출하므로 2↔3 순서는 무관하다.
+
+### 12-2. 동작/점검
+
+```sql
+-- 잡 실행 이력(5분 간격으로 succeeded 가 쌓이면 정상)
+select status, return_message, start_time
+from cron.job_run_details
+where jobid = (select jobid from cron.job where jobname='kakao-collect-dispatch')
+order by start_time desc limit 10;
+
+-- GitHub 호출 응답(204 = dispatch 접수 성공)
+select id, status_code, created from net._http_response order by created desc limit 10;
+```
+GitHub 쪽은 Actions 탭에 `event: workflow_dispatch` 실행이 5분 간격으로 찍힌다.
+
+### 12-3. 일시중지 / 토큰 만료
+
+- **중지**: `select cron.unschedule('kakao-collect-dispatch');`
+- **PAT 만료**(발급 시 만료기한 지정한 경우): dispatch 응답이 **401** 로 바뀌고 수집이
+  멈춘다 → §12-1 의 `update_secret` 으로 새 PAT 로 교체. (만료 없는 PAT 를 쓰면 무인 운영.)
+- §10 의 GitHub 자체 schedule 백업은 그대로라, Supabase 트리거가 멈춰도 GitHub 이
+  (지연은 있어도) 최소한의 수집은 이어간다.

@@ -14,6 +14,31 @@ import { execFileSync, execSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { getAdminClient } from './lib/supabase-admin.mjs';
+
+// 추출한 쿠키를 Supabase 보관함(kakao_partner_secrets)에 upsert → GitHub Actions 수집기가
+// 매 실행 시 최신 쿠키를 읽어감(쿠키 만료 수동 갱신 제거). 자격증명(SUPABASE_URL/
+// SERVICE_ROLE_KEY)은 --env-file=.env.local 로 주입(또는 데몬에서 상속)된 process.env 사용.
+// 수집기와 동일하게 supabase-js 클라이언트로 적재. best-effort: 실패해도 .env.local 갱신엔 무영향.
+async function pushCookieToSupabase(cookie) {
+  if (!(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.log('[refresh] SUPABASE_URL/SERVICE_ROLE_KEY 미설정 → Supabase 배달 생략. (node --env-file=.env.local 로 실행)');
+    return;
+  }
+  try {
+    const sb = getAdminClient();
+    const { error } = await sb
+      .from('kakao_partner_secrets')
+      .upsert(
+        { key: 'kakao_partner_cookie', value: cookie, updated_at: new Date().toISOString() },
+        { onConflict: 'key' },
+      );
+    if (error) throw error;
+    console.log('[refresh] Supabase 보관함에 쿠키 배달 완료 (GitHub 수집기가 픽업)');
+  } catch (e) {
+    console.log('[refresh] Supabase 배달 생략/실패:', e.message);
+  }
+}
 
 const HOME = os.homedir();
 const CHROME = path.join(HOME, 'Library/Application Support/Google/Chrome');
@@ -87,6 +112,10 @@ console.log(`[refresh] profile="${best.name}" cookies=${best.map.size} length=${
 const envPath = path.join(process.cwd(), '.env.local');
 let env = fs.readFileSync(envPath, 'utf8');
 const newVal = cookieStr.replace(/'/g, '');
+
+// Supabase 보관함으로 자동 배달 (GitHub Actions 수집기의 1차 쿠키 출처).
+// 변경 여부와 무관하게 매번 갱신해 보관함을 항상 최신으로 유지(만료 자동 예방).
+await pushCookieToSupabase(newVal);
 
 // 기존 값과 동일하면 쓰기/재시작 생략 → 주기적 cron 실행이 데몬을 헛되이 끊지 않게 함.
 const prev = env.match(/^KAKAO_PARTNER_COOKIE='?([^'\n]*)'?$/m);

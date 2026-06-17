@@ -24,11 +24,12 @@
     "kakao:bootstrap": "node --env-file=.env.local scripts/kakao-partner-bootstrap.mjs",
     "kakao:backfill": "node --env-file=.env.local scripts/kakao-partner-backfill.mjs",
     "kakao:stream": "node --env-file=.env.local scripts/kakao-partner-stream.mjs",
+    "kakao:collect-once": "node --env-file=.env.local scripts/kakao-partner-collect-once.mjs",
     "kakao:bootstrap:all": "node --env-file=.env.local scripts/kakao-partner-run-all.mjs kakao-partner-bootstrap.mjs",
     "kakao:backfill:all": "node --env-file=.env.local scripts/kakao-partner-run-all.mjs kakao-partner-backfill.mjs",
     "kakao:stream:all": "node --env-file=.env.local scripts/kakao-partner-multi-stream.mjs",
     "kakao:status": "node --env-file=.env.local scripts/kakao-partner-status.mjs",
-    "kakao:refresh-cookie": "node scripts/kakao-partner-refresh-cookie.mjs",
+    "kakao:refresh-cookie": "node --env-file=.env.local scripts/kakao-partner-refresh-cookie.mjs",
     "kakao:export": "node --env-file=.env.local scripts/kakao-partner-export-csv.mjs",
     "kakao:dashboard": "node --env-file=.env.local scripts/kakao-partner-dashboard.mjs",
     "kakao:sheets-sync": "node --env-file=.env.local scripts/kakao-partner-sheets-sync.mjs"
