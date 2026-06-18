@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no, address=no, email=no">
 <title>마이클래스 챗봇 — 자가해결 프로토타입</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 <style>
+  @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2')}
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{--accent:#2563eb;--accent-rgb:37,99,235;
     --text:#161616; --text-2:#161616cc; --helper:#1616168f; --placeholder:#161616a3;
@@ -498,7 +498,7 @@ log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function heroGreet(){const greet=sub('<b>{학생}</b>님, 안녕하세요');const ctx=sub('{지점} 캠퍼스 기준으로 안내해 드려요');const r=el(`<div class="hero fadein"><span class="spk"><svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true"><path d="M12 0c.45 6.3.96 7.9 3.32 9.6C17.62 11.2 19.1 11.55 24 12c-4.9.45-6.38.8-8.68 2.4C12.96 16.1 12.45 17.7 12 24c-.45-6.3-.96-7.9-3.32-9.6C6.38 12.8 4.9 12.45 0 12c4.9-.45 6.38-.8 8.68-2.4C11.04 7.9 11.55 6.3 12 0Z"/></svg></span><div class="hgreet">${greet}<br>무엇을 도와드릴까요?</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
+function heroGreet(){const greet=sub('<b>{학생}</b>님, 안녕하세요');const ctx=sub('{지점} 캠퍼스 기준으로 안내해 드려요');const r=el(`<div class="hero fadein"><div class="hgreet">${greet}<br>무엇을 도와드릴까요?</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{track('chatbot_quickfaq_click',{faq:o.go});meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
