@@ -115,8 +115,8 @@
   .chead{display:flex;align-items:center;gap:10px;padding:10px 16px 14px;touch-action:none}
   .avatar{width:36px;height:36px;border-radius:50%;background:var(--fill-strong);color:var(--text-inverse);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .avatar .ms{font-size:22px}
-  .chead .t{font-size:var(--fs-md);font-weight:700;line-height:1.25;color:var(--text-neutral)}
-  .chead .s{font-size:12px;color:var(--text-weak)}
+  .chead .t{font-size:var(--fs-md);font-weight:700;line-height:1.3;letter-spacing:-.1px;color:var(--text-neutral)}
+  .chead .s{font-size:var(--fs-cap);color:var(--text-weak);margin-top:4px}
   .chead .sp{flex:1}
   .iconbtn{width:36px;height:36px;border-radius:50%;border:none;background:var(--fill-subtle);cursor:pointer;color:var(--text-neutral);display:flex;align-items:center;justify-content:center;transition:background-color .16s var(--ease)}
   .iconbtn:hover{background:var(--border-strong)}
@@ -514,9 +514,9 @@ function regPick(area){
 }
 /* 납입증명서: 기간×항목 다양한 케이스를 1개 헬퍼로 접수 */
 function certIssue(desc){
-  botSay(`<b>${desc}</b> 납입증명서 발급을 도와드릴게요. 납입증명서는 <b>상담 실장이 결제내역에서 엑셀 파일(.xlsx)</b>로 발급해 드려요.`);
-  card(`<div class="ct">${ms('description')}납입증명서 발급 요청</div><div class="krow"><span class="k">발급 범위</span><span class="v">${desc}</span></div><div class="krow"><span class="k">발급 형식</span><span class="v">엑셀 파일(.xlsx)</span></div><div class="src">※ 상담 실장이 결제내역에서 확인해 엑셀로 발급한 뒤, 등록된 문자·이메일로 보내드려요.</div>`);
-  quick([{t:'상담 실장에게 발급 요청',primary:true,ic:'support_agent',act:()=>handoff('납입증명서 발급 · '+desc)},{t:'다른 범위로 발급',go:'pay_cert'},back('pay_status')]);
+  botSay(`<b>${desc}</b> 납입증명서 발급을 도와드릴게요. 납입증명서는 <b>상담 선생님이 결제내역에서 엑셀 파일(.xlsx)</b>로 발급해 드려요.`);
+  card(`<div class="ct">${ms('description')}납입증명서 발급 요청</div><div class="krow"><span class="k">발급 범위</span><span class="v">${desc}</span></div><div class="krow"><span class="k">발급 형식</span><span class="v">엑셀 파일(.xlsx)</span></div><div class="src">※ 상담 선생님이 결제내역에서 확인해 엑셀로 발급한 뒤, 등록된 문자·이메일로 보내드려요.</div>`);
+  quick([{t:'상담 선생님에게 발급 요청',primary:true,ic:'support_agent',act:()=>handoff('납입증명서 발급 · '+desc)},{t:'다른 범위로 발급',go:'pay_cert'},back('pay_status')]);
 }
 /* 동영상 보강: 강좌(여러 개)→주차 선택 — 더미 예시 데이터 */
 const MAKEUP={
@@ -563,8 +563,8 @@ const NODES={
   ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
     quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'아이디·비밀번호가 기억 안 나요',act:()=>{botSay('마이클래스 로그인은 <b>시대인재 통합회원(통합 ID)</b>을 써요. <b>이메일 주소(아이디)와 비밀번호</b>로 들어가면 돼요.<br>아이디(이메일)가 기억나지 않으면 로그인 화면의 <b>아이디 찾기</b>, 비밀번호는 <b>비밀번호 재설정</b>으로 본인확인 후 다시 정할 수 있어요.');quick([{t:'그래도 안 되면 도움받기',primary:true,act:()=>handoff('통합회원 아이디·가입 확인')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요.');
-    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">연결 방법·위치는 계정 상태에 따라 달라요. 지점 상담 실장이 계정을 확인해 정확히 안내해 드려요.</div>`);
-    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 지점 상담 실장이 안전하게 도와드려요.');quick([{t:'상담 실장 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
+    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">연결 방법·위치는 계정 상태에 따라 달라요. 지점 상담 선생님이 계정을 확인해 정확히 안내해 드려요.</div>`);
+    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 지점 상담 선생님이 안전하게 도와드려요.');quick([{t:'상담 선생님 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
   ac_app(){botSay('앱이 어떻게 안 되나요? 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
     quick([{t:'흰 화면만 떠요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하고, 앱을 완전히 종료한 뒤 다시 열어주세요. 그래도 흰 화면이면 <b>삭제 후 재설치</b>가 가장 확실해요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 흰 화면')},back('ac_app')]);}},
       {t:'자꾸 튕겨요·꺼져요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하거나 앱을 <b>삭제 후 재설치</b>해 주세요. 저장공간이 부족하면 더 자주 꺼질 수 있어요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 튕김·종료')},back('ac_app')]);}},
@@ -576,7 +576,7 @@ const NODES={
   m_pay(){botSay('결제·납부, 무엇을 도와드릴까요?');
     quick([{t:'미납·납부 현황',ic:'receipt_long',go:'pay_status'},{t:'결제 문자 다시 받기',ic:'sms',go:'pay_sms'},{t:'결제가 안 돼요',ic:'help',go:'pay_fail'},{t:'환불 알아보기',ic:'undo',go:'pay_refund'},{t:'영수증·결제수단',ic:'description',go:'pay_etc'},back('home')]);},
   pay_etc(){botSay('어떤 걸 도와드릴까요?');
-    quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 <b>상담 실장</b>이 확인해 안전하게 도와드려요. 바로 연결해 드릴게요.<br><span style="color:var(--text-weak)">앱의 계좌 정보 관리 메뉴에서는 현금영수증·환불 계좌 정보를 등록할 수 있어요.</span>');quick([{t:'결제수단 변경 상담',primary:true,act:()=>handoff('결제수단(카드) 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
+    quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 <b>상담 선생님</b>이 확인해 안전하게 도와드려요. 바로 연결해 드릴게요.<br><span style="color:var(--text-weak)">앱의 계좌 정보 관리 메뉴에서는 현금영수증·환불 계좌 정보를 등록할 수 있어요.</span>');quick([{t:'결제수단 변경 상담',primary:true,act:()=>handoff('결제수단(카드) 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
   pay_status(){const paidN=PAYITEMS.filter(i=>i.paid).length,tot=PAYITEMS.length,pct=Math.round(paidN/tot*100);
     const sum=PAYITEMS.filter(i=>!i.paid).reduce((s,i)=>s+payNum(i.a),0);
     cardLoad(`<div class="ct">${ms('receipt_long')}7월 납부 현황 · 김시대님</div>
@@ -596,10 +596,10 @@ const NODES={
      <div class="krow"><span class="k">입금 금액</span><span class="big">360,000원</span></div>
      <div class="src">※ 김시대님 전용 계좌예요. 위 계좌로 입금하면 자동으로 납부 처리돼요.</div>`);
     quick([{t:'가상계좌 문자로 받기',ic:'sms',primary:true,act:()=>{botSay('가상계좌 정보(은행·계좌번호·입금액)를 010-****-1234로 보내드렸어요. 은행 앱에 그대로 넣어 입금하면 돼요.');endActions();}},{t:'카드로 결제할래요',ic:'credit_card',act:()=>{botSay('카드 결제는 마이클래스 <b>납부하기</b> 화면으로 이동해 진행할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},back('pay_status')]);},
-  pay_cert(){botSay('납입증명서를 발급해 드릴게요. 납입증명서는 <b>상담 실장이 결제내역에서 엑셀 파일</b>로 발급해요. 어떤 <b>기준</b>으로 요청할까요?');
+  pay_cert(){botSay('납입증명서를 발급해 드릴게요. 납입증명서는 <b>상담 선생님이 결제내역에서 엑셀 파일</b>로 발급해요. 어떤 <b>기준</b>으로 요청할까요?');
     quick([{t:'올해(2026년) 전체',ic:'description',primary:true,act:()=>certIssue('2026년 전체')},{t:'작년(2025년) 전체',act:()=>certIssue('2025년 전체')},{t:'기간 지정',ic:'date_range',go:'cert_period'},{t:'항목만 선택',ic:'receipt_long',go:'cert_item'},back('pay_status')]);},
   cert_period(){botSay('어느 <b>기간</b>의 납입증명서가 필요하세요?');
-    quick([{t:'최근 3개월(5~7월)',act:()=>certIssue('2026년 5~7월 · 전체 항목')},{t:'상반기(1~6월)',act:()=>certIssue('2026년 1~6월 · 전체 항목')},{t:'특정 월만(예: 3월)',act:()=>certIssue('2026년 3월 · 전체 항목')},{t:'직접 기간 고르기',act:()=>{botSay('원하는 <b>시작월~종료월</b>을 알려주시면 상담 실장이 그 기간으로 정확히 발급해 드려요.');quick([{t:'상담 실장에게 발급 요청',primary:true,act:()=>handoff('납입증명서(기간 지정) 발급')},back('cert_period')]);}},back('pay_cert')]);},
+    quick([{t:'최근 3개월(5~7월)',act:()=>certIssue('2026년 5~7월 · 전체 항목')},{t:'상반기(1~6월)',act:()=>certIssue('2026년 1~6월 · 전체 항목')},{t:'특정 월만(예: 3월)',act:()=>certIssue('2026년 3월 · 전체 항목')},{t:'직접 기간 고르기',act:()=>{botSay('원하는 <b>시작월~종료월</b>을 알려주시면 상담 선생님이 그 기간으로 정확히 발급해 드려요.');quick([{t:'상담 선생님에게 발급 요청',primary:true,act:()=>handoff('납입증명서(기간 지정) 발급')},back('cert_period')]);}},back('pay_cert')]);},
   cert_item(){botSay('어떤 <b>항목</b>의 납입증명서가 필요하세요?');
     quick([{t:'수강료',act:()=>certIssue('수강료 · 2026년 7월')},{t:'교재비',act:()=>certIssue('교재비 · 2026년 7월')},{t:'콘텐츠 이용료',act:()=>certIssue('콘텐츠 이용료 · 2026년 7월')},{t:'전체 항목',act:()=>certIssue('전체 항목 · 2026년 7월')},back('pay_cert')]);},
   pay_fail(){botSay('결제창은 외부 결제로 잠깐 이동했다 돌아와요. 한 번 더 시도하면 되는 경우가 많고, 안 되면 결제 링크를 문자로 다시 보내드려요.');
@@ -717,7 +717,7 @@ const NODES={
   m_time(){botSay('수업·시간표, 무엇을 볼까요?');
     quick([{t:'내 시간표',ic:'calendar_month',go:'time_table'},
       {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
-      {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼</div><div class="guide">강좌별로 매주 강의교재·선택교재가 제공돼요. 강좌마다 구성이 달라서, 정확한 교재·커리큘럼 목록은 상담 실장이 안내해 드려요.</div>`);quick([{t:'커리큘럼 상담',primary:true,act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
+      {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼</div><div class="guide">강좌별로 매주 강의교재·선택교재가 제공돼요. 강좌마다 구성이 달라서, 정확한 교재·커리큘럼 목록은 상담 선생님이 안내해 드려요.</div>`);quick([{t:'커리큘럼 상담',primary:true,act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
       {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--text-weak)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
 
   /* 7. 상담원·자주묻는것 */
