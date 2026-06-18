@@ -26,7 +26,7 @@
     --shadow-2:0 1px 2px rgba(22,22,22,.04),0 10px 30px rgba(22,22,22,.07);
     --shadow-tile:0 1px 2px rgba(22,22,22,.06),0 5px 16px rgba(22,22,22,.08);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
-    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px; --fs-cap:12px; --lh-cap:18px;
+    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:48px; --fs-cap:12px; --lh-cap:18px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
@@ -259,8 +259,8 @@
   .hero.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:0;pointer-events:none}
   .hero .spk{display:inline-flex;animation:sparkin .55s var(--ease) both}
   .hero .spk svg path{fill:var(--accent)}
-  .hgreet{font-size:var(--fs-h);line-height:1.3;font-weight:600;letter-spacing:-.1px;color:var(--text-neutral)}
-  .hgreet b{font-weight:600}
+  .hgreet{font-size:var(--fs-h);line-height:var(--lh-h);font-weight:700;letter-spacing:normal;color:var(--text-neutral)}
+  .hgreet b{font-weight:700}
   .hsub{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--text-weak)}
   @keyframes sparkin{0%{opacity:0;transform:scale(.4) rotate(-35deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 12px}
