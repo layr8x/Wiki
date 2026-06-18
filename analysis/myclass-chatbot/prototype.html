@@ -220,15 +220,30 @@
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
   .qlabel{flex-basis:100%;font-size:12px;color:var(--helper);margin:6px 2px 0}
   .chip{border:1px solid var(--border-strong);background:var(--bg);color:var(--text-neutral);border-radius:var(--r-pill);padding:var(--s3) var(--s5);font-size:var(--fs-sm);line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .16s var(--ease),transform .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);display:inline-flex;align-items:center;gap:6px;box-shadow:var(--shadow-m)}
-  .chip:hover{background:var(--fill-subtle)}
-  .chip:active{transform:translateY(1px)}
-  .chip .ms{font-size:17px}
+  .chip:hover{background:var(--fill-subtle);transform:translateY(-1.5px);box-shadow:0 5px 16px rgba(22,22,22,.13)}
+  .chip:active{transform:translateY(0) scale(.97)}
+  .chip .ms{font-size:17px;transition:transform .16s var(--ease)}
+  .chip:active .ms{transform:scale(.92)}
   .chip.primary{background:var(--fill-strong);color:var(--text-inverse);border-color:var(--fill-strong);font-weight:700;box-shadow:0 2px 10px rgba(22,22,22,.22)}
+  .chip.primary:hover{box-shadow:0 7px 20px rgba(22,22,22,.28)}
   .chip.ghost{color:var(--text-weak)}
   .seg{display:inline-flex;background:var(--fill-subtle);border-radius:10px;padding:3px;gap:2px;margin:2px 0 12px}
   .seg button{border:none;background:transparent;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--text-weak);padding:7px 15px;border-radius:8px;cursor:pointer;transition:background-color .22s var(--ease),color .22s var(--ease),box-shadow .22s var(--ease)}
   .seg button.on{background:var(--bg);color:var(--text-neutral);box-shadow:0 1px 3px rgba(22,22,22,.10),0 1px 1px rgba(22,22,22,.06)}
   .seg button:not(.on):active{transform:scale(.96)}
+  /* ── 내 시간표: 요일별 시각 블록(아젠다형) ── */
+  .tt{margin-top:6px}
+  .tt-day{font-size:var(--fs-cap);font-weight:700;color:var(--text-secondary);margin:13px 0 7px;padding-left:2px}
+  .tt-day:first-child{margin-top:2px}
+  .tt-block{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border-subtle);border-left:3px solid var(--fill-strong);border-radius:6px;margin-bottom:6px;background:var(--bg)}
+  .tt-block.makeup{border-left-color:var(--gray30);border-left-style:dashed}
+  .tt-time{display:flex;flex-direction:column;line-height:1.18;flex-shrink:0;min-width:52px;font-variant-numeric:tabular-nums}
+  .tt-time b{font-size:var(--fs-sm);font-weight:800;color:var(--text-neutral)}
+  .tt-time span{font-size:var(--fs-cap);color:var(--text-weak)}
+  .tt-info{min-width:0}
+  .tt-info .pi-type{display:inline-block;margin-bottom:4px}
+  .tt-course{font-size:var(--fs-sm);font-weight:600;color:var(--text-neutral);line-height:1.3}
+  .tt-room{font-size:var(--fs-cap);color:var(--text-weak);margin-top:2px}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 12px}
   .mtile{display:flex;align-items:center;gap:10px;border:1px solid var(--border-strong);border-radius:var(--r-card);padding:13px 12px;cursor:pointer;background:var(--bg);transition:background-color .16s var(--ease),transform .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);text-align:left}
   .mtile:hover{background:var(--fill-subtle);border-color:var(--fill-strong);transform:translateY(-2px);box-shadow:0 6px 16px rgba(22,22,22,.08)}
@@ -238,11 +253,14 @@
   .mtile .l{font-size:var(--fs-sm);font-weight:700;line-height:1.3}
 
   .inputbar{display:flex;gap:8px;align-items:center;padding:10px 16px 18px;border-top:1px solid var(--border-subtle);background:var(--bg);flex-shrink:0}
-  .inputbar input{flex:1;height:44px;border:1px solid var(--border-strong);border-radius:999px;padding:0 16px;font-size:var(--fs-sm);font-family:var(--font);background:var(--fill-subtle);color:var(--text-neutral);outline:none}
+  .inputbar input{flex:1;height:44px;border:1px solid var(--border-strong);border-radius:999px;padding:0 16px;font-size:var(--fs-sm);font-family:var(--font);background:var(--fill-subtle);color:var(--text-neutral);outline:none;transition:border-color .2s var(--ease),background-color .2s var(--ease),box-shadow .2s var(--ease)}
+  .inputbar input:focus{border-color:var(--fill-strong);background:var(--bg);box-shadow:0 0 0 3px rgba(22,22,22,.06)}
   .inputbar input::placeholder{color:var(--placeholder)}
-  .send{width:44px;height:44px;border-radius:50%;border:none;background:var(--fill-strong);color:var(--text-inverse);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .send{width:44px;height:44px;border-radius:50%;border:none;background:var(--fill-strong);color:var(--text-inverse);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .18s var(--ease),box-shadow .18s var(--ease)}
+  .send:hover{transform:scale(1.06);box-shadow:0 4px 14px rgba(22,22,22,.22)}
+  .send:active{transform:scale(.9)}
   .send .ms{font-size:20px}
-  .fadein{animation:fi .26s var(--ease) both}
+  .fadein{animation:fi .34s var(--ease) both}
   .typing .msg{display:inline-flex;gap:5px;align-items:center}
   .td{width:6px;height:6px;border-radius:50%;background:#16161666;animation:blink 1.3s infinite}
   .td:nth-child(2){animation-delay:.18s}.td:nth-child(3){animation-delay:.36s}
@@ -253,7 +271,7 @@
   .toast{position:absolute;left:16px;right:16px;bottom:16px;z-index:60;background:var(--fill-strong);color:var(--text-inverse);border-radius:8px;padding:12px 14px;font-size:var(--fs-sm);display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(22,22,22,.18),0 1px 3px rgba(22,22,22,.12);transform:translateY(140%);opacity:0;transition:transform .4s var(--ease),opacity .4s var(--ease)}
   .toast.show{transform:translateY(0);opacity:1}
   .toast .ms{font-size:18px;animation:check-pop .34s var(--ease) both}
-  @keyframes fi{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
+  @keyframes fi{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
   @keyframes num-pop{from{opacity:0;transform:scale(.96) translateY(2px)}to{opacity:1;transform:none}}
   @keyframes check-pop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
   @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
@@ -677,12 +695,22 @@ const NODES={
 
   /* 6. 수업·시간표 */
   time_table(){
-    const S={this:[['금 13:30','이신혁T 지학 · W관 201'],['일 09:00','강기원T 수학 · 본관 101'],['일 18:30','강은양T 국어 · 엣지관 601']],
-            next:[['금 13:30','이신혁T 지학 · W관 201'],['토 14:00','지학 3주차 보강 · W관 201'],['일 09:00','강기원T 수학 · 본관 101'],['일 18:30','강은양T 국어 · 엣지관 601']]};
+    const S={this:[
+        {day:'금',time:'13:30',end:'17:00',sub:'과학',course:'이신혁T 지학Ⅰ 서바이벌',room:'W관 201호'},
+        {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
+        {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}],
+      next:[
+        {day:'금',time:'13:30',end:'17:00',sub:'과학',course:'이신혁T 지학Ⅰ 서바이벌',room:'W관 201호'},
+        {day:'토',time:'14:00',end:'17:30',sub:'보강',course:'지학Ⅰ 3주차 동영상 보강',room:'W관 201호',makeup:true},
+        {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
+        {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}]};
+    const DAY={'월':'월요일','화':'화요일','수':'수요일','목':'목요일','금':'금요일','토':'토요일','일':'일요일'};
     let wk='this';
     const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);
-    const draw=()=>{const rows=S[wk].map(x=>`<div class="krow"><span class="k">${x[0]}</span><span class="v">${x[1]}</span></div>`).join('');
-      r.querySelector('.card').innerHTML=`<div class="ct">${ms('calendar_month')}내 시간표</div><div class="seg">`+['this','next'].map(w=>`<button data-w="${w}" class="${w===wk?'on':''}">${w==='this'?'이번 주':'다음 주'}</button>`).join('')+`</div>${rows}`;};
+    const draw=()=>{const list=S[wk];let cur='',tt='';
+      list.forEach(x=>{if(x.day!==cur){cur=x.day;tt+=`<div class="tt-day">${DAY[x.day]||x.day}</div>`;}
+        tt+=`<div class="tt-block${x.makeup?' makeup':''}"><div class="tt-time"><b>${x.time}</b><span>~${x.end}</span></div><div class="tt-info"><span class="pi-type">${x.sub}</span><div class="tt-course">${x.course}</div><div class="tt-room">${x.room}</div></div></div>`;});
+      r.querySelector('.card').innerHTML=`<div class="ct">${ms('calendar_month')}내 시간표 · 주 ${list.length}개 수업</div><div class="seg">`+['this','next'].map(w=>`<button data-w="${w}" class="${w===wk?'on':''}">${w==='this'?'이번 주':'다음 주'}</button>`).join('')+`</div><div class="tt">${tt}</div>`;};
     log.appendChild(r);draw();scrollEnd();
     r.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.seg button');if(!b||b.dataset.w===wk)return;wk=b.dataset.w;draw();scrollEnd();});
     endActions();},
@@ -696,7 +724,7 @@ const NODES={
   m_help(){botSay('무엇을 도와드릴까요?');
     quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 · 대치</div><div class="guide">강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치',primary:true,act:()=>{card(`<div class="ct">${ms('inventory_2')}내 강좌 교재 수령 위치</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">대치 본관 1층 데스크</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">대치 수업관 2층</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">대치 연구소 1층</span></div>`);endActions();}},{t:'연구소 교재·교재비',act:()=>{botSay('연구소에서 받는 교재(강사 교재비)는 연구소에서 안내·정산해요. 상담원이 연구소로 연결해 드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('연구소 교재·교재비')},back('m_help')]);}},back('m_help')]);}},
       {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'제출 서류 안내',act:()=>{botSay('컨설팅에 필요한 제출 서류는 예약일 전에 준비하시면 좋아요. 정확한 서류 목록은 상담원이 안내해 드릴게요.');quick([{t:'서류 안내 상담원',primary:true,act:()=>handoff('컨설팅 제출 서류')},back('m_help')]);}},{t:'예약 변경·취소',act:()=>handoff('컨설팅 예약 변경')},back('m_help')]);}},
-      {t:'자습실 이용',ic:'local_library',act:()=>{botSay('자습실 신청·대기·연장을 도와드려요. 좌석·대기 현황과 연장 규칙은 그날그날 달라서, 상담원이 바로 확인해 신청을 도와드릴게요.');quick([{t:'자습실 상담원 연결',primary:true,act:()=>handoff('자습실 신청·대기')},back('m_help')]);}},
+      {t:'자습실 이용',ic:'local_library',act:()=>{botSay('자습실(부엉이 라이브러리) 신청·대기·연장을 도와드려요. 좌석·대기 현황과 연장 규칙은 그날그날 달라서, 상담원이 바로 확인해 신청을 도와드릴게요.');quick([{t:'자습실 상담원 연결',primary:true,act:()=>handoff('자습실 신청·대기')},back('m_help')]);}},
       {t:'상담원 연결',ic:'support_agent',act:()=>handoff('일반 상담')},back('home')]);},
   help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
     quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);},
