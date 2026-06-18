@@ -446,8 +446,8 @@ const NODES={
   ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
     quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'어느 걸로 가입했는지 모르겠어요',act:()=>{botSay('마이클래스는 <b>카카오·구글·네이버</b> 간편 로그인으로 가입돼요. 평소 자주 쓰는 것부터 눌러보면 대개 바로 들어가져요. 그래도 안 되면 가입 정보를 상담원이 확인해 드려요.');quick([{t:'카카오톡 상담으로 확인',primary:true,act:()=>handoffTech('소셜 가입수단 확인')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요.');
-    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">연결 방법·위치는 계정 상태에 따라 달라요. 카카오톡 상담에서 계정을 확인해 정확히 안내해 드릴게요.</div>`);
-    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoffTech('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 카카오톡 상담채널에서 안전하게 도와드려요.');quick([{t:'카카오톡 상담 연결',primary:true,act:()=>handoffTech('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
+    card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">연결 방법·위치는 계정 상태에 따라 달라요. 지점 상담 실장이 계정을 확인해 정확히 안내해 드려요.</div>`);
+    quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 지점 상담 실장이 안전하게 도와드려요.');quick([{t:'상담 실장 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
   ac_app(){botSay('앱이 어떻게 안 되나요? 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
     quick([{t:'흰 화면만 떠요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하고, 앱을 완전히 종료한 뒤 다시 열어주세요. 그래도 흰 화면이면 <b>삭제 후 재설치</b>가 가장 확실해요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 흰 화면')},back('ac_app')]);}},
       {t:'자꾸 튕겨요·꺼져요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하거나 앱을 <b>삭제 후 재설치</b>해 주세요. 저장공간이 부족하면 더 자주 꺼질 수 있어요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoffTech('앱 튕김·종료')},back('ac_app')]);}},
