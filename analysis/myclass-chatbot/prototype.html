@@ -10,12 +10,12 @@
 <style>
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{
-    --text:#161616; --helper:#1616168f; --placeholder:#161616a3;
+    --text:#161616; --text-2:#161616cc; --helper:#1616168f; --placeholder:#161616a3;
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
     --primary:#161616; --on-primary:#ffffff;
     /* 시맨틱 토큰 (TDS 3계층 구조 차용 — 용도 기반. 흑백 LUMEN 위에 의미층) */
-    --text-neutral:var(--primary); --text-weak:var(--helper); --text-inverse:var(--on-primary);
+    --text-neutral:var(--primary); --text-secondary:var(--text-2); --text-weak:var(--helper); --text-inverse:var(--on-primary);
     --text-strong:var(--tag-text); /* 라벨·키(key)용 진회색(#393939) — 흑(text-neutral)과 약회색(text-weak) 사이 */
     --fill-strong:var(--primary); --fill-subtle:var(--surface);
     --border-subtle:var(--border); --border-strong:var(--gray20);
@@ -23,9 +23,9 @@
     --ease:cubic-bezier(.23,1,.32,1); --ease-ios:cubic-bezier(.32,.72,0,1);
     --r-tag:2px; --r-btn:2px; --r-card:4px; --r-pill:999px; --r-bubble:16px; --r-sheet:12px;
     --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.06),0 8px 8px rgba(0,0,0,.04),0 16px 8px rgba(0,0,0,.02);
-    --shadow-2:0 1px 2px rgba(22,22,22,.06),0 4px 16px rgba(22,22,22,.06);
+    --shadow-2:0 1px 2px rgba(22,22,22,.05),0 6px 20px rgba(22,22,22,.06);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
-    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px;
+    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px; --fs-cap:12px; --lh-cap:18px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
@@ -69,8 +69,8 @@
   .userrow .ms{font-size:24px;color:#161616}
 
   /* ── 본문 ── */
-  .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-  .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
+  .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-variant-numeric:tabular-nums}
+  .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.64px;line-height:40px;color:#161616}
   .classwrap{padding:0 24px 24px}
   .tabs{display:flex}
   .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border:1px solid var(--border);border-bottom:none}
@@ -103,7 +103,7 @@
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet{position:absolute;left:0;right:0;bottom:0;height:90%;background:var(--bg);border-radius:var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .42s var(--ease-ios);
-    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none}
+    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none;font-variant-numeric:tabular-nums}
   .sheet.open{transform:translateY(0)}
   .grab{width:40px;height:4px;background:var(--gray30);border-radius:2px;margin:8px auto 4px;cursor:grab;touch-action:none}
   .sheet.dragging{transition:none}
@@ -140,13 +140,13 @@
   .bot .msg{background:var(--fill-subtle);color:var(--text-neutral);border-bottom-left-radius:4px}
   .me .msg{background:var(--fill-strong);color:var(--text-inverse);border-bottom-right-radius:4px}
 
-  .card{max-width:90%;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s var(--ease),opacity .32s var(--ease)}
+  .card{max-width:90%;background:var(--bg);border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s var(--ease),opacity .32s var(--ease)}
   .card.revealing{filter:blur(3px);opacity:.5}
   .skelwrap{display:flex;flex-direction:column;gap:10px;width:230px;max-width:72vw}
   .skel{height:13px;border-radius:4px;background:linear-gradient(90deg,var(--fill-subtle) 25%,var(--border-strong) 37%,var(--fill-subtle) 63%);background-size:400px 100%;animation:shimmer 1.15s infinite linear}
   .skel:nth-child(2){width:78%}.skel:nth-child(3){width:55%}
   @keyframes shimmer{from{background-position:-180px 0}to{background-position:180px 0}}
-  .card .ct{font-size:12px;color:var(--text-weak);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .card .ct{font-size:var(--fs-cap);line-height:var(--lh-cap);color:var(--text-secondary);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
   .card .ct .ms{font-size:16px}
   .krow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
   .krow:last-child{border-bottom:none}
@@ -254,7 +254,7 @@
 
   /* 데스크탑 좌측 세로 내비 (기본 숨김) */
   .desknav{display:none}
-  .desknav a{font-size:32px;line-height:40px;color:var(--helper);font-weight:200;letter-spacing:-.5px;cursor:pointer}
+  .desknav a{font-size:32px;line-height:40px;color:var(--helper);font-weight:200;letter-spacing:-.64px;cursor:pointer}
   .desknav a.on{color:#161616;width:fit-content;border-bottom:2px solid #161616;padding-bottom:2px}
   .deskonly{display:none}
 
