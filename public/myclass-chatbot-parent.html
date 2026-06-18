@@ -62,12 +62,12 @@
   .bell{position:relative}
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
   /* 진입 전 챗봇 아이콘: 은은한 비콘 링(입장 시 3회) + 부드러운 호버 — 과하지 않게 */
-  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#161616;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 2px 7px rgba(22,22,22,.22);transition:transform .22s var(--ease),box-shadow .22s var(--ease);animation:botbreath 2.8s var(--ease) infinite}
-  #openBtn:hover{transform:scale(1.1);box-shadow:0 5px 16px rgba(22,22,22,.30)}
+  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#3182f6;color:#fff;font-size:18px;cursor:pointer;box-shadow:0 2px 9px rgba(49,130,246,.32);transition:transform .22s var(--ease),box-shadow .22s var(--ease);animation:botbreath 2.8s var(--ease) infinite}
+  #openBtn:hover{transform:scale(1.1);box-shadow:0 6px 18px rgba(49,130,246,.42)}
   #openBtn:active{transform:scale(.92)}
-  #openBtn::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid #161616;opacity:0;pointer-events:none;animation:beacon 2.6s var(--ease) infinite .4s}
-  @keyframes beacon{0%{transform:scale(.72);opacity:.45}70%{opacity:0}100%{transform:scale(1.42);opacity:0}}
-  @keyframes botbreath{0%,100%{box-shadow:0 2px 7px rgba(22,22,22,.22)}50%{box-shadow:0 2px 7px rgba(22,22,22,.22),0 0 0 4px rgba(22,22,22,.07)}}
+  #openBtn::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid #3182f6;opacity:0;pointer-events:none;animation:beacon 2.6s var(--ease) infinite .4s}
+  @keyframes beacon{0%{transform:scale(.72);opacity:.5}70%{opacity:0}100%{transform:scale(1.42);opacity:0}}
+  @keyframes botbreath{0%,100%{box-shadow:0 2px 9px rgba(49,130,246,.32)}50%{box-shadow:0 2px 9px rgba(49,130,246,.32),0 0 0 4px rgba(49,130,246,.13)}}
   .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
   .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
@@ -340,11 +340,23 @@
 
   .tip{position:absolute;top:104px;right:20px;background:#161616;color:#fff;font-size:12px;padding:7px 11px;border-radius:8px;opacity:0;transition:.3s;z-index:30;pointer-events:none}
   .tip::after{content:"";position:absolute;top:-5px;right:18px;border:5px solid transparent;border-bottom-color:#161616;border-top:0}
-.ctxbar{display:flex;margin:0 0 10px}
+.ctxbar{position:relative;z-index:50;display:flex;margin:0 0 10px}
 .ctxsel{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:600;color:#161616cc;cursor:pointer;box-shadow:0 1px 2px rgba(22,22,22,.06);transition:background .15s}
-.ctxsel:hover{background:#fafafa}
+.ctxsel:hover,.ctxsel.open{background:#fafafa}
 .ctxsel b{color:#161616;font-weight:700}
 .ctxsel .ms{font-size:16px;color:#1616168f}
+.ctxsel .ms:last-child{transition:transform .2s}
+.ctxsel.open .ms:last-child{transform:rotate(180deg)}
+.ctxmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:212px;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:14px;box-shadow:0 10px 30px rgba(22,22,22,.16);padding:6px;display:none}
+.ctxmenu.open{display:block;animation:ddin .16s var(--ease)}
+@keyframes ddin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.ctxmenu .grp{font-size:11px;font-weight:700;color:#a1a1aa;letter-spacing:.02em;padding:8px 10px 4px}
+.ctxmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;border-radius:9px;padding:9px 10px;font:inherit;font-size:13px;color:#161616;cursor:pointer}
+.ctxmenu button:hover{background:#f4f4f5}
+.ctxmenu button.cur{font-weight:700}
+.ctxmenu button>span{flex:1}
+.ctxmenu button .ms{font-size:17px;color:#1616168f}
+.ctxmenu button .ck{color:#3182f6;font-size:16px}
 </style>
 </head>
 <body>
@@ -371,7 +383,7 @@
     <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
     <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">학부모님</span><span class="ms">keyboard_arrow_down</span></span><span class="ms cached">cached</span></div>
     <div class="headicons">
-      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미">smart_toy</span>
+      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미">forum</span>
       <span class="ms bell" aria-label="알림">notifications</span>
       <span class="ms deskonly" aria-label="전체메뉴">menu</span>
     </div>
@@ -479,10 +491,7 @@ let CTX={student:CHILDREN[0].student,grade:CHILDREN[0].grade,campus:CHILDREN[0].
 function sub(h){const cp=CAMPUSES[CTX.campus]||{};return String(h).replace(/\{학생\}/g,CTX.student).replace(/\{지점\}/g,CTX.campus).replace(/\{학년\}/g,CTX.grade).replace(/\{전화\}/g,cp.phone||'지점 상담실 대표번호로 연결').replace(/\{문자\}/g,cp.sms||'지점 상담실 문자(연동 예정)');}
 function syncShell(){try{const br=document.querySelector('.userrow .branch');if(br)br.textContent=CTX.campus;}catch(_){}}
 function rehome(){log.innerHTML='';setBanner();NODES.home();}
-function ctxBar(){const b=el(`<div class="ctxbar fadein"></div>`);const btn=el(`<button class="ctxsel" aria-label="지점·자녀 변경">${ms('place')}<b>${CTX.campus} · ${CTX.student} 학생</b>${ms('expand_more')}</button>`);btn.onclick=()=>pickCtx();b.appendChild(btn);log.appendChild(b);scrollEnd();}
-function pickCtx(){track('chatbot_ctx_change',{kind:'open'});botSay('무엇을 바꿀까요?');quick([{t:'자녀(학생) 변경',ic:'group',act:()=>pickChild()},{t:'지점 변경',ic:'place',act:()=>pickCampus()},{t:'그대로 둘게요',ghost:true,go:'home'}]);}
-function pickChild(){botSay('어느 <b>자녀</b> 기준으로 안내해 드릴까요?');quick([...CHILDREN.map((ch,i)=>({t:`${ch.student} · ${ch.grade}·${ch.campus}`+(i===CIDX?' · 현재':''),act:()=>{CIDX=i;CTX={student:ch.student,grade:ch.grade,campus:ch.campus};PAYITEMS=ch.pays;track('chatbot_ctx_change',{kind:'child',student:ch.student});syncShell();toast(ch.student+' 학생 기준으로 변경했어요');rehome();}})),{t:'이전',ghost:true,act:()=>pickCtx()}]);}
-function pickCampus(){botSay('어느 <b>지점</b> 상담 기준으로 바꿀까요?');quick([...CAMPUSES_LIST.map(c=>({t:c+' 캠퍼스'+(c===CTX.campus?' · 현재':''),act:()=>{CTX.campus=c;track('chatbot_ctx_change',{kind:'campus',campus:c});syncShell();toast(c+' 캠퍼스 기준으로 변경했어요');rehome();}})),{t:'이전',ghost:true,act:()=>pickCtx()}]);}
+function ctxBar(){const bar=el(`<div class="ctxbar fadein"></div>`);const btn=el(`<button class="ctxsel" aria-haspopup="true" aria-expanded="false">${ms('place')}<b>${CTX.campus} · ${CTX.student} 학생</b>${ms('expand_more')}</button>`);const menu=el(`<div class="ctxmenu" role="menu"></div>`);menu.innerHTML=`<div class="grp">자녀 선택</div>`+CHILDREN.map((ch,i)=>`<button data-k="child" data-i="${i}" class="${i===CIDX?'cur':''}">${ms('person')}<span>${ch.student} · ${ch.grade}·${ch.campus}</span>${i===CIDX?`<span class="ms ck">check</span>`:''}</button>`).join('')+`<div class="grp">지점 변경</div>`+CAMPUSES_LIST.map(c=>`<button data-k="campus" data-c="${c}" class="${c===CTX.campus?'cur':''}">${ms('place')}<span>${c} 캠퍼스</span>${c===CTX.campus?`<span class="ms ck">check</span>`:''}</button>`).join('');btn.onclick=e=>{e.stopPropagation();const op=menu.classList.toggle('open');btn.classList.toggle('open',op);btn.setAttribute('aria-expanded',op);};menu.querySelectorAll('button').forEach(bb=>{bb.onclick=e=>{e.stopPropagation();if(bb.dataset.k==='child'){const i=+bb.dataset.i;if(i!==CIDX){const ch=CHILDREN[i];CIDX=i;CTX={student:ch.student,grade:ch.grade,campus:ch.campus};PAYITEMS=ch.pays;track('chatbot_ctx_change',{kind:'child',student:ch.student});syncShell();toast(ch.student+' 학생 기준으로 변경했어요');rehome();return;}}else{const c=bb.dataset.c;if(c!==CTX.campus){CTX.campus=c;track('chatbot_ctx_change',{kind:'campus',campus:c});syncShell();toast(c+' 캠퍼스 기준으로 변경했어요');rehome();return;}}menu.classList.remove('open');btn.classList.remove('open');btn.setAttribute('aria-expanded','false');};});bar.appendChild(btn);bar.appendChild(menu);log.appendChild(bar);scrollEnd();}
 const ms=n=>`<span class="ms" aria-hidden="true">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
@@ -783,6 +792,7 @@ function closeChat(){track('chatbot_close',{resolved:__resolved,nodes_visited:__
  [grab,chead].forEach(elm=>{if(!elm)return;elm.addEventListener('touchstart',s,{passive:true});elm.addEventListener('mousedown',s);});
  window.addEventListener('touchmove',m,{passive:true});window.addEventListener('touchend',en);window.addEventListener('mousemove',m);window.addEventListener('mouseup',en);})();
 document.getElementById('openBtn').onclick=()=>openChat('normal');
+document.addEventListener('click',()=>{const m=document.querySelector('.ctxmenu.open');if(m){m.classList.remove('open');const bt=m.parentNode&&m.parentNode.querySelector('.ctxsel');if(bt){bt.classList.remove('open');bt.setAttribute('aria-expanded','false');}}});
 document.getElementById('closeBtn').onclick=closeChat;
 document.getElementById('scrim').onclick=closeChat;
 document.getElementById('homeBtn').onclick=()=>{log.innerHTML='';setBanner();NODES.home();};
