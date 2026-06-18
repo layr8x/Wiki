@@ -2,7 +2,7 @@
 
 > **목적**: "챗봇이 실제로 효과가 있는가"를 숫자로 알기 위한 측정 이벤트·지표 정의.
 > **배경**: GA4 분석 결과 현재 앱에는 챗봇 효과 측정용 이벤트가 **계측되어 있지 않음**(자가해결·핸드오프·인증 성공/실패 모두 0건). 본 문서는 그 공백을 메우는 설계안이다.
-> **연결 문서**: `FINAL_PROCESS.md`(SSOT) · `DATA_ANALYSIS.md`(기존 GA4 근거)
+> **SSOT**: `prototype.html`(NODES·헬퍼·배열 기준) · 연결: `DATA_ANALYSIS.md`(기존 GA4 근거)
 > **상태**: 설계안(개발 연동 시 실제 GA4/gtag 스키마에 맞춰 확정 — [확인필요] 표기)
 
 ---
@@ -18,7 +18,7 @@
 |---|---|---|
 | **자가해결율** (North Star) | 핸드오프 없이 '다 해결됐어요'/완료로 끝난 세션 비율 | 챗봇의 본질 효과(디플렉션) |
 | **핸드오프율 (채널별)** | 전화 / 마이클래스 카톡 / LIVE 카톡으로 넘어간 비율 | 어디로, 왜 사람에게 가는지 |
-| **메뉴별 진입·완주** | 8개 메뉴 진입 수 · 해결 도달률 | 어떤 메뉴가 효과 있나/막히나 |
+| **메뉴별 진입·완주** | 8개 메뉴(account·pay·enroll·live·attend·time·quit·help) 진입 수 · 해결 도달률 | 어떤 메뉴가 효과 있나/막히나 |
 | **이탈 노드 Top** | 해결도 핸드오프도 없이 닫은 직전 노드 | 시나리오 구멍 발견 |
 | **만족도** | 도움됐어요 / 아쉬웠어요 비율 | 체감 품질 |
 | **배너 전환율** | 진입 배너 클릭 / 노출 | 선제 안내 효과(결제·로그인·특강) |
@@ -33,15 +33,15 @@
 | event_name | 발생 시점(프로토타입 함수) | 주요 파라미터 |
 |---|---|---|
 | `chatbot_open` | `openChat(ctx)` | `entry_context`: normal·payment·auth·recruitment |
-| `chatbot_menu_select` | 메뉴 타일 클릭 (`menuGrid`) | `menu_key`: account·pay·enroll·live·attend·time·help·quit |
-| `chatbot_node_view` | `go(node)` 진입 | `node_id`: 예) pay_status, live_video |
+| `chatbot_menu_select` | 메뉴 타일 클릭 (`menuGrid`) | `menu_key`: account·pay·enroll·live·attend·time·quit·help |
+| `chatbot_node_view` | `go(node)` 진입 | `node_id`: 예) pay_status·pay_sms·pay_va·pay_cert·en_reg·en_waitset·en_check·en_wait·at_makeup·time_table |
 | `chatbot_quickfaq_click` | 홈 '자주 찾는 것' 칩 | `faq`: refund·makeup·app |
 | `chatbot_self_resolved` | '다 해결됐어요' 또는 핸드오프 없이 `endActions` 종료 | `last_node` |
 | `chatbot_handoff` | `handoff` / `handoffTech` / `handoffLive` 호출 | `channel`: phone·myclass_kakao·live_kakao / `reason` |
 | `chatbot_handoff_open` | '전화 연결' / '카카오톡 상담 열기' 실제 클릭 | `channel` |
 | `chatbot_satisfaction` | 👍/👎 (`endActions` 피드백) | `rating`: up·down / `last_node` |
 | `chatbot_banner_click` | 진입 배너 클릭 (`setBanner`) | `context`: payment·auth·recruitment |
-| `chatbot_copy` | 번호 복사 버튼 | `copy_type`: phone·sms |
+| `chatbot_copy` | 번호 복사 버튼(copybtn) | `copy_type`: phone(상담실 전화)·sms(상담실 문자)·account(가상계좌) |
 | `chatbot_close` | `closeChat` | `resolved`(bool) · `nodes_visited`(int) |
 
 ### 앱 본체(챗봇 밖) 추가 권고 — GA4 공백 해소
