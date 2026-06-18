@@ -14,6 +14,10 @@
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
     --primary:#161616; --on-primary:#ffffff;
+    /* 시맨틱 토큰 (TDS 3계층 구조 차용 — 용도 기반. 흑백 LUMEN 위에 의미층) */
+    --text-neutral:var(--primary); --text-weak:var(--helper); --text-inverse:var(--on-primary);
+    --fill-strong:var(--primary); --fill-subtle:var(--surface);
+    --border-subtle:var(--border); --border-strong:var(--gray20);
     --r-tag:2px; --r-btn:2px; --r-card:4px; --r-pill:999px; --r-bubble:16px; --r-sheet:12px;
     --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.06),0 8px 8px rgba(0,0,0,.04),0 16px 8px rgba(0,0,0,.02);
     --shadow-2:0 1px 2px rgba(22,22,22,.06),0 4px 16px rgba(22,22,22,.06);
@@ -188,6 +192,9 @@
   .chip .ms{font-size:17px}
   .chip.primary{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:700;box-shadow:0 2px 10px rgba(22,22,22,.22)}
   .chip.ghost{color:var(--helper)}
+  .seg{display:inline-flex;background:var(--fill-subtle);border-radius:10px;padding:3px;gap:2px;margin:2px 0 12px}
+  .seg button{border:none;background:transparent;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--text-weak);padding:7px 15px;border-radius:8px;cursor:pointer;transition:background-color .22s cubic-bezier(.23,1,.32,1),color .22s cubic-bezier(.23,1,.32,1),box-shadow .22s cubic-bezier(.23,1,.32,1)}
+  .seg button.on{background:var(--bg);color:var(--text-neutral);box-shadow:0 1px 3px rgba(22,22,22,.10),0 1px 1px rgba(22,22,22,.06)}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 12px}
   .mtile{display:flex;align-items:center;gap:10px;border:1px solid var(--gray20);border-radius:var(--r-card);padding:13px 12px;cursor:pointer;background:#fff;transition:background-color .14s,transform .14s cubic-bezier(.23,1,.32,1),border-color .14s,box-shadow .14s;text-align:left}
   .mtile:hover{background:var(--surface);border-color:#161616;transform:translateY(-2px);box-shadow:0 6px 16px rgba(22,22,22,.08)}
@@ -558,8 +565,18 @@ const NODES={
     ]);}},back('m_attend')]);},
 
   /* 6. 수업·시간표 */
+  time_table(){
+    const S={this:[['금 13:30','이신혁T 지학 · W관 201'],['일 09:00','강기원T 수학 · 본관 101'],['일 18:30','강은양T 국어 · 엣지관 601']],
+            next:[['금 13:30','이신혁T 지학 · W관 201'],['토 14:00','지학 3주차 보강 · W관 201'],['일 09:00','강기원T 수학 · 본관 101'],['일 18:30','강은양T 국어 · 엣지관 601']]};
+    let wk='this';
+    const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);
+    const draw=()=>{const rows=S[wk].map(x=>`<div class="krow"><span class="k">${x[0]}</span><span class="v">${x[1]}</span></div>`).join('');
+      r.querySelector('.card').innerHTML=`<div class="ct">${ms('calendar_month')}내 시간표</div><div class="seg">`+['this','next'].map(w=>`<button data-w="${w}" class="${w===wk?'on':''}">${w==='this'?'이번 주':'다음 주'}</button>`).join('')+`</div>${rows}`;};
+    log.appendChild(r);draw();scrollEnd();
+    r.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.seg button');if(!b||b.dataset.w===wk)return;wk=b.dataset.w;draw();scrollEnd();});
+    endActions();},
   m_time(){botSay('수업·시간표, 무엇을 볼까요?');
-    quick([{t:'내 시간표',ic:'calendar_month',act:()=>{cardLoad(`<div class="ct">${ms('calendar_month')}이번 주 시간표</div><div class="krow"><span class="k">금 13:30</span><span class="v">이신혁T 지학 · W관 201</span></div><div class="krow"><span class="k">일 09:00</span><span class="v">강기원T 수학 · 본관 101</span></div><div class="krow"><span class="k">일 18:30</span><span class="v">강은양T 국어 · 엣지관 601</span></div>`);endActions();}},
+    quick([{t:'내 시간표',ic:'calendar_month',go:'time_table'},
       {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
       {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼 (상반기)</div><div class="guide">강좌별 강의교재·선택교재가 매주 제공돼요. 예) 지학 엑셀러레이터·서바이벌 모의고사, 수학 브릿지 모의고사·VORTEX 등.<br><span style="color:var(--helper)">앱에서는 전체메뉴 → 납부·결제 → 서바이벌 선택 커리큘럼에서 볼 수 있어요. 강좌별 정확한 구성은 상담원이 안내해 드려요.</span></div>`);quick([{t:'커리큘럼 상담',act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
       {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--helper)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
