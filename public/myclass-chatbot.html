@@ -81,8 +81,8 @@
 
   /* ── 하단 탭바 ── */
   .bottomnav{display:flex;gap:8px;padding:0 8px;border-top:1px solid var(--border);flex-shrink:0;background:#fff}
-  .navitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;font-size:14px;color:var(--placeholder)}
-  .navitem .ms{font-size:28px}
+  .navitem{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;font-size:var(--fs-sm);color:var(--placeholder)}
+  .navitem .ms{font-size:24px}
   .navitem.on{color:#161616}
   /* 브라우저 하단 chrome */
   .chrome-bot{height:48px;flex-shrink:0;background:#f8f8f8;border-top:.5px solid #d6d6d6;display:flex;align-items:center;justify-content:space-between;padding:0 26px;color:#5f6368}
@@ -143,6 +143,8 @@
   .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
   .pill.ok{background:#16161610;color:#161616}
   .pill.due{background:#161616;color:#fff}
+  .pill.wait{background:#16161610;color:#393939}
+  .pill.muted{background:transparent;color:var(--helper);border:1px solid var(--border)}
   .guide{font-size:14px;line-height:1.75;color:#161616}
   .guide b{font-weight:700}
   .guide ol{margin:4px 0 0 18px}
@@ -156,6 +158,27 @@
   .qdots i{width:9px;height:9px;border-radius:50%;background:#161616;flex-shrink:0}
   .qdots i.me{background:#fff;border:2px solid #161616;width:12px;height:12px}
   .qdots .qn{font-size:12px;color:var(--helper);margin-left:6px}
+  .hmap{margin-top:10px}
+  .hmaphead,.hmaprow{display:grid;grid-template-columns:58px repeat(6,1fr);gap:5px}
+  .hmaphead{margin-bottom:6px}
+  .hmaphead span{font-size:12px;color:var(--helper);text-align:center}
+  .hmaprow{align-items:center;margin-bottom:5px}
+  .hmaprow .hl{font-size:12px;color:#393939;white-space:nowrap;font-weight:600}
+  .hcell{aspect-ratio:1;border-radius:4px;background:var(--surface);box-sizing:border-box}
+  .hcell.p{background:#161616}
+  .hcell.l{background:#16161685}
+  .hcell.a{background:#16161618;border:1px solid #16161633}
+  .hcell.f{background:transparent;border:1px dashed var(--gray20)}
+  .hleg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--helper)}
+  .hleg span{display:inline-flex;align-items:center;gap:5px}
+  .hleg i{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+  .witem{padding:12px 0;border-bottom:1px solid var(--border)}
+  .witem:first-child{padding-top:2px}
+  .witem:last-child{border-bottom:none;padding-bottom:0}
+  .wtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .wc{font-weight:700;font-size:14px}
+  .wurgent{font-size:12px;color:#161616;font-weight:700;margin-top:8px;display:flex;align-items:center;gap:5px}
+  .wurgent .ms{font-size:16px}
 
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
   .qlabel{flex-basis:100%;font-size:12px;color:var(--helper);margin:6px 2px 0}
@@ -368,7 +391,7 @@ function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,
 function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'앱이 안 돼요',go:'ac_app'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
-function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>botSay('고마워요! 또 필요하면 언제든 불러주세요.')},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
+function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
 function offHours(){const h=new Date().getHours();return h>=22||h<8;}
 function handoff(reason){
   botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
@@ -461,13 +484,30 @@ const NODES={
      <div class="krow"><span class="k">강은양T 국어</span><span class="v"><span class="pill due">결제대기</span></span></div>
      <div class="krow"><span class="k">다음 결제 예정</span><span class="v">7/19</span></div>`);
     quick([{t:'결제대기 건 지금 결제',primary:true,go:'pay_status'},back('m_enroll')]);},
-  en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황</div>
-     <div class="krow"><span class="k">강은양T 국어</span><span class="v">대기 3번</span></div>
-     <div class="krow"><span class="k">접수일</span><span class="v">7/10</span></div>
-     <div class="qdots"><i></i><i></i><i class="me"></i><span class="qn">내 앞 2명 · 자리 나면 순서대로 안내</span></div>
-     <div class="src">※ 자리가 나면 대기 순번대로 문자로 안내해 드려요.</div>`);
-    botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요. 알림만 켜두고 기다리시면 돼요.');
-    quick([{t:'충원되면 문자 받기',primary:true,act:()=>{botSay('자리가 나면 바로 010-****-1234로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
+  en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황 · 3건</div>
+     <div class="witem">
+       <div class="wtop"><span class="pill due">충원</span><span class="wc">강기원T 수학 · 일 09:00</span></div>
+       <div class="wurgent">${ms('schedule')}자리가 났어요 · 오늘 23:59까지 등록하면 확정</div>
+     </div>
+     <div class="witem">
+       <div class="wtop"><span class="pill ok">대기 1번</span><span class="wc">이신혁T 지학 · 토 14:00</span></div>
+       <div class="qdots"><i class="me"></i><span class="qn">내 앞 0명 · 곧 차례예요</span></div>
+     </div>
+     <div class="witem">
+       <div class="wtop"><span class="pill wait">대기 3번</span><span class="wc">강은양T 국어 · 일 18:30</span></div>
+       <div class="qdots"><i></i><i></i><i class="me"></i><span class="qn">내 앞 2명 · 대기 중</span></div>
+     </div>`);
+    botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요.');
+    quick([{t:'수학 지금 등록',primary:true,act:()=>{botSay('충원된 강기원T 수학 등록을 진행할게요. 결제창으로 이동합니다.');endActions();}},{t:'대기 상태 안내',ic:'help',go:'en_waitinfo'},{t:'충원되면 문자 받기',act:()=>{botSay('자리가 나면 바로 010-****-1234로 순번대로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
+  en_waitinfo(){card(`<div class="ct">${ms('help')}대기 상태 안내 · 모든 경우</div>
+     <div class="krow"><span class="k"><span class="pill due">충원</span> 자리 남</span><span class="v">기한 내 등록하면 확정</span></div>
+     <div class="krow"><span class="k"><span class="pill ok">대기 1번</span> 충원 임박</span><span class="v">곧 차례 · 알림 대기</span></div>
+     <div class="krow"><span class="k"><span class="pill wait">대기 N번</span> 대기 중</span><span class="v">앞 순번만큼 대기</span></div>
+     <div class="krow"><span class="k"><span class="pill muted">마감</span> 대기 종료</span><span class="v">개강·정원확정으로 마감</span></div>
+     <div class="krow"><span class="k"><span class="pill ok">등록완료</span></span><span class="v">충원되어 등록됨</span></div>
+     <div class="krow"><span class="k"><span class="pill muted">취소</span></span><span class="v">본인이 대기 취소</span></div>
+     <div class="src">※ 대기는 한 번만 신청하면 되고, 순번은 신청 순서로 고정돼요. 충원은 결석·취소가 생길 때 순번대로 진행돼요.</div>`);
+    quick([back('en_wait')]);},
   en_waitset(){botSay('마감된 강좌도 대기를 걸어두면 충원 시 순서대로 기회가 와요. 어떤 강좌를 대기할까요?');quick([{t:'강은양T 국어 대기',primary:true,act:()=>{botSay('대기 접수됐어요. 충원되면 순번대로 문자로 안내해요. 한 번만 신청해두면 됩니다.');endActions();}},back('m_enroll')]);},
   en_special(){botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');
     quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);},
@@ -496,9 +536,20 @@ const NODES={
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
-    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},
+    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
       {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정을 미리 알려주시면 좋아요. 빠진 수업은 <b>동영상 보강</b>으로 들을 수 있고, 회차 자료도 문자로 받을 수 있어요.');quick([{t:'동영상 보강 신청하기',primary:true,go:'at_makeup'},{t:'결석·지각 상담원에게 접수',act:()=>handoff('결석·지각 예정 신고')},back('m_attend')]);}},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
+  at_week(){cardLoad(`<div class="ct">${ms('calendar_view_week')}주간 출결 현황 · 최근 6주</div>
+     <div class="hmap" aria-hidden="true">
+       <div class="hmaphead"><span></span><span>6주전</span><span>5주전</span><span>4주전</span><span>3주전</span><span>지난주</span><span>이번주</span></div>
+       <div class="hmaprow"><span class="hl">지학·금</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hmaprow"><span class="hl">수학·일</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell a"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hmaprow"><span class="hl">국어·일</span><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hleg"><span><i class="hcell p"></i>출석</span><span><i class="hcell l"></i>지각</span><span><i class="hcell a"></i>결석</span><span><i class="hcell f"></i>예정</span></div>
+     </div>
+     <div class="barrow"><span>최근 출석률</span><span><b>80%</b> · 출석 12 · 지각 2 · 결석 1</span></div><div class="bar"><i style="width:80%"></i></div>`);
+    botSay('최근 6주 출결이에요. 결석 1회는 <b>동영상 보강</b>으로 채울 수 있어요.');
+    quick([{t:'결석분 보강 신청',primary:true,go:'at_makeup'},back('m_attend')]);},
   at_makeup(){botSay('어떤 강좌 보강인가요? 강좌·주차 단위로 조회·신청할 수 있어요.\n신청 시 수강료가 차감될 수 있어요(연속 동보 허용 등 일부 제외).');
     quick([{t:'이신혁T 지학Ⅰ',primary:true,act:()=>{botSay('몇 주차 보강인가요?');quick([
       {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청 접수됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
