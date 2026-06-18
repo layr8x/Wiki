@@ -201,7 +201,7 @@ npm run build
 ## 관련 문서
 
 - [프로젝트 README](../README.md)
-- [기여 가이드](../CONTRIBUTING.md)
+- [기여 가이드](../.github/CONTRIBUTING.md)
 - [환경 변수 설정](.env.example)
 
 ## 추가 도움말
