@@ -150,6 +150,7 @@
   .card .ct .ms{font-size:16px}
   .krow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
   .krow:last-child{border-bottom:none}
+  .krow:has(+ .src){border-bottom:none} /* 각주(※ .src)가 바로 뒤따르면 그 점선이 구분선 역할 → 행 밑줄 제거(이중선 방지) */
   .krow .k{font-size:var(--fs-sm);color:var(--text-weak)}
   .krow .v{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);text-align:right;font-variant-numeric:tabular-nums}
   .big{font-size:var(--fs-xs);line-height:var(--lh-xs);font-weight:800;letter-spacing:-.4px;color:var(--text-neutral);font-variant-numeric:tabular-nums;display:inline-block;animation:num-pop .26s var(--ease) both}
@@ -167,6 +168,25 @@
   .bar{height:6px;border-radius:999px;background:var(--fill-subtle);overflow:hidden;margin-top:6px}
   .bar > i{display:block;height:100%;background:var(--fill-strong);border-radius:999px;transform-origin:left;animation:bargrow .7s var(--ease) both}
   @keyframes bargrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  /* ── 납부 카드: 인보이스/빌링 느낌(항목별 무엇을 내는지 명시) ── */
+  .paylist{margin-top:2px}
+  .payitem{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border-subtle)}
+  .payitem .pi-l{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .payitem .pi-type{align-self:flex-start;font-size:var(--fs-cap);line-height:1;color:var(--text-secondary);background:var(--fill-subtle);border-radius:4px;padding:3px 7px;font-weight:600}
+  .payitem .pi-name{font-size:var(--fs-sm);font-weight:600;color:var(--text-neutral);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .payitem .pi-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .payitem .pi-amt{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);font-variant-numeric:tabular-nums}
+  .payitem.paid .pi-type{color:var(--text-weak);background:transparent;border:1px solid var(--border-subtle);padding:2px 6px}
+  .payitem.paid .pi-amt{color:var(--text-weak);font-weight:600}
+  .paydue{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;font-size:var(--fs-sm)}
+  .paydue .pd-k{color:var(--text-weak)}
+  .paydue .pd-v{font-weight:700;color:var(--text-neutral);font-variant-numeric:tabular-nums}
+  .paytotal{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:14px;border-top:2px solid var(--fill-strong)}
+  .paytotal .pt-k{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral)}
+  /* 등록 현황: 강좌명 전체 노출(줄바꿈 허용) + 강좌별 결제일 서브라인 */
+  .enr .payitem{align-items:flex-start}
+  .enr .pi-name{white-space:normal;line-height:1.4;font-weight:700}
+  .enr-sub{font-size:var(--fs-cap);color:var(--text-weak);font-variant-numeric:tabular-nums}
   .qdots{display:flex;align-items:center;gap:5px;margin-top:10px}
   .qdots i{width:9px;height:9px;border-radius:50%;background:var(--fill-strong);flex-shrink:0}
   .qdots i.me{background:var(--bg);border:2px solid var(--fill-strong);width:12px;height:12px}
@@ -284,11 +304,13 @@
   body[data-view="tablet"] .userrow,body[data-view="desktop"] .userrow{margin:0}
 
   /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 (트리거=헤더 우상단 forum 아이콘, 도킹 위젯 관례인 우하단 코너) */
-  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:24px;width:392px;border-radius:16px;transform:translateY(16px) scale(.98);transform-origin:bottom right;opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
-  body[data-view="tablet"] .sheet{bottom:100px;height:min(560px,64%)}
-  body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,82%)}
+  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:24px;width:392px;border-radius:16px;border:1px solid rgba(22,22,22,.10);box-shadow:0 18px 50px rgba(22,22,22,.30),0 6px 18px rgba(22,22,22,.16);transform:translateY(16px) scale(.98);transform-origin:bottom right;opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
+  /* 도킹 패널 크기 기준: 태블릿·데스크탑 동일 392×700(화면 넘으면 자동 축소). 인트로(메뉴+자주찾는것)가 스크롤 없이 들어가는 높이 */
+  body[data-view="tablet"] .sheet{bottom:100px;height:min(700px,calc(100% - 124px))}
+  body[data-view="desktop"] .sheet{bottom:24px;height:min(700px,calc(100% - 48px))}
   body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
-  body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:transparent}
+  /* 패널이 배경과 또렷이 분리되도록 옅은 백드롭 딤(투명→살짝 어둡게) */
+  body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:rgba(22,22,22,.12)}
   /* 도킹 패널에선 드래그 핸들 불필요(닫기 버튼으로 닫음) → 모바일 바텀시트에서만 노출 */
   body[data-view="tablet"] .grab,body[data-view="desktop"] .grab{display:none}
   body[data-view="tablet"] .chead,body[data-view="desktop"] .chead{padding-top:14px}
@@ -416,9 +438,8 @@ function handoff(reason){
   botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
   card(`<div class="ct">${ms('support_agent')}대치 캠퍼스 고3 상담실</div><div class="guide">
    · 학생 <b>김시대</b> · 지점 <b>대치 캠퍼스(고3)</b><br>· 문의 <b>${reason}</b>
-   <div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div>
    <div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div>
-   <span style="color:var(--text-weak)">문자로 남길 땐 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</span></div>`);
+   <span style="color:var(--text-weak)">전화는 아래 ‘전화 연결’ 버튼으로 바로 걸 수 있어요. 문자로 남길 땐 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</span></div>`);
   if(offHours())botSay('지금은 상담원 응답이 어려운 늦은 시간이에요. 전화가 안 되면 <b>문자로 남겨</b> 두시면 운영 시작 시 가장 먼저 연락드려요. 급한 자가해결은 제가 지금 도와드릴 수 있어요.');
   quick([
    {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
@@ -443,6 +464,38 @@ function handoffLive(reason){
   card(`<div class="ct">${ms('forum')}시대인재 LIVE 기술지원 카카오톡 상담</div><div class="guide">· 문의 내용·발생 시점<br>· 강좌·콘텐츠명<br>· 화면 캡처(있으면)<br>· 기기·OS 버전</div>`);
   quick([{t:'LIVE 카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 LIVE 기술지원</b> 카카오톡 채널을 열게요. 남겨주시면 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_LIVE,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
+/* 마감 강좌 대기: 영역→강좌 2단 선택(과목·강사 다른 여러 강좌 대응) — 더미 예시 데이터 */
+const WAITCOURSES={
+  '국어':[['김민정T 국어 독서','월 18:30 · 엣지관 6층','대기 3명'],['강은양T 국어 문학','일 18:30 · 엣지관 601호','대기 6명']],
+  '수학':[['강기원T 수학 서바이벌','토 14:00 · 본관 101호','대기 5명'],['배성민T 수학 미적정규','월 18:30 · W관 301호','대기 9명']],
+  '과학':[['이신혁T 지학Ⅱ 심화','수 18:30 · W관 201호','대기 8명'],['한준호T 생명과학','목 18:30 · 연구소 2층','대기 2명']],
+  '영어':[['박정T 영어 독해','금 18:30 · 본관 401호','대기 4명']],
+};
+function waitPick(area){
+  const list=WAITCOURSES[area]||[];
+  card(`<div class="ct">${ms('event_busy')}${area} · 대기 가능한 마감 강좌</div>`+list.map(c=>`<div class="witem"><div class="wtop"><span class="pill wait">${c[2]}</span><span class="wc">${c[0]}</span></div><div style="font-size:var(--fs-cap);color:var(--text-weak);margin-top:6px">${c[1]}</div></div>`).join(''));
+  botSay('대기할 강좌를 고르면 한 번만 접수해 두면 돼요. 충원되면 순번대로 문자가 가요.');
+  quick([...list.map(c=>({t:c[0],ic:'add',label:c[0]+' 대기',act:()=>{botSay(`<b>${c[0]}</b> 대기 접수됐어요. 충원되면 순번대로 문자로 안내해요. 여러 번 신청해도 순번은 빨라지지 않아요.`);endActions();}})),{t:'다른 영역 보기',ghost:true,act:()=>go('en_waitset')},back('m_enroll')]);
+}
+/* 수강신청·입반: 영역→강좌 2단 선택(과목·강사 다른 여러 강좌 대응) — 더미 예시 데이터 */
+const REGCOURSES={
+  '국어':[['김민정T 국어 독서','월 18:30 · 엣지관 6층','잔여 4석'],['강은양T 국어 문학','일 18:30 · 엣지관 601호','잔여 1석']],
+  '수학':[['강기원T 수학 서바이벌 미적정규','일 09:00 · 본관 101호','잔여 2석'],['배성민T 수학 미적','토 14:00 · W관 301호','잔여 6석']],
+  '과학':[['이신혁T 지학Ⅱ 심화','수 18:30 · W관 201호','잔여 3석'],['한준호T 생명과학','목 18:30 · 연구소 2층','잔여 1석']],
+  '영어':[['박정T 영어 독해','금 18:30 · 본관 401호','잔여 5석']],
+};
+function regPick(area){
+  const list=REGCOURSES[area]||[];
+  card(`<div class="ct">${ms('how_to_reg')}${area} · 신청 가능한 강좌</div>`+list.map(c=>`<div class="witem"><div class="wtop"><span class="pill due">${c[2]}</span><span class="wc">${c[0]}</span></div><div style="font-size:var(--fs-cap);color:var(--text-weak);margin-top:6px">${c[1]}</div></div>`).join(''));
+  botSay('신청할 강좌를 고르면 바로 <b>수강신청 화면</b>으로 안내해 드려요.');
+  quick([...list.map(c=>({t:c[0],ic:'how_to_reg',label:c[0]+' 신청',act:()=>{botSay(`마이클래스 <b>수강신청</b> 화면으로 이동해 <b>${c[0]}</b> 입반 신청을 진행할게요. 화면에서 신청·결제까지 마치면 등록이 확정돼요.`);quick([{t:'신청 링크 문자로 받기',ic:'sms',act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'다른 강좌 보기',ghost:true,act:()=>go('en_reg')},{t:'처음으로',go:'home',ghost:true}]);}})),{t:'다른 영역 보기',ghost:true,act:()=>go('en_reg')},{t:'마감 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);
+}
+/* 납입증명서: 기간×항목 다양한 케이스를 1개 헬퍼로 접수 */
+function certIssue(desc){
+  botSay(`<b>${desc}</b> 납입증명서 발급 신청이 접수됐어요. 1~2 영업일 안에 처리해 <b>문자(010-****-1234)</b>로 보내드릴게요.`);
+  card(`<div class="ct">${ms('description')}납입증명서 발급 접수</div><div class="krow"><span class="k">발급 범위</span><span class="v">${desc}</span></div><div class="krow"><span class="k">수령 방법</span><span class="v">문자(전자증명서)</span></div><div class="src">※ 원본(우편·방문) 수령이 필요하면 상담 실장이 도와드려요.</div>`);
+  quick([{t:'다른 증명서도 발급',go:'pay_cert'},{t:'원본 수령 문의',act:()=>handoff('납입증명서 원본 수령')},{t:'처음으로',go:'home',ghost:true}]);
+}
 const NODES={
   home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();},
 
@@ -450,7 +503,7 @@ const NODES={
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
   ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
-    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'어느 걸로 가입했는지 모르겠어요',act:()=>{botSay('마이클래스는 <b>카카오·구글·네이버</b> 간편 로그인으로 가입돼요. 평소 자주 쓰는 것부터 눌러보면 대개 바로 들어가져요. 그래도 안 되면 가입 정보를 상담원이 확인해 드려요.');quick([{t:'카카오톡 상담으로 확인',primary:true,act:()=>handoffTech('소셜 가입수단 확인')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
+    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'아이디·비밀번호가 기억 안 나요',act:()=>{botSay('마이클래스는 <b>시대인재 통합회원(통합 ID)</b>으로 로그인해요. 아이디는 <b>이메일 주소</b>이고, 최초 1회 회원가입 후 비밀번호로 들어가요.<br>아이디(이메일)가 기억나지 않으면 로그인 화면의 <b>아이디 찾기</b>, 비밀번호는 <b>비밀번호 재설정</b>에서 본인확인으로 찾을 수 있어요.');quick([{t:'그래도 안 되면 도움받기',primary:true,act:()=>handoff('통합회원 아이디·가입 확인')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요.');
     card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">연결 방법·위치는 계정 상태에 따라 달라요. 지점 상담 실장이 계정을 확인해 정확히 안내해 드려요.</div>`);
     quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 지점 상담 실장이 안전하게 도와드려요.');quick([{t:'상담 실장 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
@@ -465,27 +518,36 @@ const NODES={
   m_pay(){botSay('결제·납부, 무엇을 도와드릴까요?');
     quick([{t:'미납·납부 현황',ic:'receipt_long',go:'pay_status'},{t:'결제 문자 다시 받기',ic:'sms',go:'pay_sms'},{t:'결제가 안 돼요',ic:'help',go:'pay_fail'},{t:'환불 알아보기',ic:'undo',go:'pay_refund'},{t:'영수증·결제수단',ic:'description',go:'pay_etc'},back('home')]);},
   pay_etc(){botSay('어떤 걸 도와드릴까요?');
-    quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 <b>전체메뉴 → 납부·결제 → 계좌 정보 관리</b>에서 바꾸거나, 상담원이 도와드려요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('결제수단 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
-  pay_status(){cardLoad(`<div class="ct">${ms('receipt_long')}납부 현황 · 김시대님</div>
-     <div class="krow"><span class="k">7월 수강료</span><span class="v"><span class="pill due">미납</span> 360,000원</span></div>
-     <div class="krow"><span class="k">7월 교재비</span><span class="v">완납</span></div>
-     <div class="krow"><span class="k">납부 기한</span><span class="v">7/19</span></div>
-     <div class="krow"><span class="k">합계 미납</span><span class="big">360,000원</span></div>
-     <div class="barrow"><span>이번 달 납부</span><span><b>2개 중 1개</b> 완납</span></div><div class="bar"><i style="width:50%"></i></div>`);
-    quick([{t:'지금 결제하기',ic:'payment',primary:true,act:()=>{botSay('결제창으로 이동할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'가상계좌 확인',ic:'account_balance',go:'pay_va'},{t:'납입증명서 발급',ic:'description',go:'pay_cert'},{t:'결제 문자 다시 받기',go:'pay_sms'},back('m_pay')]);},
-  pay_sms(){botSay('등록된 번호 <b>010-****-1234</b>로 결제 링크를 다시 보내드렸어요. 문자 속 링크에서 결제하면 돼요.');endActions();},
+    quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 앱에서 직접 바꾸는 메뉴가 없어요. <b>상담 실장</b>이 확인해 도와드려요.<br><span style="color:var(--text-weak)">전체메뉴 → 납부·결제 → 계좌 정보 관리에서는 현금영수증 발급 정보·환불 계좌 정보만 등록할 수 있어요.</span>');quick([{t:'결제수단 변경 상담',primary:true,act:()=>handoff('결제수단(카드) 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
+  pay_status(){cardLoad(`<div class="ct">${ms('receipt_long')}7월 납부 현황 · 김시대님</div>
+     <div class="paylist">
+       <div class="payitem"><div class="pi-l"><span class="pi-type">수강료</span><span class="pi-name">이신혁T 지학Ⅰ 서바이벌</span></div><div class="pi-r"><span class="pill due">미납</span><span class="pi-amt">360,000원</span></div></div>
+       <div class="payitem paid"><div class="pi-l"><span class="pi-type">교재비</span><span class="pi-name">지학 서바이벌 교재</span></div><div class="pi-r"><span class="pill ok">완납</span><span class="pi-amt">45,000원</span></div></div>
+       <div class="payitem paid"><div class="pi-l"><span class="pi-type">콘텐츠</span><span class="pi-name">지학 복습영상(동영상 보강)</span></div><div class="pi-r"><span class="pill ok">완납</span><span class="pi-amt">30,000원</span></div></div>
+     </div>
+     <div class="paydue"><span class="pd-k">납부 기한</span><span class="pd-v">7/19까지</span></div>
+     <div class="paytotal"><span class="pt-k">합계 미납</span><span class="big">360,000원</span></div>
+     <div class="barrow"><span>결제 진행</span><span><b>3건 중 2건</b> 완료</span></div><div class="bar"><i style="width:66%"></i></div>`,5);
+    quick([{t:'지금 결제하기',ic:'payment',primary:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'가상계좌 확인',ic:'account_balance',go:'pay_va'},{t:'납입증명서 발급',ic:'description',go:'pay_cert'},{t:'결제 문자 다시 받기',go:'pay_sms'},back('m_pay')]);},
+  pay_sms(){botSay('어떤 결제 건의 링크를 문자로 받을까요? <b>미납 건</b>만 보내드릴 수 있어요.');
+    quick([{t:'7월 수강료 · 이신혁T 지학Ⅰ (360,000원)',ic:'sms',primary:true,act:()=>{botSay('등록된 번호 <b>010-****-1234</b>로 <b>7월 수강료 · 이신혁T 지학Ⅰ</b> 결제 링크를 보냈어요. 문자 속 링크에서 결제하면 돼요.');endActions();}},{t:'미납 내역 다시 보기',go:'pay_status'},back('m_pay')]);},
   pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · 김시대님</div>
+     <div class="krow"><span class="k">납부 항목</span><span class="v">7월 수강료 · 이신혁T 지학Ⅰ</span></div>
      <div class="krow"><span class="k">입금 은행</span><span class="v">신한은행</span></div>
-     <div class="krow"><span class="k">계좌번호</span><span class="v">110-***-******</span></div>
+     <div class="krow"><span class="k">계좌번호</span><span class="v">110-204-567890<button class="copybtn" data-c="110204567890" aria-label="계좌번호 복사">${ms('content_copy')}</button></span></div>
      <div class="krow"><span class="k">예금주</span><span class="v">(주)시대인재</span></div>
      <div class="krow"><span class="k">입금 기한</span><span class="v">7/19</span></div>
      <div class="krow"><span class="k">입금 금액</span><span class="big">360,000원</span></div>
-     <div class="src">※ 김시대님 전용 계좌예요. 입금하면 자동으로 납부 처리돼요.</div>`);
-    quick([{t:'결제 문자 다시 받기',go:'pay_sms'},back('pay_status')]);},
-  pay_cert(){botSay('납입증명서, 어떤 항목으로 발급할까요?');
-    quick([{t:'7월 수강료 납입증명서',primary:true,act:()=>{botSay('발급 신청이 접수됐어요. 1~2 영업일 안에 처리해 문자로 보내드릴게요.');endActions();}},back('pay_status')]);},
+     <div class="src">※ 김시대님 전용 계좌예요. 위 계좌로 입금하면 자동으로 납부 처리돼요.</div>`);
+    quick([{t:'가상계좌 문자로 받기',ic:'sms',primary:true,act:()=>{botSay('가상계좌 정보(은행·계좌번호·입금액)를 010-****-1234로 보내드렸어요. 은행 앱에 그대로 넣어 입금하면 돼요.');endActions();}},{t:'카드로 결제할래요',ic:'credit_card',act:()=>{botSay('카드 결제는 마이클래스 <b>납부하기</b> 화면으로 이동해 진행할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},back('pay_status')]);},
+  pay_cert(){botSay('납입증명서를 발급해 드릴게요. 어떤 <b>기간·항목</b>으로 만들까요?');
+    quick([{t:'이번 달(7월) 전체',ic:'description',primary:true,act:()=>certIssue('2026년 7월 · 전체 항목')},{t:'기간 지정해서 발급',ic:'date_range',go:'cert_period'},{t:'항목만 선택',ic:'receipt_long',go:'cert_item'},{t:'올해 전체(2026년)',act:()=>certIssue('2026년 1~12월 · 전체 항목')},back('pay_status')]);},
+  cert_period(){botSay('어느 <b>기간</b>의 납입증명서가 필요하세요?');
+    quick([{t:'최근 3개월(5~7월)',act:()=>certIssue('2026년 5~7월 · 전체 항목')},{t:'상반기(1~6월)',act:()=>certIssue('2026년 1~6월 · 전체 항목')},{t:'특정 월만(예: 3월)',act:()=>certIssue('2026년 3월 · 전체 항목')},{t:'직접 기간 고르기',act:()=>{botSay('전체메뉴 → 납부·결제 → 증명서 발급에서 <b>시작월~종료월</b>을 직접 골라 발급할 수 있어요. 어려우면 상담 실장이 발급해 드려요.');quick([{t:'상담 실장에게 발급 요청',primary:true,act:()=>handoff('납입증명서(기간 지정) 발급')},back('cert_period')]);}},back('pay_cert')]);},
+  cert_item(){botSay('어떤 <b>항목</b>의 납입증명서가 필요하세요?');
+    quick([{t:'수강료',act:()=>certIssue('수강료 · 2026년 7월')},{t:'교재비',act:()=>certIssue('교재비 · 2026년 7월')},{t:'콘텐츠 이용료',act:()=>certIssue('콘텐츠 이용료 · 2026년 7월')},{t:'전체 항목',act:()=>certIssue('전체 항목 · 2026년 7월')},back('pay_cert')]);},
   pay_fail(){botSay('결제창은 외부 결제로 잠깐 이동했다 돌아와요. 한 번 더 시도하면 되는 경우가 많고, 안 되면 결제 링크를 문자로 다시 보내드려요.');
-    quick([{t:'결제 다시 시도',primary:true,act:()=>{botSay('결제창을 다시 열게요.');endActions();}},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'그래도 안 돼요',act:()=>handoff('결제 진행 불가')},back('m_pay')]);},
+    quick([{t:'결제 다시 시도',primary:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 다시 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'그래도 안 돼요',act:()=>handoff('결제 진행 불가')},back('m_pay')]);},
   pay_refund(){botSay('환불은 <b>이용한 회차</b> 기준으로 계산돼요. 강좌·교재 반납 여부에 따라 달라져서, 정확한 금액은 상담원이 확정해 드려요.');
     card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div>
      <div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div>
@@ -495,14 +557,16 @@ const NODES={
   /* 3. 입반·등록·대기·전반 */
   m_enroll(){botSay('입반·등록, 무엇을 도와드릴까요?');
     quick([{t:'수강신청·입반',ic:'how_to_reg',go:'en_reg'},{t:'내 등록 확인',ic:'task_alt',go:'en_check'},{t:'대기 접수 현황',ic:'pin',go:'en_wait'},{t:'특강 신청 본인인증이 안 돼요',ic:'sms',go:'en_special'},{t:'반 변경(전반)',ic:'sync_alt',go:'en_transfer'},back('home')]);},
-  en_reg(){botSay('원하는 강좌를 고르면 <b>입반 신청 링크를 문자로</b> 보내드려요.');
-    card(`<div class="ct">${ms('event')}강기원T 수학 서바이벌 미적정규</div><div class="krow"><span class="k">일 09:00-12:35 · 본관 101호</span><span class="v"><span class="pill due">잔여 2석</span></span></div>`);
-    quick([{t:'입반 신청 문자 받기',primary:true,act:()=>{botSay('신청 링크를 010-****-1234로 보내드렸어요. 링크에서 신청을 마치면 돼요.');endActions();}},{t:'마감된 강좌 대기 걸기',go:'en_waitset'},back('m_enroll')]);},
-  en_check(){cardLoad(`<div class="ct">${ms('task_alt')}내 등록 현황</div>
-     <div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v"><span class="pill ok">등록완료</span></span></div>
-     <div class="krow"><span class="k">강은양T 국어</span><span class="v"><span class="pill due">결제대기</span></span></div>
-     <div class="krow"><span class="k">다음 결제 예정</span><span class="v">7/19</span></div>`);
-    quick([{t:'결제대기 건 지금 결제',primary:true,go:'pay_status'},back('m_enroll')]);},
+  en_reg(){botSay('수강신청·입반을 도와드릴게요. 어떤 <b>영역</b>의 강좌를 신청할까요? 잔여석이 있으면 바로 수강신청 화면으로 안내해 드려요.');
+    quick([{t:'국어',act:()=>regPick('국어')},{t:'수학',act:()=>regPick('수학')},{t:'과학',act:()=>regPick('과학')},{t:'영어',act:()=>regPick('영어')},{t:'마감 강좌 대기 걸기',ghost:true,go:'en_waitset'},back('m_enroll')]);},
+  en_check(){cardLoad(`<div class="ct">${ms('task_alt')}내 등록 현황 · 3개 강좌</div>
+     <div class="paylist enr">
+       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">이신혁T 지학Ⅰ 서바이벌</span><span class="enr-sub">8/24 종강 예정 · 추가 결제 없음</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">국어</span><span class="pi-name">강은양T 국어 문학</span><span class="enr-sub">결제 기한 7/19 · 미납 시 자동 취소</span></div><div class="pi-r"><span class="pill due">결제대기</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">수학</span><span class="pi-name">강기원T 수학 서바이벌 미적정규</span><span class="enr-sub">다음 결제 7/26 · 매월 정기결제</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
+     </div>`,5);
+    botSay('강좌마다 <b>결제일이 달라요</b>. 결제대기 1건은 기한(7/19) 내 결제하지 않으면 자동 취소될 수 있어요.');
+    quick([{t:'결제대기 건 지금 결제',ic:'payment',primary:true,go:'pay_status'},{t:'다른 강좌 더 신청',ic:'how_to_reg',go:'en_reg'},back('m_enroll')]);},
   en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황 · 3건</div>
      <div class="witem">
        <div class="wtop"><span class="pill due">충원</span><span class="wc">강기원T 수학 · 일 09:00</span></div>
@@ -527,7 +591,8 @@ const NODES={
      <div class="krow"><span class="k"><span class="pill muted">취소</span></span><span class="v">본인이 대기 취소</span></div>
      <div class="src">※ 대기는 한 번만 신청하면 되고, 순번은 신청 순서로 고정돼요. 충원은 결석·취소가 생길 때 순번대로 진행돼요.</div>`);
     quick([back('en_wait')]);},
-  en_waitset(){botSay('마감된 강좌도 대기를 걸어두면 충원 시 순서대로 기회가 와요. 어떤 강좌를 대기할까요?');quick([{t:'강은양T 국어 대기',primary:true,act:()=>{botSay('대기 접수됐어요. 충원되면 순번대로 문자로 안내해요. 한 번만 신청해두면 됩니다.');endActions();}},back('m_enroll')]);},
+  en_waitset(){botSay('마감된 강좌도 대기를 걸어두면 충원 시 순서대로 기회가 와요. 어떤 <b>영역</b>의 강좌를 대기할까요?');
+    quick([{t:'국어',act:()=>waitPick('국어')},{t:'수학',act:()=>waitPick('수학')},{t:'과학',act:()=>waitPick('과학')},{t:'영어',act:()=>waitPick('영어')},back('m_enroll')]);},
   en_special(){botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');
     quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);},
   en_transfer(){botSay('반 변경은 어떤 이유인가요? 더 나은 자리를 먼저 찾아드릴게요.');

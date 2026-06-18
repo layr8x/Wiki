@@ -106,30 +106,47 @@ npm run dev          # → http://localhost:5173
 
 ## 프로젝트 구조
 
+> 🧭 루트의 **설정 파일**들은 빌드·배포 도구(Vite·Vercel·Supabase·GitHub)가 *정해진 위치*에서 읽어가므로 옮기지 않습니다. 아래는 "무엇이 무엇인지" 한눈에 보는 지도입니다.
+
+### 📁 폴더 — 용도별
+| 폴더 | 용도 |
+|------|------|
+| `src/` | **웹앱 본체**(React) — 위키·운영챗봇·관리자 화면 소스 |
+| `api/` | **서버리스 함수**(Vercel) — Confluence/Jira 프록시·OAuth·동기화·검색요약 |
+| `public/` | 정적 파일 + **마이클래스 챗봇 프로토타입**(`myclass-chatbot.html` → `/chatbot`) |
+| `supabase/` | **데이터베이스 설계도**(migrations) — 위키·카카오 수집·RLS |
+| `scripts/` | 카카오 상담 **수집·대시보드 스크립트** |
+| `analysis/` | 분석·프로토타입 작업물(마이클래스 챗봇 디자인·문서) |
+| `docs/` | 설계·운영·연동 **문서 모음** (아래 [문서](#문서) 색인) |
+| `e2e/` | **E2E 테스트**(Playwright) |
+| `.github/` | GitHub Actions(CI·배포) · 기여/보안 정책 문서 |
+| `.claude/` · `.codex/` | AI 에이전트(Claude·Codex) 설정 |
+
+### 📄 루트 설정 파일 — *옮기면 빌드/배포가 깨져 그대로 유지*
+| 파일 | 용도 |
+|------|------|
+| `package.json` · `package-lock.json` | 의존성·실행 스크립트 |
+| `vite.config.js` · `index.html` | 빌드 도구(Vite) 설정·진입점 |
+| `vercel.json` · `.vercelignore` | 배포(Vercel) 설정 |
+| `eslint.config.js` · `jsconfig.json` | 코드 검사·경로 별칭 |
+| `components.json` | shadcn/ui 설정 |
+| `playwright.config.js` | E2E 테스트 설정 |
+| `.env.example` | 환경변수 **목록·설명**(실제 키는 `.env`, 커밋 금지) |
+| `.gitignore` · `.nvmrc` · `.mcp.json` | Git 제외 · Node 버전 · MCP |
+| `README.md` · `CLAUDE.md` · `AGENTS.md` | 소개 · AI 작업 규칙 |
+
+### 📂 `src/` 내부
 ```
 src/
-├── components/
-│   ├── chatbot/        # 운영 챗봇 (config·hook·UI)
-│   ├── common/         # Layout, Header, Sidebar 등
-│   ├── integrations/   # Jira/Confluence 설정 UI
-│   ├── search/         # ⌘K 명령 팔레트
-│   └── ui/             # shadcn/ui 컴포넌트 28개
-├── pages/              # 라우트 페이지 (Home·Guide·FAQ·Admin 등)
-├── hooks/              # React Query 훅 (useGuides·useManagerFaq 등)
-├── data/               # 가이드·FAQ·분석 시드 데이터 (폴백)
-├── lib/                # supabase·db·confluence·utils
-├── store/              # Auth·Search·I18n 스토어
-└── locales/            # 다국어 (ko·en)
+├── components/   # chatbot · common · integrations · search · ui(shadcn 28개)
+├── pages/        # 라우트 페이지 (Home·Guide·FAQ·Admin)
+├── hooks/        # React Query 훅
+├── data/         # 가이드·FAQ·분석 시드(폴백)
+├── lib/          # supabase·db·confluence·utils
+├── store/        # Auth·Search·I18n
+└── locales/      # 다국어 (ko·en)
 
-api/                    # Vercel 서버리스 함수
-├── confluence/ jira/   # REST 프록시
-├── oauth/              # Atlassian OAuth 2.0 콜백
-├── sync/               # 가이드 원본 동기화
-└── search-summary.js   # Claude 기반 검색 요약
-
-supabase/migrations/    # DB 스키마 (위키·카카오 webhook/partner·RLS)
-scripts/                # 카카오 수집·대시보드 스크립트
-docs/                   # 설계·운영·연동 문서 (아래 색인)
+api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 ```
 
 ---
@@ -158,8 +175,9 @@ docs/                   # 설계·운영·연동 문서 (아래 색인)
 ### 디자인 시스템
 - [docs/shadcn-ui/](./docs/shadcn-ui/README.md) — shadcn/ui 철학·CLI·테마·v4 마이그레이션 (17개 주제)
 
-### 기여
-- [CONTRIBUTING](./CONTRIBUTING.md) — 기여 가이드
+### 기여 · 정책
+- [CONTRIBUTING](./.github/CONTRIBUTING.md) — 기여 가이드
+- [SECURITY](./.github/SECURITY.md) — 보안 정책(취약점 제보)
 
 ---
 
