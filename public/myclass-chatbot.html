@@ -10,12 +10,12 @@
 <style>
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{
-    --text:#161616; --helper:#1616168f; --placeholder:#161616a3;
+    --text:#161616; --text-2:#161616cc; --helper:#1616168f; --placeholder:#161616a3;
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
     --primary:#161616; --on-primary:#ffffff;
     /* 시맨틱 토큰 (TDS 3계층 구조 차용 — 용도 기반. 흑백 LUMEN 위에 의미층) */
-    --text-neutral:var(--primary); --text-weak:var(--helper); --text-inverse:var(--on-primary);
+    --text-neutral:var(--primary); --text-secondary:var(--text-2); --text-weak:var(--helper); --text-inverse:var(--on-primary);
     --text-strong:var(--tag-text); /* 라벨·키(key)용 진회색(#393939) — 흑(text-neutral)과 약회색(text-weak) 사이 */
     --fill-strong:var(--primary); --fill-subtle:var(--surface);
     --border-subtle:var(--border); --border-strong:var(--gray20);
@@ -23,9 +23,9 @@
     --ease:cubic-bezier(.23,1,.32,1); --ease-ios:cubic-bezier(.32,.72,0,1);
     --r-tag:2px; --r-btn:2px; --r-card:4px; --r-pill:999px; --r-bubble:16px; --r-sheet:12px;
     --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.06),0 8px 8px rgba(0,0,0,.04),0 16px 8px rgba(0,0,0,.02);
-    --shadow-2:0 1px 2px rgba(22,22,22,.06),0 4px 16px rgba(22,22,22,.06);
+    --shadow-2:0 1px 2px rgba(22,22,22,.05),0 6px 20px rgba(22,22,22,.06);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
-    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px;
+    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px; --fs-cap:12px; --lh-cap:18px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
@@ -69,8 +69,8 @@
   .userrow .ms{font-size:24px;color:#161616}
 
   /* ── 본문 ── */
-  .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-  .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
+  .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-variant-numeric:tabular-nums}
+  .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.64px;line-height:40px;color:#161616}
   .classwrap{padding:0 24px 24px}
   .tabs{display:flex}
   .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border:1px solid var(--border);border-bottom:none}
@@ -103,7 +103,7 @@
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet{position:absolute;left:0;right:0;bottom:0;height:90%;background:var(--bg);border-radius:var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .42s var(--ease-ios);
-    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none}
+    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none;font-variant-numeric:tabular-nums}
   .sheet.open{transform:translateY(0)}
   .grab{width:40px;height:4px;background:var(--gray30);border-radius:2px;margin:8px auto 4px;cursor:grab;touch-action:none}
   .sheet.dragging{transition:none}
@@ -122,11 +122,15 @@
   .banner b{font-weight:700}
   .banner .x{margin-left:auto;opacity:.7}
 
-  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#16161626 transparent}
-  .log::-webkit-scrollbar{width:6px}
-  .log::-webkit-scrollbar-track{background:transparent}
-  .log::-webkit-scrollbar-thumb{background:#16161626;border-radius:99px}
-  .log::-webkit-scrollbar-thumb:hover{background:#16161640}
+  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  /* ── 스크롤바: 반투명 + 스크롤할 때만 노출(자동 숨김) ── */
+  .scroll,.log{scrollbar-width:thin;scrollbar-color:transparent transparent;transition:scrollbar-color .35s var(--ease)}
+  .scroll.scrolling,.log.scrolling,.scroll:hover,.log:hover{scrollbar-color:#16161626 transparent}
+  .scroll::-webkit-scrollbar,.log::-webkit-scrollbar{width:6px;height:6px}
+  .scroll::-webkit-scrollbar-track,.log::-webkit-scrollbar-track{background:transparent}
+  .scroll::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb{background:transparent;border-radius:99px;transition:background-color .35s var(--ease)}
+  .scroll.scrolling::-webkit-scrollbar-thumb,.log.scrolling::-webkit-scrollbar-thumb,.scroll:hover::-webkit-scrollbar-thumb,.log:hover::-webkit-scrollbar-thumb{background:#16161626}
+  .scroll::-webkit-scrollbar-thumb:hover,.log::-webkit-scrollbar-thumb:hover{background:#16161640}
   .row{display:flex;margin-bottom:10px;gap:8px}
   .row.bot{justify-content:flex-start}
   .row.me{justify-content:flex-end}
@@ -136,13 +140,13 @@
   .bot .msg{background:var(--fill-subtle);color:var(--text-neutral);border-bottom-left-radius:4px}
   .me .msg{background:var(--fill-strong);color:var(--text-inverse);border-bottom-right-radius:4px}
 
-  .card{max-width:90%;background:var(--bg);border:1px solid var(--border-strong);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s var(--ease),opacity .32s var(--ease)}
+  .card{max-width:90%;background:var(--bg);border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s var(--ease),opacity .32s var(--ease)}
   .card.revealing{filter:blur(3px);opacity:.5}
   .skelwrap{display:flex;flex-direction:column;gap:10px;width:230px;max-width:72vw}
   .skel{height:13px;border-radius:4px;background:linear-gradient(90deg,var(--fill-subtle) 25%,var(--border-strong) 37%,var(--fill-subtle) 63%);background-size:400px 100%;animation:shimmer 1.15s infinite linear}
   .skel:nth-child(2){width:78%}.skel:nth-child(3){width:55%}
   @keyframes shimmer{from{background-position:-180px 0}to{background-position:180px 0}}
-  .card .ct{font-size:12px;color:var(--text-weak);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .card .ct{font-size:var(--fs-cap);line-height:var(--lh-cap);color:var(--text-secondary);font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
   .card .ct .ms{font-size:16px}
   .krow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
   .krow:last-child{border-bottom:none}
@@ -250,7 +254,7 @@
 
   /* 데스크탑 좌측 세로 내비 (기본 숨김) */
   .desknav{display:none}
-  .desknav a{font-size:32px;line-height:40px;color:var(--helper);font-weight:200;letter-spacing:-.5px;cursor:pointer}
+  .desknav a{font-size:32px;line-height:40px;color:var(--helper);font-weight:200;letter-spacing:-.64px;cursor:pointer}
   .desknav a.on{color:#161616;width:fit-content;border-bottom:2px solid #161616;padding-bottom:2px}
   .deskonly{display:none}
 
@@ -258,10 +262,9 @@
   body[data-view="tablet"] .phone{width:768px;height:min(1024px,94dvh)}
   body[data-view="tablet"] .statusbar,body[data-view="tablet"] .chrome-top,body[data-view="tablet"] .home-indicator,body[data-view="tablet"] .chrome-bot{display:none}
   body[data-view="tablet"] .mac-chrome{display:flex}
-  body[data-view="tablet"] .apphead{height:64px;padding:0 40px}
-  body[data-view="tablet"] .sectiontitle{display:block;padding:12px 40px 4px}
-  body[data-view="tablet"] .scroll{padding-top:8px}
-  body[data-view="tablet"] .classwrap{padding:8px 40px 24px;max-width:none;margin:0}
+  body[data-view="tablet"] .apphead{height:64px;padding:0 48px}
+  body[data-view="tablet"] .sectiontitle{display:block;padding:48px 48px 48px}
+  body[data-view="tablet"] .classwrap{padding:24px 48px 24px;max-width:none;margin:0}
   body[data-view="tablet"] .bottomnav{height:76px;align-items:center}
 
   /* ── 데스크탑 (1440×1024): 좌측 세로 내비 + 우측 콘텐츠 2단 ── */
@@ -269,10 +272,10 @@
   body[data-view="desktop"] .statusbar,body[data-view="desktop"] .chrome-top,body[data-view="desktop"] .home-indicator,body[data-view="desktop"] .chrome-bot,body[data-view="desktop"] .bottomnav{display:none}
   body[data-view="desktop"] .mac-chrome{display:flex}
   body[data-view="desktop"] .apphead{height:64px;padding:0 128px}
-  body[data-view="desktop"] .deskonly{display:inline-block}
+  body[data-view="tablet"] .deskonly,body[data-view="desktop"] .deskonly{display:inline-block}
   body[data-view="desktop"] .sectiontitle{display:none}
-  body[data-view="desktop"] .scroll{display:flex;flex-direction:row;align-items:flex-start;padding:48px 128px 0}
-  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:24px;width:50%;flex-shrink:0;position:sticky;top:0;align-self:flex-start}
+  body[data-view="desktop"] .scroll{display:flex;flex-direction:row;align-items:flex-start;padding:48px 80px 0}
+  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:24px;width:50%;flex-shrink:0;position:sticky;top:0;align-self:flex-start;padding-left:48px}
   body[data-view="desktop"] .classwrap{width:50%;max-width:none;margin:0;padding:0 0 40px 48px}
 
   /* 헤더: 태블릿·데스크탑 = 한 줄(브랜드 왼쪽 · 사용자정보+아이콘 오른쪽) */
@@ -280,12 +283,15 @@
   body[data-view="tablet"] .apphead .brand,body[data-view="desktop"] .apphead .brand{margin-right:auto}
   body[data-view="tablet"] .userrow,body[data-view="desktop"] .userrow{margin:0}
 
-  /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 */
-  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
-  body[data-view="tablet"] .sheet{bottom:92px;height:min(560px,64%)}
+  /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 (트리거=헤더 우상단 forum 아이콘, 도킹 위젯 관례인 우하단 코너) */
+  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:24px;width:392px;border-radius:16px;transform:translateY(16px) scale(.98);transform-origin:bottom right;opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
+  body[data-view="tablet"] .sheet{bottom:100px;height:min(560px,64%)}
   body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,82%)}
   body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
   body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:transparent}
+  /* 도킹 패널에선 드래그 핸들 불필요(닫기 버튼으로 닫음) → 모바일 바텀시트에서만 노출 */
+  body[data-view="tablet"] .grab,body[data-view="desktop"] .grab{display:none}
+  body[data-view="tablet"] .chead,body[data-view="desktop"] .chead{padding-top:14px}
 
   .tip{position:absolute;top:104px;right:20px;background:#161616;color:#fff;font-size:12px;padding:7px 11px;border-radius:8px;opacity:0;transition:.3s;z-index:30;pointer-events:none}
   .tip::after{content:"";position:absolute;top:-5px;right:18px;border:5px solid transparent;border-bottom-color:#161616;border-top:0}
@@ -635,6 +641,9 @@ document.getElementById('homeBtn').onclick=()=>{log.innerHTML='';setBanner();NOD
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChat();});
 
 document.addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')openChat('payment');if(e.key==='a'||e.key==='A')openChat('auth');if(e.key==='r'||e.key==='R')openChat('recruitment');});
+/* 스크롤바 자동 숨김: 스크롤 중에만 .scrolling 부여, 멈추면 700ms 뒤 제거 */
+function autoHideScroll(elm){let t;elm.addEventListener('scroll',()=>{elm.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>elm.classList.remove('scrolling'),700);},{passive:true});}
+document.querySelectorAll('.scroll,.log').forEach(autoHideScroll);
 const _vs=document.getElementById('viewswitch');document.body.dataset.view='mobile';
 _vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.dataset.view=b.dataset.v;_vs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
 </script>
