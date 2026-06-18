@@ -339,6 +339,11 @@
 
   .tip{position:absolute;top:104px;right:20px;background:#161616;color:#fff;font-size:12px;padding:7px 11px;border-radius:8px;opacity:0;transition:.3s;z-index:30;pointer-events:none}
   .tip::after{content:"";position:absolute;top:-5px;right:18px;border:5px solid transparent;border-bottom-color:#161616;border-top:0}
+.ctxbar{display:flex;margin:0 0 10px}
+.ctxsel{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:999px;padding:6px 12px;font:inherit;font-size:12px;font-weight:600;color:#161616cc;cursor:pointer;box-shadow:0 1px 2px rgba(22,22,22,.06);transition:background .15s}
+.ctxsel:hover{background:#fafafa}
+.ctxsel b{color:#161616;font-weight:700}
+.ctxsel .ms{font-size:16px;color:#1616168f}
 </style>
 </head>
 <body>
@@ -430,7 +435,7 @@
 const MENU=[
  {k:'attend',ic:'fact_check',l:'출결·보강'},
  {k:'enroll',ic:'how_to_reg',l:'입반·등록·대기'},
- {k:'live',ic:'live_tv',l:'라이브·교재·배송'},
+ 
  {k:'pay',ic:'credit_card',l:'미납·결제·환불'},
  {k:'time',ic:'calendar_month',l:'수업·시간표'},
  {k:'account',ic:'key',l:'계정·로그인·앱'},
@@ -442,46 +447,53 @@ let ctx='normal';
 /* 측정 계측 — MEASUREMENT_SPEC §2. GA4 dataLayer 푸시(프로덕션은 gtag로 교체). PII 비포함. */
 let __nv=0,__resolved=false;
 function track(ev,p){try{(window.dataLayer=window.dataLayer||[]).push({event:ev,ts:Date.now(),...(p||{})});}catch(_){}}
+/* 컨텍스트 — 선택된 지점/학생 기준 데이터 바인딩. 챗봇 안에서 변경 가능. */
+const CAMPUSES={'대치':{phone:'02-552-2373',sms:'010-5423-2378'},'목동':{phone:'',sms:''},'반포':{phone:'',sms:''},'분당':{phone:'',sms:''}};
+let CTX={student:'김시대',campus:'대치',grade:'고3'};
+function sub(h){const cp=CAMPUSES[CTX.campus]||{};return String(h).replace(/\{학생\}/g,CTX.student).replace(/\{지점\}/g,CTX.campus).replace(/\{학년\}/g,CTX.grade).replace(/\{전화\}/g,cp.phone||'지점 상담실 대표번호로 연결').replace(/\{문자\}/g,cp.sms||'지점 상담실 문자(연동 예정)');}
+function syncShell(){try{const br=document.querySelector('.userrow .branch');if(br)br.textContent=CTX.campus;const nm=document.querySelector('.userrow .name');if(nm)nm.textContent=CTX.student+' 님';}catch(_){}}
+function rehome(){log.innerHTML='';setBanner();NODES.home();}
+function ctxBar(){const b=el(`<div class="ctxbar fadein"></div>`);const btn=el(`<button class="ctxsel" aria-label="지점 변경">${ms('place')}<b>${CTX.campus} 캠퍼스</b>${ms('expand_more')}</button>`);btn.onclick=()=>pickCampus();b.appendChild(btn);log.appendChild(b);scrollEnd();}
+function pickCampus(){track('chatbot_ctx_change',{kind:'campus_open'});botSay('어느 <b>지점</b> 기준으로 안내해 드릴까요?');quick([...Object.keys(CAMPUSES).map(c=>({t:c+' 캠퍼스'+(c===CTX.campus?' · 현재':''),act:()=>{CTX.campus=c;track('chatbot_ctx_change',{kind:'campus',campus:c});syncShell();toast(c+' 캠퍼스 기준으로 변경했어요');rehome();}})),{t:'그대로 둘게요',ghost:true,go:'home'}]);}
 const ms=n=>`<span class="ms" aria-hidden="true">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
 function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
-function botSay(h){const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
+function botSay(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
 function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
 let RM=false;try{RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
 function typingBubble(){const r=el(`<div class="row bot typing fadein" aria-hidden="true"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
 function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
-function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
-function cardLoad(h,rows){rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
+function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
+function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{track('chatbot_quickfaq_click',{faq:o.go});meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function parentEntry(){const w=el(`<div class="qr"></div>`);const c=el(`<button class="chip ghost fadein"><span>${ms('family_restroom')}학부모이신가요? 학부모 안내</span></button>`);c.style.animationDelay='430ms';c.onclick=()=>{meSay('학부모 안내');w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();const fq=log.querySelectorAll('.qr');fq.forEach(q=>q.remove());typeThen(()=>go('m_parent'));};w.appendChild(c);log.appendChild(w);scrollEnd();}
-function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
+function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{__resolved=true;track('chatbot_self_resolved',{nodes_visited:__nv});botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{track('chatbot_satisfaction',{rating:'up'});botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
 function offHours(){const h=new Date().getHours();return h>=22||h<8;}
 function handoff(reason){
   track('chatbot_handoff',{channel:'phone',reason:reason});
-  botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
-  card(`<div class="ct">${ms('support_agent')}대치 캠퍼스 고3 상담실</div><div class="guide">
-   · 학생 <b>김시대</b> · 지점 <b>대치 캠퍼스(고3)</b><br>· 문의 <b>${reason}</b>
-   <div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div>
+  botSay('이 부분은 <b>{지점} 캠퍼스 {학년} 상담실</b>에서 정확히 도와드릴 수 있어요. {학생}님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
+  card(`<div class="ct">${ms('support_agent')}{지점} 캠퍼스 {학년} 상담실</div><div class="guide">
+   · 학생 <b>{학생}</b> · 지점 <b>{지점} 캠퍼스({학년})</b><br>· 문의 <b>${reason}</b>
+   <div class="krow"><span class="k">문자 상담</span><span class="v">{문자}<button class="copybtn" data-c="{문자}" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div>
    <span style="color:var(--text-weak)">전화는 아래 ‘전화 연결’ 버튼으로 바로 걸 수 있어요. 문자로 남길 땐 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</span></div>`);
   if(offHours())botSay('지금은 상담원 응답이 어려운 늦은 시간이에요. 전화가 안 되면 <b>문자로 남겨</b> 두시면 운영 시작 시 가장 먼저 연락드려요. 급한 자가해결은 제가 지금 도와드릴 수 있어요.');
   quick([
-   {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
+   {t:'전화 연결 ({전화})',primary:true,ic:'call',act:()=>{
      track('chatbot_handoff_open',{channel:'phone'});
-     botSay('대치 캠퍼스 고3 상담실(02-552-2373)로 전화를 연결할게요.');
-     card(`<div class="ct">${ms('call')}전화 연결 중…</div><div class="guide">대치 캠퍼스 고3 상담실 직통으로 연결됩니다.<br><span style="color:var(--text-weak)">통화가 어려우면 문자(010-5423-2378)로 남기거나 챗봇에서 다른 메뉴를 이용하실 수 있어요.</span></div>`);
+     botSay('{지점} 캠퍼스 {학년} 상담실({전화})로 전화를 연결할게요.');
+     card(`<div class="ct">${ms('call')}전화 연결 중…</div><div class="guide">{지점} 캠퍼스 {학년} 상담실 직통으로 연결됩니다.<br><span style="color:var(--text-weak)">통화가 어려우면 문자({문자})로 남기거나 챗봇에서 다른 메뉴를 이용하실 수 있어요.</span></div>`);
      endActions();}},
    {t:'처음으로',go:'home',ghost:true},
   ]);
 }
 /* 기술 문제(앱·계정·로그인·영상·인증) — '시대인재 마이클래스' 카카오톡 채널로 안내. 자가해결법은 실제 myclass FAQ 근거 */
 const KAKAO_MYCLASS='https://pf.kakao.com/_VGAQn/chat'; /* 시대인재 마이클래스 카카오톡 채널 (수집 데이터 검증) */
-const KAKAO_LIVE='https://pf.kakao.com/_TkpPG/chat'; /* 시대인재 LIVE(기술지원) — 라이브 강의는 별도 서비스 */
 function handoffTech(reason){
   track('chatbot_handoff',{channel:'myclass_kakao',reason:reason});
   botSay('이건 <b>시대인재 마이클래스</b> 카카오톡 상담채널에서 기술 담당자가 가장 빠르게 도와드려요.');
@@ -489,13 +501,6 @@ function handoffTech(reason){
   quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{track('chatbot_handoff_open',{channel:'myclass_kakao'});botSay('<b>시대인재 마이클래스</b> 카카오톡 상담채널을 열게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_MYCLASS,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 
-/* 라이브 강의(별도 서비스) — 시대인재 LIVE 기술지원 카카오톡 채널로 안내 */
-function handoffLive(reason){
-  track('chatbot_handoff',{channel:'live_kakao',reason:reason});
-  botSay('<b>시대인재 LIVE</b> 카카오톡 상담으로 연결해 드릴게요. 라이브 담당자가 정확히 도와드려요.');
-  card(`<div class="ct">${ms('forum')}시대인재 LIVE 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 학생 이름·학교<br>· 라이브 강좌명<br>· 요청 내용: <b>${reason}</b></div>`);
-  quick([{t:'LIVE 카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{track('chatbot_handoff_open',{channel:'live_kakao'});botSay('<b>시대인재 LIVE</b> 카카오톡 상담을 열게요. 남겨주시면 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_LIVE,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
-}
 /* 마감 강좌 대기: 영역→강좌 2단 선택(과목·강사 다른 여러 강좌 대응) — 더미 예시 데이터 */
 const WAITCOURSES={
   '국어':[['김민정T 국어 독서','월 18:30 · 엣지관 6층','대기 3명'],['강은양T 국어 문학','일 18:30 · 엣지관 601호','대기 6명']],
@@ -565,7 +570,7 @@ const won=n=>n.toLocaleString()+'원';
 const payNum=a=>+String(a).replace(/[^0-9]/g,'');
 function payItemHtml(i){const pill=i.paid?'<span class="pill ok">완납</span>':'<span class="pill due">미납</span>';const sub=(!i.paid&&i.due)?`<span class="enr-sub">납부 기한 ${i.due}</span>`:'';return `<div class="payitem${i.paid?' paid':''}"><div class="pi-l"><span class="pi-type">${i.t}</span><span class="pi-name">${i.n}</span>${sub}</div><div class="pi-r">${pill}<span class="pi-amt">${i.a}</span></div></div>`;}
 const NODES={
-  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();parentEntry();},
+  home(){crumb('문제를 바로 해결하도록 도와드려요');ctxBar();botSay('안녕하세요, <b>{학생}</b>님. <b>{지점} 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();parentEntry();},
 
   /* 학부모 모드 — AMS 전화 상담의 92%가 학부모. 자녀 기준 핵심 메뉴로 라우팅 (DATA_ANALYSIS §4) */
   m_parent(){crumb('학부모 안내');botSay('학부모님이시군요. 자녀의 <b>결제·납부, 출결, 시간표</b>는 <b>마이클래스 학부모 통합회원</b>으로 로그인하시면 직접 보실 수 있어요. 무엇을 도와드릴까요?');
@@ -593,7 +598,7 @@ const NODES={
     quick([{t:'현금영수증 발급',act:()=>{botSay('현금영수증 발급을 접수했어요. 등록된 번호로 처리 결과를 안내해 드릴게요.');endActions();}},{t:'결제수단·카드 변경',act:()=>{botSay('결제수단(카드) 변경은 <b>상담 선생님</b>이 확인해 안전하게 도와드려요. 바로 연결해 드릴게요.<br><span style="color:var(--text-weak)">앱의 계좌 정보 관리 메뉴에서는 현금영수증·환불 계좌 정보를 등록할 수 있어요.</span>');quick([{t:'결제수단 변경 상담',primary:true,act:()=>handoff('결제수단(카드) 변경')},back('m_pay')]);}},{t:'오입금 정정',act:()=>handoff('오입금 정정')},back('m_pay')]);},
   pay_status(){const paidN=PAYITEMS.filter(i=>i.paid).length,tot=PAYITEMS.length,pct=Math.round(paidN/tot*100);
     const sum=PAYITEMS.filter(i=>!i.paid).reduce((s,i)=>s+payNum(i.a),0);
-    cardLoad(`<div class="ct">${ms('receipt_long')}7월 납부 현황 · 김시대님</div>
+    cardLoad(`<div class="ct">${ms('receipt_long')}7월 납부 현황 · {학생}님</div>
      <div class="paylist enr">${PAYITEMS.map(payItemHtml).join('')}</div>
      <div class="paytotal"><span class="pt-k">합계 미납 · ${tot-paidN}건</span><span class="big">${won(sum)}</span></div>
      <div class="barrow"><span>결제 진행</span><span><b>${tot}건 중 ${paidN}건</b> 완료</span></div><div class="bar"><i style="width:${pct}%"></i></div>`,6);
@@ -601,14 +606,14 @@ const NODES={
   pay_sms(){const unpaid=PAYITEMS.filter(i=>!i.paid);
     botSay(`어떤 결제 건의 링크를 문자로 받을까요? 현재 <b>미납 ${unpaid.length}건</b>이에요.`);
     quick([...unpaid.map(i=>({t:`${i.t} · ${i.n} (${i.a})`,ic:'sms',label:`${i.t} · ${i.n} 결제 문자`,act:()=>{botSay(`등록된 번호 <b>010-****-1234</b>로 <b>${i.t} · ${i.n}</b> 결제 링크를 보냈어요. 문자 속 링크에서 결제하면 돼요.`);endActions();}})),{t:'미납 전체 한 번에 받기',ic:'forward_to_inbox',primary:true,act:()=>{botSay(`미납 <b>${unpaid.length}건</b> 결제 링크를 모두 010-****-1234로 보냈어요. 각 링크에서 결제하면 돼요.`);endActions();}},{t:'미납 내역 다시 보기',go:'pay_status'},back('m_pay')]);},
-  pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · 김시대님</div>
+  pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · {학생}님</div>
      <div class="krow"><span class="k">납부 항목</span><span class="v">7월 수강료 · 이신혁T 지학Ⅰ</span></div>
      <div class="krow"><span class="k">입금 은행</span><span class="v">신한은행</span></div>
      <div class="krow"><span class="k">계좌번호</span><span class="v">110-204-567890<button class="copybtn" data-c="110204567890" aria-label="계좌번호 복사">${ms('content_copy')}</button></span></div>
      <div class="krow"><span class="k">예금주</span><span class="v">(주)시대인재</span></div>
      <div class="krow"><span class="k">입금 기한</span><span class="v">7/19</span></div>
      <div class="krow"><span class="k">입금 금액</span><span class="big">360,000원</span></div>
-     <div class="src">※ 김시대님 전용 계좌예요. 위 계좌로 입금하면 자동으로 납부 처리돼요.</div>`);
+     <div class="src">※ {학생}님 전용 계좌예요. 위 계좌로 입금하면 자동으로 납부 처리돼요.</div>`);
     quick([{t:'가상계좌 문자로 받기',ic:'sms',primary:true,act:()=>{botSay('가상계좌 정보(은행·계좌번호·입금액)를 010-****-1234로 보내드렸어요. 은행 앱에 그대로 넣어 입금하면 돼요.');endActions();}},{t:'카드로 결제할래요',ic:'credit_card',act:()=>{botSay('카드 결제는 마이클래스 <b>납부하기</b> 화면으로 이동해 진행할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},back('pay_status')]);},
   pay_cert(){botSay('납입증명서를 발급해 드릴게요. 납입증명서는 <b>상담 선생님이 결제내역에서 엑셀 파일</b>로 발급해요. 어떤 <b>기준</b>으로 요청할까요?');
     quick([{t:'올해(2026년) 전체',ic:'description',primary:true,act:()=>certIssue('2026년 전체')},{t:'작년(2025년) 전체',act:()=>certIssue('2025년 전체')},{t:'기간 지정',ic:'date_range',go:'cert_period'},{t:'항목만 선택',ic:'receipt_long',go:'cert_item'},back('pay_status')]);},
@@ -621,7 +626,7 @@ const NODES={
   pay_refund(){botSay('환불은 <b>이용한 회차</b> 기준으로 계산돼요. 강좌·교재 반납 여부에 따라 달라져서, 정확한 금액은 상담원이 확정해 드려요.');
     card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div>
      <div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div>
-     <div class="src">※ 정확한 금액·규정은 대치 캠퍼스 상담실에서 확정해 드려요. (상담 기록상 ‘회차 기준 환불’이 표준)</div>`);
+     <div class="src">※ 정확한 금액·규정은 {지점} 캠퍼스 상담실에서 확정해 드려요. (상담 기록상 ‘회차 기준 환불’이 표준)</div>`);
     quick([{t:'환불 상담 연결',primary:true,act:()=>handoff('환불(회차 기준)')},back('m_pay')]);},
 
   /* 3. 입반·등록·대기·전반 */
@@ -670,23 +675,6 @@ const NODES={
       {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>handoff('전반(강사 변경)')},back('m_enroll')]);},
 
-  /* 4. 라이브·교재·배송 */
-  m_live(){botSay('라이브·교재, 무엇을 도와드릴까요?');
-    quick([{t:'라이브 입반 신청',ic:'how_to_reg',act:()=>{botSay('라이브 입반은 신청 문자를 받은 뒤 라이브 사이트에서 마무리하면 돼요. <b>시대인재 LIVE</b>에서 신청을 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 입반 신청')},back('m_live')]);}},
-      {t:'복습·추가영상',ic:'smart_display',act:()=>{botSay('복습·추가영상은 <b>마이클래스 앱 → 수강 강좌 → 강좌 상세보기 → 강의 목록</b>에서 회차별로 볼 수 있어요. 안 열리면 바로 도와드릴게요.');quick([{t:'영상이 안 열려요',go:'live_video'},back('m_live')]);}},
-      {t:'교재 배송 조회',ic:'local_shipping',act:()=>{cardLoad(`<div class="ct">${ms('local_shipping')}교재 배송 현황</div><div class="krow"><span class="k">상태</span><span class="v">배송 중 (CJ대한통운)</span></div><div class="krow"><span class="k">송장</span><span class="v">****1234</span></div>`);quick([{t:'배송 추적하기',primary:true,act:()=>{botSay('택배사 추적 페이지로 이동할게요.');endActions();}},back('m_live')]);}},
-      {t:'교재 반납처',ic:'assignment_return',act:()=>{botSay('라이브 교재 반납은 대치 라이브센터에서 받아요. 반납 방법은 <b>시대인재 LIVE</b>에서 정확히 안내해 드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 교재 반납')},back('m_live')]);}},
-      {t:'라이브 결제·수강료',ic:'payment',act:()=>{card(`<div class="ct">${ms('payment')}라이브 결제 안내</div><div class="krow"><span class="k">수강료</span><span class="v">85,000원</span></div><div class="krow"><span class="k">교재비</span><span class="v">35,000원</span></div><div class="krow"><span class="k">합계</span><span class="big">120,000원</span></div>`);quick([{t:'결제 문자 받기',primary:true,act:()=>{botSay('결제 링크를 010-****-1234로 보내드렸어요.');endActions();}},back('m_live')]);}},
-      {t:'라이브 환불·취소',ic:'undo',act:()=>{botSay('라이브 환불은 <b>① 교재비 → ② 수강료</b> 순서로 진행돼요. 교재는 현장 반납 또는 선불 택배로 반납하면 돼요. 정산은 <b>시대인재 LIVE</b>에서 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브 환불')},back('m_live')]);}},
-      {t:'라이브→현강 이동',ic:'sync_alt',act:()=>{botSay('현장 강의로 옮길 수 있어요. 라이브 환불과 같이 <b>① 교재비 → ② 수강료</b>로 정리한 뒤 현강에 입반해요. 라이브 정산은 <b>시대인재 LIVE</b>에서 도와드려요.');quick([{t:'LIVE 카카오톡 상담',primary:true,act:()=>handoffLive('라이브→현강 이동')},back('m_live')]);}},
-      back('home')]);},
-
-  live_video(){botSay('영상이 안 나오는 증상을 골라주세요. 대부분 아래 방법으로 해결돼요.');
-    quick([{t:"'라이선스 정보 없음'·재생 안 됨",act:()=>{botSay('모바일 웹브라우저에서는 영상이 막힐 수 있어요. <b>마이클래스 앱</b>을 설치하거나 <b>PC(myclass.sdij.com)</b>로 접속해 주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('영상 재생 오류(라이선스)')},back('live_video')]);}},
-      {t:'버퍼링·자꾸 끊겨요',act:()=>{botSay('① 와이파이 ↔ LTE/5G로 <b>네트워크를 바꿔</b> 보고 ② 앱·휴대폰 OS를 <b>최신으로 업데이트</b>해 주세요. VPN을 쓰면 꺼주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('영상 버퍼링')},back('live_video')]);}},
-      {t:'PC 크롬에서 안 열려요',act:()=>{botSay('PC 크롬은 ① <b>하드웨어 가속 끄기</b> → ② 브라우저 초기화 → ③ 업데이트 순으로 시도해 주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('PC 크롬 영상 오류')},back('live_video')]);}},
-      {t:'앱이 자꾸 꺼져요',act:()=>{botSay('앱과 휴대폰 OS를 <b>최신으로 업데이트</b>하거나, 앱을 <b>삭제 후 재설치</b>해 주세요.');quick([{t:'그래도 안 돼요',act:()=>handoffTech('앱 종료 오류')},back('live_video')]);}},
-      back('m_live')]);},
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
@@ -746,11 +734,11 @@ const NODES={
 
   /* 7. 상담원·자주묻는것 */
   m_help(){botSay('무엇을 도와드릴까요?');
-    quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},{t:'교재 수령 위치',ic:'inventory_2',act:()=>{card(`<div class="ct">${ms('inventory_2')}교재 수령 · 대치</div><div class="guide">강좌별로 <b>본관 · 수업관 · 연구소</b> 중 한 곳에서 받아요.</div>`);quick([{t:'내 강좌 교재 위치',primary:true,act:()=>{card(`<div class="ct">${ms('inventory_2')}내 강좌 교재 수령 위치</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">대치 본관 1층 데스크</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">대치 수업관 2층</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">대치 연구소 1층</span></div>`);endActions();}},{t:'연구소 교재·교재비',act:()=>{botSay('연구소에서 받는 교재(강사 교재비)는 연구소에서 안내·정산해요. 상담원이 연구소로 연결해 드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('연구소 교재·교재비')},back('m_help')]);}},back('m_help')]);}},
+    quick([{t:'자주 묻는 것',ic:'quiz',go:'help_faq'},{t:'전화·상담 연락처',ic:'call',go:'help_contact'},
       {t:'설명회·컨설팅 예약',ic:'event',act:()=>{card(`<div class="ct">${ms('event')}내 예약</div><div class="krow"><span class="k">컨설팅</span><span class="v">7/22 14:00</span></div>`);quick([{t:'제출 서류 안내',act:()=>{botSay('컨설팅에 필요한 제출 서류는 예약일 전에 준비하시면 좋아요. 정확한 서류 목록은 상담원이 안내해 드릴게요.');quick([{t:'서류 안내 상담원',primary:true,act:()=>handoff('컨설팅 제출 서류')},back('m_help')]);}},{t:'예약 변경·취소',act:()=>handoff('컨설팅 예약 변경')},back('m_help')]);}},
       {t:'자습실 이용',ic:'local_library',act:()=>{botSay('자습실(부엉이 라이브러리) 신청·대기·연장을 도와드려요. 좌석·대기 현황과 연장 규칙은 그날그날 달라서, 상담원이 바로 확인해 신청을 도와드릴게요.');quick([{t:'자습실 상담원 연결',primary:true,act:()=>handoff('자습실 신청·대기')},back('m_help')]);}},
       {t:'상담원 연결',ic:'support_agent',act:()=>handoff('일반 상담')},back('home')]);},
-  help_contact(){card(`<div class="ct">${ms('call')}대치 캠퍼스 고3 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">02-552-2373<button class="copybtn" data-c="02-552-2373" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div><div class="krow"><span class="k">문자 상담</span><span class="v">010-5423-2378<button class="copybtn" data-c="010-5423-2378" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
+  help_contact(){card(`<div class="ct">${ms('call')}{지점} 캠퍼스 {학년} 상담</div><div class="krow"><span class="k">전화 상담</span><span class="v">{전화}<button class="copybtn" data-c="{전화}" aria-label="전화번호 복사">${ms('content_copy')}</button></span></div><div class="krow"><span class="k">문자 상담</span><span class="v">{문자}<button class="copybtn" data-c="{문자}" aria-label="문자번호 복사">${ms('content_copy')}</button></span></div><div class="src">※ 문자 상담 시 학생 이름·학교·강좌명을 함께 보내면 더 빨라요.</div>`);
     quick([{t:'상담원 연결',primary:true,act:()=>handoff('일반 상담')},back('m_help')]);},
   help_faq(){botSay('자주 묻는 것을 골라보세요. 못 찾으면 상담원이 도와드려요.');
     quick([{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결제 문자 다시 받기',go:'pay_sms'},{t:'앱이 안 돼요',go:'ac_app'},{t:'대기 충원은 언제 돼요?',go:'en_wait'},{t:'상담원 연결',act:()=>handoff('FAQ 미해결')},back('m_help')]);},
@@ -760,10 +748,10 @@ const NODES={
     quick([{t:'시간이 안 맞아요',act:()=>{botSay('어떤 강좌 시간이 안 맞으세요? 같은 강사 다른 시간을 먼저 찾아드릴게요.');quick([{t:'이신혁T 지학Ⅰ',act:()=>quitAlt('이신혁T 지학Ⅰ')},{t:'강기원T 수학',act:()=>quitAlt('강기원T 수학')},{t:'강은양T 국어',act:()=>quitAlt('강은양T 국어')},{t:'그래도 퇴원',go:'quit_refund',ghost:true},back('m_quit')]);}},
       {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. (상담에서도 ‘반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>{botSay('강사 변경도 가능해요. 남은 자리·교재 정리는 상담원이 도와드려요.');quick([{t:'강사 변경 상담',primary:true,act:()=>handoff('강사 변경')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
-      {t:'라이브로 옮길래요',go:'m_live'},{t:'수강 계획이 바뀌었어요',act:()=>handoff('수강 계획 변경')},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
+      {t:'수강 계획이 바뀌었어요',act:()=>handoff('수강 계획 변경')},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
   quit_refund(){botSay('알겠어요. 퇴원은 문자 요청으로 접수되고, 환불은 이용 회차 기준으로 처리돼요. 정확한 금액은 상담원이 확정해 드려요.');
     card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div><div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div><div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div><div class="src">※ 교육청 환불 규정에 따라 상담원이 확인 후 확정해요.</div>`);
-    quick([{t:'퇴원·환불 접수하기',primary:true,act:()=>{botSay('퇴원·환불 접수를 진행할까요? 접수하면 대치 캠퍼스 상담실에서 확인 연락을 드려요.');quick([{t:'네, 접수할게요',primary:true,act:()=>handoff('퇴원·환불')},{t:'조금 더 생각할래요',go:'m_quit'}]);}},back('m_quit')]);},
+    quick([{t:'퇴원·환불 접수하기',primary:true,act:()=>{botSay('퇴원·환불 접수를 진행할까요? 접수하면 {지점} 캠퍼스 상담실에서 확인 연락을 드려요.');quick([{t:'네, 접수할게요',primary:true,act:()=>handoff('퇴원·환불')},{t:'조금 더 생각할래요',go:'m_quit'}]);}},back('m_quit')]);},
 };
 function go(k){__nv++;track('chatbot_node_view',{node_id:k});if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
 
@@ -776,7 +764,7 @@ function setBanner(){bannerSlot.innerHTML='';
 /* 포커스 트랩 */
 let lastFocus=null;
 function trapFocus(e){if(e.key!=='Tab')return;const list=[...sheet.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];if(!list.length)return;const f=list[0],l=list[list.length-1];if(e.shiftKey&&document.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&document.activeElement===l){e.preventDefault();f.focus();}}
-function openChat(c){ctx=c||'normal';__nv=0;__resolved=false;track('chatbot_open',{entry_context:ctx});log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus({preventScroll:true});NODES.home();},300);}
+function openChat(c){syncShell();ctx=c||'normal';__nv=0;__resolved=false;track('chatbot_open',{entry_context:ctx});log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus({preventScroll:true});NODES.home();},300);}
 function closeChat(){track('chatbot_close',{resolved:__resolved,nodes_visited:__nv});scrim.classList.remove('open');sheet.classList.remove('open');document.body.classList.remove('chat-open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 /* 바텀시트 드래그로 닫기 (모바일) — Vaul 임계값: 높이 25% 또는 속도 0.4 */
 (function(){const grab=sheet.querySelector('.grab'),chead=sheet.querySelector('.chead');let y0=0,t0=0,h=0,drag=false;
