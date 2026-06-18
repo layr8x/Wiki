@@ -75,8 +75,8 @@ export default function App() {
                 <SearchProvider>
                   <BrowserRouter>
                   <Routes>
-                    {/* 챗봇 별도 창 (/chatbot) — 레이아웃 없이 창 전체 */}
-                    <Route path="/chatbot" element={
+                    {/* AMS 챗봇 별도 창 (/ams-chatbot) — 레이아웃 없이 창 전체. /chatbot 은 마이클래스(별개 서비스)가 사용 */}
+                    <Route path="/ams-chatbot" element={
                       <Suspense fallback={<PageSkeleton />}><ChatbotPopupPage /></Suspense>
                     } />
 

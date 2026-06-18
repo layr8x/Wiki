@@ -8,6 +8,14 @@
   ],
   "rewrites": [
     {
+      "source": "/chatbot",
+      "destination": "/myclass-chatbot.html"
+    },
+    {
+      "source": "/chatbot-parent",
+      "destination": "/myclass-chatbot-parent.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
