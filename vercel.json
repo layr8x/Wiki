@@ -3,11 +3,17 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "installCommand": "npm ci",
-  "regions": ["icn1"],
+  "regions": [
+    "icn1"
+  ],
   "rewrites": [
     {
       "source": "/chatbot",
       "destination": "/myclass-chatbot.html"
+    },
+    {
+      "source": "/chatbot-parent",
+      "destination": "/myclass-chatbot-parent.html"
     },
     {
       "source": "/((?!api/).*)",
