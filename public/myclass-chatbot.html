@@ -439,6 +439,9 @@ const MENU=[
 ];
 const log=document.getElementById('log'),scrim=document.getElementById('scrim'),sheet=document.getElementById('sheet'),bannerSlot=document.getElementById('bannerSlot');
 let ctx='normal';
+/* 측정 계측 — MEASUREMENT_SPEC §2. GA4 dataLayer 푸시(프로덕션은 gtag로 교체). PII 비포함. */
+let __nv=0,__resolved=false;
+function track(ev,p){try{(window.dataLayer=window.dataLayer||[]).push({event:ev,ts:Date.now(),...(p||{})});}catch(_){}}
 const ms=n=>`<span class="ms" aria-hidden="true">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
@@ -448,18 +451,19 @@ function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div>
 let RM=false;try{RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
 function typingBubble(){const r=el(`<div class="row bot typing fadein" aria-hidden="true"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
 function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
-log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
+log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
-function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{track('chatbot_quickfaq_click',{faq:o.go});meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function parentEntry(){const w=el(`<div class="qr"></div>`);const c=el(`<button class="chip ghost fadein"><span>${ms('family_restroom')}학부모이신가요? 학부모 안내</span></button>`);c.style.animationDelay='430ms';c.onclick=()=>{meSay('학부모 안내');w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();const fq=log.querySelectorAll('.qr');fq.forEach(q=>q.remove());typeThen(()=>go('m_parent'));};w.appendChild(c);log.appendChild(w);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
-function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
+function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{__resolved=true;track('chatbot_self_resolved',{nodes_visited:__nv});botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{track('chatbot_satisfaction',{rating:'up'});botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
 function offHours(){const h=new Date().getHours();return h>=22||h<8;}
 function handoff(reason){
+  track('chatbot_handoff',{channel:'phone',reason:reason});
   botSay('이 부분은 <b>대치 캠퍼스 고3 상담실</b>에서 정확히 도와드릴 수 있어요. 김시대님 기준으로 해당 상담실로 바로 연결해 드릴게요.');
   card(`<div class="ct">${ms('support_agent')}대치 캠퍼스 고3 상담실</div><div class="guide">
    · 학생 <b>김시대</b> · 지점 <b>대치 캠퍼스(고3)</b><br>· 문의 <b>${reason}</b>
@@ -468,6 +472,7 @@ function handoff(reason){
   if(offHours())botSay('지금은 상담원 응답이 어려운 늦은 시간이에요. 전화가 안 되면 <b>문자로 남겨</b> 두시면 운영 시작 시 가장 먼저 연락드려요. 급한 자가해결은 제가 지금 도와드릴 수 있어요.');
   quick([
    {t:'전화 연결 (02-552-2373)',primary:true,ic:'call',act:()=>{
+     track('chatbot_handoff_open',{channel:'phone'});
      botSay('대치 캠퍼스 고3 상담실(02-552-2373)로 전화를 연결할게요.');
      card(`<div class="ct">${ms('call')}전화 연결 중…</div><div class="guide">대치 캠퍼스 고3 상담실 직통으로 연결됩니다.<br><span style="color:var(--text-weak)">통화가 어려우면 문자(010-5423-2378)로 남기거나 챗봇에서 다른 메뉴를 이용하실 수 있어요.</span></div>`);
      endActions();}},
@@ -478,16 +483,18 @@ function handoff(reason){
 const KAKAO_MYCLASS='https://pf.kakao.com/_VGAQn/chat'; /* 시대인재 마이클래스 카카오톡 채널 (수집 데이터 검증) */
 const KAKAO_LIVE='https://pf.kakao.com/_TkpPG/chat'; /* 시대인재 LIVE(기술지원) — 라이브 강의는 별도 서비스 */
 function handoffTech(reason){
+  track('chatbot_handoff',{channel:'myclass_kakao',reason:reason});
   botSay('이건 <b>시대인재 마이클래스</b> 카카오톡 상담채널에서 기술 담당자가 가장 빠르게 도와드려요.');
   card(`<div class="ct">${ms('forum')}시대인재 마이클래스 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 오류 발생 시점<br>· 강좌·콘텐츠명<br>· 오류 현상·메시지(가능하면 화면 캡처)<br>· 기기·OS 버전</div>`);
-  quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 마이클래스</b> 카카오톡 상담채널을 열게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_MYCLASS,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
+  quick([{t:'카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{track('chatbot_handoff_open',{channel:'myclass_kakao'});botSay('<b>시대인재 마이클래스</b> 카카오톡 상담채널을 열게요. 남겨주시면 기술 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_MYCLASS,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 
 /* 라이브 강의(별도 서비스) — 시대인재 LIVE 기술지원 카카오톡 채널로 안내 */
 function handoffLive(reason){
+  track('chatbot_handoff',{channel:'live_kakao',reason:reason});
   botSay('<b>시대인재 LIVE</b> 카카오톡 상담으로 연결해 드릴게요. 라이브 담당자가 정확히 도와드려요.');
   card(`<div class="ct">${ms('forum')}시대인재 LIVE 카카오톡 상담 — 함께 적어주세요</div><div class="guide">· 학생 이름·학교<br>· 라이브 강좌명<br>· 요청 내용: <b>${reason}</b></div>`);
-  quick([{t:'LIVE 카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{botSay('<b>시대인재 LIVE</b> 카카오톡 상담을 열게요. 남겨주시면 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_LIVE,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
+  quick([{t:'LIVE 카카오톡 상담 열기',primary:true,ic:'forum',act:()=>{track('chatbot_handoff_open',{channel:'live_kakao'});botSay('<b>시대인재 LIVE</b> 카카오톡 상담을 열게요. 남겨주시면 담당자가 순서대로 확인해 드려요.');try{window.open(KAKAO_LIVE,'_blank','noopener');}catch(_){}endActions();}},{t:'처음으로',go:'home',ghost:true}]);
 }
 /* 마감 강좌 대기: 영역→강좌 2단 선택(과목·강사 다른 여러 강좌 대응) — 더미 예시 데이터 */
 const WAITCOURSES={
@@ -701,6 +708,7 @@ const NODES={
   at_absent(){const cls=[['이신혁T 지학Ⅰ 서바이벌','금 13:30'],['강기원T 수학','일 09:00'],['강은양T 국어','일 18:30']];
     const pick=(kind)=>{botSay(`<b>${kind}</b>할 수업을 선택해 주세요.`);
       quick([...cls.map(c=>({t:c[0],label:`${c[0]} ${kind}`,act:()=>{
+        track('chatbot_self_action',{action:'absent_report',kind:kind});
         botSay(`<b>${c[0]}</b>(${c[1]}) <b>${kind}</b> 신고가 접수됐어요. 담당 선생님께 전달돼요.`+(kind==='결석'?' 빠진 회차는 <b>동영상 보강</b>으로 채울 수 있어요.':''));
         quick([{t:'동영상 보강 신청',ic:'smart_display',primary:true,go:'at_makeup'},{t:'회차 자료 문자로 받기',ic:'sms',act:()=>{botSay(`${c[0]} 회차 자료를 010-****-1234로 보내드릴게요.`);endActions();}},{t:'처음으로',ghost:true,go:'home'}]);
       }})),back('at_absent')]);};
@@ -757,7 +765,7 @@ const NODES={
     card(`<div class="ct">${ms('undo')}환불 안내 (참고)</div><div class="krow"><span class="k">이용 회차</span><span class="v">8회 중 3회</span></div><div class="krow"><span class="k">계산 기준</span><span class="v">남은 회차 기준</span></div><div class="src">※ 교육청 환불 규정에 따라 상담원이 확인 후 확정해요.</div>`);
     quick([{t:'퇴원·환불 접수하기',primary:true,act:()=>{botSay('퇴원·환불 접수를 진행할까요? 접수하면 대치 캠퍼스 상담실에서 확인 연락을 드려요.');quick([{t:'네, 접수할게요',primary:true,act:()=>handoff('퇴원·환불')},{t:'조금 더 생각할래요',go:'m_quit'}]);}},back('m_quit')]);},
 };
-function go(k){if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
+function go(k){__nv++;track('chatbot_node_view',{node_id:k});if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
 
 /* 진입 맥락 배너 */
 function setBanner(){bannerSlot.innerHTML='';
@@ -768,8 +776,8 @@ function setBanner(){bannerSlot.innerHTML='';
 /* 포커스 트랩 */
 let lastFocus=null;
 function trapFocus(e){if(e.key!=='Tab')return;const list=[...sheet.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];if(!list.length)return;const f=list[0],l=list[list.length-1];if(e.shiftKey&&document.activeElement===f){e.preventDefault();l.focus();}else if(!e.shiftKey&&document.activeElement===l){e.preventDefault();f.focus();}}
-function openChat(c){ctx=c||'normal';log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus({preventScroll:true});NODES.home();},300);}
-function closeChat(){scrim.classList.remove('open');sheet.classList.remove('open');document.body.classList.remove('chat-open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+function openChat(c){ctx=c||'normal';__nv=0;__resolved=false;track('chatbot_open',{entry_context:ctx});log.innerHTML='';setBanner();scrim.classList.add('open');sheet.classList.add('open');document.body.classList.add('chat-open');lastFocus=document.activeElement;sheet.addEventListener('keydown',trapFocus);setTimeout(()=>{sheet.focus({preventScroll:true});NODES.home();},300);}
+function closeChat(){track('chatbot_close',{resolved:__resolved,nodes_visited:__nv});scrim.classList.remove('open');sheet.classList.remove('open');document.body.classList.remove('chat-open');sheet.removeEventListener('keydown',trapFocus);if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 /* 바텀시트 드래그로 닫기 (모바일) — Vaul 임계값: 높이 25% 또는 속도 0.4 */
 (function(){const grab=sheet.querySelector('.grab'),chead=sheet.querySelector('.chead');let y0=0,t0=0,h=0,drag=false;
  function s(e){if(document.body.dataset.view!=='mobile')return;if(e.target.closest&&e.target.closest('button'))return;drag=true;y0=(e.touches?e.touches[0]:e).clientY;t0=Date.now();h=sheet.offsetHeight||600;sheet.classList.add('dragging');}

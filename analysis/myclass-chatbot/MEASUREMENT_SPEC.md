@@ -29,6 +29,7 @@
 ## 2. 이벤트 스키마 (GA4 커스텀 이벤트)
 
 > 명명: `chatbot_*` 스네이크케이스. 모든 파라미터는 **PII 비포함**(노드ID·카테고리·채널만). 사용자 식별은 앱의 기존 로그인 컨텍스트 사용([확인필요]).
+> ✅ **프로토타입 배선 완료(2026-06-18)** — 아래 이벤트는 `prototype.html`의 `track()` 헬퍼로 `window.dataLayer`에 푸시됨(헤드리스 렌더로 발화 검증). 프로덕션 전환 시 `track()` 내부만 gtag로 교체하면 됨.
 
 | event_name | 발생 시점(프로토타입 함수) | 주요 파라미터 |
 |---|---|---|
@@ -36,7 +37,8 @@
 | `chatbot_menu_select` | 메뉴 타일 클릭 (`menuGrid`) | `menu_key`: account·pay·enroll·live·attend·time·quit·help |
 | `chatbot_node_view` | `go(node)` 진입 | `node_id`: 예) pay_status·pay_sms·pay_va·pay_cert·en_reg·en_waitset·en_check·en_wait·at_makeup·time_table |
 | `chatbot_quickfaq_click` | 홈 '자주 찾는 것' 칩 | `faq`: refund·makeup·app |
-| `chatbot_self_resolved` | '다 해결됐어요' 또는 핸드오프 없이 `endActions` 종료 | `last_node` |
+| `chatbot_self_resolved` | '다 해결됐어요' 또는 핸드오프 없이 `endActions` 종료 | `nodes_visited` |
+| `chatbot_self_action` | 셀프 신고·접수 완료(결석·지각 등) | `action`: absent_report / `kind` |
 | `chatbot_handoff` | `handoff` / `handoffTech` / `handoffLive` 호출 | `channel`: phone·myclass_kakao·live_kakao / `reason` |
 | `chatbot_handoff_open` | '전화 연결' / '카카오톡 상담 열기' 실제 클릭 | `channel` |
 | `chatbot_satisfaction` | 👍/👎 (`endActions` 피드백) | `rating`: up·down / `last_node` |
@@ -76,7 +78,7 @@ chatbot_open → chatbot_menu_select → chatbot_node_view
 
 ## 4. 구현 메모 (프로토타입 → 프로덕션)
 
-현재 프로토타입은 데모라 미계측. 프로덕션 전환 시 **얇은 `track()` 헬퍼** 한 개로 위 이벤트를 연결한다(예시, 실제 전송은 gtag/dataLayer [확인필요]):
+✅ **프로토타입에 배선 완료.** 아래 **얇은 `track()` 헬퍼** 한 개로 위 이벤트를 `window.dataLayer`에 연결했고, 프로덕션 전환 시 `track()` 내부 전송만 gtag로 교체한다([확인필요]):
 
 ```js
 function track(event, params){ try{ (window.dataLayer=window.dataLayer||[]).push({event, ...params}); }catch(_){} }
