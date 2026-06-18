@@ -231,7 +231,7 @@
   @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
   /* ── 뷰 전환: 모바일 / 태블릿 / 데스크탑 ── */
   .viewswitch{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:4px;background:#fff;border:1px solid var(--gray20);border-radius:999px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.14)}
-  .viewswitch button{border:none;background:none;padding:7px 15px;border-radius:999px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--helper);cursor:pointer}
+  .viewswitch button{border:none;background:none;padding:7px 15px;border-radius:999px;font-family:var(--font);font-size:13px;font-weight:700;color:var(--helper);cursor:pointer;white-space:nowrap;flex-shrink:0}
   .viewswitch button.on{background:#161616;color:#fff}
   /* macOS Chrome 브라우저 프레임 (태블릿·데스크탑 공통, 높이 76) */
   .mac-chrome{display:none;flex-direction:column;flex-shrink:0;background:#dee1e6}
