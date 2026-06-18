@@ -425,13 +425,15 @@
 
 <script>
 /* ===== 자가해결 챗봇 — 모든 가이드는 AMS 실제 상담 해결방법(RESOLUTION_EVIDENCE.md)에 근거 ===== */
+/* 메뉴 순서 = 데이터(AMS 424,200) 흡수 잠재 우선: 출결·보강 30.8%(흡수율 80%) → 입반 26.7% → LIVE 16% → 결제 8.4%.
+   계정·로그인은 디지털 채널 1위지만 '로그인 전' 문제라 인앱 챗봇이 못 잡음 → 하향. (DATA_ANALYSIS §0) */
 const MENU=[
- {k:'account',ic:'key',l:'계정·로그인·앱'},
- {k:'pay',ic:'credit_card',l:'미납·결제·환불'},
+ {k:'attend',ic:'fact_check',l:'출결·보강'},
  {k:'enroll',ic:'how_to_reg',l:'입반·등록·대기'},
  {k:'live',ic:'live_tv',l:'라이브·교재·배송'},
- {k:'attend',ic:'fact_check',l:'출결·보강'},
+ {k:'pay',ic:'credit_card',l:'미납·결제·환불'},
  {k:'time',ic:'calendar_month',l:'수업·시간표'},
+ {k:'account',ic:'key',l:'계정·로그인·앱'},
  {k:'quit',ic:'logout',l:'퇴원·전반'},
  {k:'help',ic:'support_agent',l:'상담원·자주묻는것'},
 ];
@@ -451,7 +453,7 @@ function card(h){const r=el(`<div class="row bot fadein"><div class="card"></div
 function cardLoad(h,rows){rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
-function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'환불 되나요?',go:'pay_refund'},{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'앱이 안 돼요',go:'ac_app'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
@@ -677,7 +679,7 @@ const NODES={
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
     quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
-      {t:'결석·지각 미리 신고',ic:'event_busy',act:()=>{botSay('결석·지각 예정을 미리 알려주시면 좋아요. 빠진 수업은 <b>동영상 보강</b>으로 들을 수 있고, 회차 자료도 문자로 받을 수 있어요.');quick([{t:'동영상 보강 신청하기',primary:true,go:'at_makeup'},{t:'결석·지각 상담원에게 접수',act:()=>handoff('결석·지각 예정 신고')},back('m_attend')]);}},
+      {t:'결석·지각 미리 신고',ic:'event_busy',go:'at_absent'},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
   at_week(){cardLoad(`<div class="ct">${ms('calendar_view_week')}주간 출결 현황 · 최근 6주</div>
      <div class="hmap" aria-hidden="true">
@@ -690,6 +692,15 @@ const NODES={
      <div class="barrow"><span>최근 출석률</span><span><b>80%</b> · 출석 12 · 지각 2 · 결석 1</span></div><div class="bar"><i style="width:80%"></i></div>`);
     botSay('최근 6주 출결이에요. 결석 1회는 <b>동영상 보강</b>으로 채울 수 있어요.');
     quick([{t:'결석분 보강 신청',primary:true,go:'at_makeup'},back('m_attend')]);},
+  /* 결석·지각 셀프 신고 — AMS 최대 자가해결 항목(결석예정 23,501·결석생TX 27,597·지각 6,477 ≈ 5.8만건). 전화 대체. */
+  at_absent(){const cls=[['이신혁T 지학Ⅰ 서바이벌','금 13:30'],['강기원T 수학','일 09:00'],['강은양T 국어','일 18:30']];
+    const pick=(kind)=>{botSay(`<b>${kind}</b>할 수업을 선택해 주세요.`);
+      quick([...cls.map(c=>({t:c[0],label:`${c[0]} ${kind}`,act:()=>{
+        botSay(`<b>${c[0]}</b>(${c[1]}) <b>${kind}</b> 신고가 접수됐어요. 담당 선생님께 전달돼요.`+(kind==='결석'?' 빠진 회차는 <b>동영상 보강</b>으로 채울 수 있어요.':''));
+        quick([{t:'동영상 보강 신청',ic:'smart_display',primary:true,go:'at_makeup'},{t:'회차 자료 문자로 받기',ic:'sms',act:()=>{botSay(`${c[0]} 회차 자료를 010-****-1234로 보내드릴게요.`);endActions();}},{t:'처음으로',ghost:true,go:'home'}]);
+      }})),back('at_absent')]);};
+    botSay('결석·지각을 미리 신고할게요. 미리 알려주시면 빠진 수업을 <b>동영상 보강</b>으로 채울 수 있어요. 어떤 경우인가요?');
+    quick([{t:'결석 신고',ic:'event_busy',act:()=>pick('결석')},{t:'지각 신고',ic:'schedule',act:()=>pick('지각')},{t:'장기 결석·기타 상담',ghost:true,act:()=>handoff('결석·지각(장기·기타)')},back('m_attend')]);},
   at_makeup(){botSay('어떤 강좌 보강인가요? 수강 중인 강좌별·주차별로 조회·신청할 수 있어요.\n신청 시 수강료가 차감될 수 있어요(연속 동보 허용 등 일부 제외).');
     quick([...Object.keys(MAKEUP).map(c=>({t:c,ic:'smart_display',act:()=>makeupWeeks(c)})),back('m_attend')]);},
 
