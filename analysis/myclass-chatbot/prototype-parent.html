@@ -135,7 +135,7 @@
   .banner b{font-weight:600}
   .banner .x{margin-left:auto;opacity:.7}
 
-  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 16px 12px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background-color:var(--surface);background-image:radial-gradient(circle,rgba(22,22,22,.05) 1px,transparent 1.5px);background-size:20px 20px;background-position:6px 6px}
+  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 16px 12px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background-color:var(--surface);background-image:radial-gradient(circle,rgba(22,22,22,.05) 1px,transparent 1.5px);background-size:16px 16px;background-position:6px 6px}
   /* ── 스크롤바: 반투명 + 스크롤할 때만 노출(자동 숨김) ── */
   .scroll,.log{scrollbar-width:thin;scrollbar-color:transparent transparent;transition:scrollbar-color .35s var(--ease)}
   .scroll.scrolling,.log.scrolling,.scroll:hover,.log:hover{scrollbar-color:#16161626 transparent}
@@ -259,8 +259,8 @@
   .hero.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:0;pointer-events:none}
   .hero .spk{display:inline-flex;animation:sparkin .55s var(--ease) both}
   .hero .spk svg path{fill:var(--accent)}
-  .hgreet{font-size:var(--fs-h);line-height:var(--lh-h);font-weight:600;letter-spacing:normal;color:var(--text-neutral)}
-  .hgreet b{font-weight:600}
+  .hgreet{font-size:var(--fs-h);line-height:var(--lh-h);font-weight:300;letter-spacing:normal;color:var(--text-neutral)}
+  .hgreet b{font-weight:300}
   .hsub{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--text-weak)}
   @keyframes sparkin{0%{opacity:0;transform:scale(.4) rotate(-35deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 12px}
