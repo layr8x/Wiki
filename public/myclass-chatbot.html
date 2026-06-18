@@ -347,14 +347,14 @@
 .ctxsel .ms{font-size:16px;color:#1616168f}
 .ctxsel .ms:last-child{transition:transform .2s}
 .ctxsel.open .ms:last-child{transform:rotate(180deg)}
-.ctxmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;min-width:212px;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:14px;box-shadow:0 10px 30px rgba(22,22,22,.16);padding:6px;display:none}
+.ctxmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:max-content;min-width:232px;max-width:86%;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:14px;box-shadow:0 10px 30px rgba(22,22,22,.16);padding:6px;display:none}
 .ctxmenu.open{display:block;animation:ddin .16s var(--ease)}
 @keyframes ddin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
 .ctxmenu .grp{font-size:11px;font-weight:700;color:#a1a1aa;letter-spacing:.02em;padding:8px 10px 4px}
 .ctxmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;border-radius:9px;padding:9px 10px;font:inherit;font-size:13px;color:#161616;cursor:pointer}
 .ctxmenu button:hover{background:#f4f4f5}
 .ctxmenu button.cur{font-weight:700}
-.ctxmenu button>span{flex:1}
+.ctxmenu button>span{flex:1;white-space:nowrap}
 .ctxmenu button .ms{font-size:17px;color:#1616168f}
 .ctxmenu button .ck{color:#3182f6;font-size:16px}
 </style>
