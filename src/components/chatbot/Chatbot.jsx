@@ -537,7 +537,7 @@ function ChatbotWidget({ chatbot }) {
   )
 }
 
-// ─── 별도 브라우저 창 페이지 (/chatbot) — 창 전체를 채움 ──────────────────
+// ─── 별도 브라우저 창 페이지 (/ams-chatbot) — 창 전체를 채움 ──────────────────
 export function ChatbotPopupPage() {
   const faqList = useManagerFaq()
   const chatbot = useChatbot({ faqList })
@@ -567,7 +567,7 @@ export function Chatbot({ userName = '명준', onOpenGuide }) {
     const left = Math.max(0, ((window.screen?.availWidth) || 1280) - w - 40)
     let win
     try {
-      win = window.open('/chatbot', 'ams-chatbot', `popup=yes,width=${w},height=${h},left=${left},top=80`)
+      win = window.open('/ams-chatbot', 'ams-chatbot', `popup=yes,width=${w},height=${h},left=${left},top=80`)
     } catch { win = null }
     if (!win || win.closed || typeof win.closed === 'undefined') {
       chatbot.open() // 팝업이 차단되면 인페이지 위젯으로 폴백
