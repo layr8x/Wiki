@@ -454,6 +454,7 @@ function cardLoad(h,rows){rows=rows||3;const r=el(`<div class="row bot fadein"><
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function parentEntry(){const w=el(`<div class="qr"></div>`);const c=el(`<button class="chip ghost fadein"><span>${ms('family_restroom')}학부모이신가요? 학부모 안내</span></button>`);c.style.animationDelay='430ms';c.onclick=()=>{meSay('학부모 안내');w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();const fq=log.querySelectorAll('.qr');fq.forEach(q=>q.remove());typeThen(()=>go('m_parent'));};w.appendChild(c);log.appendChild(w);scrollEnd();}
 function crumb(t){const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
@@ -557,13 +558,17 @@ const won=n=>n.toLocaleString()+'원';
 const payNum=a=>+String(a).replace(/[^0-9]/g,'');
 function payItemHtml(i){const pill=i.paid?'<span class="pill ok">완납</span>':'<span class="pill due">미납</span>';const sub=(!i.paid&&i.due)?`<span class="enr-sub">납부 기한 ${i.due}</span>`:'';return `<div class="payitem${i.paid?' paid':''}"><div class="pi-l"><span class="pi-type">${i.t}</span><span class="pi-name">${i.n}</span>${sub}</div><div class="pi-r">${pill}<span class="pi-amt">${i.a}</span></div></div>`;}
 const NODES={
-  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();},
+  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>김시대</b>님. <b>대치 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();parentEntry();},
+
+  /* 학부모 모드 — AMS 전화 상담의 92%가 학부모. 자녀 기준 핵심 메뉴로 라우팅 (DATA_ANALYSIS §4) */
+  m_parent(){crumb('학부모 안내');botSay('학부모님이시군요. 자녀의 <b>결제·납부, 출결, 시간표</b>는 <b>마이클래스 학부모 통합회원</b>으로 로그인하시면 직접 보실 수 있어요. 무엇을 도와드릴까요?');
+    quick([{t:'자녀 결제·납부 확인',ic:'credit_card',go:'m_pay'},{t:'자녀 출결·보강',ic:'fact_check',go:'m_attend'},{t:'학부모 로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'상담 선생님과 통화',ic:'call',act:()=>handoff('학부모 상담')},back('home')]);},
 
   /* 1. 계정·로그인·앱 */
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
     quick([{t:'로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'통합회원·계정 연결',ic:'link',go:'ac_unify'},{t:'앱이 안 돼요',ic:'phonelink_erase',go:'ac_app'},back('home')]);},
   ac_login(){botSay('로그인 오류는 원인이 다양해 확인이 필요해요. 어떻게 도와드릴까요?');
-    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'아이디·비밀번호가 기억 안 나요',act:()=>{botSay('마이클래스 로그인은 <b>시대인재 통합회원(통합 ID)</b>을 써요. <b>이메일 주소(아이디)와 비밀번호</b>로 들어가면 돼요.<br>아이디(이메일)가 기억나지 않으면 로그인 화면의 <b>아이디 찾기</b>, 비밀번호는 <b>비밀번호 재설정</b>으로 본인확인 후 다시 정할 수 있어요.');quick([{t:'그래도 안 되면 도움받기',primary:true,act:()=>handoff('통합회원 아이디·가입 확인')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
+    quick([{t:'통합회원 연결 확인',go:'ac_unify'},{t:'아이디·비밀번호가 기억 안 나요',act:()=>{botSay('마이클래스 로그인은 <b>시대인재 통합회원(통합 ID)</b>을 써요. <b>이메일 주소(아이디)와 비밀번호</b>로 들어가면 돼요.<br>아이디(이메일)가 기억나지 않으면 로그인 화면의 <b>아이디 찾기</b>, 비밀번호는 <b>비밀번호 재설정</b>으로 본인확인 후 다시 정할 수 있어요.');quick([{t:'그래도 안 되면 도움받기',primary:true,act:()=>handoff('통합회원 아이디·가입 확인')},back('ac_login')]);}},{t:'비밀번호 재설정 방법',act:()=>{botSay('로그인 화면에서 <b>비밀번호 재설정</b>을 눌러 ① 가입한 <b>이메일(아이디)</b> 입력 → ② 본인확인(이메일·문자) → ③ 새 비밀번호 설정 순서로 진행하면 돼요. 비밀번호는 영문·숫자를 섞어 8자 이상이 안전해요.');quick([{t:'그래도 안 돼요',primary:true,act:()=>handoff('비밀번호 재설정 실패')},back('ac_login')]);}},{t:'로그인 화면 자체가 안 열려요',act:()=>{botSay('앱에 들어가기 전 단계라면 <b>마이클래스 앱 삭제 후 재설치</b>가 가장 확실하고, 그래도 막히면 <b>카카오톡 채널</b>에서 바로 도와드려요.');quick([{t:'카카오톡으로 도움받기',primary:true,act:()=>handoffTech('로그인 화면 진입 불가')},back('ac_login')]);}},{t:'카카오톡 기술 상담',act:()=>handoffTech('로그인 실패')},back('m_account')]);},
   ac_unify(){botSay('통합회원은 시대인재 여러 서비스를 한 계정으로 쓰는 기능이에요.');
     card(`<div class="ct">${ms('link')}통합회원 연결</div><div class="guide">연결 방법·위치는 계정 상태에 따라 달라요. 지점 상담 선생님이 계정을 확인해 정확히 안내해 드려요.</div>`);
     quick([{t:'통합회원 도움받기',primary:true,act:()=>handoff('통합회원 연결')},{t:'자녀 계정 연결',act:()=>{botSay('자녀(학생) 계정 연결도 지점 상담 선생님이 안전하게 도와드려요.');quick([{t:'상담 선생님 연결',primary:true,act:()=>handoff('자녀 계정 연결')},back('m_account')]);}},back('m_account')]);},
@@ -678,7 +683,7 @@ const NODES={
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
-    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
+    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'회차 자료(동보) 받기',ic:'description',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
       {t:'결석·지각 미리 신고',ic:'event_busy',go:'at_absent'},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
   at_week(){cardLoad(`<div class="ct">${ms('calendar_view_week')}주간 출결 현황 · 최근 6주</div>
