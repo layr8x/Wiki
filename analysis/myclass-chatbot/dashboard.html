@@ -1,0 +1,163 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>마이클래스 챗봇 — 데이터 분석 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/static/pretendard.min.css">
+<style>
+:root{--bg:#fafafa;--card:#fff;--fg:#09090b;--muted:#f4f4f5;--muted-fg:#71717a;--faint:#a1a1aa;
+ --border:#e4e4e7;--primary:#18181b;--ring:#d4d4d8;--radius:8px;
+ --sans:"Pretendard","Pretendard Variable",-apple-system,"Apple SD Gothic Neo",sans-serif;
+ --mono:ui-monospace,"SF Mono",Menlo,monospace;--bar:#18181b;--bar2:#d4d4d8;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.5;
+ -webkit-font-smoothing:antialiased;padding:40px 20px 72px}
+.wrap{max-width:1080px;margin:0 auto}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.a{animation:up .5s cubic-bezier(.21,.6,.35,1) both}
+.a2{animation-delay:.06s}.a3{animation-delay:.12s}.a4{animation-delay:.18s}.a5{animation-delay:.24s}.a6{animation-delay:.3s}
+header{margin-bottom:28px}
+.eyebrow{font-size:13px;font-weight:600;color:var(--faint);letter-spacing:.02em;text-transform:uppercase}
+h1{font-size:30px;font-weight:800;letter-spacing:-.03em;margin:6px 0 10px}
+.lede{font-size:17px;color:var(--muted-fg);max-width:760px}
+.lede b{color:var(--fg)}
+.stats{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:12px;width:fit-content;
+ overflow:hidden;background:var(--card);margin:22px 0 8px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.st{padding:16px 22px;border-left:1px solid var(--border)}.st:first-child{border-left:0}
+.st .n{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
+.st .l{font-size:13px;color:var(--muted-fg);margin-top:3px}
+section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px 26px;margin-top:18px;
+ box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.sh{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+h2{font-size:18px;font-weight:700;letter-spacing:-.02em}
+.sub{font-size:14px;color:var(--muted-fg);margin-bottom:18px}
+/* bar list */
+.bars{display:flex;flex-direction:column;gap:11px}
+.brow{display:grid;grid-template-columns:148px 1fr 64px;align-items:center;gap:14px}
+.brow .k{font-size:14px;font-weight:600;text-align:right;color:var(--fg)}
+.track{height:26px;background:var(--muted);border-radius:6px;overflow:hidden;position:relative}
+.fill{height:100%;background:var(--bar);border-radius:6px;display:flex;align-items:center;
+ padding:0 10px;color:#fff;font-size:12.5px;font-weight:600;white-space:nowrap;min-width:fit-content}
+.fill.lite{background:var(--bar2);color:var(--fg)}
+.brow .v{font-size:14px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.brow .v small{display:block;font-size:11.5px;color:var(--muted-fg);font-weight:500}
+/* table */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 12px;text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+thead th{font-weight:600;color:var(--muted-fg);border-bottom:1px solid var(--border);font-size:13px}
+tbody tr{border-bottom:1px solid var(--muted);transition:background .15s}
+tbody tr:hover{background:#fafafa}
+td .mini{display:inline-block;height:8px;border-radius:3px;background:var(--bar2);vertical-align:middle;margin-left:8px}
+.hot{font-weight:800;color:var(--fg)}
+.hot b{background:#18181b;color:#fff;border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums}
+.dim{color:var(--faint)}
+/* badges / checklist */
+.chips{display:flex;flex-wrap:wrap;gap:9px}
+.bdg{display:inline-flex;align-items:center;gap:7px;border-radius:9999px;padding:7px 14px;font-size:13.5px;font-weight:600;
+ background:var(--muted)}
+.bdg.ok{background:#18181b;color:#fff}
+.bdg.ok::before{content:"✓";font-weight:800}
+.bdg.todo{background:#fff;border:1px dashed var(--ring);color:var(--muted-fg)}
+.note{margin-top:14px;font-size:13px;color:var(--muted-fg);line-height:1.6}
+.note b{color:var(--fg)}
+.foot{margin-top:22px;font-size:12.5px;color:var(--faint);line-height:1.7}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.brow{grid-template-columns:96px 1fr 56px}}
+.tag{font-size:11px;font-weight:700;color:var(--faint);border:1px solid var(--border);border-radius:5px;padding:2px 7px}
+</style></head>
+<body><div class="wrap">
+
+<header class="a">
+ <div class="eyebrow">시대인재 마이클래스 · 챗봇 데이터 분석</div>
+ <h1>전화 상담 424,200건 — 챗봇이 흡수 가능한 절반</h1>
+ <p class="lede">2026년 1~6월 AMS 전화 상담 전수와 카카오·웹(GA4) 실측을 교차분석했습니다. 핵심은 <b>출결·보강이 전화의 1/3(30.8%)이고 자가해결 가능성이 가장 높다(80%)</b>는 것, 그리고 <b>전화는 학부모·디지털은 계정/로그인</b>이라는 정반대 구조입니다.</p>
+ <div class="stats">
+  <div class="st"><div class="n">424,200</div><div class="l">전화 상담 (2026.1~6)</div></div>
+  <div class="st"><div class="n">96.7%</div><div class="l">전화 접수</div></div>
+  <div class="st"><div class="n">92%</div><div class="l">학부모</div></div>
+  <div class="st"><div class="n">30.8%</div><div class="l">출결·보강 (1위)</div></div>
+  <div class="st"><div class="n">~55%</div><div class="l">자가해결 잠재</div></div>
+  <div class="st"><div class="n">76%</div><div class="l">모바일 (웹)</div></div>
+ </div>
+</header>
+
+<section class="a a2">
+ <div class="sh"><h2>챗봇 메뉴별 흡수 잠재</h2><span class="tag">전화 상담 기준</span></div>
+ <p class="sub">막대 = 문의량 · 우측 = 자가해결 가능 추정(흡수율). <b>출결·보강이 단일 최대이자 흡수율 최고</b> → 1순위.</p>
+ <div class="bars">
+  <div class="brow"><div class="k">출결·보강</div><div class="track"><div class="fill" style="width:100%">130,552 · 흡수율 80%</div></div><div class="v">~104k<small>잠재</small></div></div>
+  <div class="brow"><div class="k">입반·등록·대기</div><div class="track"><div class="fill" style="width:87%">113,142 · 49%</div></div><div class="v">~56k<small>잠재</small></div></div>
+  <div class="brow"><div class="k">LIVE</div><div class="track"><div class="fill" style="width:52%">68,048 · 49%</div></div><div class="v">~34k<small>잠재</small></div></div>
+  <div class="brow"><div class="k">결제·납부</div><div class="track"><div class="fill" style="width:27%">35,834 · 63%</div></div><div class="v">~23k<small>잠재</small></div></div>
+  <div class="brow"><div class="k">퇴원·환불</div><div class="track"><div class="fill lite" style="width:28%">36,335 · 15%</div></div><div class="v">~5k<small>잠재</small></div></div>
+  <div class="brow"><div class="k">교재·자습실</div><div class="track"><div class="fill lite" style="width:16%">21,084 · 55%</div></div><div class="v">~12k<small>잠재</small></div></div>
+ </div>
+ <p class="note"><b>전화 상담의 자가해결 가능 상한 ≈ 235,000건 (55.5%).</b> 출결·보강 안의 핵심은 결석·지각 신고(≈5.8만)·동영상보강·동보자료(≈6.4만).</p>
+</section>
+
+<section class="a a3">
+ <div class="sh"><h2>3채널 교차비교 — 전화 vs 디지털은 정반대</h2></div>
+ <p class="sub">전화는 운영 처리(출결·입반), 디지털은 "앱에 못 들어감"(계정·로그인)이 지배. 분모가 달라 절대비교가 아닌 구조 비교.</p>
+ <table>
+  <thead><tr><th>메뉴</th><th>전화 (AMS)</th><th>카톡 채널</th><th>라이브 상담</th></tr></thead>
+  <tbody>
+   <tr><td>출결·보강</td><td class="hot"><b>30.8%</b></td><td>8.4%</td><td class="dim">3.1%</td></tr>
+   <tr><td>입반·등록·대기</td><td class="hot">26.7%</td><td>16.1%</td><td>7.6%</td></tr>
+   <tr><td>LIVE</td><td>16.0%</td><td>21.5%</td><td>6.0%</td></tr>
+   <tr><td>결제·납부·환불</td><td>8.4%</td><td>11.5%</td><td>12.1%</td></tr>
+   <tr><td>계정·로그인·앱</td><td class="dim">0.2%</td><td class="hot"><b>65.9%</b></td><td class="hot">36.6%</td></tr>
+   <tr><td>시간표</td><td class="dim">0.4%</td><td>12.0%</td><td class="dim">0.2%</td></tr>
+  </tbody>
+ </table>
+ <p class="note">⟶ <b>함정</b>: 챗봇은 <b>로그인된 앱 안</b>에 사는데 디지털 최대 수요(계정·로그인)는 <b>로그인 전</b>에 발생 → 그 사용자는 챗봇에 닿지 못함. 인앱 챗봇의 흡수 타깃은 <b>전화의 출결·보강·입반·결제</b>.</p>
+</section>
+
+<div class="grid2">
+ <section class="a a4">
+  <div class="sh"><h2>월별 추세</h2><span class="tag">2026</span></div>
+  <p class="sub">계절 기준선(baseline). 챗봇 미배포라 감소를 챗봇 효과로 볼 수 없음.</p>
+  <div class="bars">
+   <div class="brow"><div class="k">1월</div><div class="track"><div class="fill" style="width:100%">89,356</div></div><div class="v"></div></div>
+   <div class="brow"><div class="k">2월</div><div class="track"><div class="fill" style="width:85%">75,905</div></div><div class="v"></div></div>
+   <div class="brow"><div class="k">3월</div><div class="track"><div class="fill" style="width:85%">76,236</div></div><div class="v"></div></div>
+   <div class="brow"><div class="k">4월</div><div class="track"><div class="fill" style="width:68%">61,134</div></div><div class="v"></div></div>
+   <div class="brow"><div class="k">5월</div><div class="track"><div class="fill" style="width:80%">71,772</div></div><div class="v"></div></div>
+   <div class="brow"><div class="k">6월</div><div class="track"><div class="fill lite" style="width:56%">49,797</div></div><div class="v dim"><small>부분</small></div></div>
+  </div>
+  <p class="note">입반·대기만 유일하게 <b>상승</b>(1월 18,878 → 6월 20,831). 6월은 6/17까지(반 달).</p>
+ </section>
+
+ <section class="a a5">
+  <div class="sh"><h2>누가 · 어디서</h2></div>
+  <p class="sub">전화 채널 사용자·접수 형태.</p>
+  <div class="bars">
+   <div class="brow"><div class="k">학부모</div><div class="track"><div class="fill" style="width:92%">92.1%</div></div><div class="v">390,509</div></div>
+   <div class="brow"><div class="k">학생</div><div class="track"><div class="fill lite" style="width:8%"></div></div><div class="v">7.9%</div></div>
+   <div class="brow"><div class="k">전화 접수</div><div class="track"><div class="fill" style="width:97%">96.7%</div></div><div class="v">410,104</div></div>
+   <div class="brow"><div class="k">모바일(웹)</div><div class="track"><div class="fill" style="width:76%">76%</div></div><div class="v">GA4</div></div>
+  </div>
+  <p class="note"><b>학부모 92%</b> — 챗봇이 학생만 쓰면 전화량은 잘 안 줄어듦 → <b>학부모 접근 경로</b>가 효과의 전제.</p>
+ </section>
+</div>
+
+<section class="a a6">
+ <div class="sh"><h2>분석 → 챗봇 반영</h2><span class="tag">이번 적용</span></div>
+ <p class="sub">데이터가 가리킨 우선순위를 챗봇에 반영했습니다.</p>
+ <div class="chips">
+  <span class="bdg ok">출결·보강 메뉴 1순위 배치</span>
+  <span class="bdg ok">결석·지각 셀프 신고(전화 대체)</span>
+  <span class="bdg ok">회차 자료(동보) 전면 노출</span>
+  <span class="bdg ok">학부모 모드 신설</span>
+  <span class="bdg ok">로그인 전 분기 → 카톡</span>
+  <span class="bdg ok">계정·로그인 메뉴 하향</span>
+  <span class="bdg ok">효과 측정 설계(대조군)</span>
+  <span class="bdg todo">학부모 도달 경로 확대</span>
+  <span class="bdg todo">백엔드 실데이터 연동</span>
+  <span class="bdg todo">측정 이벤트 실계측</span>
+ </div>
+</section>
+
+<p class="foot">
+ 출처 — AMS 전화 상담 424,200건(대치단과, 2026-01~06, 암호화 원본 직접 복호화) · 카카오 마이클래스 채널 6,503메시지 · Supabase 라이브 85,139메시지 · GA4 785,841세션. 집계·비PII만(이름·전화·원문 미포함).<br>
+ 한계 — 6월 부분 집계 · 챗봇 미배포(감소를 챗봇 효과로 귀속 금지) · 채널별 분모 상이 · 대치단과 단일 지점 · 갱신 2026-06-18.
+</p>
+
+</div></body></html>
