@@ -62,11 +62,12 @@
   .bell{position:relative}
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
   /* 진입 전 챗봇 아이콘: 은은한 비콘 링(입장 시 3회) + 부드러운 호버 — 과하지 않게 */
-  #openBtn{position:relative;border-radius:50%;transition:transform .22s var(--ease)}
-  #openBtn:hover{transform:scale(1.12)}
+  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#161616;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 2px 7px rgba(22,22,22,.22);transition:transform .22s var(--ease),box-shadow .22s var(--ease);animation:botbreath 2.8s var(--ease) infinite}
+  #openBtn:hover{transform:scale(1.1);box-shadow:0 5px 16px rgba(22,22,22,.30)}
   #openBtn:active{transform:scale(.92)}
-  #openBtn::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:1.5px solid #161616;opacity:0;pointer-events:none;animation:beacon 2.4s var(--ease) 3 .5s both}
-  @keyframes beacon{0%{transform:scale(.6);opacity:.5}60%{opacity:0}100%{transform:scale(1.35);opacity:0}}
+  #openBtn::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid #161616;opacity:0;pointer-events:none;animation:beacon 2.6s var(--ease) infinite .4s}
+  @keyframes beacon{0%{transform:scale(.72);opacity:.45}70%{opacity:0}100%{transform:scale(1.42);opacity:0}}
+  @keyframes botbreath{0%,100%{box-shadow:0 2px 7px rgba(22,22,22,.22)}50%{box-shadow:0 2px 7px rgba(22,22,22,.22),0 0 0 4px rgba(22,22,22,.07)}}
   .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
   .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
@@ -370,7 +371,7 @@
     <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
     <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">학부모님</span><span class="ms">keyboard_arrow_down</span></span><span class="ms cached">cached</span></div>
     <div class="headicons">
-      <span class="ms" id="openBtn" role="button" aria-label="문의 챗봇 열기" title="문의 챗봇">forum</span>
+      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미">smart_toy</span>
       <span class="ms bell" aria-label="알림">notifications</span>
       <span class="ms deskonly" aria-label="전체메뉴">menu</span>
     </div>
@@ -497,7 +498,6 @@ function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot 
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'미납·납부 확인',go:'pay_status'},{t:'자녀 보강 보기',go:'at_makeup'},{t:'설명회·컨설팅',go:'m_help'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{track('chatbot_quickfaq_click',{faq:o.go});meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function parentEntry(){const w=el(`<div class="qr"></div>`);const c=el(`<button class="chip ghost fadein"><span>${ms('family_restroom')}학부모이신가요? 학부모 안내</span></button>`);c.style.animationDelay='430ms';c.onclick=()=>{meSay('학부모 안내');w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();const fq=log.querySelectorAll('.qr');fq.forEach(q=>q.remove());typeThen(()=>go('m_parent'));};w.appendChild(c);log.appendChild(w);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 function back(k){return {t:'이전',go:k,ghost:true};}
 function endActions(){quick([{t:'처음으로',go:'home',ghost:true},{t:'다 해결됐어요',ghost:true,act:()=>{__resolved=true;track('chatbot_self_resolved',{nodes_visited:__nv});botSay('도움이 됐다니 다행이에요. 오늘 안내는 어떠셨나요?');quick([{t:'도움이 됐어요',ic:'thumb_up',act:()=>{track('chatbot_satisfaction',{rating:'up'});botSay('고마워요! 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',ghost:true,act:()=>closeChat()}]);}},{t:'아쉬웠어요',ic:'thumb_down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담원이 더 정확히 도와드릴게요.');quick([{t:'상담원 연결',primary:true,act:()=>handoff('챗봇 안내 미흡')},back('home')]);}}]);}}]);}
@@ -591,11 +591,8 @@ const won=n=>n.toLocaleString()+'원';
 const payNum=a=>+String(a).replace(/[^0-9]/g,'');
 function payItemHtml(i){const pill=i.paid?'<span class="pill ok">완납</span>':'<span class="pill due">미납</span>';const sub=(!i.paid&&i.due)?`<span class="enr-sub">납부 기한 ${i.due}</span>`:'';return `<div class="payitem${i.paid?' paid':''}"><div class="pi-l"><span class="pi-type">${i.t}</span><span class="pi-name">${i.n}</span>${sub}</div><div class="pi-r">${pill}<span class="pi-amt">${i.a}</span></div></div>`;}
 const NODES={
-  home(){crumb('자녀 학습을 함께 챙겨드려요');ctxBar();botSay('안녕하세요, <b>학부모님</b>. <b>{학생} 학생</b>({지점} 캠퍼스) 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();homeFaq();},
+  home(){crumb('자녀 학습을 함께 챙겨드려요');ctxBar();botSay('안녕하세요, <b>학부모님</b>. <b>{학생} 학생</b>({지점} 캠퍼스) 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
 
-  /* 학부모 모드 — AMS 전화 상담의 92%가 학부모. 자녀 기준 핵심 메뉴로 라우팅 (DATA_ANALYSIS §4) */
-  m_parent(){crumb('학부모 안내');botSay('학부모님이시군요. 자녀의 <b>결제·납부, 출결, 시간표</b>는 <b>마이클래스 학부모 통합회원</b>으로 로그인하시면 직접 보실 수 있어요. 무엇을 도와드릴까요?');
-    quick([{t:'자녀 결제·납부 확인',ic:'credit_card',go:'m_pay'},{t:'자녀 출결·보강',ic:'fact_check',go:'m_attend'},{t:'학부모 로그인이 안 돼요',ic:'login',go:'ac_login'},{t:'상담 선생님과 통화',ic:'call',act:()=>handoff('학부모 상담')},back('home')]);},
 
   /* 1. 계정·로그인·앱 */
   m_account(){botSay('계정·로그인·앱, 어디가 막히셨나요?');
@@ -695,7 +692,6 @@ const NODES={
     quick([{t:'시간대를 바꾸고 싶어요',act:()=>{botSay('어떤 강좌의 시간을 바꾸고 싶으세요?');quick([{t:'이신혁T 지학Ⅰ',act:()=>transferTime('이신혁T 지학Ⅰ')},{t:'강기원T 수학',act:()=>transferTime('강기원T 수학')},{t:'강은양T 국어',act:()=>transferTime('강은양T 국어')},back('en_transfer')]);}},
       {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>handoff('전반(강사 변경)')},back('m_enroll')]);},
-
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
