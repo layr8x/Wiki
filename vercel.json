@@ -6,6 +6,12 @@
   "regions": [
     "icn1"
   ],
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "claude/compassionate-wozniak-a9x5yr": false
+    }
+  },
   "rewrites": [
     {
       "source": "/chatbot",
