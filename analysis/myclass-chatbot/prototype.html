@@ -11,7 +11,7 @@
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{
     --text:#161616; --helper:#1616168f; --placeholder:#161616a3;
-    --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0;
+    --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
     --primary:#161616; --on-primary:#ffffff;
     --r-tag:2px; --r-btn:2px; --r-card:4px; --r-pill:999px; --r-bubble:16px; --r-sheet:12px;
@@ -98,7 +98,7 @@
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .42s cubic-bezier(.32,.72,0,1);
     display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none}
   .sheet.open{transform:translateY(0)}
-  .grab{width:40px;height:4px;background:#c6c6c6;border-radius:2px;margin:8px auto 4px;cursor:grab;touch-action:none}
+  .grab{width:40px;height:4px;background:var(--gray30);border-radius:2px;margin:8px auto 4px;cursor:grab;touch-action:none}
   .sheet.dragging{transition:none}
   .chead{display:flex;align-items:center;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--border);touch-action:none}
   .avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -130,7 +130,7 @@
   .card{max-width:90%;background:var(--bg);border:1px solid var(--gray20);border-radius:var(--r-card);padding:var(--s5);margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s ease,opacity .32s ease}
   .card.revealing{filter:blur(3px);opacity:.5}
   .skelwrap{display:flex;flex-direction:column;gap:10px;width:230px;max-width:72vw}
-  .skel{height:13px;border-radius:4px;background:linear-gradient(90deg,#f1f1f1 25%,#e6e6e6 37%,#f1f1f1 63%);background-size:400px 100%;animation:shimmer 1.15s infinite linear}
+  .skel{height:13px;border-radius:4px;background:linear-gradient(90deg,var(--surface) 25%,var(--gray20) 37%,var(--surface) 63%);background-size:400px 100%;animation:shimmer 1.15s infinite linear}
   .skel:nth-child(2){width:78%}.skel:nth-child(3){width:55%}
   @keyframes shimmer{from{background-position:-180px 0}to{background-position:180px 0}}
   .card .ct{font-size:13px;color:var(--helper);margin-bottom:8px;display:flex;align-items:center;gap:6px}
@@ -141,9 +141,9 @@
   .krow .v{font-size:15px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
   .big{font-size:22px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums;display:inline-block;animation:num-pop .26s cubic-bezier(.23,1,.32,1) both}
   .pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
-  .pill.ok{background:#16161610;color:#161616}
-  .pill.due{background:#161616;color:#fff}
-  .pill.wait{background:#16161610;color:#393939}
+  .pill.ok{background:var(--surface);color:var(--primary)}
+  .pill.due{background:var(--primary);color:var(--on-primary)}
+  .pill.wait{background:var(--surface);color:var(--tag-text)}
   .pill.muted{background:transparent;color:var(--helper);border:1px solid var(--border)}
   .guide{font-size:14px;line-height:1.75;color:#161616}
   .guide b{font-weight:700}
@@ -165,9 +165,9 @@
   .hmaprow{align-items:center;margin-bottom:5px}
   .hmaprow .hl{font-size:12px;color:#393939;white-space:nowrap;font-weight:600}
   .hcell{aspect-ratio:1;border-radius:4px;background:var(--surface);box-sizing:border-box}
-  .hcell.p{background:#161616}
-  .hcell.l{background:#16161685}
-  .hcell.a{background:#16161618;border:1px solid #16161633}
+  .hcell.p{background:var(--primary)}
+  .hcell.l{background:var(--gray60)}
+  .hcell.a{background:var(--gray20)}
   .hcell.f{background:transparent;border:1px dashed var(--gray20)}
   .hleg{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--helper)}
   .hleg span{display:inline-flex;align-items:center;gap:5px}
