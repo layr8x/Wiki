@@ -62,7 +62,8 @@
 | **결제 문자 재발송 — 건별**(`pay_sms`) | `POST /me/payments/sms-resend` `{ item: <id> }` | 특정 미납 1건 링크 |
 | **결제 문자 재발송 — 전체**(`pay_sms`) | `POST /me/payments/sms-resend` `{ all: true }` | 미납 전체 링크 일괄 |
 | 보강 신청(`makeupWeek`) | `POST /me/makeup` | 수강료 차감 룰 서버 검증(일부 제외) |
-| 보강 자료 문자(`makeupWeek`) | `POST /me/makeup/material-sms` | |
+| 보강 자료(동보) 문자(`makeupWeek`) | `POST /me/makeup/material-sms` | 출결 2위 항목(동보자료수령 31,690) |
+| **결석·지각 셀프 신고**(`at_absent`) ⭐ | `POST /me/attendance/report` `{ course_id, kind: absent\|late, date }` | **전화 최대 자가해결(≈5.8만)**. 담당 강사·출결시스템 통지. 신고 후 보강(`/me/makeup`) 연계 |
 | 현금영수증 발급(`pay_etc`) | `POST /me/payments/cash-receipt` | |
 
 > 실제 **결제 실행**은 외부 PG로 이동(현 `pay_fail`·`pay_status`의 '납부하기 화면'처럼). 챗봇은 링크/문자까지만.
