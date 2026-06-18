@@ -122,11 +122,15 @@
   .banner b{font-weight:700}
   .banner .x{margin-left:auto;opacity:.7}
 
-  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#16161626 transparent}
-  .log::-webkit-scrollbar{width:6px}
-  .log::-webkit-scrollbar-track{background:transparent}
-  .log::-webkit-scrollbar-thumb{background:#16161626;border-radius:99px}
-  .log::-webkit-scrollbar-thumb:hover{background:#16161640}
+  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 16px 8px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+  /* ── 스크롤바: 반투명 + 스크롤할 때만 노출(자동 숨김) ── */
+  .scroll,.log{scrollbar-width:thin;scrollbar-color:transparent transparent;transition:scrollbar-color .35s var(--ease)}
+  .scroll.scrolling,.log.scrolling,.scroll:hover,.log:hover{scrollbar-color:#16161626 transparent}
+  .scroll::-webkit-scrollbar,.log::-webkit-scrollbar{width:6px;height:6px}
+  .scroll::-webkit-scrollbar-track,.log::-webkit-scrollbar-track{background:transparent}
+  .scroll::-webkit-scrollbar-thumb,.log::-webkit-scrollbar-thumb{background:transparent;border-radius:99px;transition:background-color .35s var(--ease)}
+  .scroll.scrolling::-webkit-scrollbar-thumb,.log.scrolling::-webkit-scrollbar-thumb,.scroll:hover::-webkit-scrollbar-thumb,.log:hover::-webkit-scrollbar-thumb{background:#16161626}
+  .scroll::-webkit-scrollbar-thumb:hover,.log::-webkit-scrollbar-thumb:hover{background:#16161640}
   .row{display:flex;margin-bottom:10px;gap:8px}
   .row.bot{justify-content:flex-start}
   .row.me{justify-content:flex-end}
@@ -258,10 +262,9 @@
   body[data-view="tablet"] .phone{width:768px;height:min(1024px,94dvh)}
   body[data-view="tablet"] .statusbar,body[data-view="tablet"] .chrome-top,body[data-view="tablet"] .home-indicator,body[data-view="tablet"] .chrome-bot{display:none}
   body[data-view="tablet"] .mac-chrome{display:flex}
-  body[data-view="tablet"] .apphead{height:64px;padding:0 40px}
-  body[data-view="tablet"] .sectiontitle{display:block;padding:12px 40px 4px}
-  body[data-view="tablet"] .scroll{padding-top:8px}
-  body[data-view="tablet"] .classwrap{padding:8px 40px 24px;max-width:none;margin:0}
+  body[data-view="tablet"] .apphead{height:64px;padding:0 48px}
+  body[data-view="tablet"] .sectiontitle{display:block;padding:48px 48px 48px}
+  body[data-view="tablet"] .classwrap{padding:24px 48px 24px;max-width:none;margin:0}
   body[data-view="tablet"] .bottomnav{height:76px;align-items:center}
 
   /* ── 데스크탑 (1440×1024): 좌측 세로 내비 + 우측 콘텐츠 2단 ── */
@@ -269,10 +272,10 @@
   body[data-view="desktop"] .statusbar,body[data-view="desktop"] .chrome-top,body[data-view="desktop"] .home-indicator,body[data-view="desktop"] .chrome-bot,body[data-view="desktop"] .bottomnav{display:none}
   body[data-view="desktop"] .mac-chrome{display:flex}
   body[data-view="desktop"] .apphead{height:64px;padding:0 128px}
-  body[data-view="desktop"] .deskonly{display:inline-block}
+  body[data-view="tablet"] .deskonly,body[data-view="desktop"] .deskonly{display:inline-block}
   body[data-view="desktop"] .sectiontitle{display:none}
-  body[data-view="desktop"] .scroll{display:flex;flex-direction:row;align-items:flex-start;padding:48px 128px 0}
-  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:24px;width:50%;flex-shrink:0;position:sticky;top:0;align-self:flex-start}
+  body[data-view="desktop"] .scroll{display:flex;flex-direction:row;align-items:flex-start;padding:48px 80px 0}
+  body[data-view="desktop"] .desknav{display:flex;flex-direction:column;gap:24px;width:50%;flex-shrink:0;position:sticky;top:0;align-self:flex-start;padding-left:48px}
   body[data-view="desktop"] .classwrap{width:50%;max-width:none;margin:0;padding:0 0 40px 48px}
 
   /* 헤더: 태블릿·데스크탑 = 한 줄(브랜드 왼쪽 · 사용자정보+아이콘 오른쪽) */
@@ -280,12 +283,15 @@
   body[data-view="tablet"] .apphead .brand,body[data-view="desktop"] .apphead .brand{margin-right:auto}
   body[data-view="tablet"] .userrow,body[data-view="desktop"] .userrow{margin:0}
 
-  /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 */
-  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:22px;width:392px;border-radius:16px;transform:translateY(16px);opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
-  body[data-view="tablet"] .sheet{bottom:92px;height:min(560px,64%)}
+  /* 챗봇: 태블릿·데스크탑 = 우하단 도킹 패널 (트리거=헤더 우상단 forum 아이콘, 도킹 위젯 관례인 우하단 코너) */
+  body[data-view="tablet"] .sheet,body[data-view="desktop"] .sheet{left:auto;right:24px;width:392px;border-radius:16px;transform:translateY(16px) scale(.98);transform-origin:bottom right;opacity:0;visibility:hidden;transition:transform .26s cubic-bezier(.22,.61,.36,1),opacity .26s,visibility .26s}
+  body[data-view="tablet"] .sheet{bottom:100px;height:min(560px,64%)}
   body[data-view="desktop"] .sheet{bottom:24px;height:min(640px,82%)}
   body[data-view="tablet"] .sheet.open,body[data-view="desktop"] .sheet.open{transform:none;opacity:1;visibility:visible}
   body[data-view="tablet"] .scrim,body[data-view="desktop"] .scrim{background:transparent}
+  /* 도킹 패널에선 드래그 핸들 불필요(닫기 버튼으로 닫음) → 모바일 바텀시트에서만 노출 */
+  body[data-view="tablet"] .grab,body[data-view="desktop"] .grab{display:none}
+  body[data-view="tablet"] .chead,body[data-view="desktop"] .chead{padding-top:14px}
 
   .tip{position:absolute;top:104px;right:20px;background:#161616;color:#fff;font-size:12px;padding:7px 11px;border-radius:8px;opacity:0;transition:.3s;z-index:30;pointer-events:none}
   .tip::after{content:"";position:absolute;top:-5px;right:18px;border:5px solid transparent;border-bottom-color:#161616;border-top:0}
@@ -635,6 +641,9 @@ document.getElementById('homeBtn').onclick=()=>{log.innerHTML='';setBanner();NOD
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeChat();});
 
 document.addEventListener('keydown',e=>{if(e.key==='p'||e.key==='P')openChat('payment');if(e.key==='a'||e.key==='A')openChat('auth');if(e.key==='r'||e.key==='R')openChat('recruitment');});
+/* 스크롤바 자동 숨김: 스크롤 중에만 .scrolling 부여, 멈추면 700ms 뒤 제거 */
+function autoHideScroll(elm){let t;elm.addEventListener('scroll',()=>{elm.classList.add('scrolling');clearTimeout(t);t=setTimeout(()=>elm.classList.remove('scrolling'),700);},{passive:true});}
+document.querySelectorAll('.scroll,.log').forEach(autoHideScroll);
 const _vs=document.getElementById('viewswitch');document.body.dataset.view='mobile';
 _vs.querySelectorAll('button').forEach(b=>b.onclick=()=>{document.body.dataset.view=b.dataset.v;_vs.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
 </script>
