@@ -147,6 +147,15 @@
   .guide b{font-weight:700}
   .guide ol{margin:4px 0 0 18px}
   .src{font-size:11px;color:var(--helper);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+  .barrow{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--helper);margin-top:10px}
+  .barrow b{color:#161616;font-weight:700;font-variant-numeric:tabular-nums}
+  .bar{height:6px;border-radius:999px;background:var(--surface);overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:#161616;border-radius:999px;transform-origin:left;animation:bargrow .7s cubic-bezier(.23,1,.32,1) both}
+  @keyframes bargrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .qdots{display:flex;align-items:center;gap:5px;margin-top:10px}
+  .qdots i{width:9px;height:9px;border-radius:50%;background:#161616;flex-shrink:0}
+  .qdots i.me{background:#fff;border:2px solid #161616;width:12px;height:12px}
+  .qdots .qn{font-size:12px;color:var(--helper);margin-left:6px}
 
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
   .qlabel{flex-basis:100%;font-size:12px;color:var(--helper);margin:6px 2px 0}
@@ -160,7 +169,8 @@
   .mtile{display:flex;align-items:center;gap:10px;border:1px solid var(--gray20);border-radius:var(--r-card);padding:13px 12px;cursor:pointer;background:#fff;transition:background-color .14s,transform .14s cubic-bezier(.23,1,.32,1),border-color .14s,box-shadow .14s;text-align:left}
   .mtile:hover{background:var(--surface);border-color:#161616;transform:translateY(-2px);box-shadow:0 6px 16px rgba(22,22,22,.08)}
   .mtile:active{transform:translateY(0);box-shadow:0 1px 3px rgba(22,22,22,.06)}
-  .mtile .ms{font-size:22px;color:#161616}
+  .mtile .ms{font-size:20px;color:#161616;width:36px;height:36px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background-color .14s}
+  .mtile:hover .ms{background:#fff}
   .mtile .l{font-size:14px;font-weight:700;line-height:1.3}
 
   .inputbar{display:flex;gap:8px;align-items:center;padding:10px 16px 18px;border-top:1px solid var(--border);background:#fff;flex-shrink:0}
@@ -418,7 +428,8 @@ const NODES={
      <div class="krow"><span class="k">7월 수강료</span><span class="v"><span class="pill due">미납</span> 360,000원</span></div>
      <div class="krow"><span class="k">7월 교재비</span><span class="v">완납</span></div>
      <div class="krow"><span class="k">납부 기한</span><span class="v">7/19</span></div>
-     <div class="krow"><span class="k">합계 미납</span><span class="big">360,000원</span></div>`);
+     <div class="krow"><span class="k">합계 미납</span><span class="big">360,000원</span></div>
+     <div class="barrow"><span>이번 달 납부</span><span><b>2개 중 1개</b> 완납</span></div><div class="bar"><i style="width:50%"></i></div>`);
     quick([{t:'지금 결제하기',ic:'payment',primary:true,act:()=>{botSay('결제창으로 이동할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');endActions();}},{t:'가상계좌 확인',ic:'account_balance',go:'pay_va'},{t:'납입증명서 발급',ic:'description',go:'pay_cert'},{t:'결제 문자 다시 받기',go:'pay_sms'},back('m_pay')]);},
   pay_sms(){botSay('등록된 번호 <b>010-****-1234</b>로 결제 링크를 다시 보내드렸어요. 문자 속 링크에서 결제하면 돼요.');endActions();},
   pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · 김시대님</div>
@@ -453,6 +464,7 @@ const NODES={
   en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황</div>
      <div class="krow"><span class="k">강은양T 국어</span><span class="v">대기 3번</span></div>
      <div class="krow"><span class="k">접수일</span><span class="v">7/10</span></div>
+     <div class="qdots"><i></i><i></i><i class="me"></i><span class="qn">내 앞 2명 · 자리 나면 순서대로 안내</span></div>
      <div class="src">※ 자리가 나면 대기 순번대로 문자로 안내해 드려요.</div>`);
     botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요. 알림만 켜두고 기다리시면 돼요.');
     quick([{t:'충원되면 문자 받기',primary:true,act:()=>{botSay('자리가 나면 바로 010-****-1234로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
@@ -491,7 +503,7 @@ const NODES={
     quick([{t:'이신혁T 지학Ⅰ',primary:true,act:()=>{botSay('몇 주차 보강인가요?');quick([
       {t:'3주차',act:()=>{meSay('3주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 3주차 보강</div><div class="krow"><span class="k">상태</span><span class="v"><span class="pill due">신청 가능</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">신청 후 안내</span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('3주차 보강이 신청 접수됐어요. 영상으로 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('3주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
       {t:'4주차',act:()=>{meSay('4주차');botSay('4주차 영상은 아직 열리지 않았어요. 열리면 문자로 알려드릴까요?');quick([{t:'열리면 문자 받기',primary:true,act:()=>{botSay('알림 신청됐어요.');endActions();}},back('m_attend')]);}},
-      {t:'5주차',act:()=>{meSay('5주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 5주차 보강</div><div class="krow"><span class="k">상태</span><span class="v"><span class="pill due">신청 가능</span></span></div>`);quick([{t:'보강 신청하기',primary:true,act:()=>{botSay('5주차 보강이 신청 접수됐어요.');endActions();}},back('m_attend')]);}},
+      {t:'5주차',act:()=>{meSay('5주차');card(`<div class="ct">${ms('smart_display')}이신혁T 지학Ⅰ · 5주차 보강</div><div class="krow"><span class="k">상태</span><span class="v"><span class="pill ok">시청 중</span></span></div><div class="krow"><span class="k">시청 기한</span><span class="v">8/24까지</span></div><div class="barrow"><span>시청 진도율</span><span><b>40%</b> · 240/600분</span></div><div class="bar"><i style="width:40%"></i></div>`);quick([{t:'이어보기',primary:true,act:()=>{botSay('5주차 보강 영상으로 이어서 이동할게요.');endActions();}},{t:'동보 자료 문자로 받기',act:()=>{botSay('5주차 자료를 010-****-1234로 보내드렸어요.');endActions();}},back('m_attend')]);}},
     ]);}},back('m_attend')]);},
 
   /* 6. 수업·시간표 */
