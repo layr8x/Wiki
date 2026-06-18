@@ -7,6 +7,8 @@
 >
 > **이 문서의 토큰 모델은 토스 디자인 시스템(TDS)의 3계층(Base→Semantic→Component) 구조를 차용해 정식화했다. 단, LUMEN은 단색 `#161616` 흑백 정체성을 유지하므로 TDS에서 가져온 것은 "색"이 아니라 _구조·원칙·네이밍·컴포넌트 스펙_ 이다. 색 액센트(토스 블루 등)는 도입하지 않는다.**
 
+> **현재 톤(운영 적용) — 하이엔드·모던·심플 흑백.** 분리(separation)를 *테두리*가 아니라 **옅은 회색 대화 캔버스 + 흰색 부유 요소 + 소프트 섀도우**로 만든다. 대화 영역(`.log`)은 회색 캔버스 `#f1f1f3`, 그 위에 흰색(`--bg #fff`) 봇 말풍선·메뉴타일·카드·칩이 그림자로 떠 있다. 헤더·입력창도 흰색, 유저(me) 말풍선만 검정 `#161616`. 테두리는 최소화하고, 쓰더라도 헤어라인(`--border-subtle #16161614`)만 쓴다.
+
 ---
 
 ## 0. 토큰 3계층 모델 (TDS 차용 → LUMEN 번역)
@@ -15,7 +17,7 @@
 
 | 계층 | 정의 | 예시(LUMEN) | 비유 |
 |---|---|---|---|
-| **Base (원시)** | 의미 없는 순수 값. 팔레트·치수의 원천. | `--gray-100:#161616`, `--tb-56`, `--radius-md:4px` | 물감 원색 |
+| **Base (원시)** | 의미 없는 순수 값. 팔레트·치수의 원천. | `--gray-100:#161616`, `--tb-56`, `--r-card:14px` | 물감 원색 |
 | **Semantic (시맨틱)** | "어디에 쓰는가"(용도·역할). Base를 가리킴. light/dark가 여기서 갈림. | `--text-primary → gray-100`, `--fill-strong → gray-100` | 물감의 용도 라벨("본문용") |
 | **Component (컴포넌트)** | 특정 부품의 특정 부위. Semantic을 가리킴. | `--button-primary`, `--seg-thumb-bg`, `--pill-due-bg` | 완성된 부품 |
 
@@ -42,19 +44,23 @@
   --tb-40:#16161666; --tb-48:#1616167a; --tb-56:#1616168f; --tb-64:#161616a3;
   --tb-72:#161616b8; --tb-80:#161616cc; --tb-88:#161616e0; --tb-96:#161616f5;
   --tw-8:#ffffff14; --tw-64:#ffffffa3;  /* 흰색 위 알파(다크용), 중간단계 [확인필요] */
-  /* Radius */
+  /* Radius — 운영 prototype.html 적용치 (LUMEN 부유형 UI) */
   --radius-xs:1px; --radius-sm:2px; --radius-md:4px; --radius-lg:8px; --radius-xl:12px; --radius-full:9999px;
+  --r-tag:2px; --r-btn:2px; --r-card:14px; --r-pill:999px; --r-bubble:20px; --r-sheet:16px; --r-chip:6px;
+  /* (그 외 부품별 고정 radius: 말풍선 tail 7px · .tt-block 10px · .seg 12px) */
   /* Spacing / layout */
-  --spacing-02:4px; --spacing-03:8px; --spacing-05:16px;
-  --gap-8:8px; --gap-16:16px; --gap-24:24px;
-  --layout-margin:24px; --layout-width:430px; --layout-height:932px;
-  /* Shadow */
-  --shadow-m:0 1px 4px rgba(0,0,0,.08),0 4px 4px rgba(0,0,0,.06),0 8px 8px rgba(0,0,0,.04),0 16px 8px rgba(0,0,0,.02);
+  --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
+  --layout-width:430px; --layout-height:932px;
+  /* Shadow — 가볍고 공기감 있는 부유 섀도우(테두리 대체). 모두 rgba(22,22,22,...) */
+  --shadow-m:0 1px 2px rgba(22,22,22,.05),0 2px 10px rgba(22,22,22,.05);   /* 칩 등 */
+  --shadow-2:0 1px 2px rgba(22,22,22,.04),0 10px 30px rgba(22,22,22,.07);  /* 정보카드 */
+  --shadow-tile:0 1px 2px rgba(22,22,22,.06),0 5px 16px rgba(22,22,22,.08); /* 메뉴타일 */
+  /* 봇 말풍선 섀도우(인라인) = 0 1px 2px rgba(22,22,22,.05),0 2px 8px rgba(22,22,22,.05) */
   /* Component radius */
-  --button-radius:var(--radius-sm);    /* 2px */
-  --input-radius:var(--radius-md);      /* 4px */
-  --card-radius:var(--radius-md);       /* 4px */
-  --tag-radius:var(--radius-full);      /* pill (카테고리 태그 인스턴스는 2px 오버라이드) */
+  --button-radius:var(--r-btn);    /* 2px */
+  --input-radius:var(--r-pill);    /* 입력바=pill(999px) */
+  --card-radius:var(--r-card);     /* 14px */
+  --tag-radius:var(--r-tag);       /* 2px (카테고리 태그 인스턴스) */
 }
 ```
 
@@ -111,8 +117,9 @@ TDS는 시맨틱을 **대상(Text/Fill/Border/Icon) × 역할(Neutral/Brand/…)
 #### Fill (배경·면)
 | 시맨틱 토큰 | LUMEN 별칭(운영) | → Base 매핑 (light) | → Base 매핑 (dark) | 용도 |
 |---|---|---|---|---|
-| `--bg-primary` | — | `white #ffffff` | `gray-100 #161616` | 1차 표면(카드·시트·말풍선 바닥) |
-| `--bg-secondary` | `--fill-subtle` | `gray-10 #f4f4f4` | `gray-90 #262626` | 2차 표면(인풋·세그먼트 트랙·봇 말풍선) |
+| `--bg-primary` | `--bg` | `white #ffffff` | `gray-100 #161616` | 1차 표면(카드·시트·메뉴타일·칩·봇 말풍선·헤더·입력바) |
+| `--bg-secondary` | `--fill-subtle` / `--surface` | `gray-10 #f4f4f4` | `gray-90 #262626` | 2차 표면(인풋 바탕·세그먼트 트랙·아이콘 칩 배경) |
+| `--bg-canvas`(운영 신규) | — | `#f1f1f3` | (dark [확인필요]) | **대화 영역(`.log`) 회색 캔버스** — 흰 부유 요소를 띄우는 바닥 |
 | `--bg-inverse` | `--fill-strong` | `gray-100 #161616` | `white #ffffff` | 강조 면(CTA·유저 말풍선·전송 버튼) |
 | `--bg-inverse-hover` | — | `black #000000` | (dark [확인필요]) | inverse 면 hover |
 | `--bg-inverse-selected` | — | `gray-80 #393939` | `gray-20 #e0e0e0` | inverse 면 선택 |
@@ -138,8 +145,8 @@ TDS는 **OKLCH(= 사람 눈 기준으로 균일하게 설계된 색 좌표계. �
 | `--tb-8`  #16161614 | 8% | 1.1:1 | 비텍스트 | 구획선·카드 테두리 |
 | `--tb-16` #16161629 | 16% | 1.3:1 | 비텍스트 | 약한 구분선 |
 | `--tb-24` #1616163d | 24% | 2.0:1 | **텍스트 불가** | 강조 테두리·비활성 텍스트(장식) |
-| `--tb-32` #16161652 | 32% | 2.7:1 | 비텍스트 | 아이콘 플레이스홀더 |
-| `--tb-48` #1616167a | 48% | 4.0:1 | 큰 텍스트 경계 | 딤(바텀시트 스크림) |
+| `--tb-32` #16161652 | 32% | 2.7:1 | 비텍스트 | 아이콘 플레이스홀더 · **바텀시트 스크림 ≈.32** |
+| `--tb-48` #1616167a | 48% | 4.0:1 | 큰 텍스트 경계 | 딤(과거 스크림값; 도킹 패널 딤은 ≈.12) |
 | `--tb-56` #1616168f | 56% | 5.7:1 | **AA 본문 OK** | 헬퍼·캡션 (≥4.5:1) |
 | `--tb-64` #161616a3 | 64% | 6.9:1 | AA 본문 OK | 플레이스홀더 |
 | `--tb-72` #161616b8 | 72% | 8.6:1 | AA/AAA | 보조 본문 |
@@ -190,24 +197,31 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 ---
 
-## 3. 타이포그래피 (Pretendard Variable, feature ss03/ss05/ss06/ss10)
+## 3. 타이포그래피 (Pretendard Variable)
+운영 `:root` 토큰: `--fs-cap 12/--lh-cap 18`, `--fs-sm 14/--lh-sm 24`, `--fs-md 16/--lh-md 28`, `--fs-xs 20/--lh-xs 32`, `--fs-h 32/--lh-h 40`. 전반적으로 `font-variant-numeric:tabular-nums`(자릿수 고정) 적용.
+
 | 토큰 | size/line-height | weight | 용도 |
 |---|---|---|---|
-| body-sm | 14/24 | 400 | 태그·보조라벨·탭바 |
-| body-md | 16/28 | 400 (B 700) | 본문·버튼·가이드 설명 |
-| heading-xs / headline-m | 20/32 | 400 (강조 600) | 강좌 제목·챗봇 말풍선·칩·모달 타이틀 |
-| heading-md | 32/40 | **200 ExtraLight, ls −1** | 큰 타이틀 |
+| caption (`--fs-cap`) | **12/18** | 400 (강조 600/700) | 캡션·헬퍼·범례·서브라인. **12px가 하한**(10/11px 사용 안 함) |
+| body-sm (`--fs-sm`) | 14/24 | 400 (B 700) | 태그·보조라벨·탭바·칩·세그·krow |
+| body-md (`--fs-md`) | 16/28 | 400 (B 700) | 본문·버튼·가이드 설명·말풍선 |
+| heading-xs (`--fs-xs`) | 20/32 | 400 (강조 600/800) | 강좌 제목·`.big` 강조 숫자(800, ls −0.4) |
+| heading-md / display (`--fs-h`) | 32/40 | **200 ExtraLight, ls −0.64px** | 큰 타이틀(섹션 제목·데스크탑 내비) |
 
-## 4. 컴포넌트 스펙 (실측)
-- **버튼**: radius 2px. primary bg `--button-primary #161616`/텍스트 `--text-inverse`. tertiary=배경없음·underline·텍스트 `#161616`. 높이 48 표준(아이콘버튼 64/48/32). state enabled/hover/active/disabled.
-- **인풋**: radius 4px, bg `--bg-secondary`/border `--border-primary`, placeholder `--text-placeholder`.
-- **태그**: bg `#f4f4f4`/border 0.8px `#e0e0e0`/radius 2px(인스턴스)/텍스트 body-sm `#393939`/px-6.
-- **Input chip**: pill, bg gray/10, hover gray/20.
-- **카드**: radius 4px, bg `--bg-primary`, border 1px `--border-primary`, padding 16, gap 16.
-- **탭**: 선택=bg white+border+`--text-primary` / 비선택=bg `#f4f4f4`+`--text-helper`. px-24 py-18.
-- **헤더**: height 96(Main)/64(Detail), bg white, px-24 py-18, 아이콘 24px `--icon-primary`.
-- **하단 탭바**: height 76, bg white, 상단 border 1px, 아이콘 28px+라벨 14/24. 활성 `#161616`/비활성 `--text-placeholder`.
-- **리스트 아이템**: 하단 border 1px, py-24, Tag+상태 → 제목 20/32(2줄) → tertiary 액션.
+## 4. 컴포넌트 스펙 (운영 prototype.html 실측 — 부유형 LUMEN)
+> 공통 원칙: **테두리 대신 흰 면 + 소프트 섀도우로 분리.** 카드·타일·말풍선은 테두리 없음, 칩만 헤어라인.
+
+- **버튼/CTA**: 칩 형태가 기본. primary 칩 = bg `--fill-strong #161616`/텍스트 흰색/weight 700/섀도우 `0 2px 10px rgba(22,22,22,.22)`. tertiary(보조) = ghost 칩(텍스트 `--text-weak`). 본문 카드 내 링크는 underline.
+- **인풋(입력바)**: 높이 44px, **radius 999px(pill)**, bg `--fill-subtle`/border 1px `--border-strong`, placeholder `--text-placeholder`. focus 시 border `--fill-strong` + `0 0 0 3px rgba(22,22,22,.06)` 글로우. 전송 버튼 = 44×44 검정 원형+흰 아이콘.
+- **태그**(앱 본문): bg `#f4f4f4`/border 0.8px `#e0e0e0`/radius 2px/텍스트 body-sm `#393939`/px-6.
+- **메뉴타일(`.mtile`)**: **테두리 없음.** 흰 카드 bg `--bg`, radius **14px**(`--r-card`), 섀도우 `--shadow-tile`, padding 14px. 아이콘 38×38 칩(radius 11px, bg `--fill-subtle`). hover lift `translateY(-2px)` + 그림자 확대.
+- **정보카드(`.card`)**: **테두리 없음.** bg `--bg`, radius 14px, 섀도우 `--shadow-2`, padding **18px**, max-width 92%. 스켈레톤 shimmer → blur cross-fade로 채워짐.
+- **말풍선(`.msg`)**: padding 10×16, radius **20px**(`--r-bubble`), 말하는 모서리만 **7px**(tail). 봇=흰 `--bg`+섀도우 `0 1px 2px rgba(22,22,22,.05),0 2px 8px rgba(22,22,22,.05)`, me=검정 `--fill-strong`/흰 텍스트. max-width 80%.
+- **칩(`.chip`)**: pill(`--r-pill`), bg `--bg`(흰)+**헤어라인 border `--border-subtle`**+섀도우 `--shadow-m`, padding 10×16, body-sm. hover lift `translateY(-1.5px)`+그림자 확대. `.primary`=검정 반전, `.ghost`=텍스트 `--text-weak`.
+- **탭(앱 본문)**: 선택=bg white+border+`--text`/비선택=bg `#f4f4f4`+`--helper`. px-24 py-18.
+- **헤더(`.apphead`)**: bg white, **구분선 없음**(border 제거), 모바일 padding 18×24×14. 타이틀/서브 4px 간격. 아이콘 24px. 챗봇 아이콘(`#openBtn`)=비콘 링(입장 시 3회) + hover `scale(1.12)`.
+- **하단 탭바**: bg white, 상단 border 1px, 아이콘 24px+라벨 14/24. 활성 `#161616`/비활성 `--placeholder`.
+- **리스트 아이템(`.citem`)**: 하단 border 1px, py-24, Tag+상태 → 제목 20/32 → tertiary 액션.
 
 ### 4.1 세그먼트 컨트롤 (`.seg`) — 신규 정식 스펙
 하나의 트랙 안에서 thumb(흰 알약)가 선택 항목으로 이동하는 컨트롤. (운영 `prototype.html` 실측)
@@ -215,9 +229,9 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | 부위 | 토큰/값 |
 |---|---|
 | 트랙 배경 | `--fill-subtle` (#f4f4f4) |
-| 트랙 radius | 10px · padding 3px · 항목 gap 2px |
+| 트랙 radius | **12px** · padding 3px · 항목 gap 2px |
 | 항목(off) 텍스트 | `--text-weak`, body-sm 14px, weight 600, padding 7×15px |
-| 항목(on) thumb | bg `--bg-primary`(#fff) · radius 8px · 텍스트 `--text-neutral` · 그림자 `0 1px 3px rgba(22,22,22,.10),0 1px 1px rgba(22,22,22,.06)` |
+| 항목(on) thumb | bg `--bg`(#fff) · radius **9px** · 텍스트 `--text-neutral` · 그림자 `0 1px 3px rgba(22,22,22,.10),0 1px 1px rgba(22,22,22,.06)` |
 | 이징 | `cubic-bezier(.23,1,.32,1)` 0.22s (bg·color·shadow 동시) |
 | 상태 | enabled / on(선택) / hover(off항목 텍스트만 진해짐) / focus-visible(2px 검정 outline, offset 2px) |
 | 다크 | 트랙 `gray-90`, thumb `gray-100` 위 `--text-neutral #f4f4f4` |
@@ -253,10 +267,10 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 | 부위 | 토큰/값 |
 |---|---|
-| 일반 점 | 9×9px 원 · bg `#161616` |
-| 내 위치(`.me`) | 12×12px 원 · bg 흰색 + `2px solid #161616` (반전 강조) |
-| 라벨(`.qn`) | caption 12px · `--text-helper` |
-| 간격 | gap 5px · 상단 margin 10px |
+| 일반 점 | **6×6px** 원 · bg `--gray30 #c6c6c6`(회색 = 남의 순번) |
+| 내 위치(`.me`) | **6×6px** 원 · bg `--fill-strong #161616`(검정) + `box-shadow:0 0 0 3px var(--fill-subtle)`(회색 헤일로로 강조) |
+| 라벨(`.qn`) | caption 12px · `--text-weak` · margin-left 7px |
+| 간격 | gap 4px · 상단 margin 8px |
 
 ### 4.5 출결 히트맵 (`.hmap`) — 신규 정식 스펙
 주차×요일 출결 격자. 색이 아니라 **명도 4단**으로 상태 구분(흑백 핵심). (실측)
@@ -277,18 +291,22 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 > **명도=의미 매핑이 곧 접근성**: 색맹·흑백 인쇄에도 진하기 순서(출석>지각>결석)가 그대로 읽힌다. 토스의 "정밀=신뢰"를 LUMEN은 *명도 위계의 일관성*으로 구현.
 
-## 5. 챗봇 적용 매핑 (AMS 패턴 → LUMEN 흑백)
-> AMS의 네이비/파랑 강조를 **검정(`--button-primary #161616`)으로 일괄 치환**, 파랑은 링크에만. 표면 위계는 white→`#f4f4f4` 2단.
+## 5. 챗봇 적용 매핑 (AMS 패턴 → LUMEN 부유형 흑백)
+> AMS의 네이비/파랑 강조를 **검정(`--fill-strong #161616`)으로 일괄 치환**, 파랑은 링크에만. **표면 위계 = 회색 캔버스(`#f1f1f3`) 위에 흰 부유 요소를 섀도우로 띄움**(테두리 최소). 운영 `prototype.html` 실측.
 
 | 챗봇 요소 | LUMEN 토큰 |
 |---|---|
-| 봇 말풍선 | bg `--bg-primary`, border `--border-primary`, 텍스트 `--text-primary`, radius (말하는 모서리 4 / 나머지 16). 다크 bg `--bg-secondary` |
-| 유저 말풍선 | bg `--bg-inverse #161616`, 텍스트 `--text-inverse`, radius (말하는 모서리 4 / 나머지 16) |
-| 빠른답변 칩 | pill, bg `--bg-primary`, border `--border-secondary #1616163d`, 텍스트 `--text-primary`, `--shadow-m`, hover `--chip-bg-hover` |
-| 정보카드 | radius 4, bg `--bg-primary`, border `--border-primary`, 제목 20/32, 설명 `--text-helper`, 링크 underline |
-| CTA 버튼 | bg `--button-primary #161616`, 텍스트 흰색, radius 2. 보조=tertiary underline 검정 |
-| 바텀시트 | dim `--tb-48`, 시트 bg white, 상단 radius 12, grabber gray/30 `#c6c6c6`, 헤더 64 |
-| 입력바 | bg `--bg-secondary`, border `--border-primary`, radius full(pill), 전송=검정 원형+흰 아이콘 |
+| 대화 캔버스(`.log`) | bg `#f1f1f3`(회색) — 흰 말풍선·카드·칩을 띄우는 바닥 |
+| 봇 말풍선 | bg `--bg`(흰), **테두리 없음**, 섀도우 `0 1px 2px rgba(22,22,22,.05),0 2px 8px rgba(22,22,22,.05)`, 텍스트 `--text-neutral`, radius **20**(말하는 모서리 7). 다크 bg `--bg-secondary` |
+| 유저 말풍선 | bg `--fill-strong #161616`, 텍스트 `--text-inverse`, radius **20**(말하는 모서리 7) |
+| 빠른답변 칩 | pill, bg `--bg`(흰), **헤어라인 border `--border-subtle #16161614`**, 텍스트 `--text-neutral`, `--shadow-m`, hover lift+그림자 확대 |
+| 메뉴타일 | **테두리 없음**, bg `--bg`(흰), radius **14**, 섀도우 `--shadow-tile`, 아이콘 38칩(bg `--fill-subtle`) |
+| 정보카드 | radius **14**, bg `--bg`(흰), **테두리 없음**, 섀도우 `--shadow-2`, padding 18, 제목 캡션·설명 `--text-secondary`, 링크 underline |
+| CTA 버튼 | primary 칩 bg `--fill-strong #161616`, 텍스트 흰색, pill. 보조=ghost 칩(`--text-weak`) |
+| 헤더(`.chead`) | bg 흰, 타이틀 16/700 + 서브 12px(`--text-weak`) 4px 간격, 아이콘버튼 36×36(bg `--fill-subtle`) |
+| 바텀시트(모바일) | dim `rgba(22,22,22,.32)`, 시트 bg `--bg`, 상단 radius **16**(`--r-sheet`), grabber 40×4 gray/30 `#c6c6c6`, 드래그로 닫기(Vaul 임계값 25%/속도 .4) |
+| 도킹 패널(태블릿·데스크탑) | 우하단 도킹 **392×700**(핸들 없음), radius 16, 헤어라인 border `rgba(22,22,22,.10)`+그림자, 배경 딤 `rgba(22,22,22,.12)` |
+| 입력바 | bg `--fill-subtle`, border `--border-strong`, radius full(pill), 전송=검정 원형+흰 아이콘 |
 
 ## 6. 디자인 원칙 (TDS 철학 → LUMEN 번역, 챗봇 맥락 예시)
 
@@ -302,7 +320,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 ### 6.2 여백 (Breathing space)
 - **TDS**: 여백을 "비용"이 아니라 정보 위계 도구로 본다.
 - **LUMEN 번역**: spacing 토큰(`02/03/05`=4/8/16)과 gap(8/16/24)을 8 배수로 고정. 카드 padding 16·gap 16, 리스트 py-24.
-- **챗봇 예시**: 말풍선 max-width 78%, 카드 90% — 화면 가장자리 여백을 남겨 "숨 쉴 공간". 칩 사이 gap 8.
+- **챗봇 예시**: 말풍선 max-width 80%, 카드 92% — 화면 가장자리 여백을 남겨 "숨 쉴 공간". 칩 사이 gap 8.
 
 ### 6.3 숫자 위계 (Tabular, 큰 숫자)
 - **TDS**: 핵심 수치를 크게·tabular(자릿수 고정)로 → 신뢰감.
@@ -311,8 +329,8 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 ### 6.4 정밀 = 신뢰
 - **TDS**: 1px 어긋남도 없는 정렬·일관된 라운딩이 곧 신뢰.
-- **LUMEN 번역**: radius 토큰을 부품별로 못박음(tag 2 / btn 2 / card 4 / pill 999 / bubble 16 / sheet 12). 말풍선은 "말하는 모서리만 4, 나머지 16"으로 방향성까지 규칙화.
-- **챗봇 예시**: 모든 컴포넌트가 같은 radius 세트·같은 border 1px(`--border-subtle`)·같은 그림자(`--shadow-m`)를 공유 → "한 손에서 만든 화면" 인상. 히트맵 명도 4단도 정확히 같은 간격.
+- **LUMEN 번역**: radius 토큰을 부품별로 못박음(tag 2 / btn 2 / chip 6 / card·tile 14 / sheet 16 / bubble 20 / pill 999 · seg 12 · tt-block 10). 말풍선은 "말하는 모서리만 7, 나머지 20"으로 방향성까지 규칙화.
+- **챗봇 예시**: 모든 부유 컴포넌트가 같은 radius 세트·**테두리 대신 같은 계열 소프트 섀도우**(`--shadow-m/-2/-tile`)를 공유 → "한 손에서 만든 화면" 인상. 회색 캔버스 위 흰 면의 들림 높이(그림자 강도)로 위계를 만든다. 히트맵 명도 4단도 정확히 같은 간격.
 
 ### 6.5 체감 속도 (Perceived performance)
 - **TDS**: 스켈레톤 + 스태거(차례로 등장)로 _실제보다 빠르게_ 느끼게.
