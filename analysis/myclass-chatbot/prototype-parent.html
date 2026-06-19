@@ -153,7 +153,7 @@
   .bav .ms{font-size:15px}
   .msg{max-width:80%;padding:12px 16px;font-size:var(--fs-sm);line-height:var(--lh-sm);border-radius:var(--r-bubble);white-space:pre-wrap;word-break:break-word}
   .bot .msg{background:var(--bg);color:var(--text-neutral);border-bottom-left-radius:var(--r-md);box-shadow:var(--shadow-xs)}
-  .me .msg{background:var(--fill-strong);color:var(--text-inverse);font-weight:700;border-bottom-right-radius:var(--r-md)}
+  .me .msg{background:var(--fill-strong);color:var(--text-inverse);font-weight:700;border-bottom-right-radius:var(--r-md);white-space:nowrap;max-width:100%}
   .sheet b,.sheet strong{font-weight:700}
 
   .card{max-width:calc(100% - 16px);background:var(--bg);border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:16px;margin-bottom:var(--s2);box-shadow:var(--shadow-xs);transition:filter .32s var(--ease),opacity .32s var(--ease)}
@@ -187,10 +187,11 @@
   /* ── 납부 카드: 인보이스/빌링 느낌(항목별 무엇을 내는지 명시) ── */
   .paylist{margin-top:2px}
   .payitem{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
-  .payitem .pi-l{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .payitem .pi-l{display:flex;flex-direction:column;gap:4px;min-width:0}
   .payitem .pi-type{align-self:flex-start;font-size:var(--fs-cap);line-height:20px;color:var(--tag-text);background:var(--tag-bg);border:.8px solid var(--tag-border);border-radius:var(--r-tag);padding:0 4px;font-weight:400}
   .payitem .pi-name{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .payitem .pi-r{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .payitem .pi-r{display:flex;align-items:center;gap:4px;flex-shrink:0;padding-top:24px}
+  .paylist .payitem:last-child{border-bottom:none}
   .payitem .pi-amt{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);font-variant-numeric:tabular-nums}
   .payitem.paid .pi-name,.payitem.paid .pi-amt,.payitem.paid .pi-type{color:#1616163d}
   .payitem.paid .pi-type{background:var(--fill-subtle)}
@@ -376,9 +377,13 @@
 .ctxmenu .ck .ms{font-size:15px;color:#fff}
 @keyframes ckpop{0%{opacity:0;transform:scale(.5)}60%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
 /* 결제내역(수단/금액 2줄 스택) · 입반 리스트 · 긴 라벨 행 */
-.payitem .pi-r.col{flex-direction:column;align-items:flex-end;gap:3px}
-.payitem .pi-method{font-size:var(--fs-cap);color:var(--text-weak);font-weight:400}
-.enrline{font-size:var(--fs-sm);font-weight:600;color:var(--text-neutral);padding:11px 0;border-bottom:1px solid var(--border-subtle);line-height:1.45}
+/* 결제내역: 좌=날짜+강좌(회색 한 묶음, 줄바꿈) / 우=수단·금액(둘 다 볼드 검정, 우측정렬 스택) */
+.phrow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+.phrow.last{border-bottom:none}
+.ph-l{flex:1;min-width:0;font-size:var(--fs-sm);font-weight:400;line-height:var(--lh-sm);color:var(--text-weak);word-break:break-word}
+.ph-r{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;text-align:right}
+.ph-r span{font-size:var(--fs-sm);font-weight:700;line-height:var(--lh-sm);color:var(--text-neutral);white-space:nowrap;font-variant-numeric:tabular-nums}
+.enrline{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);padding:12px 0;border-bottom:1px solid var(--border-subtle);line-height:var(--lh-sm)}
 .enrline:last-child{border-bottom:none}
 .krow.long{align-items:flex-start;gap:12px}
 .krow.long .k{white-space:normal;line-height:1.45;flex:1}
@@ -625,7 +630,7 @@ const NODES={
   pay_wait(){const unpaid=PAY_WAIT.filter(i=>!i.paid).length,paidN=PAY_WAIT.length-unpaid,sum=PAY_WAIT.filter(i=>!i.paid).reduce((s,i)=>s+payNum(i.a),0),pct=Math.round(paidN/PAY_WAIT.length*100);
     cardLoad(`<div class="ct">${ms('receipt_long')}6월 납부 현황 · {학생} 학생</div><div class="paylist enr">${PAY_WAIT.map(payWaitHtml).join('')}</div><div class="paytotal"><span class="pt-k">합계 미납 · ${unpaid}건</span><span class="big">${won(sum)}</span></div><div class="barrow"><span>결제 진행</span><span><b>${PAY_WAIT.length}건 중 ${paidN}건</b> 완료</span></div><div class="bar"><i style="width:${pct}%"></i></div>`,6);
     quick([{t:'납부하기',ic:'credit_card',primary:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([{t:'처음으로',ic:'home',go:'home'}]);}},{t:'처음으로',go:'home'}]);},
-  pay_history(){cardLoad(`<div class="ct">${ms('receipt_long')}최근 3개월 결제 내역</div><div class="paylist enr">${PAY_HISTORY.map(payHistHtml).join('')}</div><div class="paytotal"><span class="pt-k">합계</span><span class="big">1,300,000원</span></div>`,6);endInfo();},
+  pay_history(){cardLoad(`<div class="ct">${ms('receipt_long')}최근 3개월 결제 내역</div>${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}<div class="paytotal"><span class="pt-k">합계</span><span class="big">1,300,000원</span></div>`,6);endInfo();},
 
   /* ② 입반·등록·대기 */
   m_enroll(){crumb('입반·등록·대기');botSay('입반·등록·대기, 무엇을 도와드릴까요?');quick([{t:'입반 강좌 확인',ic:'how_to_reg',go:'en_check'},{t:'수강 가능 강좌',ic:'fact_check',go:'en_avail'}]);},
@@ -665,7 +670,7 @@ function consultReg(){track('chatbot_consult');botSay('상담 등록을 접수�
 function phoneConnect(){track('chatbot_phone');botSay('<b>{지점} 캠퍼스 상담실</b>로 전화를 연결할게요.');quick([{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액 2줄 스택) */
 function payWaitHtml(i){const badge=i.paid?'<span class="pill ok">완납</span>':'<span class="pill due">미납</span>';const sub=(!i.paid&&i.due)?`<span class="enr-sub">${i.due}</span>`:'';return `<div class="payitem${i.paid?' paid':''}"><div class="pi-l"><span class="pi-type">${i.type}</span><span class="pi-name">${i.n}</span>${sub}</div><div class="pi-r">${badge}<span class="pi-amt">${i.a}</span></div></div>`;}
-function payHistHtml(r){return `<div class="payitem"><div class="pi-l"><span class="enr-sub">${r[0]}</span><span class="pi-name">${r[1]}</span></div><div class="pi-r col"><span class="pi-method">${r[2]}</span><span class="pi-amt">${r[3]}</span></div></div>`;}
+function payHistHtml(r,last){return `<div class="phrow${last?' last':''}"><span class="ph-l">${r[0]} ${r[1]}</span><span class="ph-r"><span>${r[2]}</span><span>${r[3]}</span></span></div>`;}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[['4회차','지급 6/3 · 기한 6/17'],['5회차','지급 6/10 · 기한 6/24'],['6회차','지급 6/17 · 기한 7/1']]};
 const VIDEO_EXTRA={[COURSES[0]]:[['3회차 · 지급 5/27 · 기한 6/10','시청 완료'],['5회차 · 지급 6/10 · 기한 6/24','미시청']]};
