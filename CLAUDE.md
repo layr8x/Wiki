@@ -111,10 +111,11 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **아이콘**: Sample에 없어도 DS에 컴포넌트로 존재 → 이름으로 찾아 인스턴스 (`receipt_long` `1282:1020` 등). 없을 때만 추출 SVG + `icon/*` bind.
 - **카드 컨테이너**: `radius/xl`(12) + `p-spacing/16` + **`border/primary` 보더 + `SHADOW/shadow-xs`**(둘 다) + 우측 `spacing/32` 인셋.
 - **카드 제목(ct)**: 아이콘 20(`icon/secondary`) + `BODY/body-xs`·`text/helper`, `pb-spacing/8`.
-- **항목(payitem)**: 행 `py-spacing/12`, 하단 `border/primary`. 좌측=[Tag, 강좌명 `BODY/body-sm (B)`, 기한 `BODY/body-xs`·`text/helper`]. 우측(배지+금액)은 **강좌명 줄에 상단 정렬**(pt로). 완납 행 글자=`text/disabled`.
-- **배지(미납/완납)**: `BODY/body-xs`·`px-spacing/8`(상하패딩 0)·radius 999. 미납=`background/inverse`+`text/inverse`, 완납=`background/secondary`+`text/placeholder`.
-- **합계(paytotal)**: 상단 `border-2` = `text/primary`(검정), `pt-spacing/8`. 라벨 `BODY/body-sm (B)`·`text/primary`. **큰 숫자 = `HEADING/heading-sm`(24 ExtraLight, ls −0.5)·`text/primary`.**
-- **진행바**: 라벨 `BODY/body-xs`, 트랙 높이 **4**·`background/secondary`·radius 999, 채움 `background/inverse`.
+- **항목(payitem)**: 행 `gap-spacing/8`·`py-spacing/12`, 하단 `border/primary`. 좌측=[Tag, **강좌명+기한 묶음**(gap 0): 강좌명 `BODY/body-sm (B)`(w-full), 기한 `BODY/body-xs`·`text/helper`(w-full)]. 우측(배지+금액 gap-4)은 강좌명 줄에 맞춰 **`pt-spacing/24`**(=24, 옛 raw 28 아님). 완납 행 글자=`text/disabled`.
+- **배지(미납/완납)**: `BODY/body-xs (B)`(=**Bold**, regular 아님)·**`px-spacing/6`**(=6, 상하패딩 0)·radius 999. 미납=`background/inverse`+`text/inverse`, 완납=`background/secondary`+`text/placeholder`.
+- **합계(paytotal)**: 상단 **`border-1`** = `text/primary`(검정, 2px 아님), **`pt-spacing/12`**(8 아님). 라벨 `BODY/body-sm (B)`·`text/primary`. **큰 숫자 = `HEADING/heading-xs`(20 Light)·`text/primary`** (옛 heading-sm 24 아님 — 사용자가 줄임).
+- **진행바**: 묶음 `gap-spacing/4`(8 아님)·`pt-spacing/12`. 라벨 `BODY/body-xs`, 트랙 높이 **4**·**full-width**(`layoutSizingHorizontal=FILL`)·`background/secondary`·radius 999, 채움 `background/inverse`.
 - **말풍선(me)**: `bg background/inverse`·`text/inverse`·`BODY/body-sm (B)`·`px-spacing/16 py-spacing/12`·라운드 24/24/24 + 꼬리 `radius/md`(4).
-- **퀵리플라이 칩**: 텍스트만(아이콘 X). primary=`background/inverse`+`text/inverse`, 기본=`background/primary`+`border/primary`+`text/placeholder`, `px-spacing/16 py-spacing/8`·radius 999·`BODY/body-sm (B)`. **칩 스타일은 딱 둘뿐 — primary / 기본.** "처음으로·이전·다음 주 보기" 같은 보조 버튼도 배경·보더 없는 맨 글자("ghost")로 만들지 말 것 → 반드시 **기본 칩**(흰 배경+보더+text/placeholder). (이번 세션 실수: 보조 버튼을 임의 ghost로 만들어 "버튼 적용 안 됐다" 지적받음.)
-- 추가 스타일: `BODY/body-xs (B)`·`HEADING/heading-sm`(24)·`HEADING/heading-xs`(20 Light). 추가 토큰: `tag/gray/*`·`radius/md`(4)·`text/placeholder`·`icon/secondary`·`icon/on-color`.
+- **퀵리플라이 칩 = 아이콘 + 텍스트** (예전 "텍스트만"은 틀림 — 사용자 교정). primary=`background/inverse`+`text/inverse`(아이콘 `icon/on-color`), 기본=`background/primary`+`border/primary`+`text/placeholder`(아이콘 `icon/secondary`). 공통 `px-spacing/16 py-spacing/8`·radius 999·`BODY/body-sm (B)`·**아이콘↔텍스트 `gap-spacing/8`(4 아님)·아이콘 24px**. 칩 스타일은 primary / 기본 둘뿐(ghost·맨 글자 금지). "처음으로·이전" 등 보조 버튼도 기본 칩.
+- **아이콘 = Material Symbols, Sharp, weight 200** (사용자 지정). Figma에선 Material Symbols 플러그인으로 가져옴. 코드로는 `https://fonts.gstatic.com/s/i/short-term/release/materialsymbolssharp/{이름}/wght200/24px.svg`(viewBox `0 -960 960 960`) fetch → `figma.createNodeFromSvg` → fill을 `icon/*` 토큰에 recolor. raw hex/다른 weight 금지.
+- 추가 스타일: `BODY/body-xs (B)`·`HEADING/heading-xs`(20 Light). 추가 토큰: `tag/gray/*`·`radius/md`(4)·`spacing/6`·`spacing/24`·`text/placeholder`·`icon/secondary`·`icon/on-color`.
