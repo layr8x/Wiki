@@ -70,6 +70,11 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **색 → 색상 변수**: `text/primary`·`text/helper`(=`#161616a3`)·`background/primary`·`background/secondary`·`border/primary`·`icon/primary`·`icon/disabled`(그랩핸들).
 - **아이콘 → 디자인시스템 아이콘 컴포넌트 인스턴스** 24px (`location_on`·`keyboard_arrow_down`·`calendar_today`·`fact_check`·`how_to_reg`·`credit_card`·`sync_alt`·`home`·`close` 등). **직접 그린 SVG 금지.** 색은 `icon/*` 토큰.
 - **라이브러리 토큰은 이 파일에 로컬이 아님** → `getLocalVariablesAsync`/`getLocalTextStylesAsync`/`getLocalEffectStylesAsync`는 **0** 반환. `importByKeyAsync`로 가져오거나, 그 토큰을 이미 쓰는 노드(예: 사용자 Sample)에서 `boundVariables`/`textStyleId`/`effectStyleId`/아이콘 instance의 mainComponent를 읽어 **live id를 harvest**해 적용.
+- **✅ 검증된 적용 절차** (이 세션에서 성공 확인, 사용자 Sample `1265:720` 기준):
+  1. Sample 노드를 재귀 순회하며 수집 — `textStyleId`(→`getStyleByIdAsync`로 이름), `boundVariables`(→`getVariableByIdAsync`로 이름), `effectStyleId`, INSTANCE의 `getMainComponentAsync`(아이콘 컴포넌트).
+  2. 새 노드에 적용 — `await node.setTextStyleIdAsync(id)` / `node.setBoundVariable('paddingLeft'|'itemSpacing'|'topLeftRadius'…, variable)` / `figma.variables.setBoundVariableForPaint(paint,'color',variable)` / `await node.setEffectStyleIdAsync(id)` / `component.createInstance()`.
+  3. **검증**: `get_variable_defs(노드)`가 `{}`가 아니라 토큰 목록을 반환하면 성공. (반환 전 "완료" 금지)
+- **아이콘 주의**: 일부 아이콘(`how_to_reg`·`sync_alt` 등)은 DS 컴포넌트가 아니라 Sample에 raw 이미지로 들어가 있어 harvest 안 됨 → 추출한 Material Symbols SVG 벡터로 만들되 fill을 `icon/primary` 토큰에 bind(= 컴포넌트 가능한 건 인스턴스, 없는 건 토큰-bind 벡터).
 - DS에 완성 컴포넌트 존재 → 가능하면 인스턴스로: `WidgetHeader`·`ContextBanner`·`MessageBubble`·`QuickReplyChip`·`MenuTile`·`GuideCard`·`FAB`·`TypingIndicator`.
 
 정확 수치: 콘텐츠 폭 400, 아이콘원 40×40, 아이콘 24, 헤더 pad 8/16 gap-8, 헤더아이콘 gap-16, 로그 pad-32 gap-32, 메뉴 gap-8, 헤더부제·히어로부제 끝에 마침표.
