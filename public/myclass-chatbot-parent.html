@@ -415,17 +415,17 @@
       <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div></div>
       <div class="citem">
         <div class="cinfo"><span class="tag">과학영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">이신혁T 지학Ⅰ 서바이벌<br>금 13:30-17:00 W관 201호</div>
+        <div class="cdesc">현정훈T 물리1 서바이벌<br>토 13:30-17:00 별관 305호</div>
         <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
       </div>
       <div class="citem">
-        <div class="cinfo"><span class="tag">수학영역</span></div>
-        <div class="cdesc">강기원T 수학 서바이벌 미적정규<br>일 09:00-12:35 본관 101호</div>
+        <div class="cinfo"><span class="tag">과학영역</span></div>
+        <div class="cdesc">최현호T 물리 역학 특강(클리어) 5회<br>목 18:30-21:30 별관 301호</div>
         <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
       </div>
       <div class="citem">
-        <div class="cinfo"><span class="tag">수학영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">강은양T 국어<br>일 18:30-22:00 엣지관 601호 7/13</div>
+        <div class="cinfo"><span class="tag">국어영역</span><span class="status">수강중</span></div>
+        <div class="cdesc">강은양T 국어 서바이벌<br>일 13:30-17:05 본관 204호 7/13</div>
         <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
       </div>
     </div>
@@ -485,18 +485,18 @@ const CAMPUSES={'대치':{phone:'02-552-2373',sms:'010-5423-2378'},'목동':{pho
 const CAMPUSES_LIST=Object.keys(CAMPUSES);
 const CHILDREN=[
  {student:'김시대',grade:'고3',campus:'대치',
-  pays:[{t:'수강료',n:'강은양T 국어 문학',a:'320,000원',paid:false,due:'7/19'},
-        {t:'수강료',n:'강기원T 수학 서바이벌 미적정규',a:'360,000원',paid:false,due:'7/26'},
-        {t:'교재비',n:'강기원T 수학 교재',a:'45,000원',paid:false,due:'7/22'},
+  pays:[{t:'수강료',n:'강은양T 국어 서바이벌',a:'320,000원',paid:false,due:'7/19'},
+        {t:'수강료',n:'최현호T 물리 역학 특강(클리어) 5회',a:'360,000원',paid:false,due:'7/26'},
+        {t:'교재비',n:'현정훈T 물리1 교재',a:'45,000원',paid:false,due:'7/22'},
         {t:'교재비',n:'강은양T 국어 교재',a:'38,000원',paid:true},
-        {t:'콘텐츠',n:'지학 복습영상(동영상 보강)',a:'30,000원',paid:true}],
-  sched:{this:[{day:'금',time:'13:30',end:'17:00',sub:'과학',course:'이신혁T 지학Ⅰ 서바이벌',room:'W관 201호'},
-        {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
-        {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}],
-   next:[{day:'금',time:'13:30',end:'17:00',sub:'과학',course:'이신혁T 지학Ⅰ 서바이벌',room:'W관 201호'},
-        {day:'토',time:'14:00',end:'17:30',sub:'보강',course:'지학Ⅰ 3주차 동영상 보강',room:'W관 201호',makeup:true},
-        {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
-        {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}]}},
+        {t:'콘텐츠',n:'물리1 복습영상(동영상 보강)',a:'30,000원',paid:true}],
+  sched:{this:[{day:'목',time:'18:30',end:'21:30',sub:'과학',course:'최현호T 물리 역학 특강(클리어) 5회',room:'별관 301호'},
+        {day:'토',time:'13:30',end:'17:00',sub:'과학',course:'현정훈T 물리1 서바이벌',room:'별관 305호'},
+        {day:'일',time:'13:30',end:'17:05',sub:'국어',course:'강은양T 국어 서바이벌',room:'본관 204호'}],
+   next:[{day:'목',time:'18:30',end:'21:30',sub:'과학',course:'최현호T 물리 역학 특강(클리어) 5회',room:'별관 301호'},
+        {day:'토',time:'13:30',end:'17:00',sub:'과학',course:'현정훈T 물리1 서바이벌',room:'별관 305호'},
+        {day:'토',time:'18:30',end:'22:00',sub:'보강',course:'물리1 3주차 동영상 보강',room:'별관 305호',makeup:true},
+        {day:'일',time:'13:30',end:'17:05',sub:'국어',course:'강은양T 국어 서바이벌',room:'본관 204호'}]}},
  {student:'이시대',grade:'고2',campus:'목동',
   pays:[{t:'수강료',n:'목동 국어 정규반',a:'300,000원',paid:false,due:'7/21'},
         {t:'교재비',n:'국어 교재',a:'35,000원',paid:true}],
@@ -597,9 +597,9 @@ function certIssue(desc){
 }
 /* 동영상 보강: 강좌(여러 개)→주차 선택 — 더미 예시 데이터 */
 const MAKEUP={
-  '이신혁T 지학Ⅰ 서바이벌':[{w:'3주차',s:'open',d:'신청 후 안내'},{w:'4주차',s:'soon'},{w:'5주차',s:'watching',d:'8/24까지',p:40,m:'240/600분'}],
-  '강기원T 수학 서바이벌 미적정규':[{w:'2주차',s:'open',d:'신청 후 안내'},{w:'3주차',s:'watching',d:'8/30까지',p:65,m:'390/600분'}],
-  '강은양T 국어 문학':[{w:'4주차',s:'open',d:'신청 후 안내'},{w:'5주차',s:'soon'}],
+  '현정훈T 물리1 서바이벌':[{w:'3주차',s:'open',d:'신청 후 안내'},{w:'4주차',s:'soon'},{w:'5주차',s:'watching',d:'8/24까지',p:40,m:'240/600분'}],
+  '최현호T 물리 역학 특강(클리어) 5회':[{w:'2주차',s:'open',d:'신청 후 안내'},{w:'3주차',s:'watching',d:'8/30까지',p:65,m:'390/600분'}],
+  '강은양T 국어 서바이벌':[{w:'4주차',s:'open',d:'신청 후 안내'},{w:'5주차',s:'soon'}],
 };
 function makeupWeeks(course){
   const ws=MAKEUP[course]||[];
@@ -616,7 +616,7 @@ function makeupWeek(course,x){
   quick([main,{t:'동보 자료 문자로 받기',act:()=>{botSay(`${x.w} 자료를 010-****-1234로 보내드렸어요.`);endActions();}},back('at_makeup')]);
 }
 /* 반 변경/퇴원 시 '같은 강사 다른 시간' — 강좌별 더미 대체 시간 */
-const ALTTIME={'이신혁T 지학Ⅰ':['수 18:30 · W관 201호','잔여 2석'],'강기원T 수학':['토 14:00 · 본관 101호','잔여 3석'],'강은양T 국어':['토 18:30 · 엣지관 601호','잔여 1석']};
+const ALTTIME={'현정훈T 물리1 서바이벌':['일 13:30 · 별관 305호','잔여 2석'],'최현호T 물리 역학 특강(클리어) 5회':['화 18:30 · 별관 301호','잔여 3석'],'강은양T 국어 서바이벌':['토 13:30 · 본관 204호','잔여 1석']};
 function altCard(course){const a=ALTTIME[course]||['다른 시간','문의'];card(`<div class="ct">${ms('schedule')}${course} · 같은 강사 다른 시간</div><div class="krow"><span class="k">${a[0]}</span><span class="v"><span class="pill due">${a[1]}</span></span></div>`);}
 function transferTime(course){altCard(course);quick([{t:'이 시간으로 변경 상담',primary:true,act:()=>handoff('전반(시간 변경) · '+course)},back('en_transfer')]);}
 function quitAlt(course){altCard(course);quick([{t:'이 시간으로 반 변경 상담',primary:true,act:()=>handoff('반 변경(시간) · '+course)},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}
@@ -660,7 +660,7 @@ const NODES={
     botSay(`어떤 결제 건의 링크를 문자로 받을까요? 현재 <b>미납 ${unpaid.length}건</b>이에요.`);
     quick([...unpaid.map(i=>({t:`${i.t} · ${i.n} (${i.a})`,ic:'sms',label:`${i.t} · ${i.n} 결제 문자`,act:()=>{botSay(`등록된 번호 <b>010-****-1234</b>로 <b>${i.t} · ${i.n}</b> 결제 링크를 보냈어요. 문자 속 링크에서 결제하면 돼요.`);endActions();}})),{t:'미납 전체 한 번에 받기',ic:'forward_to_inbox',primary:true,act:()=>{botSay(`미납 <b>${unpaid.length}건</b> 결제 링크를 모두 010-****-1234로 보냈어요. 각 링크에서 결제하면 돼요.`);endActions();}},{t:'미납 내역 다시 보기',go:'pay_status'},back('m_pay')]);},
   pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · {학생} 학생</div>
-     <div class="krow"><span class="k">납부 항목</span><span class="v">7월 수강료 · 이신혁T 지학Ⅰ</span></div>
+     <div class="krow"><span class="k">납부 항목</span><span class="v">7월 수강료 · 현정훈T 물리1</span></div>
      <div class="krow"><span class="k">입금 은행</span><span class="v">신한은행</span></div>
      <div class="krow"><span class="k">계좌번호</span><span class="v">110-204-567890<button class="copybtn" data-c="110204567890" aria-label="계좌번호 복사">${ms('content_copy')}</button></span></div>
      <div class="krow"><span class="k">예금주</span><span class="v">(주)시대인재</span></div>
@@ -689,27 +689,27 @@ const NODES={
     quick([{t:'국어',act:()=>regPick('국어')},{t:'수학',act:()=>regPick('수학')},{t:'과학',act:()=>regPick('과학')},{t:'영어',act:()=>regPick('영어')},{t:'마감 강좌 대기 걸기',ghost:true,go:'en_waitset'},back('m_enroll')]);},
   en_check(){cardLoad(`<div class="ct">${ms('task_alt')}내 등록 현황 · 3개 강좌</div>
      <div class="paylist enr">
-       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">이신혁T 지학Ⅰ 서바이벌</span><span class="enr-sub">8/24 종강 예정 · 추가 결제 없음</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
-       <div class="payitem"><div class="pi-l"><span class="pi-type">국어</span><span class="pi-name">강은양T 국어 문학</span><span class="enr-sub">결제 기한 7/19 · 미납 시 자동 취소</span></div><div class="pi-r"><span class="pill due">결제대기</span></div></div>
-       <div class="payitem"><div class="pi-l"><span class="pi-type">수학</span><span class="pi-name">강기원T 수학 서바이벌 미적정규</span><span class="enr-sub">다음 결제 7/26 · 매월 정기결제</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">현정훈T 물리1 서바이벌</span><span class="enr-sub">8/24 종강 예정 · 추가 결제 없음</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">국어</span><span class="pi-name">강은양T 국어 서바이벌</span><span class="enr-sub">결제 기한 7/19 · 미납 시 자동 취소</span></div><div class="pi-r"><span class="pill due">결제대기</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">최현호T 물리 역학 특강(클리어) 5회</span><span class="enr-sub">다음 결제 7/26 · 매월 정기결제</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
      </div>`,5);
     botSay('강좌마다 <b>결제일이 달라요</b>. 결제대기 1건은 기한(7/19) 내 결제하지 않으면 자동 취소될 수 있어요.');
     quick([{t:'결제대기 건 지금 결제',ic:'payment',primary:true,go:'pay_status'},{t:'다른 강좌 더 신청',ic:'how_to_reg',go:'en_reg'},back('m_enroll')]);},
   en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황 · 3건</div>
      <div class="witem">
-       <div class="wtop"><span class="pill due">충원</span><span class="wc">강기원T 수학 · 일 09:00</span></div>
+       <div class="wtop"><span class="pill due">충원</span><span class="wc">최현호T 물리 역학 특강(클리어) 5회 · 목 18:30</span></div>
        <div class="wurgent">${ms('schedule')}자리가 났어요 · 오늘 23:59까지 등록하면 확정</div>
      </div>
      <div class="witem">
-       <div class="wtop"><span class="pill ok">대기 1번</span><span class="wc">이신혁T 지학 · 토 14:00</span></div>
+       <div class="wtop"><span class="pill ok">대기 1번</span><span class="wc">현정훈T 물리1 서바이벌 · 토 13:30</span></div>
        <div class="qdots"><i class="me"></i><span class="qn">내 앞 0명 · 곧 차례예요</span></div>
      </div>
      <div class="witem">
-       <div class="wtop"><span class="pill wait">대기 3번</span><span class="wc">강은양T 국어 · 일 18:30</span></div>
+       <div class="wtop"><span class="pill wait">대기 3번</span><span class="wc">강은양T 국어 서바이벌 · 일 13:30</span></div>
        <div class="qdots"><i></i><i></i><i class="me"></i><span class="qn">내 앞 2명 · 대기 중</span></div>
      </div>`);
     botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요.');
-    quick([{t:'수학 지금 등록',primary:true,act:()=>{botSay('충원된 강기원T 수학 등록을 진행할게요. 결제창으로 이동합니다.');endActions();}},{t:'대기 상태 안내',ic:'help',go:'en_waitinfo'},{t:'충원되면 문자 받기',act:()=>{botSay('자리가 나면 바로 010-****-1234로 순번대로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
+    quick([{t:'물리 지금 등록',primary:true,act:()=>{botSay('충원된 최현호T 물리 역학 특강(클리어) 5회 등록을 진행할게요. 결제창으로 이동합니다.');endActions();}},{t:'대기 상태 안내',ic:'help',go:'en_waitinfo'},{t:'충원되면 문자 받기',act:()=>{botSay('자리가 나면 바로 010-****-1234로 순번대로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
   en_waitinfo(){card(`<div class="ct">${ms('help')}대기 상태 안내 · 모든 경우</div>
      <div class="krow"><span class="k"><span class="pill due">충원</span> 자리 남</span><span class="v">기한 내 등록하면 확정</span></div>
      <div class="krow"><span class="k"><span class="pill ok">대기 1번</span> 충원 임박</span><span class="v">곧 차례 · 알림 대기</span></div>
@@ -724,20 +724,20 @@ const NODES={
   en_special(){botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');
     quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);},
   en_transfer(){botSay('반 변경은 어떤 이유인가요? 더 나은 자리를 먼저 찾아드릴게요.');
-    quick([{t:'시간대를 바꾸고 싶어요',act:()=>{botSay('어떤 강좌의 시간을 바꾸고 싶으세요?');quick([{t:'이신혁T 지학Ⅰ',act:()=>transferTime('이신혁T 지학Ⅰ')},{t:'강기원T 수학',act:()=>transferTime('강기원T 수학')},{t:'강은양T 국어',act:()=>transferTime('강은양T 국어')},back('en_transfer')]);}},
+    quick([{t:'시간대를 바꾸고 싶어요',act:()=>{botSay('어떤 강좌의 시간을 바꾸고 싶으세요?');quick([{t:'현정훈T 물리1 서바이벌',act:()=>transferTime('현정훈T 물리1 서바이벌')},{t:'최현호T 물리 역학 특강(클리어) 5회',act:()=>transferTime('최현호T 물리 역학 특강(클리어) 5회')},{t:'강은양T 국어 서바이벌',act:()=>transferTime('강은양T 국어 서바이벌')},back('en_transfer')]);}},
       {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>handoff('전반(강사 변경)')},back('m_enroll')]);},
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
-    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'회차 자료(동보) 받기',ic:'description',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
+    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'회차 자료(동보) 받기',ic:'description',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 현정훈T 물리1</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
       {t:'결석·지각 미리 신고',ic:'event_busy',go:'at_absent'},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
   at_week(){cardLoad(`<div class="ct">${ms('calendar_view_week')}주간 출결 현황 · 최근 6주</div>
      <div class="hmap" aria-hidden="true">
        <div class="hmaphead"><span></span><span>6주전</span><span>5주전</span><span>4주전</span><span>3주전</span><span>지난주</span><span>이번주</span></div>
-       <div class="hmaprow"><span class="hl">지학·금</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell f"></i></div>
-       <div class="hmaprow"><span class="hl">수학·일</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell a"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hmaprow"><span class="hl">물리1·토</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hmaprow"><span class="hl">물리역학·목</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell a"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
        <div class="hmaprow"><span class="hl">국어·일</span><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
        <div class="hleg"><span><i class="hcell p"></i>출석</span><span><i class="hcell l"></i>지각</span><span><i class="hcell a"></i>결석</span><span><i class="hcell f"></i>예정</span></div>
      </div>
@@ -745,7 +745,7 @@ const NODES={
     botSay('최근 6주 출결이에요. 결석 1회는 <b>동영상 보강</b>으로 채울 수 있어요.');
     quick([{t:'결석분 보강 신청',primary:true,go:'at_makeup'},back('m_attend')]);},
   /* 결석·지각 셀프 신고 — AMS 최대 자가해결 항목(결석예정 23,501·결석생TX 27,597·지각 6,477 ≈ 5.8만건). 전화 대체. */
-  at_absent(){const cls=[['이신혁T 지학Ⅰ 서바이벌','금 13:30'],['강기원T 수학','일 09:00'],['강은양T 국어','일 18:30']];
+  at_absent(){const cls=[['현정훈T 물리1 서바이벌','토 13:30'],['최현호T 물리 역학 특강(클리어) 5회','목 18:30'],['강은양T 국어 서바이벌','일 13:30']];
     const pick=(kind)=>{botSay(`<b>${kind}</b>할 수업을 선택해 주세요.`);
       quick([...cls.map(c=>({t:c[0],label:`${c[0]} ${kind}`,act:()=>{
         track('chatbot_self_action',{action:'absent_report',kind:kind});
@@ -772,9 +772,9 @@ const NODES={
     endActions();},
   m_time(){botSay('수업·시간표, 무엇을 볼까요?');
     quick([{t:'내 시간표',ic:'calendar_month',go:'time_table'},
-      {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
+      {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">현정훈T 물리1</span><span class="v">별관 305호</span></div><div class="krow"><span class="k">최현호T 물리 역학</span><span class="v">별관 301호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">본관 204호</span></div>`);endActions();}},
       {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼</div><div class="guide">강좌별로 매주 강의교재·선택교재가 제공돼요. 강좌마다 구성이 달라서, 정확한 교재·커리큘럼 목록은 상담 선생님이 안내해 드려요.</div>`);quick([{t:'커리큘럼 상담',primary:true,act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
-      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--text-weak)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
+      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">현정훈T 물리1 종강일: <b>8/24</b><br><span style="color:var(--text-weak)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
 
   /* 7. 상담원·자주묻는것 */
   m_help(){botSay('무엇을 도와드릴까요?');
@@ -789,7 +789,7 @@ const NODES={
 
   /* 8. 퇴원·전반 */
   m_quit(){botSay('어떤 점이 어려우셨어요? 더 나은 방법을 먼저 찾아드릴게요.');
-    quick([{t:'시간이 안 맞아요',act:()=>{botSay('어떤 강좌 시간이 안 맞으세요? 같은 강사 다른 시간을 먼저 찾아드릴게요.');quick([{t:'이신혁T 지학Ⅰ',act:()=>quitAlt('이신혁T 지학Ⅰ')},{t:'강기원T 수학',act:()=>quitAlt('강기원T 수학')},{t:'강은양T 국어',act:()=>quitAlt('강은양T 국어')},{t:'그래도 퇴원',go:'quit_refund',ghost:true},back('m_quit')]);}},
+    quick([{t:'시간이 안 맞아요',act:()=>{botSay('어떤 강좌 시간이 안 맞으세요? 같은 강사 다른 시간을 먼저 찾아드릴게요.');quick([{t:'현정훈T 물리1 서바이벌',act:()=>quitAlt('현정훈T 물리1 서바이벌')},{t:'최현호T 물리 역학 특강(클리어) 5회',act:()=>quitAlt('최현호T 물리 역학 특강(클리어) 5회')},{t:'강은양T 국어 서바이벌',act:()=>quitAlt('강은양T 국어 서바이벌')},{t:'그래도 퇴원',go:'quit_refund',ghost:true},back('m_quit')]);}},
       {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. (상담에서도 ‘반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>{botSay('강사 변경도 가능해요. 남은 자리·교재 정리는 상담원이 도와드려요.');quick([{t:'강사 변경 상담',primary:true,act:()=>handoff('강사 변경')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
       {t:'수강 계획이 바뀌었어요',act:()=>handoff('수강 계획 변경')},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
