@@ -376,8 +376,9 @@
 .ctxmenu .ci{display:flex;flex-direction:column;gap:2px;min-width:0}
 .ctxmenu .ci b{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:1.45}
 .ctxmenu .ci em{font-size:var(--fs-cap);font-weight:400;font-style:normal;color:var(--text-weak);line-height:1.5}
-.ctxmenu .ck{margin-left:auto;flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#0e6027;color:#fff;display:flex;align-items:center;justify-content:center;animation:ckpop .24s var(--ease)}
-.ctxmenu .ck .ms{font-size:15px;color:#fff}
+.ctxmenu .ck{margin-left:auto;flex-shrink:0;width:24px;height:24px;position:relative;display:flex;align-items:center;justify-content:center;animation:ckpop .24s var(--ease)}
+.ctxmenu .ck::before{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#0e6027}
+.ctxmenu .ck .ms{position:relative;font-size:14px;color:#fff}
 @keyframes ckpop{0%{opacity:0;transform:scale(.5)}60%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
 /* 결제내역(수단/금액 2줄 스택) · 입반 리스트 · 긴 라벨 행 */
 /* 결제내역: 좌=날짜+강좌(회색 한 묶음, 줄바꿈) / 우=수단·금액(둘 다 볼드 검정, 우측정렬 스택) */
