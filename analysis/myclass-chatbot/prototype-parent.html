@@ -364,16 +364,18 @@
 .ctxsel .ms{font-size:16px;color:#1616168f}
 .ctxsel .ms:last-child{transition:transform .2s}
 .ctxsel.open .ms:last-child{transform:rotate(180deg)}
-.ctxmenu{position:absolute;top:calc(100% + 6px);left:0;z-index:60;width:max-content;min-width:232px;max-width:86%;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:14px;box-shadow:0 10px 30px rgba(22,22,22,.16);padding:6px;display:none}
-.ctxmenu.open{display:block;animation:ddin .16s var(--ease)}
-@keyframes ddin{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
-.ctxmenu .grp{font-size:11px;font-weight:600;color:#a1a1aa;letter-spacing:.02em;padding:8px 10px 4px}
-.ctxmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;border-radius:9px;padding:10px 11px;font:inherit;font-size:var(--fs-sm);font-weight:600;color:#161616;cursor:pointer}
-.ctxmenu button:hover{background:#f4f4f5}
-.ctxmenu button.cur{font-weight:600}
-.ctxmenu button>span{white-space:nowrap}
-.ctxmenu button .ms{font-size:17px;color:#1616168f}
-.ctxmenu button .ck{color:var(--accent);font-size:16px;margin-left:auto}
+.ctxmenu{position:absolute;top:calc(100% + 7px);left:0;z-index:60;width:max-content;min-width:248px;max-width:88%;background:#fff;border:1px solid rgba(22,22,22,.10);border-radius:16px;box-shadow:0 12px 34px rgba(22,22,22,.17),0 2px 6px rgba(22,22,22,.06);padding:6px;display:none;transform-origin:top left}
+.ctxmenu.open{display:block;animation:ddin .22s var(--ease)}
+@keyframes ddin{from{opacity:0;transform:translateY(-7px) scale(.97)}to{opacity:1;transform:none}}
+.ctxmenu .grp{font-size:11px;font-weight:600;color:#a1a1aa;letter-spacing:.02em;padding:9px 12px 6px}
+.ctxmenu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;border-radius:10px;padding:11px 12px;font:inherit;color:#161616;cursor:pointer;transition:background .14s var(--ease)}
+.ctxmenu button:hover{background:#f7f7f8}
+.ctxmenu button.cur{background:#f4f4f5}
+.ctxmenu .ci{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ctxmenu .ci b{font-size:var(--fs-sm);font-weight:700;color:#161616;line-height:1.32;white-space:nowrap}
+.ctxmenu .ci em{font-size:12px;font-style:normal;font-weight:500;color:#9a9aa2;line-height:1.3;white-space:nowrap}
+.ctxmenu button .ck{margin-left:auto;flex:none;width:22px;height:22px;border-radius:50%;background:#22a565;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 1px 3px rgba(34,165,101,.4);animation:ckpop .24s var(--ease)}
+@keyframes ckpop{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 </style>
 </head>
 <body>
@@ -495,21 +497,26 @@ const CHILDREN=[
         {day:'토',time:'14:00',end:'17:30',sub:'보강',course:'지학Ⅰ 3주차 동영상 보강',room:'W관 201호',makeup:true},
         {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
         {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}]}},
- {student:'김보민',grade:'고1',campus:'분당',
-  pays:[{t:'수강료',n:'고1 수학 정규반',a:'280,000원',paid:false,due:'7/20'},
-        {t:'수강료',n:'고1 영어 독해반',a:'250,000원',paid:false,due:'7/20'},
-        {t:'교재비',n:'고1 통합 교재',a:'30,000원',paid:true}],
-  sched:{this:[{day:'화',time:'18:30',end:'21:30',sub:'영어',course:'고1 영어 독해반',room:'분당 2관 304호'},
-        {day:'토',time:'09:00',end:'12:00',sub:'수학',course:'고1 수학 정규반',room:'분당 1관 201호'}],
-   next:[{day:'화',time:'18:30',end:'21:30',sub:'영어',course:'고1 영어 독해반',room:'분당 2관 304호'},
-        {day:'토',time:'09:00',end:'12:00',sub:'수학',course:'고1 수학 정규반',room:'분당 1관 201호'}]}}
+ {student:'이시대',grade:'고2',campus:'목동',
+  pays:[{t:'수강료',n:'목동 국어 정규반',a:'300,000원',paid:false,due:'7/21'},
+        {t:'교재비',n:'국어 교재',a:'35,000원',paid:true}],
+  sched:{this:[{day:'수',time:'18:30',end:'21:30',sub:'국어',course:'목동 국어 정규반',room:'목동 1관 302호'}],
+   next:[{day:'수',time:'18:30',end:'21:30',sub:'국어',course:'목동 국어 정규반',room:'목동 1관 302호'}]}},
+ {student:'박시대',grade:'고1',campus:'반포',
+  pays:[{t:'수강료',n:'반포 수학 정규반',a:'280,000원',paid:false,due:'7/22'}],
+  sched:{this:[{day:'토',time:'10:00',end:'13:00',sub:'수학',course:'반포 수학 정규반',room:'반포 2관 201호'}],
+   next:[{day:'토',time:'10:00',end:'13:00',sub:'수학',course:'반포 수학 정규반',room:'반포 2관 201호'}]}},
+ {student:'최시대',grade:'중3',campus:'분당',
+  pays:[{t:'수강료',n:'분당 영어 정규반',a:'250,000원',paid:true}],
+  sched:{this:[{day:'화',time:'17:00',end:'20:00',sub:'영어',course:'분당 영어 정규반',room:'분당 1관 105호'}],
+   next:[{day:'화',time:'17:00',end:'20:00',sub:'영어',course:'분당 영어 정규반',room:'분당 1관 105호'}]}}
 ];
 let CIDX=0;
 let CTX={student:CHILDREN[0].student,grade:CHILDREN[0].grade,campus:CHILDREN[0].campus};
 function sub(h){const cp=CAMPUSES[CTX.campus]||{};return String(h).replace(/\{학생\}/g,CTX.student).replace(/\{지점\}/g,CTX.campus).replace(/\{학년\}/g,CTX.grade).replace(/\{전화\}/g,cp.phone||'지점 상담실 대표번호로 연결').replace(/\{문자\}/g,cp.sms||'지점 상담실 문자(연동 예정)');}
 function syncShell(){try{const br=document.querySelector('.userrow .branch');if(br)br.textContent=CTX.campus;}catch(_){}}
 function rehome(){log.innerHTML='';setBanner();NODES.home();}
-function buildCtxFilter(){const host=document.getElementById('ctxfilter');if(!host)return;host.innerHTML='';const bar=el(`<div class="ctxbar"></div>`);const btn=el(`<button class="ctxsel" aria-haspopup="true" aria-expanded="false">${ms('place')}<b>${CTX.campus} · ${CTX.student} 학생</b>${ms('expand_more')}</button>`);const menu=el(`<div class="ctxmenu" role="menu"></div>`);menu.innerHTML=`<div class="grp">조회할 자녀 · 캠퍼스는 자녀 기준</div>`+CHILDREN.map((ch,i)=>`<button data-i="${i}" class="${i===CIDX?'cur':''}">${ms('person')}<span>${ch.student} · ${ch.grade} · ${ch.campus} 캠퍼스</span>${i===CIDX?`<span class="ms ck">check</span>`:''}</button>`).join('');btn.onclick=e=>{e.stopPropagation();const op=menu.classList.toggle('open');btn.classList.toggle('open',op);btn.setAttribute('aria-expanded',op);};menu.querySelectorAll('button').forEach(bb=>{bb.onclick=e=>{e.stopPropagation();const i=+bb.dataset.i;if(i!==CIDX){const ch=CHILDREN[i];CIDX=i;CTX={student:ch.student,grade:ch.grade,campus:ch.campus};PAYITEMS=ch.pays;track('chatbot_ctx_change',{kind:'child',student:ch.student});syncShell();toast(ch.student+' 학생 기준으로 변경했어요');buildCtxFilter();rehome();}else{menu.classList.remove('open');btn.classList.remove('open');btn.setAttribute('aria-expanded','false');}};});bar.appendChild(btn);bar.appendChild(menu);host.appendChild(bar);}
+function buildCtxFilter(){const host=document.getElementById('ctxfilter');if(!host)return;host.innerHTML='';const bar=el(`<div class="ctxbar"></div>`);const btn=el(`<button class="ctxsel" aria-haspopup="true" aria-expanded="false">${ms('place')}<b>${CTX.campus} · ${CTX.student} 학생</b>${ms('expand_more')}</button>`);const menu=el(`<div class="ctxmenu" role="menu"></div>`);menu.innerHTML=`<div class="grp">자녀 · 캠퍼스 선택</div>`+CHILDREN.map((ch,i)=>`<button data-i="${i}" class="${i===CIDX?'cur':''}"><span class="ci"><b>${ch.student} 학생</b><em>${ch.campus} 캠퍼스</em></span>${i===CIDX?`<span class="ck">${ms('check')}</span>`:''}</button>`).join('');btn.onclick=e=>{e.stopPropagation();const op=menu.classList.toggle('open');btn.classList.toggle('open',op);btn.setAttribute('aria-expanded',op);};menu.querySelectorAll('button').forEach(bb=>{bb.onclick=e=>{e.stopPropagation();const i=+bb.dataset.i;if(i!==CIDX){const ch=CHILDREN[i];CIDX=i;CTX={student:ch.student,grade:ch.grade,campus:ch.campus};PAYITEMS=ch.pays;track('chatbot_ctx_change',{kind:'child',student:ch.student});syncShell();toast(ch.student+' 학생 기준으로 변경했어요');buildCtxFilter();rehome();}else{menu.classList.remove('open');btn.classList.remove('open');btn.setAttribute('aria-expanded','false');}};});bar.appendChild(btn);bar.appendChild(menu);host.appendChild(bar);}
 const ms=n=>`<span class="ms" aria-hidden="true">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
