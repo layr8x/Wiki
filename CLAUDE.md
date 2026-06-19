@@ -102,3 +102,19 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 2. 토큰/스타일/아이콘 컴포넌트의 **실제 id 확보** (`get_variable_defs`·`get_design_context`·Sample harvest).
 3. 만든 뒤 **`get_variable_defs`로 bind 검증** + 스크린샷 비교. **검증 전 "완료" 보고 금지.**
 4. 학생용/학부모용 차이(선택기 표기·화법) 반영.
+
+## 5. 카드 답변 컴포넌트 레시피 (사용자 다듬은 기준 `1281:110`)
+
+납부 명세서 카드를 사용자가 직접 토큰으로 다듬음. 모든 카드 화면은 이 레시피를 따른다 (같은 종류는 `1281:110` clone, 다른 종류는 아래 규칙으로):
+
+- **유형칩(수강료 등) = DS `Tag` 컴포넌트** (`1186:2027`, Configuration=Gray) 인스턴스. raw 프레임 금지. (`tag/gray/background`·`tag/gray/border` 0.8px·radius 2·`tag/gray/color` #393939·`BODY/body-sm`)
+- **아이콘**: Sample에 없어도 DS에 컴포넌트로 존재 → 이름으로 찾아 인스턴스 (`receipt_long` `1282:1020` 등). 없을 때만 추출 SVG + `icon/*` bind.
+- **카드 컨테이너**: `radius/xl`(12) + `p-spacing/16` + **`border/primary` 보더 + `SHADOW/shadow-xs`**(둘 다) + 우측 `spacing/32` 인셋.
+- **카드 제목(ct)**: 아이콘 20(`icon/secondary`) + `BODY/body-xs`·`text/helper`, `pb-spacing/8`.
+- **항목(payitem)**: 행 `py-spacing/12`, 하단 `border/primary`. 좌측=[Tag, 강좌명 `BODY/body-sm (B)`, 기한 `BODY/body-xs`·`text/helper`]. 우측(배지+금액)은 **강좌명 줄에 상단 정렬**(pt로). 완납 행 글자=`text/disabled`.
+- **배지(미납/완납)**: `BODY/body-xs`·`px-spacing/8`(상하패딩 0)·radius 999. 미납=`background/inverse`+`text/inverse`, 완납=`background/secondary`+`text/placeholder`.
+- **합계(paytotal)**: 상단 `border-2` = `text/primary`(검정), `pt-spacing/8`. 라벨 `BODY/body-sm (B)`·`text/primary`. **큰 숫자 = `HEADING/heading-sm`(24 ExtraLight, ls −0.5)·`text/primary`.**
+- **진행바**: 라벨 `BODY/body-xs`, 트랙 높이 **4**·`background/secondary`·radius 999, 채움 `background/inverse`.
+- **말풍선(me)**: `bg background/inverse`·`text/inverse`·`BODY/body-sm (B)`·`px-spacing/16 py-spacing/12`·라운드 24/24/24 + 꼬리 `radius/md`(4).
+- **퀵리플라이 칩**: 텍스트만(아이콘 X). primary=`background/inverse`+`text/inverse`, 기본=`background/primary`+`border/primary`+`text/placeholder`, `px-spacing/16 py-spacing/8`·radius 999·`BODY/body-sm (B)`.
+- 추가 스타일: `BODY/body-xs (B)`·`HEADING/heading-sm`(24)·`HEADING/heading-xs`(20 Light). 추가 토큰: `tag/gray/*`·`radius/md`(4)·`text/placeholder`·`icon/secondary`·`icon/on-color`.
