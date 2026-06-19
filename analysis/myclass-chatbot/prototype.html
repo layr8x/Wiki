@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no, address=no, email=no">
 <title>마이클래스 챗봇 — 자가해결 프로토타입</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 <style>
+  @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2')}
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{--accent:#2563eb;--accent-rgb:37,99,235;
     --text:#161616; --text-2:#161616cc; --helper:#1616168f; --placeholder:#161616a3;
@@ -21,12 +21,12 @@
     --border-subtle:var(--border); --border-strong:var(--gray20);
     /* 모션 — 토스식 단일 이징(감속 곡선)으로 통일. iOS 시트 곡선은 별도 유지 */
     --ease:cubic-bezier(.23,1,.32,1); --ease-ios:cubic-bezier(.32,.72,0,1);
-    --r-tag:2px; --r-btn:2px; --r-card:14px; --r-pill:999px; --r-bubble:20px; --r-sheet:16px; --r-chip:6px;
+    --r-tag:4px; --r-btn:8px; --r-card:18px; --r-pill:999px; --r-bubble:20px; --r-sheet:22px; --r-chip:12px;
     --shadow-m:0 1px 2px rgba(22,22,22,.05),0 2px 10px rgba(22,22,22,.05);
     --shadow-2:0 1px 2px rgba(22,22,22,.04),0 10px 30px rgba(22,22,22,.07);
     --shadow-tile:0 1px 2px rgba(22,22,22,.06),0 5px 16px rgba(22,22,22,.08);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
-    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:40px; --fs-cap:12px; --lh-cap:18px;
+    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:48px; --fs-cap:12px; --lh-cap:18px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
@@ -135,7 +135,7 @@
   .banner b{font-weight:600}
   .banner .x{margin-left:auto;opacity:.7}
 
-  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 16px 12px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--surface)}
+  .log{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 16px 12px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background-color:var(--surface);background-image:radial-gradient(circle,rgba(22,22,22,.05) 0.7px,transparent 1.2px);background-size:16px 16px;background-position:6px 6px}
   /* ── 스크롤바: 반투명 + 스크롤할 때만 노출(자동 숨김) ── */
   .scroll,.log{scrollbar-width:thin;scrollbar-color:transparent transparent;transition:scrollbar-color .35s var(--ease)}
   .scroll.scrolling,.log.scrolling,.scroll:hover,.log:hover{scrollbar-color:#16161626 transparent}
@@ -150,8 +150,8 @@
   .bav{width:26px;height:26px;border-radius:50%;background:var(--fill-strong);color:var(--text-inverse);display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end}
   .bav .ms{font-size:15px}
   .msg{max-width:80%;padding:10px 16px;font-size:var(--fs-md);line-height:var(--lh-md);border-radius:var(--r-bubble);white-space:pre-wrap;word-break:break-word}
-  .bot .msg{background:var(--bg);color:var(--text-neutral);border-bottom-left-radius:7px;box-shadow:0 1px 2px rgba(22,22,22,.05),0 2px 8px rgba(22,22,22,.05)}
-  .me .msg{background:var(--fill-strong);color:var(--text-inverse);border-bottom-right-radius:7px}
+  .bot .msg{background:var(--bg);color:var(--text-neutral);border-bottom-left-radius:6px;box-shadow:0 1px 2px rgba(22,22,22,.05),0 2px 8px rgba(22,22,22,.05)}
+  .me .msg{background:var(--fill-strong);color:var(--text-inverse);border-bottom-right-radius:6px}
   .sheet b,.sheet strong{font-weight:600}
 
   .card{max-width:92%;background:var(--bg);border:none;border-radius:var(--r-card);padding:18px;margin-bottom:var(--s2);box-shadow:var(--shadow-2);transition:filter .32s var(--ease),opacity .32s var(--ease)}
@@ -255,11 +255,19 @@
   .tt-info .pi-type{display:inline-block;margin:0 6px 0 0;vertical-align:middle}
   .tt-course{font-size:var(--fs-sm);font-weight:600;color:var(--text-neutral);line-height:1.4}
   .tt-room{font-size:var(--fs-cap);color:var(--text-weak);margin-top:2px}
+  .hero{display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:8px 2px 22px;max-height:360px;overflow:hidden;transition:max-height .44s var(--ease),opacity .3s var(--ease),padding .44s var(--ease),margin .44s var(--ease)}
+  .hero.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:0;pointer-events:none}
+  .hero .spk{display:inline-flex;animation:sparkin .55s var(--ease) both}
+  .hero .spk svg path{fill:var(--accent)}
+  .hgreet{font-size:var(--fs-h);line-height:var(--lh-h);font-weight:100;letter-spacing:-0.03em;color:var(--text-neutral)}
+  .hgreet b{font-weight:100}
+  .hsub{font-size:var(--fs-sm);line-height:var(--lh-sm);color:var(--text-weak)}
+  @keyframes sparkin{0%{opacity:0;transform:scale(.4) rotate(-35deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
   .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:2px 0 12px}
-  .mtile{display:flex;align-items:center;gap:11px;border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:14px 14px;cursor:pointer;background:var(--bg);transition:transform .18s var(--ease),box-shadow .18s var(--ease),border-color .18s var(--ease);text-align:left}
-  .mtile:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(22,22,22,.10);border-color:var(--border-strong)}
+  .mtile{display:flex;align-items:center;gap:12px;border:1px solid var(--border-subtle);border-radius:var(--r-card);padding:14px 14px;cursor:pointer;background:var(--bg);box-shadow:0 1px 2px rgba(22,22,22,.04),0 4px 14px rgba(22,22,22,.05);transition:transform .22s var(--ease),box-shadow .22s var(--ease),border-color .22s var(--ease);text-align:left}
+  .mtile:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(22,22,22,.09);border-color:var(--border-strong)}
   .mtile:active{transform:translateY(0) scale(.99);box-shadow:var(--shadow-m)}
-  .mtile .ms{font-size:21px;color:var(--text-neutral);width:38px;height:38px;border-radius:8px;background:var(--fill-subtle);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .mtile .ms{font-size:20px;color:var(--text-neutral);width:36px;height:36px;border-radius:10px;background:var(--fill-subtle);display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .mtile .l{font-size:var(--fs-sm);font-weight:600;line-height:1.3}
 
   .inputbar{display:flex;gap:8px;align-items:center;padding:10px 16px 18px;border-top:1px solid var(--border-subtle);background:var(--bg);flex-shrink:0}
@@ -405,17 +413,17 @@
       <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div></div>
       <div class="citem">
         <div class="cinfo"><span class="tag">과학영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">이신혁T 지학Ⅰ 서바이벌<br>금 13:30-17:00 W관 201호</div>
+        <div class="cdesc">현정훈T 물리1 서바이벌<br>토 13:30-17:00 별관 305호</div>
         <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
       </div>
       <div class="citem">
-        <div class="cinfo"><span class="tag">수학영역</span></div>
-        <div class="cdesc">강기원T 수학 서바이벌 미적정규<br>일 09:00-12:35 본관 101호</div>
+        <div class="cinfo"><span class="tag">과학영역</span></div>
+        <div class="cdesc">최현호T 물리 역학 특강(클리어) 5회<br>목 18:30-21:30 별관 301호</div>
         <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
       </div>
       <div class="citem">
-        <div class="cinfo"><span class="tag">수학영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">강은양T 국어<br>일 18:30-22:00 엣지관 601호 7/13</div>
+        <div class="cinfo"><span class="tag">국어영역</span><span class="status">수강중</span></div>
+        <div class="cdesc">강은양T 국어 서바이벌<br>일 13:30-17:05 본관 204호 7/13</div>
         <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
       </div>
     </div>
@@ -482,7 +490,7 @@ function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return
 function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
 function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
 function botSay(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="msg"></div></div>`);r.querySelector('.msg').innerHTML=h;log.appendChild(r);scrollEnd();}
-function meSay(t){const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
+function meSay(t){const hr=log.querySelector('.hero:not(.collapsed)');if(hr)hr.classList.add('collapsed');const r=el(`<div class="row me fadein"><div class="msg"></div></div>`);r.querySelector('.msg').textContent=t;log.appendChild(r);scrollEnd();}
 let RM=false;try{RM=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
 function typingBubble(){const r=el(`<div class="row bot typing fadein" aria-hidden="true"><div class="msg"><span class="td"></span><span class="td"></span><span class="td"></span></div></div>`);log.appendChild(r);scrollEnd();return r;}
 function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBubble();setTimeout(()=>{if(tb)tb.remove();run();},340);}
@@ -490,6 +498,7 @@ log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function heroGreet(){const greet=sub('<b>{학생}</b>님, 안녕하세요');const ctx=sub('{지점} 캠퍼스 기준으로 안내해 드려요');const r=el(`<div class="hero fadein"><div class="hgreet">${greet}<br>무엇을 도와드릴까요?</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function homeFaq(){const w=el(`<div class="qr"><span class="qlabel">자주 찾는 것</span></div>`);[{t:'보강 어떻게 봐요?',go:'at_makeup'},{t:'결석·지각 신고',go:'at_absent'},{t:'대기 충원은 언제 돼요?',go:'en_wait'}].forEach((o,i)=>{const c=el(`<button class="chip ghost fadein"><span>${o.t}</span></button>`);c.style.animationDelay=(280+i*45)+'ms';c.onclick=()=>{track('chatbot_quickfaq_click',{faq:o.go});meSay(o.t);w.remove();const mg=log.querySelector('.menu-grid');if(mg)mg.remove();typeThen(()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
@@ -556,9 +565,9 @@ function certIssue(desc){
 }
 /* 동영상 보강: 강좌(여러 개)→주차 선택 — 더미 예시 데이터 */
 const MAKEUP={
-  '이신혁T 지학Ⅰ 서바이벌':[{w:'3주차',s:'open',d:'신청 후 안내'},{w:'4주차',s:'soon'},{w:'5주차',s:'watching',d:'8/24까지',p:40,m:'240/600분'}],
-  '강기원T 수학 서바이벌 미적정규':[{w:'2주차',s:'open',d:'신청 후 안내'},{w:'3주차',s:'watching',d:'8/30까지',p:65,m:'390/600분'}],
-  '강은양T 국어 문학':[{w:'4주차',s:'open',d:'신청 후 안내'},{w:'5주차',s:'soon'}],
+  '현정훈T 물리1 서바이벌':[{w:'3주차',s:'open',d:'신청 후 안내'},{w:'4주차',s:'soon'},{w:'5주차',s:'watching',d:'8/24까지',p:40,m:'240/600분'}],
+  '최현호T 물리 역학 특강(클리어) 5회':[{w:'2주차',s:'open',d:'신청 후 안내'},{w:'3주차',s:'watching',d:'8/30까지',p:65,m:'390/600분'}],
+  '강은양T 국어 서바이벌':[{w:'4주차',s:'open',d:'신청 후 안내'},{w:'5주차',s:'soon'}],
 };
 function makeupWeeks(course){
   const ws=MAKEUP[course]||[];
@@ -575,23 +584,23 @@ function makeupWeek(course,x){
   quick([main,{t:'동보 자료 문자로 받기',act:()=>{botSay(`${x.w} 자료를 010-****-1234로 보내드렸어요.`);endActions();}},back('at_makeup')]);
 }
 /* 반 변경/퇴원 시 '같은 강사 다른 시간' — 강좌별 더미 대체 시간 */
-const ALTTIME={'이신혁T 지학Ⅰ':['수 18:30 · W관 201호','잔여 2석'],'강기원T 수학':['토 14:00 · 본관 101호','잔여 3석'],'강은양T 국어':['토 18:30 · 엣지관 601호','잔여 1석']};
+const ALTTIME={'현정훈T 물리1 서바이벌':['일 13:30 · 별관 305호','잔여 2석'],'최현호T 물리 역학 특강(클리어) 5회':['화 18:30 · 별관 301호','잔여 3석'],'강은양T 국어 서바이벌':['토 13:30 · 본관 204호','잔여 1석']};
 function altCard(course){const a=ALTTIME[course]||['다른 시간','문의'];card(`<div class="ct">${ms('schedule')}${course} · 같은 강사 다른 시간</div><div class="krow"><span class="k">${a[0]}</span><span class="v"><span class="pill due">${a[1]}</span></span></div>`);}
 function transferTime(course){altCard(course);quick([{t:'이 시간으로 변경 상담',primary:true,act:()=>handoff('전반(시간 변경) · '+course)},back('en_transfer')]);}
 function quitAlt(course){altCard(course);quick([{t:'이 시간으로 반 변경 상담',primary:true,act:()=>handoff('반 변경(시간) · '+course)},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}
 /* 납부 항목 단일 출처(SSOT) — pay_status·pay_sms·pay_va가 공유해 항상 일치 + 미납 여러 건 */
 const PAYITEMS=[
-  {t:'수강료',n:'강은양T 국어 문학',a:'320,000원',paid:false,due:'7/19'},
-  {t:'수강료',n:'강기원T 수학 서바이벌 미적정규',a:'360,000원',paid:false,due:'7/26'},
-  {t:'교재비',n:'강기원T 수학 교재',a:'45,000원',paid:false,due:'7/22'},
+  {t:'수강료',n:'강은양T 국어 서바이벌',a:'320,000원',paid:false,due:'7/19'},
+  {t:'수강료',n:'최현호T 물리 역학 특강(클리어) 5회',a:'360,000원',paid:false,due:'7/26'},
+  {t:'교재비',n:'현정훈T 물리1 교재',a:'45,000원',paid:false,due:'7/22'},
   {t:'교재비',n:'강은양T 국어 교재',a:'38,000원',paid:true},
-  {t:'콘텐츠',n:'지학 복습영상(동영상 보강)',a:'30,000원',paid:true},
+  {t:'콘텐츠',n:'물리1 복습영상(동영상 보강)',a:'30,000원',paid:true},
 ];
 const won=n=>n.toLocaleString()+'원';
 const payNum=a=>+String(a).replace(/[^0-9]/g,'');
 function payItemHtml(i){const pill=i.paid?'<span class="pill ok">완납</span>':'<span class="pill due">미납</span>';const sub=(!i.paid&&i.due)?`<span class="enr-sub">납부 기한 ${i.due}</span>`:'';return `<div class="payitem${i.paid?' paid':''}"><div class="pi-l"><span class="pi-type">${i.t}</span><span class="pi-name">${i.n}</span>${sub}</div><div class="pi-r">${pill}<span class="pi-amt">${i.a}</span></div></div>`;}
 const NODES={
-  home(){crumb('문제를 바로 해결하도록 도와드려요');botSay('안녕하세요, <b>{학생}</b>님. <b>{지점} 캠퍼스</b> 기준으로 안내해 드릴게요. 무엇을 도와드릴까요?');menuGrid();},
+  home(){crumb('문제를 바로 해결하도록 도와드려요');heroGreet();menuGrid();},
 
 
   /* 1. 계정·로그인·앱 */
@@ -625,7 +634,7 @@ const NODES={
     botSay(`어떤 결제 건의 링크를 문자로 받을까요? 현재 <b>미납 ${unpaid.length}건</b>이에요.`);
     quick([...unpaid.map(i=>({t:`${i.t} · ${i.n} (${i.a})`,ic:'sms',label:`${i.t} · ${i.n} 결제 문자`,act:()=>{botSay(`등록된 번호 <b>010-****-1234</b>로 <b>${i.t} · ${i.n}</b> 결제 링크를 보냈어요. 문자 속 링크에서 결제하면 돼요.`);endActions();}})),{t:'미납 전체 한 번에 받기',ic:'forward_to_inbox',primary:true,act:()=>{botSay(`미납 <b>${unpaid.length}건</b> 결제 링크를 모두 010-****-1234로 보냈어요. 각 링크에서 결제하면 돼요.`);endActions();}},{t:'미납 내역 다시 보기',go:'pay_status'},back('m_pay')]);},
   pay_va(){cardLoad(`<div class="ct">${ms('account_balance')}가상계좌 · {학생}님</div>
-     <div class="krow"><span class="k">납부 항목</span><span class="v">7월 수강료 · 이신혁T 지학Ⅰ</span></div>
+     <div class="krow"><span class="k">납부 항목</span><span class="v">7월 수강료 · 현정훈T 물리1</span></div>
      <div class="krow"><span class="k">입금 은행</span><span class="v">신한은행</span></div>
      <div class="krow"><span class="k">계좌번호</span><span class="v">110-204-567890<button class="copybtn" data-c="110204567890" aria-label="계좌번호 복사">${ms('content_copy')}</button></span></div>
      <div class="krow"><span class="k">예금주</span><span class="v">(주)시대인재</span></div>
@@ -654,27 +663,27 @@ const NODES={
     quick([{t:'국어',act:()=>regPick('국어')},{t:'수학',act:()=>regPick('수학')},{t:'과학',act:()=>regPick('과학')},{t:'영어',act:()=>regPick('영어')},{t:'마감 강좌 대기 걸기',ghost:true,go:'en_waitset'},back('m_enroll')]);},
   en_check(){cardLoad(`<div class="ct">${ms('task_alt')}내 등록 현황 · 3개 강좌</div>
      <div class="paylist enr">
-       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">이신혁T 지학Ⅰ 서바이벌</span><span class="enr-sub">8/24 종강 예정 · 추가 결제 없음</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
-       <div class="payitem"><div class="pi-l"><span class="pi-type">국어</span><span class="pi-name">강은양T 국어 문학</span><span class="enr-sub">결제 기한 7/19 · 미납 시 자동 취소</span></div><div class="pi-r"><span class="pill due">결제대기</span></div></div>
-       <div class="payitem"><div class="pi-l"><span class="pi-type">수학</span><span class="pi-name">강기원T 수학 서바이벌 미적정규</span><span class="enr-sub">다음 결제 7/26 · 매월 정기결제</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">현정훈T 물리1 서바이벌</span><span class="enr-sub">8/24 종강 예정 · 추가 결제 없음</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">국어</span><span class="pi-name">강은양T 국어 서바이벌</span><span class="enr-sub">결제 기한 7/19 · 미납 시 자동 취소</span></div><div class="pi-r"><span class="pill due">결제대기</span></div></div>
+       <div class="payitem"><div class="pi-l"><span class="pi-type">과학</span><span class="pi-name">최현호T 물리 역학 특강(클리어) 5회</span><span class="enr-sub">다음 결제 7/26 · 매월 정기결제</span></div><div class="pi-r"><span class="pill ok">등록완료</span></div></div>
      </div>`,5);
     botSay('강좌마다 <b>결제일이 달라요</b>. 결제대기 1건은 기한(7/19) 내 결제하지 않으면 자동 취소될 수 있어요.');
     quick([{t:'결제대기 건 지금 결제',ic:'payment',primary:true,go:'pay_status'},{t:'다른 강좌 더 신청',ic:'how_to_reg',go:'en_reg'},back('m_enroll')]);},
   en_wait(){cardLoad(`<div class="ct">${ms('pin')}대기 접수 현황 · 3건</div>
      <div class="witem">
-       <div class="wtop"><span class="pill due">충원</span><span class="wc">강기원T 수학 · 일 09:00</span></div>
+       <div class="wtop"><span class="pill due">충원</span><span class="wc">최현호T 물리 역학 특강(클리어) 5회 · 목 18:30</span></div>
        <div class="wurgent">${ms('schedule')}자리가 났어요 · 오늘 23:59까지 등록하면 확정</div>
      </div>
      <div class="witem">
-       <div class="wtop"><span class="pill ok">대기 1번</span><span class="wc">이신혁T 지학 · 토 14:00</span></div>
+       <div class="wtop"><span class="pill ok">대기 1번</span><span class="wc">현정훈T 물리1 서바이벌 · 토 13:30</span></div>
        <div class="qdots"><i class="me"></i><span class="qn">내 앞 0명 · 곧 차례예요</span></div>
      </div>
      <div class="witem">
-       <div class="wtop"><span class="pill wait">대기 3번</span><span class="wc">강은양T 국어 · 일 18:30</span></div>
+       <div class="wtop"><span class="pill wait">대기 3번</span><span class="wc">강은양T 국어 서바이벌 · 일 13:30</span></div>
        <div class="qdots"><i></i><i></i><i class="me"></i><span class="qn">내 앞 2명 · 대기 중</span></div>
      </div>`);
     botSay('대기는 <b>한 번만</b> 걸어두면 돼요. 충원되면 <b>순번대로 자동 문자</b>가 가서, 여러 번 신청해도 순번이 빨라지진 않아요.');
-    quick([{t:'수학 지금 등록',primary:true,act:()=>{botSay('충원된 강기원T 수학 등록을 진행할게요. 결제창으로 이동합니다.');endActions();}},{t:'대기 상태 안내',ic:'help',go:'en_waitinfo'},{t:'충원되면 문자 받기',act:()=>{botSay('자리가 나면 바로 010-****-1234로 순번대로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
+    quick([{t:'물리 지금 등록',primary:true,act:()=>{botSay('충원된 최현호T 물리 역학 특강(클리어) 5회 등록을 진행할게요. 결제창으로 이동합니다.');endActions();}},{t:'대기 상태 안내',ic:'help',go:'en_waitinfo'},{t:'충원되면 문자 받기',act:()=>{botSay('자리가 나면 바로 010-****-1234로 순번대로 문자 보내드릴게요.');endActions();}},{t:'다른 강좌·시간 추가 대기',ic:'add',go:'en_waitset'},back('m_enroll')]);},
   en_waitinfo(){card(`<div class="ct">${ms('help')}대기 상태 안내 · 모든 경우</div>
      <div class="krow"><span class="k"><span class="pill due">충원</span> 자리 남</span><span class="v">기한 내 등록하면 확정</span></div>
      <div class="krow"><span class="k"><span class="pill ok">대기 1번</span> 충원 임박</span><span class="v">곧 차례 · 알림 대기</span></div>
@@ -689,20 +698,20 @@ const NODES={
   en_special(){botSay('특강 신청 중 본인인증 문자가 안 오면 ① 잠시 뒤 <b>[인증번호 다시 받기]</b>를 누르고 ② 입력한 휴대폰 번호가 맞는지 ③ 문자 차단·스팸함을 확인해 주세요. 계속 안 오면 바로 도와드릴게요.');
     quick([{t:'그래도 안 와요',primary:true,act:()=>handoffTech('특강 신청 본인인증 문자 미수신')},back('m_enroll')]);},
   en_transfer(){botSay('반 변경은 어떤 이유인가요? 더 나은 자리를 먼저 찾아드릴게요.');
-    quick([{t:'시간대를 바꾸고 싶어요',act:()=>{botSay('어떤 강좌의 시간을 바꾸고 싶으세요?');quick([{t:'이신혁T 지학Ⅰ',act:()=>transferTime('이신혁T 지학Ⅰ')},{t:'강기원T 수학',act:()=>transferTime('강기원T 수학')},{t:'강은양T 국어',act:()=>transferTime('강은양T 국어')},back('en_transfer')]);}},
+    quick([{t:'시간대를 바꾸고 싶어요',act:()=>{botSay('어떤 강좌의 시간을 바꾸고 싶으세요?');quick([{t:'현정훈T 물리1 서바이벌',act:()=>transferTime('현정훈T 물리1 서바이벌')},{t:'최현호T 물리 역학 특강(클리어) 5회',act:()=>transferTime('최현호T 물리 역학 특강(클리어) 5회')},{t:'강은양T 국어 서바이벌',act:()=>transferTime('강은양T 국어 서바이벌')},back('en_transfer')]);}},
       {t:'난이도를 바꾸고 싶어요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. 자리·교재 정리는 상담원이 도와드려요.</div>`);quick([{t:'난이도 변경 상담',primary:true,act:()=>handoff('전반(난이도)')},back('en_transfer')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>handoff('전반(강사 변경)')},back('m_enroll')]);},
 
   /* 5. 출결·보강 */
   m_attend(){botSay('출결·보강, 무엇을 확인할까요?');
-    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'회차 자료(동보) 받기',ic:'description',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 이신혁T 지학Ⅰ</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
+    quick([{t:'동영상 보강',ic:'smart_display',go:'at_makeup'},{t:'회차 자료(동보) 받기',ic:'description',go:'at_makeup'},{t:'오늘 출석 확인',ic:'check_circle',act:()=>{cardLoad(`<div class="ct">${ms('check_circle')}오늘 출결 · 현정훈T 물리1</div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">17:58 체크인</span></span></div>`);endActions();}},{t:'주간 출결 현황',ic:'calendar_view_week',go:'at_week'},
       {t:'결석·지각 미리 신고',ic:'event_busy',go:'at_absent'},
       {t:'현장 보강 문의',ic:'meeting_room',act:()=>{botSay('현장 보강은 결석한 수업을 같은 강좌 다른 시간에 듣는 거예요. 마감반은 시작 5분 전 입실하고, 결석 학생이 없으면 자리가 없을 수 있어요. 가능 여부는 상담원이 확인해 드려요.');quick([{t:'현장 보강 상담',primary:true,act:()=>handoff('현장 보강 가능 여부')},back('m_attend')]);}},back('home')]);},
   at_week(){cardLoad(`<div class="ct">${ms('calendar_view_week')}주간 출결 현황 · 최근 6주</div>
      <div class="hmap" aria-hidden="true">
        <div class="hmaphead"><span></span><span>6주전</span><span>5주전</span><span>4주전</span><span>3주전</span><span>지난주</span><span>이번주</span></div>
-       <div class="hmaprow"><span class="hl">지학·금</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell f"></i></div>
-       <div class="hmaprow"><span class="hl">수학·일</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell a"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hmaprow"><span class="hl">물리1·토</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell f"></i></div>
+       <div class="hmaprow"><span class="hl">물리역학·목</span><i class="hcell p"></i><i class="hcell p"></i><i class="hcell a"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
        <div class="hmaprow"><span class="hl">국어·일</span><i class="hcell p"></i><i class="hcell l"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell p"></i><i class="hcell f"></i></div>
        <div class="hleg"><span><i class="hcell p"></i>출석</span><span><i class="hcell l"></i>지각</span><span><i class="hcell a"></i>결석</span><span><i class="hcell f"></i>예정</span></div>
      </div>
@@ -710,7 +719,7 @@ const NODES={
     botSay('최근 6주 출결이에요. 결석 1회는 <b>동영상 보강</b>으로 채울 수 있어요.');
     quick([{t:'결석분 보강 신청',primary:true,go:'at_makeup'},back('m_attend')]);},
   /* 결석·지각 셀프 신고 — AMS 최대 자가해결 항목(결석예정 23,501·결석생TX 27,597·지각 6,477 ≈ 5.8만건). 전화 대체. */
-  at_absent(){const cls=[['이신혁T 지학Ⅰ 서바이벌','금 13:30'],['강기원T 수학','일 09:00'],['강은양T 국어','일 18:30']];
+  at_absent(){const cls=[['현정훈T 물리1 서바이벌','토 13:30'],['최현호T 물리 역학 특강(클리어) 5회','목 18:30'],['강은양T 국어 서바이벌','일 13:30']];
     const pick=(kind)=>{botSay(`<b>${kind}</b>할 수업을 선택해 주세요.`);
       quick([...cls.map(c=>({t:c[0],label:`${c[0]} ${kind}`,act:()=>{
         track('chatbot_self_action',{action:'absent_report',kind:kind});
@@ -725,14 +734,14 @@ const NODES={
   /* 6. 수업·시간표 */
   time_table(){
     const S={this:[
-        {day:'금',time:'13:30',end:'17:00',sub:'과학',course:'이신혁T 지학Ⅰ 서바이벌',room:'W관 201호'},
-        {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
-        {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}],
+        {day:'목',time:'18:30',end:'21:30',sub:'과학',course:'최현호T 물리 역학 특강(클리어) 5회',room:'별관 301호'},
+        {day:'토',time:'13:30',end:'17:00',sub:'과학',course:'현정훈T 물리1 서바이벌',room:'별관 305호'},
+        {day:'일',time:'13:30',end:'17:05',sub:'국어',course:'강은양T 국어 서바이벌',room:'본관 204호'}],
       next:[
-        {day:'금',time:'13:30',end:'17:00',sub:'과학',course:'이신혁T 지학Ⅰ 서바이벌',room:'W관 201호'},
-        {day:'토',time:'14:00',end:'17:30',sub:'보강',course:'지학Ⅰ 3주차 동영상 보강',room:'W관 201호',makeup:true},
-        {day:'일',time:'09:00',end:'12:35',sub:'수학',course:'강기원T 수학 서바이벌 미적정규',room:'본관 101호'},
-        {day:'일',time:'18:30',end:'22:00',sub:'국어',course:'강은양T 국어 문학',room:'엣지관 601호'}]};
+        {day:'목',time:'18:30',end:'21:30',sub:'과학',course:'최현호T 물리 역학 특강(클리어) 5회',room:'별관 301호'},
+        {day:'토',time:'13:30',end:'17:00',sub:'과학',course:'현정훈T 물리1 서바이벌',room:'별관 305호'},
+        {day:'토',time:'18:30',end:'22:00',sub:'보강',course:'물리1 3주차 동영상 보강',room:'별관 305호',makeup:true},
+        {day:'일',time:'13:30',end:'17:05',sub:'국어',course:'강은양T 국어 서바이벌',room:'본관 204호'}]};
     const DAY={'월':'월요일','화':'화요일','수':'수요일','목':'목요일','금':'금요일','토':'토요일','일':'일요일'};
     let wk='this';
     const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);
@@ -745,9 +754,9 @@ const NODES={
     endActions();},
   m_time(){botSay('수업·시간표, 무엇을 볼까요?');
     quick([{t:'내 시간표',ic:'calendar_month',go:'time_table'},
-      {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">이신혁T 지학Ⅰ</span><span class="v">W관 201호</span></div><div class="krow"><span class="k">강기원T 수학</span><span class="v">본관 101호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">엣지관 601호</span></div>`);endActions();}},
+      {t:'강의실 위치',ic:'meeting_room',act:()=>{cardLoad(`<div class="ct">${ms('meeting_room')}강의실 안내</div><div class="krow"><span class="k">현정훈T 물리1</span><span class="v">별관 305호</span></div><div class="krow"><span class="k">최현호T 물리 역학</span><span class="v">별관 301호</span></div><div class="krow"><span class="k">강은양T 국어</span><span class="v">본관 204호</span></div>`);endActions();}},
       {t:'서바이벌 커리큘럼',ic:'menu_book',act:()=>{card(`<div class="ct">${ms('menu_book')}서바이벌 선택 커리큘럼</div><div class="guide">강좌별로 매주 강의교재·선택교재가 제공돼요. 강좌마다 구성이 달라서, 정확한 교재·커리큘럼 목록은 상담 선생님이 안내해 드려요.</div>`);quick([{t:'커리큘럼 상담',primary:true,act:()=>handoff('서바이벌 선택 커리큘럼')},back('m_time')]);}},
-      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">이신혁T 지학Ⅰ 종강일: <b>8/24</b><br><span style="color:var(--text-weak)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
+      {t:'종강일·휴강 안내',ic:'event_available',act:()=>{card(`<div class="ct">${ms('event_available')}일정 안내</div><div class="guide">현정훈T 물리1 종강일: <b>8/24</b><br><span style="color:var(--text-weak)">휴강 등 변동 일정은 상담실에서 정확히 확인해 드려요.</span></div>`);quick([{t:'휴강·일정 상담원 확인',act:()=>handoff('종강일·휴강 일정')},back('m_time')]);}},back('home')]);},
 
   /* 7. 상담원·자주묻는것 */
   m_help(){botSay('무엇을 도와드릴까요?');
@@ -762,7 +771,7 @@ const NODES={
 
   /* 8. 퇴원·전반 */
   m_quit(){botSay('어떤 점이 어려우셨어요? 더 나은 방법을 먼저 찾아드릴게요.');
-    quick([{t:'시간이 안 맞아요',act:()=>{botSay('어떤 강좌 시간이 안 맞으세요? 같은 강사 다른 시간을 먼저 찾아드릴게요.');quick([{t:'이신혁T 지학Ⅰ',act:()=>quitAlt('이신혁T 지학Ⅰ')},{t:'강기원T 수학',act:()=>quitAlt('강기원T 수학')},{t:'강은양T 국어',act:()=>quitAlt('강은양T 국어')},{t:'그래도 퇴원',go:'quit_refund',ghost:true},back('m_quit')]);}},
+    quick([{t:'시간이 안 맞아요',act:()=>{botSay('어떤 강좌 시간이 안 맞으세요? 같은 강사 다른 시간을 먼저 찾아드릴게요.');quick([{t:'현정훈T 물리1 서바이벌',act:()=>quitAlt('현정훈T 물리1 서바이벌')},{t:'최현호T 물리 역학 특강(클리어) 5회',act:()=>quitAlt('최현호T 물리 역학 특강(클리어) 5회')},{t:'강은양T 국어 서바이벌',act:()=>quitAlt('강은양T 국어 서바이벌')},{t:'그래도 퇴원',go:'quit_refund',ghost:true},back('m_quit')]);}},
       {t:'난이도가 안 맞아요',act:()=>{card(`<div class="ct">${ms('stairs')}수준별 반</div><div class="guide">기초·심화 반으로 옮길 수 있어요. (상담에서도 ‘반 변경’으로 많이 해결돼요)</div>`);quick([{t:'반 변경 상담',primary:true,act:()=>handoff('반 변경(난이도)')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
       {t:'강사를 바꾸고 싶어요',act:()=>{botSay('강사 변경도 가능해요. 남은 자리·교재 정리는 상담원이 도와드려요.');quick([{t:'강사 변경 상담',primary:true,act:()=>handoff('강사 변경')},{t:'그래도 퇴원',go:'quit_refund'},back('m_quit')]);}},
       {t:'수강 계획이 바뀌었어요',act:()=>handoff('수강 계획 변경')},{t:'그래도 퇴원할래요',go:'quit_refund'},back('home')]);},
