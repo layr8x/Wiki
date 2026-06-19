@@ -116,5 +116,5 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **합계(paytotal)**: 상단 `border-2` = `text/primary`(검정), `pt-spacing/8`. 라벨 `BODY/body-sm (B)`·`text/primary`. **큰 숫자 = `HEADING/heading-sm`(24 ExtraLight, ls −0.5)·`text/primary`.**
 - **진행바**: 라벨 `BODY/body-xs`, 트랙 높이 **4**·`background/secondary`·radius 999, 채움 `background/inverse`.
 - **말풍선(me)**: `bg background/inverse`·`text/inverse`·`BODY/body-sm (B)`·`px-spacing/16 py-spacing/12`·라운드 24/24/24 + 꼬리 `radius/md`(4).
-- **퀵리플라이 칩**: 텍스트만(아이콘 X). primary=`background/inverse`+`text/inverse`, 기본=`background/primary`+`border/primary`+`text/placeholder`, `px-spacing/16 py-spacing/8`·radius 999·`BODY/body-sm (B)`.
+- **퀵리플라이 칩**: 텍스트만(아이콘 X). primary=`background/inverse`+`text/inverse`, 기본=`background/primary`+`border/primary`+`text/placeholder`, `px-spacing/16 py-spacing/8`·radius 999·`BODY/body-sm (B)`. **칩 스타일은 딱 둘뿐 — primary / 기본.** "처음으로·이전·다음 주 보기" 같은 보조 버튼도 배경·보더 없는 맨 글자("ghost")로 만들지 말 것 → 반드시 **기본 칩**(흰 배경+보더+text/placeholder). (이번 세션 실수: 보조 버튼을 임의 ghost로 만들어 "버튼 적용 안 됐다" 지적받음.)
 - 추가 스타일: `BODY/body-xs (B)`·`HEADING/heading-sm`(24)·`HEADING/heading-xs`(20 Light). 추가 토큰: `tag/gray/*`·`radius/md`(4)·`text/placeholder`·`icon/secondary`·`icon/on-color`.
