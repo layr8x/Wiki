@@ -63,20 +63,23 @@
   .headicons .ms{font-size:24px;color:#161616;cursor:pointer}
   .bell{position:relative}
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
-  /* 진입 전 챗봇 아이콘: 은은한 비콘 링(입장 시 3회) + 부드러운 호버 — 과하지 않게 */
-  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:transparent;cursor:pointer;transition:transform .2s var(--ease)}
-  #openBtn:hover{transform:scale(1.1)}
-  #openBtn:active{transform:scale(.9)}
+  /* 진입 아이콘 — '숨쉬는 비콘': 미세 호흡 + 절제된 단일 펄스 / 호버=떠오르며 눈↑·미소·펄스정지 / 클릭=탄력 */
+  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:transparent;cursor:pointer;transition:transform .34s cubic-bezier(.34,1.56,.64,1)}
+  #openBtn svg{overflow:visible;animation:obreathe 4.2s ease-in-out infinite}
+  #openBtn:hover{transform:translateY(-2px) scale(1.06)}
+  #openBtn:active{transform:scale(.9);transition:transform .1s ease-out}
   #openBtn .bub{fill:none;stroke:var(--primary);stroke-width:1.2;stroke-linejoin:miter}
-  #openBtn .eye{fill:var(--primary);transform-box:fill-box;transform-origin:center;animation:eyeblink 4.8s ease-in-out infinite}
-  #openBtn .smile{fill:none;stroke:var(--primary);stroke-width:1.2;stroke-linecap:round;transform-box:fill-box;transform-origin:center;opacity:0;animation:smile 6.4s ease-in-out infinite}
-  #openBtn::before,#openBtn::after{content:"";position:absolute;inset:1px;border-radius:50%;border:1.3px solid var(--accent);opacity:0;pointer-events:none}
-  #openBtn::before{animation:ripple 4.6s var(--ease) infinite}
-  #openBtn::after{animation:ripple 4.6s var(--ease) infinite 2.3s}
-  @keyframes ripple{0%{transform:scale(.82);opacity:.38}80%{opacity:0}100%{transform:scale(1.7);opacity:0}}
-  @keyframes eyeblink{0%,91%,100%{transform:scaleY(1)}93.5%{transform:scaleY(.1)}95.5%{transform:scaleY(1)}}
-  @keyframes smile{0%,70%,100%{opacity:0;transform:scaleY(.6)}80%,92%{opacity:1;transform:scaleY(1)}}
-  @media (prefers-reduced-motion:reduce){#openBtn .eye,#openBtn .smile{animation:none}#openBtn::before,#openBtn::after{animation:none}}
+  #openBtn .face{transform-box:fill-box;transform-origin:center;transition:transform .32s var(--ease)}
+  #openBtn:hover .face{transform:translateY(-0.9px)}
+  #openBtn .eye{fill:var(--primary);transform-box:fill-box;transform-origin:center;animation:oblink 5.6s ease-in-out infinite}
+  #openBtn .smile{fill:none;stroke:var(--primary);stroke-width:1.2;stroke-linecap:round;transform-box:fill-box;transform-origin:center bottom;opacity:0;transform:scaleY(.45);transition:opacity .32s var(--ease),transform .32s var(--ease)}
+  #openBtn:hover .smile{opacity:1;transform:scaleY(1)}
+  #openBtn::after{content:"";position:absolute;inset:0;border-radius:50%;border:1.4px solid var(--accent);opacity:0;pointer-events:none;animation:obeacon 3.6s var(--ease) infinite}
+  #openBtn:hover::after{animation:none;opacity:0}
+  @keyframes obreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes oblink{0%,93%,100%{transform:scaleY(1)}95.5%{transform:scaleY(.08)}98%{transform:scaleY(1)}}
+  @keyframes obeacon{0%{transform:scale(.7);opacity:0}18%{opacity:.32}72%{opacity:0}100%{transform:scale(1.55);opacity:0}}
+  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::after{animation:none}#openBtn .face,#openBtn .smile{transition:none}}
   .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
   .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
@@ -414,7 +417,7 @@
     <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
     <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">김시대 님</span><span class="ms">keyboard_arrow_down</span></span><span class="ms cached">cached</span></div>
     <div class="headicons">
-      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path class="bub" d="M3.5 4H20.5V15H7L3.5 18.5V4Z"/><circle class="eye" cx="9.5" cy="9.3" r="1.05"/><circle class="eye" cx="14.5" cy="9.3" r="1.05"/><path class="smile" d="M9.7 11.7Q12 13.5 14.3 11.7"/></svg></span>
+      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path class="bub" d="M3.5 4H20.5V15H7L3.5 18.5V4Z"/><g class="face"><circle class="eye" cx="9.5" cy="9.3" r="1.05"/><circle class="eye" cx="14.5" cy="9.3" r="1.05"/><path class="smile" d="M9.7 11.7Q12 13.5 14.3 11.7"/></g></svg></span>
       <span class="ms bell" aria-label="알림">notifications</span>
       <span class="ms deskonly" aria-label="전체메뉴">menu</span>
     </div>
