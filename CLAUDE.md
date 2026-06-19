@@ -119,3 +119,15 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **퀵리플라이 칩 = 아이콘 + 텍스트** (예전 "텍스트만"은 틀림 — 사용자 교정). primary=`background/inverse`+`text/inverse`(아이콘 `icon/on-color`), 기본=`background/primary`+`border/primary`+`text/placeholder`(아이콘 `icon/secondary`). 공통 `px-spacing/16 py-spacing/8`·radius 999·`BODY/body-sm (B)`·**아이콘↔텍스트 `gap-spacing/8`(4 아님)·아이콘 24px**. 칩 스타일은 primary / 기본 둘뿐(ghost·맨 글자 금지). "처음으로·이전" 등 보조 버튼도 기본 칩.
 - **아이콘 = Material Symbols, Sharp, weight 200** (사용자 지정). Figma에선 Material Symbols 플러그인으로 가져옴. 코드로는 `https://fonts.gstatic.com/s/i/short-term/release/materialsymbolssharp/{이름}/wght200/24px.svg`(viewBox `0 -960 960 960`) fetch → `figma.createNodeFromSvg` → fill을 `icon/*` 토큰에 recolor. raw hex/다른 weight 금지.
 - 추가 스타일: `BODY/body-xs (B)`·`HEADING/heading-xs`(20 Light). 추가 토큰: `tag/gray/*`·`radius/md`(4)·`spacing/6`·`spacing/24`·`text/placeholder`·`icon/secondary`·`icon/on-color`.
+
+## 6. v5 기획서(콘텐츠 원본) 충실 반영 — 검수 결과
+
+> 콘텐츠 출처 = `82a2104c-…v5.xlsx`("메뉴 시나리오"·"공통·진입·연결" 시트). 디자인만 맞추지 말고 **답변 텍스트·날짜형식·플로우를 기획서와 1:1 대조**할 것.
+
+- **홈 메뉴 = 5개** (출결·보강 / 입반·등록·대기 / 납부·결제 / 수업·시간표 / 전반). 기획서 공통시트엔 "메뉴 6개" 표기가 있으나 **사용자가 5개로 확정**(6번째 미정).
+- **만족도(👍/👎)**: 데이터 조회·자가안내 완료로 **끝나는 화면**엔 답변 칩 아래에 "도움이 됐나요?" + [👍 해결됐어요][👎 아직 안 됐어요](thumb_up/thumb_down 아이콘) 추가. **단, 상담 등록/전화로 끝나는 화면(이미 👎 경로)·진입·선택 화면엔 미노출.** (규칙: 칩에 '처음으로' 있고 '상담 등록' 없으면 노출.)
+- **결제 내역**: 날짜 `YYYY-MM-DD`(예 2026-06-01), 강좌 **풀네임**(국어 박지훈T 기말 심화).
+- **추가영상/동영상 보강**: 회차마다 `지급일 + 시청 기한` 둘 다.
+- **입반 강좌 확인**: 제목 "입반된 강좌 현황", 강좌명만 단순 리스트(`li`), 완료 배지 없음(기획서엔 배지 없음).
+- 납부 명세서 카드의 합계·진행바·완납 금액은 기획서엔 없지만 **사용자가 1281:110에서 직접 추가한 디자인** → 유지.
+- **맞춤법**: 사용자 노출 챗봇 텍스트는 검수상 깨끗(보조용언 "해 주세요/도와드릴까요" 일관). "출석예정"은 기획서 표기 그대로 유지.
