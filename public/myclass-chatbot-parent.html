@@ -241,7 +241,7 @@
   .chip:active{transform:translateY(0) scale(.97)}
   .chip .ms{font-size:24px;transition:transform .16s var(--ease)}
   .chip:active .ms{transform:scale(.92)}
-  .chip.primary{background:var(--fill-strong);color:var(--text-inverse);border-color:var(--fill-strong);font-weight:700;box-shadow:0 2px 10px rgba(22,22,22,.22)}
+  .chip.primary{background:var(--interactive);color:#fff;border-color:var(--interactive);font-weight:700;box-shadow:0 2px 10px rgba(0,67,206,.22)}
   .chip.cta{background:var(--interactive);color:#fff;border-color:var(--interactive);font-weight:700;box-shadow:0 2px 10px rgba(0,67,206,.22)}
   .chip.cta .ms{color:#fff}
   .chip.primary:hover{box-shadow:0 7px 20px rgba(22,22,22,.28)}
@@ -258,6 +258,11 @@
   .tt-block{display:flex;flex-direction:column;gap:4px;padding:8px 12px;border:1px solid var(--border-subtle);border-left:4px solid var(--fill-strong);border-radius:var(--r-lg);background:var(--bg);overflow:hidden}
   .tt-time{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm);font-variant-numeric:tabular-nums}
   .tt-course{font-size:var(--fs-cap);font-weight:400;color:var(--text-weak);line-height:var(--lh-cap);white-space:normal}
+  .ttrow{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+  .ttrow:last-child{border-bottom:none}
+  .tt-d{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);flex-shrink:0;width:18px}
+  .tt-i{font-size:var(--fs-sm);font-weight:400;color:var(--text-neutral);line-height:var(--lh-sm)}
+  .tt-i b{font-weight:700}
   .hero{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:0 0 32px;max-height:360px;overflow:hidden;transition:max-height .44s var(--ease),opacity .3s var(--ease),padding .44s var(--ease),margin .44s var(--ease)}
   .hero.collapsed{max-height:0;opacity:0;padding-top:0;padding-bottom:0;margin-bottom:0;pointer-events:none}
   .hero .spk{display:inline-flex;animation:sparkin .55s var(--ease) both}
@@ -387,7 +392,7 @@
 .phrow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
 .phrow.last{border-bottom:none}
 .ph-l{flex:1;min-width:0;font-size:var(--fs-sm);font-weight:400;line-height:var(--lh-sm);color:var(--text-weak);word-break:break-word}
-.ph-r{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;text-align:right}
+.ph-r{flex:1;display:flex;flex-direction:column;align-items:flex-end;text-align:right}
 .ph-r span{font-size:var(--fs-sm);font-weight:700;line-height:var(--lh-sm);color:var(--text-neutral);white-space:nowrap;font-variant-numeric:tabular-nums}
 .enrline{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);padding:12px 0;border-bottom:1px solid var(--border-subtle);line-height:var(--lh-sm)}
 .enrline:last-child{border-bottom:none}
@@ -398,6 +403,11 @@
 .ph-r .ph-m{font-weight:400;color:var(--text-weak);font-size:var(--fs-cap);line-height:1.5}
 .ph-r .ph-a{font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm)}
 .ph-r .ph-st{font-weight:600;color:var(--text-weak);font-size:var(--fs-cap);line-height:1.5}
+.ph-date{font-size:var(--fs-sm);color:var(--text-weak);flex-shrink:0;white-space:nowrap}
+.ph-r .ph-course{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm)}
+.ph-r .ph-meta{font-size:var(--fs-cap);color:var(--text-weak);line-height:1.5}
+.ms.up{color:#0e6027}
+.ms.down{color:#da1e28}
 /* 동영상 보강(VOD) 행 — 회차 + 상세(마이클래스/시청기한/제공시간) */
 .vrow{padding:12px 0;border-bottom:1px solid var(--border-subtle)}
 .vrow:last-child{border-bottom:none}
@@ -526,7 +536,7 @@ function sub(h){const cp=CAMPUSES[CTX.campus]||{};return String(h).replace(/\{�
 function syncShell(){try{const br=document.querySelector('.userrow .branch');if(br)br.textContent=CTX.campus;const nm=document.querySelector('.userrow .name');if(nm)nm.textContent=CTX.student+' 님';}catch(_){}}
 function rehome(){log.innerHTML='';setBanner();NODES.home();}
 function buildCtxFilter(){const host=document.getElementById('ctxfilter');if(!host)return;host.innerHTML='';const bar=el(`<div class="ctxbar"></div>`);const btn=el(`<button class="ctxsel" aria-haspopup="true" aria-expanded="false">${ms('location_on')}<b>${CTX.campus} · ${CTX.student} 학생</b>${ms('keyboard_arrow_down')}</button>`);const menu=el(`<div class="ctxmenu" role="menu"></div>`);menu.innerHTML=`<div class="grp">자녀 · 캠퍼스 선택</div>`+CHILDREN.map((ch,i)=>`<button role="menuitem" data-i="${i}" class="${i===CIDX?'cur':''}"><span class="ci"><b>${ch.student} 학생</b><em>${ch.campus} 캠퍼스</em></span>${i===CIDX?`<span class="ck">${ms('check')}</span>`:''}</button>`).join('');btn.onclick=e=>{e.stopPropagation();const op=menu.classList.toggle('open');btn.classList.toggle('open',op);btn.setAttribute('aria-expanded',op);};menu.querySelectorAll('button').forEach(bb=>{bb.onclick=e=>{e.stopPropagation();const i=+bb.dataset.i;if(i!==CIDX){const ch=CHILDREN[i];CIDX=i;CTX={student:ch.student,campus:ch.campus,grade:ch.grade};track('chatbot_ctx_change',{kind:'child',student:ch.student});syncShell();toast(ch.student+' 학생 기준으로 변경했어요');buildCtxFilter();rehome();}else{menu.classList.remove('open');btn.classList.remove('open');btn.setAttribute('aria-expanded','false');}};});bar.appendChild(btn);bar.appendChild(menu);host.appendChild(bar);}
-const ms=n=>`<span class="ms" aria-hidden="true">${n}</span>`;
+const ms=(n,c)=>`<span class="ms${c?' '+c:''}" aria-hidden="true">${n}</span>`;
 function el(h){const d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
 function toast(msg){const t=el(`<div class="toast" role="status" aria-live="polite">${ms('check_circle')}<span>${msg}</span></div>`);sheet.appendChild(t);requestAnimationFrame(()=>t.classList.add('show'));setTimeout(()=>{t.classList.remove('show');setTimeout(()=>{if(t.parentNode)t.remove();},420);},2400);}
 function scrollEnd(){requestAnimationFrame(()=>{try{log.scrollTo({top:log.scrollHeight,behavior:'smooth'});}catch(e){log.scrollTop=log.scrollHeight;}});}
@@ -538,7 +548,7 @@ function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBu
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
-function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic,o.iconCls):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function heroGreet(){const r=el(`<div class="hero fadein"><div class="hgreet">안녕하세요, 학부모님</div><div class="hsub">${CTX.student} 학생(${CTX.campus}) 기준으로 안내드릴게요.</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
@@ -551,7 +561,7 @@ const NODES={
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'how_to_reg',go:'at_today'},{t:'강좌 선택',ic:'fact_check',go:'at_course'},{t:'입반 강좌 확인',ic:'checklist',go:'en_check'},back('home')]);},
   at_today(){const c=COURSES[3];card(`<div class="ct">${ms('how_to_reg')}오늘(6/23) 출석 현황</div><div class="cardcourse">${nameOf(c)}</div><div class="krow"><span class="k">수업</span><span class="v">18:00~21:00</span></div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill wait">출석예정</span></span></div>`);navEnd('m_attend',true);},
   at_course(){botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
-  en_check(){card(`<div class="ct">${ms('checklist')}입반된 강좌 현황</div>`+COURSES.map(c=>`<div class="enrline">${c}</div>`).join(''));navEnd('m_attend',true);},
+  en_check(){card(`<div class="ct">${ms('checklist')}입반된 강좌 현황</div>`+COURSES.map(c=>`<div class="krow long"><span class="k">${nameOf(c)}</span><span class="v">${schedOf(c)}</span></div>`).join(''));navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부 현황',ic:'fact_check',go:'pay_wait'},{t:'결제 내역',ic:'receipt_long',go:'pay_history'},back('home')]);},
@@ -562,7 +572,7 @@ const NODES={
   /* ③ 수업·시간표 */
   m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'},back('home')]);},
   time_table(){drawWeek('this');},
-  time_end(){card(`<div class="ct">${ms('fact_check')}강좌별 종강일</div>`+ENDDATES.map(e=>`<div class="krow long"><span class="k">${e[0]}</span><span class="v">${e[1]}</span></div>`).join('')+`<div class="src">휴강·일정 변경은 상담실로 문의해 주세요.</div>`);consultEnd('m_time');},
+  time_end(){card(`<div class="ct">${ms('fact_check')}강좌별 종강일</div>`+ENDDATES.map(e=>`<div class="krow long"><span class="k">${nameOf(e[0])}</span><span class="v">${e[1]}</span></div>`).join('')+`<div class="src">휴강·일정 변경은 상담실로 문의해 주세요.</div>`);consultEnd('m_time');},
   time_rounds(){botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
 
   /* ④ 전반 — 전반 가능한 강좌 확인하기 */
@@ -578,6 +588,7 @@ const COURSES=[
   '김경욱T 진선1 영어 기말 6+1회 화 18:00-21:00 5/12',
 ];
 const teacherOf=c=>c.split(' ')[0];
+const schedOf=c=>String(c).slice(nameOf(c).length).trim();
 /* 강좌명 표기: 칩·납부·종강일=풀네임(스케줄 포함) / 시간표·결제내역·상세문장=이름만(스케줄 제외) */
 const nameOf=c=>String(c).replace(/\s[월화수목금토일]\s\d.*$/,'');
 /* [이전] — 노드키(go) 또는 함수(act) 어느 쪽이든 받음. 모든 2Depth+ 화면에 노출(v6 공통 UX) */
@@ -585,8 +596,8 @@ function back(target){if(typeof target==='function')return{t:'이전',ic:'chevro
 function courseChips(onPick,backKey){quick([...COURSES.map(c=>({t:c,label:c,act:()=>onPick(c)})),back(backKey),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 만족도(👍/👎) — 조회·자가안내로 끝나는 화면에만 (진입·선택·전화상담 종료 화면 제외) */
 function satis(backTarget){botSay('도움이 됐나요?');quick([
-  {t:'해결됐어요',ic:'thumb_up',act:()=>{track('chatbot_satisfaction',{rating:'up'});__resolved=true;botSay('도움이 됐다니 다행이에요. 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',act:()=>closeChat()}]);}},
-  {t:'아직 안 됐어요',ic:'thumb_down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담으로 더 정확히 도와드릴게요.');consultEnd(backTarget);}},
+  {t:'해결됐어요',ic:'thumb_up',iconCls:'up',act:()=>{track('chatbot_satisfaction',{rating:'up'});__resolved=true;botSay('도움이 됐다니 다행이에요. 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',act:()=>closeChat()}]);}},
+  {t:'아직 안 됐어요',ic:'thumb_down',iconCls:'down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담으로 더 정확히 도와드릴게요.');consultEnd(backTarget);}},
 ]);}
 /* 조회·안내 종료 화면: [이전][처음으로] + (선택 시) 만족도 */
 function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);if(withSatis)satis(backTarget);}
@@ -597,14 +608,14 @@ function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.c
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
 /* 납부 현황 섹션 — [납부필요]/[납부대기·가상계좌] 각각 수강료·교재비·합계·납부기한(·입금계좌) */
 function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="krow"><span class="k">${it[0]} ${it[1]}</span><span class="v">${it[2]}</span></div>`).join('');const acct=sec.account?`<div class="krow"><span class="k">입금 계좌</span><span class="v">${sec.account}</span></div>`:'';return `<div class="payseclabel ${cls}">[${label}]</div><div class="cardcourse">${nameOf(sec.course)}</div>${rows}<div class="krow tot"><span class="k">합계 · 납부기한 ${sec.due}</span><span class="v">${sec.total}</span></div>${acct}`;}
-function payHistHtml(r,last){const st=r[4]?`<span class="ph-st">${r[4]}</span>`:'';return `<div class="phrow${last?' last':''}"><span class="ph-l">${r[0]}<br>${nameOf(r[1])}</span><span class="ph-r"><span class="ph-m">${r[2]}</span><span class="ph-a">${r[3]}</span>${st}</span></div>`;}
+function payHistHtml(r,last){const more=r[5]?' '+r[5]:'';return `<div class="phrow${last?' last':''}"><span class="ph-date">${r[0]}</span><span class="ph-r"><span class="ph-course">${nameOf(r[1])}${more}</span><span class="ph-meta">${r[3]} · ${r[2]}</span>${r[4]?`<span class="ph-st">${r[4]}</span>`:''}</span></div>`;}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[
   ['4회차','마이클래스(VOD) · 시청 기한 6/17 · 120분 제공 (45분 시청)'],
   ['5회차','마이클래스(VOD) · 시청 기한 6/24 · 120분 제공 (미시청)'],
   ['6회차','연구실 동영상 · 연구실 문의'],
 ]};
-const VIDEO_EXTRA={[COURSES[0]]:[['3회차 · 지급일 5/27 · 시청 기한 6/10','시청 완료'],['5회차 · 지급일 6/10 · 시청 기한 6/24','미시청']]};
+const VIDEO_EXTRA={[COURSES[0]]:[['3회차','지급일 5/27 · 시청 기한 6/10'],['5회차','지급일 6/10 · 시청 기한 6/24']]};
 const OTHERCLASS={[COURSES[0]]:[['5회차 6/11(수)','18:00~21:00 · 본관 204호'],['5회차 6/14(토)','14:00~17:00 · 본관 204호']]};
 const ROUNDS={[COURSES[0]]:{total:6,cur:4,list:[['1회차','6/3(월) 14:00~17:00'],['2회차','6/10(월) 14:00~17:00'],['3회차','6/14(토) 14:00~17:00'],['4회차','6/17(월) 14:00~17:00'],['5회차','6/21(토) 14:00~17:00'],['6회차','6/24(월) 14:00~17:00']]}};
 const ENDDATES=[[COURSES[0],'2026-08-30'],[COURSES[1],'2026-07-31'],[COURSES[2],'2026-08-26'],[COURSES[3],'2026-06-30']];
@@ -626,21 +637,21 @@ const TT={
 const PAY_DUE={course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','3회','320,000원'],['교재비','국어 서바이벌 교재','45,000원']],total:'365,000원',due:'2026-06-25'};
 const PAY_PENDING={label:'납부대기',course:'최현호T 물리 역학 특강(클리어) 5회 목 18:30-21:30 7/16',items:[['수강료','5회','280,000원']],total:'280,000원',due:'2026-06-28',account:'국민 60491-01-302157'};
 const PAY_HISTORY=[
-  ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','400,000원','결제완료'],
+  ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','400,000원','결제완료','외 1건'],
   ['2026-05-15','박종민T 수학 미적분 목 18:30-22:00 4/30','가상계좌','320,000원','부분환불(환불금액: 100,000원)'],
   ['2026-05-10','박종민T 수학 서바이벌 실전모의 수 18:25-22:00 7/8','카드(신한)','300,000원','결제완료'],
   ['2026-05-01','김경욱T 진선1 영어 기말 6+1회 화 18:00-21:00 5/12','카드(국민)','280,000원','결제완료'],
 ];
 
 /* ① 강좌 선택 후 내용 선택 → 동영상 보강 / 타반보강 / 추가영상 (항상 3개 고정, 있음=강은양, 그 외=없음) */
-function atAfter(c){botSay(nameOf(c)+'\n어떤 내용을 확인할까요?');quick([{t:'동영상 보강',ic:'smart_display',act:()=>atVideoMakeup(c)},{t:'타반보강',ic:'meeting_room',act:()=>atOther(c)},{t:'추가영상',ic:'play_circle',act:()=>atVideoExtra(c)},back('at_course'),{t:'처음으로',ic:'home',go:'home'}]);}
-function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(nameOf(c)+'의 동영상 보강 내역이 없어요.');navEnd(()=>atAfter(c),true);return;}card(`<div class="ct">${ms('smart_display')}동영상 보강 · ${nameOf(c)}</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
-function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(nameOf(c)+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),true);return;}card(`<div class="ct">${ms('play_circle')}추가영상 · ${nameOf(c)}</div>`+d.map(r=>`<div class="krow long"><span class="k">${r[0]}</span><span class="v"><span class="pill ok">${r[1]}</span></span></div>`).join(''));navEnd(()=>atAfter(c),true);}
-function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(nameOf(c)+'의 타반보강 가능한 일정이 없어요.\n문의는 상담실로 연락해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="ct">${ms('meeting_room')}타반보강 가능 일정 · ${nameOf(c)}</div>`+d.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
+function atAfter(c){botSay(c+'\n어떤 내용을 확인할까요?');quick([{t:'동영상 보강',ic:'smart_display',act:()=>atVideoMakeup(c)},{t:'타반보강',ic:'meeting_room',act:()=>atOther(c)},{t:'추가영상',ic:'play_circle',act:()=>atVideoExtra(c)},back('at_course'),{t:'처음으로',ic:'home',go:'home'}]);}
+function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(nameOf(c)+'의 동영상 보강 내역이 없어요.');navEnd(()=>atAfter(c),true);return;}card(`<div class="ct">${ms('smart_display')}동영상 보강 · ${c}</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
+function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(nameOf(c)+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),true);return;}card(`<div class="ct">${ms('play_circle')}추가영상 · ${c}</div>`+d.map(r=>`<div class="krow long"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
+function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(nameOf(c)+'의 타반보강 가능한 일정이 없어요.\n문의는 상담실로 연락해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="ct">${ms('meeting_room')}타반보강 가능 일정 · ${c}</div>`+d.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
 /* ③ 전체 회차 */
 function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',go:'time_rounds'},{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="ct">${ms('calendar_view_month')}${nameOf(c)} · 전체 ${d.total}회</div>`+d.list.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">전체 ${d.total}회 중 ${d.cur}회차 진행 중</div>`);tail();}
 /* ③ 내 시간표 (강좌명=이름만, 시각은 별도 열) */
-function drawWeek(wk){const w=TT[wk];let tt='';w.rows.forEach(x=>{tt+=`<div class="tt-day">${x[0]}</div><div class="tt-block"><div class="tt-time">${x[1]}</div><div class="tt-course">${nameOf(x[2])} · ${x[3]}</div></div>`;});card(`<div class="ct">${ms('calendar_today')}${wk==='this'?'이번 주':'다음 주'}(${w.range}) 시간표</div><div class="tt">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))},back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
+function drawWeek(wk){const w=TT[wk];let tt='';w.rows.forEach(x=>{tt+=`<div class="ttrow"><span class="tt-d">${x[0]}</span><span class="tt-i"><b>${x[1]}</b> · ${nameOf(x[2])} · ${x[3]}</span></div>`;});card(`<div class="ct">${ms('calendar_today')}${wk==='this'?'이번 주':'다음 주'}(${w.range}) 시간표</div><div class="tt">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'calendar_today',cta:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))},back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
 /* ④ 전반 — 같은 강사 다른 시간대(지점단과별 노출) */
 function altResult(c){const a=ALT_SAME[c];if(!a){botSay('현재 '+teacherOf(c)+' 선생님의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="ct">${ms('sync_alt')}${nameOf(c)}의 다른 시간대 강좌</div>`+a.map(r=>`<div class="krow long"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">반 변경 신청은 상담을 통해 진행해 주세요.</div>`);consultEnd('m_overall');}
 function go(k){__nv++;track('chatbot_node_view',{node_id:k});if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
