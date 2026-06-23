@@ -401,6 +401,16 @@
 .vrow:last-child{border-bottom:none}
 .vrow .vr-t{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm)}
 .vrow .vr-d{font-size:var(--fs-cap);color:var(--text-weak);margin-top:2px;line-height:1.55}
+/* 납부 현황 2섹션([납부필요]/[납부대기·가상계좌]) */
+.payseclabel{display:inline-flex;align-items:center;font-size:var(--fs-cap);font-weight:700;border-radius:var(--r-pill);padding:1px 10px;margin-bottom:8px}
+.payseclabel.need{color:var(--text-inverse);background:var(--fill-strong)}
+.payseclabel.wait{color:var(--text-strong);background:var(--fill-subtle)}
+.cardcourse{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);margin-bottom:4px;line-height:var(--lh-sm)}
+.krow.tot{border-top:1px solid var(--fill-strong);border-bottom:none;margin-top:2px;padding-top:10px}
+.krow.tot .k,.krow.tot .v{font-weight:700;color:var(--text-neutral)}
+.paysec-gap{height:16px}
+/* 각주(강좌 선택 등) */
+.ftn{font-size:12px;color:var(--helper);font-weight:400;display:inline-block;margin-top:6px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -525,7 +535,7 @@ log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
 function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
-function heroGreet(){const greet=sub('<b>{학생}</b>님, 안녕하세요.');const ctx=sub('{지점} 캠퍼스 기준으로 안내해 드려요.');const r=el(`<div class="hero fadein"><div class="hgreet">${greet}<br>무엇을 도와드릴까요?</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
+function heroGreet(){const greet=sub('<b>{학생}</b>님, 안녕하세요.');const ctx=sub('{지점} 캠퍼스 기준으로 안내드릴게요.');const r=el(`<div class="hero fadein"><div class="hgreet">${greet}<br>무엇을 도와드릴까요?</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
 const won=n=>n.toLocaleString()+'원';
@@ -535,14 +545,13 @@ const NODES={
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'how_to_reg',go:'at_today'},{t:'강좌 선택',ic:'fact_check',go:'at_course'},{t:'입반 강좌 확인',ic:'checklist',go:'en_check'},back('home')]);},
-  at_today(){const c=COURSES[0];card(`<div class="ct">${ms('how_to_reg')}오늘 출결 · ${nameOf(c)}</div><div class="krow"><span class="k">수업</span><span class="v">14:00~17:00</span></div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill ok">13:58 체크인</span></span></div>`);navEnd('m_attend',true);},
-  at_course(){botSay('어떤 강좌를 확인할까요?');courseChips(atAfter,'m_attend');},
+  at_today(){const c=COURSES[3];card(`<div class="ct">${ms('how_to_reg')}오늘(6/23) 출석 현황</div><div class="cardcourse">${nameOf(c)}</div><div class="krow"><span class="k">수업</span><span class="v">18:00~21:00</span></div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill wait">출석예정</span></span></div>`);navEnd('m_attend',true);},
+  at_course(){botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
   en_check(){card(`<div class="ct">${ms('checklist')}입반된 강좌 현황</div>`+COURSES.map(c=>`<div class="enrline">${c}</div>`).join(''));navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부 현황',ic:'fact_check',go:'pay_wait'},{t:'결제 내역',ic:'receipt_long',go:'pay_history'},back('home')]);},
-  pay_wait(){const unpaid=PAY_WAIT.filter(i=>!i.paid).length,paidN=PAY_WAIT.length-unpaid,sum=PAY_WAIT.filter(i=>!i.paid).reduce((s,i)=>s+payNum(i.a),0),pct=Math.round(paidN/PAY_WAIT.length*100);
-    cardLoad(`<div class="ct">${ms('receipt_long')}납부 현황 · {학생} 학생</div><div class="paylist enr">${PAY_WAIT.map(payWaitHtml).join('')}</div><div class="paytotal"><span class="pt-k">합계 미납 · ${unpaid}건</span><span class="big">${won(sum)}</span></div><div class="barrow"><span>결제 진행</span><span><b>${PAY_WAIT.length}건 중 ${paidN}건</b> 완료</span></div><div class="bar"><i style="width:${pct}%"></i></div>`,6);
+  pay_wait(){cardLoad(`<div class="ct">${ms('receipt_long')}납부 현황 · {학생} 학생</div>${paySec('납부필요',PAY_DUE,'need')}<div class="paysec-gap"></div>${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
     quick([{t:'납부하기',ic:'credit_card',primary:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}},back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);},
   pay_history(){cardLoad(`<div class="ct">${ms('receipt_long')}최근 3개월 결제 내역</div>${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}`,6);navEnd('m_pay',true);},
 
@@ -580,9 +589,10 @@ function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',
 /* 상담으로 끝나는 화면 — v6: [전화 상담 연결][이전][처음으로] (상담 등록 버튼 제거). 만족도 미노출 */
 function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',primary:true,act:()=>phoneConnect(backTarget)},back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
 /* v6: 전화 상담 연결 클릭 시 지점 전화번호 노출 */
-function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:''));quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
+function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
-function payWaitHtml(i){const badge=i.paid?'<span class="pill ok">완납</span>':'<span class="pill due">미납</span>';const sub=(!i.paid&&i.due)?`<span class="enr-sub">${i.due}</span>`:'';return `<div class="payitem${i.paid?' paid':''}"><div class="pi-l"><span class="pi-type">${i.type}</span><span class="pi-name">${i.n}</span>${sub}</div><div class="pi-r">${badge}<span class="pi-amt">${i.a}</span></div></div>`;}
+/* 납부 현황 섹션 — [납부필요]/[납부대기·가상계좌] 각각 수강료·교재비·합계·납부기한(·입금계좌) */
+function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="krow"><span class="k">${it[0]} ${it[1]}</span><span class="v">${it[2]}</span></div>`).join('');const acct=sec.account?`<div class="krow"><span class="k">입금 계좌</span><span class="v">${sec.account}</span></div>`:'';return `<div class="payseclabel ${cls}">${label}</div><div class="cardcourse">${nameOf(sec.course)}</div>${rows}<div class="krow tot"><span class="k">합계</span><span class="v">${sec.total}</span></div><div class="krow"><span class="k">납부기한</span><span class="v">${sec.due}</span></div>${acct}`;}
 function payHistHtml(r,last){const st=r[4]?`<span class="ph-st">${r[4]}</span>`:'';return `<div class="phrow${last?' last':''}"><span class="ph-l">${r[0]}<br>${nameOf(r[1])}</span><span class="ph-r"><span class="ph-m">${r[2]}</span><span class="ph-a">${r[3]}</span>${st}</span></div>`;}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[
@@ -608,11 +618,9 @@ const TT={
     ['목','18:30~22:00','박종민T 수학 미적분 목 18:30-22:00 4/30','별관 301호'],
     ['일','13:30~17:05','강은양T 국어 서바이벌 일 13:30-17:05 7/12','본관 204호']]},
 };
-const PAY_WAIT=[
-  {type:'수강료',n:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',due:'납부 기한 6/25 · 오늘 마감',paid:false,a:'320,000원'},
-  {type:'수강료',n:'현정훈T 물리1 서바이벌 토 13:30-17:00 7/11',paid:true,a:'400,000원'},
-  {type:'수강료',n:'최현호T 물리 역학 특강(클리어) 5회 목 18:30-21:30 7/16',paid:true,a:'280,000원'},
-];
+/* 납부 현황 — v6 R23: [납부필요] / [납부대기·가상계좌] 2섹션 */
+const PAY_DUE={course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','3회','320,000원'],['교재비','국어 서바이벌 교재','45,000원']],total:'365,000원',due:'2026-06-25'};
+const PAY_PENDING={label:'가상계좌 입금 대기',course:'최현호T 물리 역학 특강(클리어) 5회 목 18:30-21:30 7/16',items:[['수강료','5회','280,000원']],total:'280,000원',due:'2026-06-28',account:'국민 60491-01-302157'};
 const PAY_HISTORY=[
   ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','400,000원','결제완료'],
   ['2026-05-15','박종민T 수학 미적분 목 18:30-22:00 4/30','가상계좌','320,000원','부분환불(환불금액: 100,000원)'],
