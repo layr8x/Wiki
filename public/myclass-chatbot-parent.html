@@ -565,7 +565,7 @@ const NODES={
 
   /* ② 납부·결제 */
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부 현황',ic:'fact_check',go:'pay_wait'},{t:'결제 내역',ic:'receipt_long',go:'pay_history'},back('home')]);},
-  pay_wait(){cardLoad(`<div class="ct">${ms('receipt_long')}납부 현황 · {학생} 학생</div>${paySec('납부필요',PAY_DUE,'need')}<div class="paysec-gap"></div>${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
+  pay_wait(){cardLoad(`<div class="ct">${ms('receipt_long')}${PAY_DUE.course} 납부 현황</div>${paySec('납부필요',PAY_DUE,'need')}<div class="paysec-gap"></div>${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
     quick([{t:'납부하기',ic:'credit_card',cta:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}},back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);},
   pay_history(){cardLoad(`<div class="ct">${ms('receipt_long')}최근 3개월 결제 내역</div>${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}`,6);navEnd('m_pay',true);},
 
@@ -607,7 +607,7 @@ function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',prima
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
 /* 납부 현황 섹션 — [납부필요]/[납부대기·가상계좌] 각각 수강료·교재비·합계·납부기한(·입금계좌) */
-function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="krow"><span class="k">${it[0]} ${it[1]}</span><span class="v">${it[2]}</span></div>`).join('');const acct=sec.account?`<div class="krow"><span class="k">입금 계좌</span><span class="v">${sec.account}</span></div>`:'';return `<div class="payseclabel ${cls}">[${label}]</div><div class="cardcourse">${nameOf(sec.course)}</div>${rows}<div class="krow tot"><span class="k">합계 · 납부기한 ${sec.due}</span><span class="v">${sec.total}</span></div>${acct}`;}
+function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="krow"><span class="k">${it[0]} ${it[1]}</span><span class="v">${it[2]}</span></div>`).join('');return `<div class="payseclabel ${cls}">[${label}]</div>${rows}<div class="krow tot"><span class="k">합계 · 납부기한 ${sec.due}</span><span class="v">${sec.total}</span></div>`;}
 function payHistHtml(r,last){const more=r[5]?' '+r[5]:'';return `<div class="phrow${last?' last':''}"><span class="ph-date">${r[0]}</span><span class="ph-r"><span class="ph-course">${nameOf(r[1])}${more}</span><span class="ph-meta">${r[3]} · ${r[2]}</span>${r[4]?`<span class="ph-st">${r[4]}</span>`:''}</span></div>`;}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[
@@ -634,8 +634,8 @@ const TT={
     ['일','13:30~17:05','강은양T 국어 서바이벌 일 13:30-17:05 7/12','본관 204호']]},
 };
 /* 납부 현황 — v6 R23: [납부필요] / [납부대기·가상계좌] 2섹션 */
-const PAY_DUE={course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','3회','320,000원'],['교재비','국어 서바이벌 교재','45,000원']],total:'365,000원',due:'2026-06-25'};
-const PAY_PENDING={label:'납부대기',course:'최현호T 물리 역학 특강(클리어) 5회 목 18:30-21:30 7/16',items:[['수강료','5회','280,000원']],total:'280,000원',due:'2026-06-28',account:'국민 60491-01-302157'};
+const PAY_DUE={course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','320,000원'],['교재비','국어 리바이벌 패키지','20,000원']],total:'340,000원',due:'6/25'};
+const PAY_PENDING={label:'납부대기',course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','160,000원']],total:'160,000원',due:'6/25'};
 const PAY_HISTORY=[
   ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','400,000원','결제완료','외 1건'],
   ['2026-05-15','박종민T 수학 미적분 목 18:30-22:00 4/30','가상계좌','320,000원','부분환불(환불금액: 100,000원)'],
