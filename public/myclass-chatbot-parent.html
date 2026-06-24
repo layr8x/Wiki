@@ -9,7 +9,7 @@
 <style>
   @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2')}
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
-  :root{--accent:#3182f6;--accent-rgb:49,130,246;--interactive:#0043ce;--tag-blue-bg:#edf5ff;
+  :root{--accent:#3182f6;--accent-rgb:49,130,246;--interactive:#0043ce;--button2:#001d6c;--tag-blue-bg:#edf5ff;
     --text:#161616; --text-2:#161616cc; --helper:#161616a3; --placeholder:#161616a3; --disabled:#1616163d; --icon-secondary:#161616b8;
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
@@ -236,17 +236,24 @@
 
   .qr{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
   .qlabel{flex-basis:100%;font-size:12px;color:var(--helper);margin:6px 2px 0}
-  .chip{border:1px solid var(--border-subtle);background:var(--bg);color:var(--placeholder);border-radius:var(--r-pill);padding:8px 16px;font-size:var(--fs-sm);font-weight:700;line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .16s var(--ease),transform .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);display:inline-flex;align-items:center;gap:8px}
-  .chip:hover{background:var(--bg);border-color:var(--border-strong);transform:translateY(-1.5px);box-shadow:0 4px 12px rgba(22,22,22,.10)}
+  .chip{border:1px solid var(--interactive);background:var(--bg);color:var(--text-secondary);border-radius:16px;padding:12px 16px;font-size:16px;font-weight:700;line-height:24px;cursor:pointer;font-family:var(--font);transition:background-color .16s var(--ease),transform .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);display:inline-flex;align-items:center;gap:8px}
+  .chip:hover{transform:translateY(-1.5px);box-shadow:0 4px 12px rgba(22,22,22,.10)}
   .chip:active{transform:translateY(0) scale(.97)}
   .chip .ms{font-size:24px;color:var(--interactive);transition:transform .16s var(--ease)}
-  .chip .ms.nav{color:var(--icon-secondary)}
   .chip:active .ms{transform:scale(.92)}
-  .chip.primary{background:var(--interactive);color:#fff;border-color:var(--interactive);font-weight:700;box-shadow:0 2px 10px rgba(0,67,206,.22)}
-  .chip.cta{background:var(--interactive);color:#fff;border-color:var(--interactive);font-weight:700;box-shadow:0 2px 10px rgba(0,67,206,.22)}
+  /* nav 칩(이전·처음으로) — 회색 채움 + 어두운 아이콘 */
+  .chip.nav{background:#e8e8e8;border-color:#e8e8e8;color:var(--text-secondary)}
+  .chip.nav .ms{color:#161616}
+  .chip.nav:hover{background:#dfdfdf;border-color:#dfdfdf}
+  /* 주요 액션(납부하기·전화 상담 연결) — 진한 네이비 #001d6c */
+  .chip.primary,.chip.cta{background:var(--button2);border-color:var(--button2);color:#fff}
   .chip.primary .ms,.chip.cta .ms{color:#fff}
-  .chip.primary:hover{box-shadow:0 7px 20px rgba(22,22,22,.28)}
-  .chip.ghost{background:transparent;color:var(--text-weak)}
+  .chip.primary:hover,.chip.cta:hover{box-shadow:0 7px 20px rgba(0,29,108,.28)}
+  .chip.full{width:100%;justify-content:center}
+  /* 만족도 칩 — 흰 배경 radius 8 */
+  .chip.satis{border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:8px;padding:6px 8px;font-size:14px;line-height:20px}
+  .chip.satis .ms{font-size:20px}
+  .chip.ghost{background:transparent;border-color:transparent;color:var(--text-weak)}
   .chip.ghost:hover{color:var(--text-secondary)}
   .seg{display:inline-flex;background:var(--fill-subtle);border-radius:12px;padding:3px;gap:2px;margin:2px 0 12px}
   .seg button{border:none;background:transparent;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--text-weak);padding:7px 15px;border-radius:9px;cursor:pointer;transition:background-color .22s var(--ease),color .22s var(--ease),box-shadow .22s var(--ease)}
@@ -408,7 +415,23 @@
 .ph-r .ph-course{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm)}
 .ph-r .ph-meta{font-size:var(--fs-cap);color:var(--text-weak);line-height:1.5}
 .ms.up{color:#0e6027}
-.ms.down{color:#da1e28}
+.ms.down{color:#a2191f}
+/* 납부 현황 카드(새 디자인) — 문장 제목·태그·납부기한 */
+.paytitle{font-size:16px;line-height:24px;color:var(--text-neutral);padding-bottom:16px;border-bottom:1px solid rgba(22,22,22,.92)}
+.paytitle b{font-weight:700;color:var(--interactive)}
+.paysec{border-bottom:1px solid rgba(22,22,22,.92)}
+.paysec:last-child{border-bottom:none}
+.payhead{display:flex;align-items:center;justify-content:space-between;padding:10px 0 8px}
+.paytag{display:inline-flex;align-items:center;font-size:14px;line-height:20px;border:.8px solid;border-radius:4px;padding:0 4px;white-space:nowrap}
+.paytag.need{background:#fcf4d6;border-color:#fddc69;color:#684e00}
+.paytag.wait{background:#f4f4f4;border-color:#e0e0e0;color:#525252}
+.paydue2{font-size:14px;color:var(--text-neutral);white-space:nowrap}
+.paydue2 em{color:#da1e28;font-style:normal;margin-left:4px}
+.payrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:14px;line-height:20px;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
+.payrow .pk{color:var(--text-weak)}
+.payrow .pv{color:var(--text-neutral);text-align:right;white-space:nowrap}
+.payrow .pv.b{font-weight:700}
+.payrow.paytot{border-bottom:none}
 .krow .v.blue{color:var(--interactive)}
 /* 동영상 보강(VOD) 행 — 회차 + 상세(마이클래스/시청기한/제공시간) */
 .vrow{padding:12px 0;border-bottom:1px solid var(--border-subtle)}
@@ -550,7 +573,7 @@ function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBu
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
-function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic,o.iconCls||((o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'))?'nav':'')):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&(o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'));const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic,o.iconCls):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function heroGreet(){const r=el(`<div class="hero fadein"><div class="hgreet">안녕하세요, 학부모님</div><div class="hsub">${CTX.student} 학생(${CTX.campus}) 기준으로 안내드릴게요.</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
@@ -566,9 +589,9 @@ const NODES={
   en_check(){card(`<div class="ct">${ms('checklist')}입반된 강좌 현황</div>`+COURSES.map(c=>`<div class="krow long"><span class="k">${nameOf(c)}</span><span class="v">${schedOf(c)}</span></div>`).join(''));navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
-  m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부 현황',ic:'fact_check',go:'pay_wait'},{t:'결제 내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
-  pay_wait(){cardLoad(`<div class="ct">${ms('receipt_long')}${PAY_DUE.course} 납부 현황</div>${paySec('납부필요',PAY_DUE,'need')}<div class="paysec-gap"></div>${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
-    quick([{t:'납부하기',ic:'credit_card',cta:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}},back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);},
+  m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부현황',ic:'account_balance_wallet',go:'pay_wait'},{t:'결제내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
+  pay_wait(){cardLoad(`<div class="paytitle">${PAY_DUE.course}의 <b>납부 현황</b>이에요.</div>${paySec('납부필요',PAY_DUE,'need')}${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
+    quick([{t:'납부하기',ic:'credit_card',cta:true,full:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}}]);quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);},
   pay_history(){cardLoad(`<div class="ct">${ms('receipt_long')}최근 3개월 결제 내역</div>${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}`,6);navEnd('m_pay',true);},
 
   /* ③ 수업·시간표 */
@@ -594,7 +617,7 @@ const schedOf=c=>String(c).slice(nameOf(c).length).trim();
 /* 강좌명 표기: 칩·납부·종강일=풀네임(스케줄 포함) / 시간표·결제내역·상세문장=이름만(스케줄 제외) */
 const nameOf=c=>String(c).replace(/\s[월화수목금토일]\s\d.*$/,'');
 /* [이전] — 노드키(go) 또는 함수(act) 어느 쪽이든 받음. 모든 2Depth+ 화면에 노출(v6 공통 UX) */
-function back(target){if(typeof target==='function')return{t:'이전',ic:'chevron_left',act:target};return{t:'이전',ic:'chevron_left',go:target};}
+function back(target){if(typeof target==='function')return{t:'이전',ic:'keyboard_arrow_left',act:target};return{t:'이전',ic:'keyboard_arrow_left',go:target};}
 function courseChips(onPick,backKey){quick([...COURSES.map(c=>({t:c,label:c,act:()=>onPick(c)})),back(backKey),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 만족도(👍/👎) — 조회·자가안내로 끝나는 화면에만 (진입·선택·전화상담 종료 화면 제외) */
 function satis(backTarget){botSay('도움이 됐나요?');quick([
@@ -609,7 +632,7 @@ function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',prima
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
 /* 납부 현황 섹션 — [납부필요]/[납부대기·가상계좌] 각각 수강료·교재비·합계·납부기한(·입금계좌) */
-function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="krow"><span class="k">${it[0]} ${it[1]}</span><span class="v">${it[2]}</span></div>`).join('');return `<div class="payseclabel ${cls}">[${label}]</div>${rows}<div class="krow tot"><span class="k">합계 · 납부기한 ${sec.due}</span><span class="v">${sec.total}</span></div>`;}
+function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="payrow"><span class="pk">${it[0]} ${it[1]}</span><span class="pv">${it[2]}</span></div>`).join('');return `<div class="paysec"><div class="payhead"><span class="paytag ${cls}">${label}</span><span class="paydue2">납부기한<em>${sec.due}</em></span></div>${rows}<div class="payrow paytot"><span class="pk">합계</span><span class="pv b">${sec.total}</span></div></div>`;}
 function payHistHtml(r,last){const more=r[5]?' '+r[5]:'';return `<div class="phrow${last?' last':''}"><span class="ph-date">${r[0]}</span><span class="ph-r"><span class="ph-course">${nameOf(r[1])}${more}</span><span class="ph-meta">${r[3]} · ${r[2]}</span>${r[4]?`<span class="ph-st">${r[4]}</span>`:''}</span></div>`;}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[
@@ -637,7 +660,7 @@ const TT={
 };
 /* 납부 현황 — v6 R23: [납부필요] / [납부대기·가상계좌] 2섹션 */
 const PAY_DUE={course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','320,000원'],['교재비','국어 리바이벌 패키지','20,000원']],total:'340,000원',due:'6/25'};
-const PAY_PENDING={label:'납부대기',course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','160,000원']],total:'160,000원',due:'6/25'};
+const PAY_PENDING={label:'가상계좌 입금 대기',course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','160,000원']],total:'160,000원',due:'6/30'};
 const PAY_HISTORY=[
   ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','400,000원','결제완료','외 1건'],
   ['2026-05-15','박종민T 수학 미적분 목 18:30-22:00 4/30','가상계좌','320,000원','부분환불(환불금액: 100,000원)'],
