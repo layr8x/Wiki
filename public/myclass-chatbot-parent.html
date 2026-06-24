@@ -10,7 +10,7 @@
   @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2')}
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{--accent:#3182f6;--accent-rgb:49,130,246;--interactive:#0043ce;--button2:#001d6c;--tag-blue-bg:#edf5ff;
-    --text:#161616; --text-2:#161616b8; --helper:#161616a3; --placeholder:#161616a3; --disabled:#1616163d; --icon-secondary:#161616b8;
+    --text:#161616; --text-2:#161616b8; --helper:#16161690; --placeholder:#161616a3; --disabled:#1616163d; --icon-secondary:#161616b8;
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
     --primary:#161616; --on-primary:#ffffff;
@@ -290,7 +290,7 @@
   .hgreet b{font-weight:200}
   .hsub{font-size:16px;line-height:24px;color:#16161666}
   @keyframes sparkin{0%{opacity:0;transform:scale(.4) rotate(-35deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0;filter:drop-shadow(0 2px 2px rgba(0,29,108,.08)) drop-shadow(0 8px 4px rgba(0,29,108,.06)) drop-shadow(0 16px 8px rgba(0,29,108,.04))}
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0;filter:drop-shadow(0 2px 2px rgba(0,29,108,.08)) drop-shadow(0 8px 4px rgba(0,29,108,.06)) drop-shadow(0 16px 8px rgba(0,29,108,.04)) drop-shadow(0 32px 8px rgba(0,29,108,.02))}
   .mtile{display:flex;align-items:center;gap:16px;border:none;border-radius:16px;padding:8px;cursor:pointer;background:var(--bg);transition:transform .22s var(--ease),box-shadow .22s var(--ease);text-align:left}
   .mtile:hover{transform:translateY(-2px)}
   .mtile:active{transform:translateY(0) scale(.99);box-shadow:var(--shadow-m)}
@@ -463,7 +463,7 @@
 .atblk{padding:8px 0;border-bottom:1px solid var(--border-subtle)}
 .atblk:first-of-type{padding-top:2px}
 .atblk:last-child{border-bottom:none;padding-bottom:0}
-.atc{font-size:var(--fs-sm);font-weight:400;color:var(--text-neutral);line-height:var(--lh-sm);margin-bottom:2px}
+.atc{font-size:var(--fs-sm);font-weight:400;color:var(--text-neutral);line-height:20px;margin-bottom:2px}
 .atblk .krow{border-bottom:none;padding:5px 0}
 .atblk .krow .k{min-width:64px}
 .atsoon{color:#6929c4;font-weight:700}
@@ -653,7 +653,7 @@ function satis(backTarget){const sq=el(`<div class="row bot fadein"><div class="
 /* 조회·안내 종료 화면: [이전][처음으로] + (선택 시) 만족도 */
 function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);if(withSatis)satis(backTarget);}
 /* 상담으로 끝나는 화면 — v6: [전화 상담 연결][이전][처음으로] (상담 등록 버튼 제거). 만족도 미노출 */
-function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',primary:true,act:()=>phoneConnect(backTarget)}]);quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
+function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',primary:true,full:true,act:()=>phoneConnect(backTarget)}]);quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
 /* v6: 전화 상담 연결 클릭 시 지점 전화번호 노출 */
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
