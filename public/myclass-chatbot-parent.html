@@ -618,7 +618,7 @@ function crumb(...parts){const s=sheet.querySelector('.chead .s');if(!s)return;s
 const won=n=>n.toLocaleString()+'원';
 const payNum=a=>+String(a).replace(/[^0-9]/g,'');
 const NODES={
-  home(){crumb('문제를 바로 해결하도록 도와드려요.');heroGreet();menuGrid();},
+  home(){log.innerHTML='';setBanner();crumb('문제를 바로 해결하도록 도와드려요.');heroGreet();menuGrid();},
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'person_check',go:'at_today'},{t:'보강 확인',ic:'add_notes',go:'at_course'},{t:'입반 강좌 확인',ic:'check_circle',go:'en_check'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
