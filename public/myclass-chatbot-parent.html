@@ -254,7 +254,8 @@
   /* 강좌 선택 칩 — 파란 테두리 없이 흰 배경(메뉴 옵션 칩과 구분) */
   .chip.plain{border-color:var(--border-subtle);color:var(--text-secondary)}
   /* 만족도 칩 — 흰 배경 radius 8 */
-  .chip.satis{border:none;color:var(--text-secondary);border-radius:8px;padding:6px 8px;font-size:14px;line-height:20px;box-shadow:none}
+  .chip.satis{background:#fff;border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:8px;padding:6px 8px;font-size:14px;line-height:20px;box-shadow:none}
+  .chip.satis .emo{font-size:20px;line-height:1}
   .chip.satis .ms{font-size:20px}
   .chip.ghost{background:transparent;border-color:transparent;color:var(--text-weak)}
   .chip.ghost:hover{color:var(--text-secondary)}
@@ -462,10 +463,17 @@
 .atblk{padding:8px 0;border-bottom:1px solid var(--border-subtle)}
 .atblk:first-of-type{padding-top:2px}
 .atblk:last-child{border-bottom:none;padding-bottom:0}
-.atc{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm);margin-bottom:2px}
+.atc{font-size:var(--fs-sm);font-weight:400;color:var(--text-neutral);line-height:var(--lh-sm);margin-bottom:2px}
 .atblk .krow{border-bottom:none;padding:5px 0}
 .atblk .krow .k{min-width:64px}
 .atsoon{color:#6929c4;font-weight:700}
+.attag{display:inline-flex;align-items:center;gap:2px;padding:0 4px;border:.8px solid;border-radius:4px;font-size:14px;line-height:20px;font-weight:700;white-space:nowrap}
+.attag .ms{font-size:18px}
+.attag.ok{background:#defbe6;border-color:#a7f0ba;color:#0e6027}
+.attag.ok .ms{color:#0e6027}
+.attag.soon{background:#fff2e8;border-color:#ffd9be;color:#8a3800}
+.attag.soon .ms{color:#8a3800}
+.satq{font-size:14px;line-height:20px;color:var(--text-secondary);margin:2px 2px 0}
 </style>
 </head>
 <body>
@@ -591,7 +599,7 @@ function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBu
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
-function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&(o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'));const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${o.plain?'plain':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic,o.iconCls):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&(o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'));const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${o.plain?'plain':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.emoji?`<span class="emo">${o.emoji}</span>`:(o.ic?ms(o.ic,o.iconCls):'')}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function heroGreet(){const r=el(`<div class="hero fadein"><div class="hgreet">안녕하세요, 학부모님</div><div class="hsub">${CTX.student} 학생(${CTX.campus}) 기준으로 안내드릴게요.</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(...parts){const s=sheet.querySelector('.chead .s');if(!s)return;s.innerHTML=parts.map(p=>sub(p)).join('<span class="crumb-sep">/</span>');}
@@ -602,7 +610,7 @@ const NODES={
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'person_check',go:'at_today'},{t:'보강 확인',ic:'add_notes',go:'at_course'},{t:'입반 강좌 확인',ic:'check_circle',go:'en_check'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
-  at_today(){crumb('출결·보강','오늘 출석 확인');const today=[{c:COURSES[2],time:'18:25-22:00',st:'attend',at:'18:22'},{c:COURSES[0],time:'13:30-17:05',st:'soon'}];card(`<div class="paytitle"><b>오늘(6/24) 출석 현황</b>이에요.</div>`+today.map(t=>`<div class="atblk"><div class="atc">${nameOf(t.c)}</div><div class="krow"><span class="k">수업시간</span><span class="v">${t.time}</span></div><div class="krow"><span class="k">출결상태</span><span class="v">${t.st==='attend'?ms('check_circle','up')+' '+t.at:'<span class="atsoon">출석예정</span>'}</span></div></div>`).join(''));navEnd('m_attend',true);},
+  at_today(){crumb('출결·보강','오늘 출석 확인');const today=[{c:COURSES[0],time:'13:30-17:05',st:'attend',at:'13:58'},{c:COURSES[2],time:'18:25-22:00',st:'soon'}];card(`<div class="paytitle"><b>오늘(6/24) 출석 현황</b>이에요.</div>`+today.map(t=>`<div class="atblk"><div class="atc">${t.c}</div><div class="krow"><span class="k">수업시간</span><span class="v">${t.time}</span></div><div class="krow"><span class="k">출결상태</span>${t.st==='attend'?`<span class="attag ok">${ms('check_circle','fill')}${t.at}</span>`:`<span class="attag soon">${ms('do_not_disturb_on','fill')}출석예정</span>`}</div></div>`).join(''));navEnd('m_attend',true);},
   at_course(){crumb('출결·보강','보강 확인');botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
   en_check(){crumb('출결·보강','입반 강좌 확인');card(`<div class="paytitle"><b>입반된 강좌 현황</b>이에요.</div>`+COURSES.map(c=>`<div class="krow long"><span class="k">${nameOf(c)}</span><span class="v">${schedOf(c)}</span></div>`).join(''));navEnd('m_attend',true);},
 
@@ -638,9 +646,9 @@ const nameOf=c=>String(c).replace(/\s[월화수목금토일]\s\d.*$/,'');
 function back(target){if(typeof target==='function')return{t:'이전',ic:'keyboard_arrow_left',act:target};return{t:'이전',ic:'keyboard_arrow_left',go:target};}
 function courseChips(onPick,backKey){quick([...COURSES.map(c=>({t:c,label:nameOf(c)+'\n'+schedOf(c),plain:true,act:()=>onPick(c)})),back(backKey),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 만족도(👍/👎) — 조회·자가안내로 끝나는 화면에만 (진입·선택·전화상담 종료 화면 제외) */
-function satis(backTarget){botSay('도움이 됐나요?');quick([
-  {t:'해결됐어요',ic:'thumb_up',iconCls:'up',act:()=>{track('chatbot_satisfaction',{rating:'up'});__resolved=true;botSay('도움이 됐다니 다행이에요. 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',act:()=>closeChat()}]);}},
-  {t:'아직 안 됐어요',ic:'thumb_down',iconCls:'down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담으로 더 정확히 도와드릴게요.');consultEnd(backTarget);}},
+function satis(backTarget){const sq=el(`<div class="row bot fadein"><div class="satq">도움이 됐나요?</div></div>`);log.appendChild(sq);scrollEnd();quick([
+  {t:'해결됐어요',emoji:'😄',iconCls:'up',act:()=>{track('chatbot_satisfaction',{rating:'up'});__resolved=true;botSay('도움이 됐다니 다행이에요. 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',act:()=>closeChat()}]);}},
+  {t:'아직 안 됐어요',emoji:'😭',iconCls:'down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담으로 더 정확히 도와드릴게요.');consultEnd(backTarget);}},
 ]);}
 /* 조회·안내 종료 화면: [이전][처음으로] + (선택 시) 만족도 */
 function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);if(withSatis)satis(backTarget);}
