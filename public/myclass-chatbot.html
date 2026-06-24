@@ -642,7 +642,7 @@ const NODES={
   /* ③ 수업·시간표 */
   m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   time_table(){drawWeek('this');},
-  time_end(){crumb('수업·시간표','종강일');card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${e[1]}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');},
+  time_end(){crumb('수업·시간표','종강일');card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${fmtYMD(e[1])}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');},
   time_rounds(){crumb('수업·시간표','전체 회차');botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
 
   /* ④ 전반 — 전반 가능한 강좌 확인하기 */
@@ -662,6 +662,8 @@ const schedOf=c=>String(c).slice(nameOf(c).length).trim();
 /* 강좌명 표기: 칩·납부·종강일=풀네임(스케줄 포함) / 시간표·결제내역·상세문장=이름만(스케줄 제외) */
 const nameOf=c=>String(c).replace(/\s[월화수목금토일]\s\d.*$/,'');
 function segs(s){return String(s).split(' / ').map(t=>'<span>'+t+'</span>').join('<span class="sep"> / </span>');}
+/* 날짜 표기 = Figma YY/MM/DD (예 2026-08-30 → 26/08/30). 데이터는 YYYY-MM-DD 정본 유지, 표시만 변환. */
+function fmtYMD(d){const m=String(d).match(/^\d{2}(\d{2})-(\d{2})-(\d{2})$/);return m?`${m[1]}/${m[2]}/${m[3]}`:d;}
 const subjectOf=c=>(['국어','수학','영어','물리','화학','생명','지구','사회','한국사'].find(s=>String(c).includes(s))||'강좌');
 /* [이전] — 노드키(go) 또는 함수(act) 어느 쪽이든 받음. 모든 2Depth+ 화면에 노출(v6 공통 UX) */
 function back(target){if(typeof target==='function')return{t:'이전',ic:'keyboard_arrow_left',act:target};return{t:'이전',ic:'keyboard_arrow_left',go:target};}
@@ -680,7 +682,7 @@ function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.c
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
 /* 납부 현황 섹션 — [납부필요]/[납부대기·가상계좌] 각각 수강료·교재비·합계·납부기한(·입금계좌) */
 function paySec(label,sec,cls,last){const due=`<div class="payrow"><span class="pk pdue"><span class="plbl">납부기한</span><em>${sec.due}</em></span><span class="paytag ${cls}">${label}</span></div>`;const items=sec.items.map(it=>`<div class="payrow"><span class="pk"><span class="plbl">${it[0]}</span><span class="pdesc">${it[1]}</span></span><span class="pv">${it[2]}</span></div>`).join('');return `<div class="paysec${last?' last':''}"><div class="payitems">${due}${items}</div><div class="payrow paytot"><span class="pk"><span class="plbl">합계</span></span><span class="pv b">${sec.total}</span></div></div>`;}
-function payHistHtml(r,last){const more=r[6]?' '+r[6]:'';const refund=r[5]?`<div class="phrow2"><span class="phlbl">환불금액</span><span class="phval">${r[5]}</span></div>`:'';return `<div class="phitem${last?' last':''}"><div class="phtop"><div class="phmeta"><span class="phdate">${r[0]}</span><span class="phms"><span>${r[2]}</span><span class="sep">/</span><span>${r[3]}</span></span></div><div class="phcourse">${nameOf(r[1])}${more}</div></div><div class="phrow2"><span class="phlbl">결제금액</span><span class="phval">${r[4]}</span></div>${refund}</div>`;}
+function payHistHtml(r,last){const more=r[6]?' '+r[6]:'';const refund=r[5]?`<div class="phrow2"><span class="phlbl">환불금액</span><span class="phval">${r[5]}</span></div>`:'';return `<div class="phitem${last?' last':''}"><div class="phtop"><div class="phmeta"><span class="phdate">${fmtYMD(r[0])}</span><span class="phms"><span>${r[2]}</span><span class="sep">/</span><span>${r[3]}</span></span></div><div class="phcourse">${nameOf(r[1])}${more}</div></div><div class="phrow2"><span class="phlbl">결제금액</span><span class="phval">${r[4]}</span></div>${refund}</div>`;}
 function moreBtn(){const r=el(`<div class="row bot fadein"><button class="morebtn"><span>더 보기</span>${ms('keyboard_arrow_down')}</button></div>`);r.querySelector('.morebtn').onclick=()=>toast('최근 3개월 내역을 모두 표시했어요');log.appendChild(r);scrollEnd();}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[
