@@ -642,16 +642,16 @@ const schedOf=c=>String(c).slice(nameOf(c).length).trim();
 const nameOf=c=>String(c).replace(/\s[월화수목금토일]\s\d.*$/,'');
 /* [이전] — 노드키(go) 또는 함수(act) 어느 쪽이든 받음. 모든 2Depth+ 화면에 노출(v6 공통 UX) */
 function back(target){if(typeof target==='function')return{t:'이전',ic:'keyboard_arrow_left',act:target};return{t:'이전',ic:'keyboard_arrow_left',go:target};}
-function courseChips(onPick,backKey){quick([...COURSES.map(c=>({t:c,label:nameOf(c)+'\n'+schedOf(c),plain:true,act:()=>onPick(c)})),back(backKey),{t:'처음으로',ic:'home',go:'home'}]);}
+function courseChips(onPick,backKey){quick([...COURSES.map(c=>({t:c,label:nameOf(c)+'\n'+schedOf(c),plain:true,act:()=>onPick(c)}))]);quick([back(backKey),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 만족도(👍/👎) — 조회·자가안내로 끝나는 화면에만 (진입·선택·전화상담 종료 화면 제외) */
 function satis(backTarget){const sq=el(`<div class="row bot fadein"><div class="satq">도움이 됐나요?</div></div>`);log.appendChild(sq);scrollEnd();quick([
-  {t:'해결됐어요',emoji:'😄',iconCls:'up',act:()=>{track('chatbot_satisfaction',{rating:'up'});__resolved=true;botSay('도움이 됐다니 다행이에요. 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',primary:true,go:'home'},{t:'대화 닫기',act:()=>closeChat()}]);}},
+  {t:'해결됐어요',emoji:'😄',iconCls:'up',act:()=>{track('chatbot_satisfaction',{rating:'up'});__resolved=true;botSay('도움이 됐다니 다행이에요. 다른 것도 도와드릴 수 있어요.');quick([{t:'처음으로',ic:'home',go:'home'},{t:'대화 닫기',act:()=>closeChat()}]);}},
   {t:'아직 안 됐어요',emoji:'😭',iconCls:'down',act:()=>{track('chatbot_satisfaction',{rating:'down'});botSay('불편을 드려 죄송해요. 상담으로 더 정확히 도와드릴게요.');consultEnd(backTarget);}},
 ]);}
 /* 조회·안내 종료 화면: [이전][처음으로] + (선택 시) 만족도 */
 function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);if(withSatis)satis(backTarget);}
 /* 상담으로 끝나는 화면 — v6: [전화 상담 연결][이전][처음으로] (상담 등록 버튼 제거). 만족도 미노출 */
-function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',primary:true,act:()=>phoneConnect(backTarget)},back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
+function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',primary:true,act:()=>phoneConnect(backTarget)}]);quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
 /* v6: 전화 상담 연결 클릭 시 지점 전화번호 노출 */
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
@@ -696,12 +696,12 @@ const PAY_HISTORY=[
 ];
 
 /* ① 강좌 선택 후 내용 선택 → 동영상 보강 / 타반보강 / 추가영상 (항상 3개 고정, 있음=강은양, 그 외=없음) */
-function atAfter(c){crumb('출결·보강','보강 확인');botSay('어떤 내용을 확인할까요?');quick([{t:'타반보강',ic:'meeting_room',act:()=>atOther(c)},{t:'동영상보강',ic:'subscriptions',act:()=>atVideoMakeup(c)},{t:'추가영상',ic:'library_add',act:()=>atVideoExtra(c)},back('at_course'),{t:'처음으로',ic:'home',go:'home'}]);}
+function atAfter(c){crumb('출결·보강','보강 확인');botSay('어떤 내용을 확인할까요?');quick([{t:'타반보강',ic:'meeting_room',act:()=>atOther(c)},{t:'동영상보강',ic:'subscriptions',act:()=>atVideoMakeup(c)},{t:'추가영상',ic:'library_add',act:()=>atVideoExtra(c)}]);quick([back('at_course'),{t:'처음으로',ic:'home',go:'home'}]);}
 function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(c+'의 동영상보강 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>동영상보강 지급 내역</b>이에요.</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
 function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(c+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>추가영상 내역</b>이에요.</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
 function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(c+'의 타반보강 가능 일정이 없어요.\n문의는 하단의 상담 연결 버튼을 통해 진행해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="paytitle">${c}의 <b>타반보강 가능 일정</b>이에요.</div>`+d.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
 /* ③ 전체 회차 */
-function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,go:'time_rounds'},back('time_rounds'),{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="paytitle">${nameOf(c)} <b>전체 일정</b>이에요.</div>`+d.list.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">전체 ${d.total}회 중 ${d.cur}회차 진행 중</div>`);tail();}
+function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,go:'time_rounds'}]);quick([back('time_rounds'),{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="paytitle">${nameOf(c)} <b>전체 일정</b>이에요.</div>`+d.list.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">전체 ${d.total}회 중 ${d.cur}회차 진행 중</div>`);tail();}
 /* ③ 내 시간표 (강좌명=이름만, 시각은 별도 열) */
 function drawWeek(wk){crumb('수업·시간표','내 시간표');const w=TT[wk];let tt='';w.rows.forEach(x=>{const badge=OTHERCLASS[x[2]]?'<span class="ttbadge">타반보강</span>':'';tt+=`<div class="ttrow2"><div class="ttr-top"><div class="ttr-meta"><span class="ttr-day">${x[0]}</span><span class="ttr-sep">/</span><span class="ttr-time">${x[1]}</span></div>${badge}</div><div class="ttr-bot"><span class="ttr-course">${nameOf(x[2])}</span><span class="ttr-sep">/</span><span class="ttr-room">${x[3]}</span></div></div>`;});card(`<div class="paytitle"><b>${wk==='this'?'이번 주':'다음 주'}(${w.range})</b> 시간표예요.</div><div class="ttwrap">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'event_upcoming',cta:true,full:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))}]);quick([back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
 /* ④ 전반 — 같은 강사 다른 시간대(지점단과별 노출) */
