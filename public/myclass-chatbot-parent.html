@@ -408,6 +408,7 @@
 .ph-r .ph-meta{font-size:var(--fs-cap);color:var(--text-weak);line-height:1.5}
 .ms.up{color:#0e6027}
 .ms.down{color:#da1e28}
+.krow .v.blue{color:var(--interactive)}
 /* 동영상 보강(VOD) 행 — 회차 + 상세(마이클래스/시청기한/제공시간) */
 .vrow{padding:12px 0;border-bottom:1px solid var(--border-subtle)}
 .vrow:last-child{border-bottom:none}
@@ -559,7 +560,7 @@ const NODES={
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'how_to_reg',go:'at_today'},{t:'강좌 선택',ic:'fact_check',go:'at_course'},{t:'입반 강좌 확인',ic:'checklist',go:'en_check'},back('home')]);},
-  at_today(){const c=COURSES[3];card(`<div class="ct">${ms('how_to_reg')}오늘(6/23) 출석 현황</div><div class="cardcourse">${nameOf(c)}</div><div class="krow"><span class="k">수업</span><span class="v">18:00~21:00</span></div><div class="krow"><span class="k">출석</span><span class="v"><span class="pill wait">출석예정</span></span></div>`);navEnd('m_attend',true);},
+  at_today(){const c=COURSES[3];card(`<div class="ct">${ms('how_to_reg')}오늘(6/23) 출석 현황 · ${c}</div><div class="krow"><span class="k">수업</span><span class="v">18:00~21:00</span></div><div class="krow"><span class="k">출석</span><span class="v">17:58 ${ms('check')}</span></div>`);navEnd('m_attend',true);},
   at_course(){botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
   en_check(){card(`<div class="ct">${ms('checklist')}입반된 강좌 현황</div>`+COURSES.map(c=>`<div class="krow long"><span class="k">${nameOf(c)}</span><span class="v">${schedOf(c)}</span></div>`).join(''));navEnd('m_attend',true);},
 
@@ -616,10 +617,10 @@ const VIDEO_MAKEUP={[COURSES[0]]:[
   ['6회차','연구실 동영상 · 연구실 문의'],
 ]};
 const VIDEO_EXTRA={[COURSES[0]]:[['3회차','지급일 5/27 · 시청 기한 6/10'],['5회차','지급일 6/10 · 시청 기한 6/24']]};
-const OTHERCLASS={[COURSES[0]]:[['5회차 6/11(수)','18:00~21:00 · 본관 204호'],['5회차 6/14(토)','14:00~17:00 · 본관 204호']]};
+const OTHERCLASS={[COURSES[0]]:[['5회차','6/11(수) 18:00~21:00 · 본관 204호'],['6회차','6/14(토) 14:00~17:00 · 본관 204호']]};
 const ROUNDS={[COURSES[0]]:{total:6,cur:4,list:[['1회차','6/3(월) 14:00~17:00'],['2회차','6/10(월) 14:00~17:00'],['3회차','6/14(토) 14:00~17:00'],['4회차','6/17(월) 14:00~17:00'],['5회차','6/21(토) 14:00~17:00'],['6회차','6/24(월) 14:00~17:00']]}};
 const ENDDATES=[[COURSES[0],'2026-08-30'],[COURSES[1],'2026-07-31'],[COURSES[2],'2026-08-26'],[COURSES[3],'2026-06-30']];
-const ALT_SAME={[COURSES[1]]:[['대치 단과 · 박종민T 수학 미적분','토 10:00~13:00'],['목동 단과 · 박종민T 수학 미적분','일 14:00~17:00']]};
+const ALT_SAME={[COURSES[0]]:[['대치단과','강은양T 국어 목 09:00~12:35'],['목동단과','강은양T 국어 금 09:00~12:35']]};
 const OVERALL=[{c:COURSES[0]},{c:COURSES[1]}];
 const TT={
   this:{range:'6/16~6/22',rows:[
@@ -647,13 +648,13 @@ const PAY_HISTORY=[
 function atAfter(c){botSay(c+'\n어떤 내용을 확인할까요?');quick([{t:'동영상 보강',ic:'smart_display',act:()=>atVideoMakeup(c)},{t:'타반보강',ic:'meeting_room',act:()=>atOther(c)},{t:'추가영상',ic:'play_circle',act:()=>atVideoExtra(c)},back('at_course'),{t:'처음으로',ic:'home',go:'home'}]);}
 function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(c+'의 동영상 보강 내역이 없어요.');navEnd(()=>atAfter(c),true);return;}card(`<div class="ct">${ms('smart_display')}동영상 보강 · ${c}</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
 function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(c+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),true);return;}card(`<div class="ct">${ms('play_circle')}추가영상 · ${c}</div>`+d.map(r=>`<div class="krow long"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
-function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(c+'의 타반보강 가능한 일정이 없어요.\n문의는 상담실로 연락해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="ct">${ms('meeting_room')}타반보강 가능 일정 · ${c}</div>`+d.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
+function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(c+'의 타반보강 가능한 일정이 없어요.\n문의는 상담실로 연락해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="ct">${ms('meeting_room')}타반보강 가능 일정 · ${c}</div>`+d.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v blue">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
 /* ③ 전체 회차 */
-function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',go:'time_rounds'},{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="ct">${ms('calendar_view_month')}${nameOf(c)} · 전체 ${d.total}회</div>`+d.list.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">전체 ${d.total}회 중 ${d.cur}회차 진행 중</div>`);tail();}
+function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,go:'time_rounds'},back('time_rounds'),{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="ct">${ms('calendar_view_month')}${nameOf(c)} · 전체 ${d.total}회 중 ${d.cur}회차 진행 중</div>`+d.list.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v blue">${r[1]}</span></div>`).join(''));tail();}
 /* ③ 내 시간표 (강좌명=이름만, 시각은 별도 열) */
 function drawWeek(wk){const w=TT[wk];let tt='';w.rows.forEach(x=>{tt+=`<div class="ttrow"><span class="tt-d">${x[0]}</span><span class="tt-i"><b>${x[1]}</b> · ${nameOf(x[2])} · ${x[3]}</span></div>`;});card(`<div class="ct">${ms('calendar_today')}${wk==='this'?'이번 주':'다음 주'}(${w.range}) 시간표</div><div class="tt">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'calendar_today',cta:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))},back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
 /* ④ 전반 — 같은 강사 다른 시간대(지점단과별 노출) */
-function altResult(c){const a=ALT_SAME[c];if(!a){botSay('현재 '+teacherOf(c)+' 선생님의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="ct">${ms('sync_alt')}${nameOf(c)}의 다른 시간대 강좌</div>`+a.map(r=>`<div class="krow long"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">반 변경 신청은 상담을 통해 진행해 주세요.</div>`);consultEnd('m_overall');}
+function altResult(c){const a=ALT_SAME[c];if(!a){botSay('현재 '+teacherOf(c)+' 선생님의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="ct">${ms('sync_alt')}${nameOf(c)} · 다른 시간대 강좌</div>`+a.map(r=>`<div class="krow long"><span class="k">${r[0]}</span><span class="v blue">${r[1]}</span></div>`).join('')+`<div class="src">반 변경 신청은 상담을 통해 진행해 주세요.</div>`);consultEnd('m_overall');}
 function go(k){__nv++;track('chatbot_node_view',{node_id:k});if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
 
 /* 진입 맥락 배너 */
