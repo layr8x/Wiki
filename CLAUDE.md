@@ -244,3 +244,9 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **납부 현황 `paySec`**: 행=`.payrow`. 납부기한 행=[`.pdue`(라벨 placeholder + 날짜 `#da1e28`) 좌 | Tag 우]. 품목 행=[라벨 `.plbl`(placeholder w64) + 내용 `.pdesc`(#161616) 좌 | 금액 `.pv` 우]. 합계=`.pv.b` Bold. 섹션 구분 `border/secondary`(.48), 품목묶음 하단 `border/primary`(.08). 납부필요=노랑Tag, 가상계좌=회색Tag.
 - **결제 내역 `.phitem`**: 항목=[세부(메타행 `날짜 placeholder | 수단/상태 wrap, / 구분자 disabled` + 강좌명행 #161616) + 결제금액 행 + (환불 시 환불금액 행)]. 라벨 placeholder, 값 Bold. 항목 구분 border/secondary(.48), 세부↔금액 border/primary(.08). **카드 아래 `.morebtn`(더 보기 + keyboard_arrow_down, 흰배경 border/secondary radius16 검정 4단 쉐도우)**. **콘텐츠 규칙 유지**: 날짜 `YYYY-MM-DD`(Figma YY/MM/DD 무시), 강좌명 `nameOf`(이름만) + 외N건. PAY_HISTORY 포맷=[날짜,강좌,수단,상태,결제금액,환불금액,외N건].
 - **빈 상태**(입반 없음 `현재 입반된 강좌가 없어요.` / 오늘 출석 없음 `오늘(6/24)은 수업이 없어요.`): 카드 아님 **봇 말풍선** + nav칩, **만족도 미노출**(`navEnd(...,false)`). 코드 분기는 있으나 현재 데모 데이터는 항상 강좌 있어 평소엔 미노출.
+
+## 13-8. 메시지 영역 간격 체계 (Figma 실측 대조 — 헤드리스 아이콘폰트 주입 후 1:1)
+> 검증법: `ms300.ttf`(Material Symbols Rounded wght300) 다운로드 → Playwright `addStyleTag`로 @font-face 주입 → `#sheet` 스크린샷을 Figma `get_screenshot`과 나란히 비교. (헤드리스 CDN 차단 우회 = 실측 렌더 확보.)
+- **그룹 내 16 / 그룹 간 32 체계**: `.log`=`display:flex;flex-direction:column;gap:16px`(그룹 내 기본). `.row`·`.qr`·`.card` margin 제거. **그룹 경계(CTA·nav칩·만족도)는 `.grpgap`(margin-top:16 → gap16+16=32)**. quick()에서 `primary||cta`거나 전부 nav(이전/처음으로)면 grpgap, satis 질문행도 grpgap. (block margin은 collapse → flex gap+margin으로 비충돌 32 구현.)
+- **말풍선·카드 인셋**: bot `.msg`·`.me .msg`·`.card` = `max-width:calc(100% - 32px)`(Figma pr-32/pl-32). 옛 80%/100%/16px 아님.
+- **hero(인사말) pb 32→16**(gap-16과 합쳐 인사말→메뉴 32).
