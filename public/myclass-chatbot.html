@@ -239,11 +239,12 @@
   .chip{border:1px solid var(--border-subtle);background:var(--bg);color:var(--placeholder);border-radius:var(--r-pill);padding:8px 16px;font-size:var(--fs-sm);font-weight:700;line-height:var(--lh-sm);cursor:pointer;font-family:var(--font);transition:background-color .16s var(--ease),transform .16s var(--ease),border-color .16s var(--ease),box-shadow .16s var(--ease);display:inline-flex;align-items:center;gap:8px}
   .chip:hover{background:var(--bg);border-color:var(--border-strong);transform:translateY(-1.5px);box-shadow:0 4px 12px rgba(22,22,22,.10)}
   .chip:active{transform:translateY(0) scale(.97)}
-  .chip .ms{font-size:24px;transition:transform .16s var(--ease)}
+  .chip .ms{font-size:24px;color:var(--interactive);transition:transform .16s var(--ease)}
+  .chip .ms.nav{color:var(--icon-secondary)}
   .chip:active .ms{transform:scale(.92)}
   .chip.primary{background:var(--interactive);color:#fff;border-color:var(--interactive);font-weight:700;box-shadow:0 2px 10px rgba(0,67,206,.22)}
   .chip.cta{background:var(--interactive);color:#fff;border-color:var(--interactive);font-weight:700;box-shadow:0 2px 10px rgba(0,67,206,.22)}
-  .chip.cta .ms{color:#fff}
+  .chip.primary .ms,.chip.cta .ms{color:#fff}
   .chip.primary:hover{box-shadow:0 7px 20px rgba(22,22,22,.28)}
   .chip.ghost{background:transparent;color:var(--text-weak)}
   .chip.ghost:hover{color:var(--text-secondary)}
@@ -547,7 +548,7 @@ function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBu
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
-function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic,o.iconCls):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function quick(opts){const w=el(`<div class="qr"></div>`);opts.forEach((o,i)=>{const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.ghost?'ghost':''}">${o.ic?ms(o.ic,o.iconCls||((o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'))?'nav':'')):''}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function heroGreet(){const greet=sub('안녕하세요, {학생}님');const ctx=sub('{지점} 캠퍼스 기준으로 안내드릴게요.');const r=el(`<div class="hero fadein"><div class="hgreet">${greet}</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(t){t=sub(t);const s=sheet.querySelector('.chead .s');if(s)s.textContent=t;}
@@ -557,25 +558,25 @@ const NODES={
   home(){crumb('문제를 바로 해결하도록 도와드려요.');heroGreet();menuGrid();},
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
-  m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'how_to_reg',go:'at_today'},{t:'강좌 선택',ic:'fact_check',go:'at_course'},{t:'입반 강좌 확인',ic:'checklist',go:'en_check'},back('home')]);},
+  m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'how_to_reg',go:'at_today'},{t:'강좌 선택',ic:'fact_check',go:'at_course'},{t:'입반 강좌 확인',ic:'checklist',go:'en_check'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   at_today(){const c=COURSES[3];card(`<div class="ct">${ms('how_to_reg')}오늘(6/23) 출석 현황 · ${c}</div><div class="krow"><span class="k">수업</span><span class="v">18:00~21:00</span></div><div class="krow"><span class="k">출석</span><span class="v">17:58 ${ms('check')}</span></div>`);navEnd('m_attend',true);},
   at_course(){botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
   en_check(){card(`<div class="ct">${ms('checklist')}입반된 강좌 현황</div>`+COURSES.map(c=>`<div class="krow long"><span class="k">${nameOf(c)}</span><span class="v">${schedOf(c)}</span></div>`).join(''));navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
-  m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부 현황',ic:'fact_check',go:'pay_wait'},{t:'결제 내역',ic:'receipt_long',go:'pay_history'},back('home')]);},
+  m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부 현황',ic:'fact_check',go:'pay_wait'},{t:'결제 내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   pay_wait(){cardLoad(`<div class="ct">${ms('receipt_long')}${PAY_DUE.course} 납부 현황</div>${paySec('납부필요',PAY_DUE,'need')}<div class="paysec-gap"></div>${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
     quick([{t:'납부하기',ic:'credit_card',cta:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}},back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);},
   pay_history(){cardLoad(`<div class="ct">${ms('receipt_long')}최근 3개월 결제 내역</div>${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}`,6);navEnd('m_pay',true);},
 
   /* ③ 수업·시간표 */
-  m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'},back('home')]);},
+  m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   time_table(){drawWeek('this');},
   time_end(){card(`<div class="ct">${ms('fact_check')}강좌별 종강일</div>`+ENDDATES.map(e=>`<div class="krow long"><span class="k">${nameOf(e[0])}</span><span class="v">${e[1]}</span></div>`).join('')+`<div class="src">휴강·일정 변경은 상담실로 문의해 주세요.</div>`);consultEnd('m_time');},
   time_rounds(){botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
 
   /* ④ 전반 — 전반 가능한 강좌 확인하기 */
-  m_overall(){crumb('전반');botSay('전반 가능한 강좌를 확인해 드릴게요.\n어떤 강좌를 확인할까요?');quick([...OVERALL.map(o=>({t:o.c,label:o.c,act:()=>altResult(o.c)})),back('home')]);},
+  m_overall(){crumb('전반');botSay('전반 가능한 강좌를 확인해 드릴게요.\n어떤 강좌를 확인할까요?');quick([...OVERALL.map(o=>({t:o.c,label:o.c,act:()=>altResult(o.c)}))]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
 
 };
 
