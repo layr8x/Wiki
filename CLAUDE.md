@@ -250,3 +250,7 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **그룹 내 16 / 그룹 간 32 체계**: `.log`=`display:flex;flex-direction:column;gap:16px`(그룹 내 기본). `.row`·`.qr`·`.card` margin 제거. **그룹 경계(CTA·nav칩·만족도)는 `.grpgap`(margin-top:16 → gap16+16=32)**. quick()에서 `primary||cta`거나 전부 nav(이전/처음으로)면 grpgap, satis 질문행도 grpgap. (block margin은 collapse → flex gap+margin으로 비충돌 32 구현.)
 - **말풍선·카드 인셋**: bot `.msg`·`.me .msg`·`.card` = `max-width:calc(100% - 32px)`(Figma pr-32/pl-32). 옛 80%/100%/16px 아님.
 - **hero(인사말) pb 32→16**(gap-16과 합쳐 인사말→메뉴 32).
+
+## 13-9. 챗봇 기준폭 = Figma 400px (헤드리스 폰트 함정)
+- **`.phone` 모바일 목업 폭 430→400**(높이 866)으로 Figma 디자인 기준폭에 정합. (옛 430px는 Figma 400px보다 7.5% 넓어 전체가 커 보였음.)
+- **헤드리스 검증 함정**: Playwright 헤드리스는 Pretendard(jsdelivr)·Material Symbols(gstatic) **CDN 차단** → 대체 폰트(글자 더 큼)로 렌더돼 "빌드가 10% 크다"는 착시 발생. **실측 = `page.route`로 jsdelivr Pretendard·gstatic 폰트를 로컬 woff2/ttf로 fulfill + `.phone` 400 override 후 `#sheet`를 Figma `get_screenshot`(widget 400px crop)과 1:1 대조.** 폰트 로드(`document.fonts.check`로 확인) 안 하면 크기 비교 무의미.
