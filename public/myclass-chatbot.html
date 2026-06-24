@@ -10,9 +10,9 @@
   @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2')}
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
   :root{--accent:#3182f6;--accent-rgb:49,130,246;--interactive:#0043ce;--button2:#001d6c;--tag-blue-bg:#edf5ff;
-    --text:#161616; --text-2:#161616b8; --helper:#16161690; --placeholder:#161616a3; --disabled:#1616163d; --icon-secondary:#161616b8;
+    --text:#161616; --text-2:#161616b8; --helper:#1616168f; --placeholder:#16161666; --disabled:#1616163d; --icon-secondary:#161616b8;
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
-    --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#393939;
+    --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#525252;
     --primary:#161616; --on-primary:#ffffff;
     /* 시맨틱 토큰 (TDS 3계층 구조 차용 — 용도 기반. 흑백 LUMEN 위에 의미층) */
     --text-neutral:var(--primary); --text-secondary:var(--text-2); --text-weak:var(--helper); --text-inverse:var(--on-primary);
@@ -28,7 +28,7 @@
     --shadow-xs:0 1px 2px rgba(0,0,0,.06),0 2px 4px rgba(0,0,0,.04);
     --shadow-xl:0 4px 16px rgba(0,0,0,.08),0 16px 16px rgba(0,0,0,.06),0 32px 32px rgba(0,0,0,.04);
     --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
-    --fs-md:16px; --lh-md:28px; --fs-sm:14px; --lh-sm:24px; --fs-xs:20px; --lh-xs:32px; --fs-h:32px; --lh-h:44px; --fs-cap:12px; --lh-cap:20px;
+    --fs-md:16px; --lh-md:24px; --fs-sm:14px; --lh-sm:20px; --fs-xs:20px; --lh-xs:28px; --fs-h:32px; --lh-h:44px; --fs-cap:12px; --lh-cap:20px;
     --font:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
@@ -121,7 +121,7 @@
   .scrim.open{opacity:1;pointer-events:auto}
   .sheet{position:absolute;left:0;right:0;bottom:0;height:90%;background:var(--bg);border-radius:var(--r-sheet) var(--r-sheet) 0 0;
     box-shadow:0 -8px 40px rgba(22,22,22,.18);transform:translateY(103%);transition:transform .42s var(--ease-ios);
-    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none;font-variant-numeric:tabular-nums}
+    display:flex;flex-direction:column;overflow:hidden;z-index:41;outline:none;font-variant-numeric:tabular-nums;font-feature-settings:'ss03' 1,'ss05' 1,'ss06' 1,'ss10' 1,'tnum' 1}
   .sheet.open{transform:translateY(0)}
   .grab{width:40px;height:4px;background:var(--disabled);border-radius:999px;margin:8px auto;cursor:grab;touch-action:none}
   .sheet.dragging{transition:none}
@@ -140,7 +140,7 @@
   .banner b{font-weight:600}
   .banner .x{margin-left:auto;opacity:.7}
 
-  .log{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:16px;padding:32px 16px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background-color:var(--surface);background-image:radial-gradient(circle,rgba(22,22,22,.05) 0.7px,transparent 1.2px);background-size:16px 16px;background-position:6px 6px}
+  .log{flex:1;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:16px;padding:32px 16px;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background-color:var(--surface);background-image:radial-gradient(circle,rgba(22,22,22,.05) 0.7px,transparent 1.2px);background-size:20.48px 20.48px;background-position:8px 8px}
   /* ── 스크롤바: 반투명 + 스크롤할 때만 노출(자동 숨김) ── */
   .scroll,.log{scrollbar-width:thin;scrollbar-color:transparent transparent;transition:scrollbar-color .35s var(--ease)}
   .scroll.scrolling,.log.scrolling,.scroll:hover,.log:hover{scrollbar-color:#16161626 transparent}
@@ -609,9 +609,9 @@ function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBu
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
-function quick(opts){const grp=opts.some(o=>o.primary||o.cta)||(opts.length>0&&opts.every(o=>o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home')));const w=el(`<div class="qr${grp?' grpgap':''}"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&(o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'));const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${o.plain?'plain':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.emoji?`<span class="emo">${o.emoji}</span>`:(o.ic?ms(o.ic,o.iconCls):'')}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.silent!==true)meSay(o.label||o.t);w.remove();typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function quick(opts){const grp=opts.some(o=>o.primary||o.cta)||(opts.length>0&&opts.every(o=>o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home')));const w=el(`<div class="qr${grp?' grpgap':''}"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&(o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'));const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${o.plain?'plain':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.emoji?`<span class="emo">${o.emoji}</span>`:(o.ic?ms(o.ic,o.iconCls):'')}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{const nav=(o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home'));if(o.silent!==true&&!nav)meSay(o.label||o.t);const echo=(!nav&&o.silent!==true)?log.lastElementChild:null;log.innerHTML='';if(echo)log.appendChild(echo);typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function heroGreet(){const greet=sub('안녕하세요, {학생}님');const ctx=sub('{지점} 캠퍼스 기준으로 안내드릴게요.');const r=el(`<div class="hero fadein"><div class="hgreet">${greet}</div><div class="hsub">${ctx}</div></div>`);log.appendChild(r);scrollEnd();}
-function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);crumb(m.l);g.remove();const fq=log.querySelector('.qr');if(fq)fq.remove();typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
+function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);const echo=log.lastElementChild;log.innerHTML='';if(echo)log.appendChild(echo);typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(...parts){const s=sheet.querySelector('.chead .s');if(!s)return;s.innerHTML=parts.map(p=>sub(p)).join('<span class="crumb-sep">/</span>');}
 const won=n=>n.toLocaleString()+'원';
 const payNum=a=>+String(a).replace(/[^0-9]/g,'');
