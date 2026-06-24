@@ -250,7 +250,10 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **그룹 내 16 / 그룹 간 32 체계**: `.log`=`display:flex;flex-direction:column;gap:16px`(그룹 내 기본). `.row`·`.qr`·`.card` margin 제거. **그룹 경계(nav칩·만족도)만 `.grpgap`(margin-top:16 → gap16+16=32)**. quick()에서 **전부 nav(이전/처음으로)일 때만 grpgap**, satis 질문행도 grpgap. (block margin은 collapse → flex gap+margin으로 비충돌 32 구현.)
 - ⚠️**CTA(납부하기·상담 연결·다음 주 보기)는 그룹 경계 아님 = 직전 응답(카드/말풍선)과 같은 그룹 16**(Figma node 1519:14712·1526:2281 실측: 응답묶음 안에 CTA 포함). 옛날 `primary||cta`도 grpgap(32) 처리한 건 **틀림**(사용자 교정). quick() grp 조건에서 `primary||cta` 빼고 grpOverride 인자 추가(consultEnd는 `false` 명시). CTA→nav만 32.
 - ⚠️**풀폭 CTA(`full:true`)는 우측 32 인셋 = 가로 336**(`.qr.ctainset{padding-right:32px}`, quick()에서 `full&&(primary||cta)`면 부여). 옛 `width:100%`로 368까지 늘린 건 **틀림**(Figma 버튼 x16..351 w335, 카드/말풍선 우측엣지와 정렬). 사용자 "가로폭 같냐" 지적 핵심.
-- **말풍선·카드 인셋**: bot `.msg`·`.me .msg`·`.card` = `max-width:calc(100% - 32px)`(Figma pr-32/pl-32). 옛 80%/100%/16px 아님.
+- **말풍선·카드 인셋**: bot `.msg`·`.me .msg` = `max-width:calc(100% - 32px)`(hug). **카드 `.card`는 `width:calc(100% - 32px)`(=336 꽉 채움, hug 아님)** — Figma 카드 전부 w-full. ⚠️옛 `.card{max-width}`(hug)는 제목 짧은 카드(결제내역 "최근 3개월 결제 내역")가 240px로 쪼그라들어 우측정렬 값이 안 맞음 → 사용자 "결제 내역 리스트 가로폭" 지적. `width`로 강제해야 모든 카드 336 통일.
+- ⚠️**CTA 쉐도우 = 네이비**(`0 2 2 / 0 8 4 / 0 16 8 / 0 32 8 rgba(0,29,108,…)`, Figma node 1519:14732 실측). 옛 검정·큰값(`64px`까지)은 **틀림** — 큰 검정 그림자가 CTA→nav 간격을 무겁게/달라 보이게 함(사용자 "이전·처음으로 상단 간격" 지적). 옵션칩 쉐도우와 동일.
+- ⚠️**`대화 닫기`·터미널 nav 버튼 = 회색**(`{nav:true}` 플래그 → `.chip.nav`). ic 없는 버튼은 자동 nav 인식 안 되니 `nav:true` 명시. quick()에 `isNavBtn=o=>o.nav===true||arrow/home` 헬퍼.
+- ⚠️**강좌선택 칩 = 흰 plain 통일**: courseChips·m_overall(전반) 둘 다 `plain:true`(흰 배경). m_overall이 옛 파란테두리였던 건 **틀림**(CLAUDE.md §5 "강좌칩=흰배경" 규칙). 옵션칩(오늘출석·타반보강 등)만 파란테두리.
 - **hero(인사말) pb 32→16**(gap-16과 합쳐 인사말→메뉴 32).
 
 ## 13-9. 챗봇 기준폭 = Figma 400px (헤드리스 폰트 함정)
