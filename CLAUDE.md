@@ -232,3 +232,8 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 ## 13-5. 남은 항목(사용자 확인 필요)
 - **결제 내역 카드 심화 재구조화 보류**: 마스터보드는 `결제금액/환불금액` 라벨행 + `더 보기`(keyboard_arrow_down) 버튼 + `전체환불` 상태 + 날짜 `YY/MM/DD`를 보이나, §6/§10(이름만·YYYY-MM-DD·사용자 직접 다듬음)와 충돌 → 내용규칙 유지하고 구조변경은 보류. 진행 시 사용자 확인.
 - Figma의 일부 무공백 표기(`시청기한`·`영상준비중`)는 한글 맞춤법·§6 위배라 정상 띄어쓰기 유지(구분자만 `·`→`/`).
+
+## 13-6. 출결 뱃지 · 만족도 버튼 (사용자 실시간 교정 — Figma 1549:*, 1534:40*)
+- **오늘 출석 출결상태 = 컬러 Tag 뱃지**(`.attag`, radius 4·border .8px): 출석=초록 `bg #defbe6·border #a7f0ba·#0e6027` + `check_circle`(fill) + 시각 / 출석예정=주황 `bg #fff2e8·border #ffd9be·#8a3800` + `do_not_disturb_on`(fill). 강좌블록 헤더 = **풀강좌명**(Regular). 순서 = 출석(강은양 13:58) → 출석예정(박종민).
+- **만족도 버튼 = 흰 배경 + 이모지**(`.chip.satis`): bg #fff·border `border/primary` 0.08·radius 8, 😄 해결됐어요 / 😭 아직 안 됐어요(이모지 20px, 라벨 `text/secondary` Bold). thumb_up/down 아이콘 아님. (사용자가 cyan/yellow→흰색으로 재교정.)
+- **"도움이 됐나요?" = 평문**(`.satq`, `text/secondary` 14)으로 렌더(말풍선 아님).
