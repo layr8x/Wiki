@@ -253,8 +253,8 @@
   .chip.primary .ms,.chip.cta .ms{color:#f4f4f4}
   .chip.primary:hover,.chip.cta:hover{box-shadow:0 7px 20px rgba(0,29,108,.28)}
   .chip.full{width:100%;justify-content:center}
-  /* 강좌 선택 칩 — 파란 테두리 없이 흰 배경(메뉴 옵션 칩과 구분) · 풀폭(카드와 동일 336)·텍스트 우측정렬 */
-  .chip.plain{border-color:var(--border-subtle);color:var(--text-secondary);width:calc(100% - 32px);text-align:right}
+  /* 강좌 선택 칩 — 파란 테두리 없이 흰 배경(메뉴 옵션 칩과 구분) · 풀폭(카드와 동일 336)·텍스트 좌측정렬 */
+  .chip.plain{border-color:var(--border-subtle);color:var(--text-secondary);width:calc(100% - 32px);text-align:left}
   .chip.plain>span{flex:1;min-width:0}
   /* 만족도 칩 — 흰 배경 radius 8 */
   .chip.satis{background:#fff;border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:8px;padding:6px 8px;font-size:14px;line-height:20px;box-shadow:none}
@@ -262,6 +262,21 @@
   .chip.satis .ms{font-size:20px}
   .chip.ghost{background:transparent;border-color:transparent;color:var(--text-weak)}
   .chip.ghost:hover{color:var(--text-secondary)}
+  /* ── 상담 연락처 선택 모달(바텀시트) ── */
+  .cmodal-scrim{position:absolute;inset:0;background:rgba(22,22,22,.36);opacity:0;transition:opacity .28s var(--ease);z-index:50}
+  .cmodal-scrim.open{opacity:1}
+  .cmodal{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:24px 24px 0 0;padding:28px 20px 20px;z-index:51;transform:translateY(100%);transition:transform .36s var(--ease-ios);display:flex;flex-direction:column;gap:16px;box-shadow:0 -8px 40px rgba(22,22,22,.16)}
+  .cmodal.open{transform:translateY(0)}
+  .cm-title{font-size:22px;line-height:30px;font-weight:700;letter-spacing:-.2px;color:var(--text)}
+  .cm-sub{font-size:16px;line-height:24px;color:var(--text-2);margin-top:-8px}
+  .cm-list{display:flex;flex-direction:column;background:var(--surface);border-radius:16px;overflow:hidden}
+  .cm-row{display:flex;align-items:center;gap:12px;padding:18px 16px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border-subtle)}
+  .cm-row:last-child{border-bottom:none}
+  .cm-row:active{background:var(--border-subtle)}
+  .cm-row .ms{font-size:24px;color:var(--text);flex-shrink:0}
+  .cm-row span{font-size:17px;font-weight:600;line-height:24px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+  .cm-close{background:var(--bg);border:1px solid var(--border-strong);border-radius:16px;padding:18px;font-size:17px;font-weight:600;color:var(--text);font-family:var(--font);cursor:pointer;text-align:center;transition:background-color .16s var(--ease)}
+  .cm-close:active{background:var(--surface)}
   .seg{display:inline-flex;background:var(--fill-subtle);border-radius:12px;padding:3px;gap:2px;margin:2px 0 12px}
   .seg button{border:none;background:transparent;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--text-weak);padding:7px 15px;border-radius:9px;cursor:pointer;transition:background-color .22s var(--ease),color .22s var(--ease),box-shadow .22s var(--ease)}
   .seg button.on{background:var(--bg);color:var(--text-neutral);box-shadow:0 1px 3px rgba(22,22,22,.10),0 1px 1px rgba(22,22,22,.06)}
@@ -601,7 +616,7 @@ let ctx='normal';
 let __nv=0,__resolved=false;
 function track(ev,p){try{(window.dataLayer=window.dataLayer||[]).push({event:ev,ts:Date.now(),...(p||{})});}catch(_){}}
 /* 컨텍스트 — 선택된 지점/학생 기준 데이터 바인딩. 챗봇 안에서 변경 가능. */
-const CAMPUSES={'대치':{phone:'02-552-2373',sms:'010-5423-2378'},'목동':{phone:'',sms:''},'반포':{phone:'',sms:''},'분당':{phone:'',sms:''}};
+const CAMPUSES={'대치':{phone:'02-552-2373',sms:'010-5423-2378',contacts:[['고3','02-552-2373'],['수학스쿨','02-552-2378'],['고2 / 고1','02-554-2373'],['특목센터','02-565-2373']]},'목동':{phone:'',sms:''},'반포':{phone:'',sms:''},'분당':{phone:'',sms:''}};
 const CHILDREN=[{student:'김시대',campus:'대치',grade:'고3'},{student:'이시대',campus:'목동',grade:'고2'},{student:'박시대',campus:'반포',grade:'고1'},{student:'최시대',campus:'분당',grade:'중3'}];
 let CIDX=0;
 let CTX={student:CHILDREN[0].student,campus:CHILDREN[0].campus,grade:CHILDREN[0].grade};
@@ -621,7 +636,7 @@ function typeThen(run){if(window.__noTyping||RM){run();return;}const tb=typingBu
 log.addEventListener('click',e=>{const btn=e.target.closest&&e.target.closest('.copybtn');if(!btn)return;const v=btn.dataset.c||'';track('chatbot_copy',{copy_type:btn.dataset.t||'number'});try{navigator.clipboard&&navigator.clipboard.writeText(v);}catch(_){}const ic=btn.querySelector('.ms');btn.classList.add('copied');if(ic)ic.textContent='check';toast('번호가 복사됐어요');setTimeout(()=>{btn.classList.remove('copied');if(ic)ic.textContent='content_copy';},1400);});
 function card(h){h=sub(h);const r=el(`<div class="row bot fadein"><div class="card"></div></div>`);r.querySelector('.card').innerHTML=h;log.appendChild(r);scrollEnd();}
 function cardLoad(h,rows){h=sub(h);rows=rows||3;const r=el(`<div class="row bot fadein"><div class="card"><div class="skelwrap">${'<div class="skel"></div>'.repeat(rows)}</div></div></div>`);log.appendChild(r);scrollEnd();const d=(window.__noTyping||RM)?0:480;setTimeout(()=>{const c=r.querySelector('.card');if(!c)return;c.classList.add('revealing');c.innerHTML=h;requestAnimationFrame(()=>c.classList.remove('revealing'));scrollEnd();},d);return r;}
-function quick(opts,grpOverride){const isNavBtn=o=>o.nav===true||o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home');const grp=grpOverride!==undefined?grpOverride:(opts.length>0&&opts.every(isNavBtn));const cta=opts.some(o=>o.full&&(o.primary||o.cta));const w=el(`<div class="qr${grp?' grpgap':''}${cta?' ctainset':''}"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&isNavBtn(o);const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${o.plain?'plain':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.emoji?`<span class="emo">${o.emoji}</span>`:(o.ic?ms(o.ic,o.iconCls):'')}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{const nav=isNavBtn(o);if(o.silent!==true&&!nav)meSay(o.label||o.t);const echo=(!nav&&o.silent!==true)?log.lastElementChild:null;log.innerHTML='';if(echo)log.appendChild(echo);typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
+function quick(opts,grpOverride){const isNavBtn=o=>o.nav===true||o.ic==='keyboard_arrow_left'||o.ic==='chevron_left'||(o.ic==='home'&&o.go==='home');const grp=grpOverride!==undefined?grpOverride:(opts.length>0&&opts.every(isNavBtn));const cta=opts.some(o=>o.full&&(o.primary||o.cta));const w=el(`<div class="qr${grp?' grpgap':''}${cta?' ctainset':''}"></div>`);opts.forEach((o,i)=>{const isNav=!o.primary&&!o.cta&&isNavBtn(o);const isSat=o.iconCls==='up'||o.iconCls==='down';const c=el(`<button class="chip fadein ${o.primary?'primary':''} ${o.cta?'cta':''} ${o.full?'full':''} ${o.plain?'plain':''} ${isNav?'nav':''} ${isSat?'satis':''} ${o.ghost?'ghost':''}">${o.emoji?`<span class="emo">${o.emoji}</span>`:(o.ic?ms(o.ic,o.iconCls):'')}<span>${o.t}</span></button>`);c.style.animationDelay=(i*45)+'ms';c.onclick=()=>{if(o.keep===true){if(o.act)o.act();return;}const nav=isNavBtn(o);if(o.silent!==true&&!nav)meSay(o.label||o.t);const echo=(!nav&&o.silent!==true)?log.lastElementChild:null;log.innerHTML='';if(echo)log.appendChild(echo);typeThen(o.act?o.act:()=>go(o.go));};w.appendChild(c);});log.appendChild(w);scrollEnd();}
 function heroGreet(){const r=el(`<div class="hero fadein"><div class="hgreet">안녕하세요, 학부모님</div><div class="hsub">${CTX.student} 학생(${CTX.campus}) 기준으로 안내드릴게요.</div></div>`);log.appendChild(r);scrollEnd();}
 function menuGrid(){const g=el(`<div class="menu-grid"></div>`);MENU.forEach((m,i)=>{const t=el(`<button class="mtile fadein">${ms(m.ic)}<span class="l">${m.l}</span></button>`);t.style.animationDelay=(i*30)+'ms';t.onclick=()=>{track('chatbot_menu_select',{menu_key:m.k});meSay(m.l);const echo=log.lastElementChild;log.innerHTML='';if(echo)log.appendChild(echo);typeThen(()=>go('m_'+m.k));};g.appendChild(t);});log.appendChild(g);scrollEnd();}
 function crumb(...parts){const s=sheet.querySelector('.chead .s');if(!s)return;s.innerHTML=parts.map(p=>sub(p)).join('<span class="crumb-sep">/</span>');}
@@ -679,7 +694,10 @@ function satis(backTarget){const sq=el(`<div class="row bot fadein grpgap"><div 
 /* 조회·안내 종료 화면: [이전][처음으로] + (선택 시) 만족도 */
 function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);if(withSatis)satis(backTarget);}
 /* 상담으로 끝나는 화면 — v6: [전화 상담 연결][이전][처음으로] (상담 등록 버튼 제거). 만족도 미노출 */
-function consultEnd(backTarget){quick([{t:'상담 연결',ic:'call',primary:true,full:true,act:()=>phoneConnect(backTarget)}],false);quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
+function consultEnd(backTarget){quick([{t:'상담 연결',ic:'call',primary:true,full:true,keep:true,act:()=>openConsultModal()}],false);quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
+/* 상담 연결 = 지점별 연락처 선택 모달(바텀시트). 클릭 시 tel: 통화 연결 */
+function openConsultModal(){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const list=(cp.contacts&&cp.contacts.length)?cp.contacts:(cp.phone?[['상담실',cp.phone]]:[]);closeConsultModal();const sh=document.getElementById('sheet');if(!sh)return;const scrim=el(`<div class="cmodal-scrim" id="cmScrim"></div>`);const rows=list.map(c=>`<a class="cm-row" href="tel:${String(c[1]).replace(/[^0-9]/g,'')}">${ms('call')}<span>${c[0]} : ${c[1]}</span></a>`).join('');const m=el(`<div class="cmodal" id="cmodal" role="dialog" aria-modal="true" aria-label="상담 연락처 선택"><div class="cm-title">상담하실 지점을 선택해 주세요.</div><div class="cm-sub">아래의 연락처를 누르면 통화가 연결됩니다.</div><div class="cm-list">${rows}</div><button class="cm-close" type="button">닫기</button></div>`);sh.appendChild(scrim);sh.appendChild(m);scrim.onclick=closeConsultModal;m.querySelector('.cm-close').onclick=closeConsultModal;requestAnimationFrame(()=>{scrim.classList.add('open');m.classList.add('open');});}
+function closeConsultModal(){const m=document.getElementById('cmodal'),s=document.getElementById('cmScrim');if(m){m.classList.remove('open');setTimeout(()=>{try{m.remove();}catch(_){}},300);}if(s){s.classList.remove('open');setTimeout(()=>{try{s.remove();}catch(_){}},300);}}
 /* v6: 전화 상담 연결 클릭 시 지점 전화번호 노출 */
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
