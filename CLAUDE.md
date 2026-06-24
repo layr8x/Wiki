@@ -237,3 +237,10 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - **오늘 출석 출결상태 = 컬러 Tag 뱃지**(`.attag`, radius 4·border .8px): 출석=초록 `bg #defbe6·border #a7f0ba·#0e6027` + `check_circle`(fill) + 시각 / 출석예정=주황 `bg #fff2e8·border #ffd9be·#8a3800` + `do_not_disturb_on`(fill). 강좌블록 헤더 = **풀강좌명**(Regular). 순서 = 출석(강은양 13:58) → 출석예정(박종민).
 - **만족도 버튼 = 흰 배경 + 이모지**(`.chip.satis`): bg #fff·border `border/primary` 0.08·radius 8, 😄 해결됐어요 / 😭 아직 안 됐어요(이모지 20px, 라벨 `text/secondary` Bold). thumb_up/down 아이콘 아님. (사용자가 cyan/yellow→흰색으로 재교정.)
 - **"도움이 됐나요?" = 평문**(`.satq`, `text/secondary` 14)으로 렌더(말풍선 아님).
+
+## 13-7. 카드 행 가로형 · 입반 Tag · 납부/결제 재구조화 · 빈 상태 (Figma 1519:14803·17139 / 1526:2267 / 1530:1183 / 1519:17118·15628)
+- **보강 카드 행(타반·동영상·추가영상) = 가로 `.crow`**: 좌 회차라벨(`.ck` placeholder #16161666) | 우 값(`.cv` flex:1 wrap, #161616). 값 안 구분자는 `segs()`로 ` / `를 `.sep`(text/disabled) 분리. Regular(굵게 아님). (옛 세로 `.vrow` 폐기.)
+- **입반 강좌 = `.crow` + 과목 Tag**: 좌 `.subjtag`(과목, tag/gray #f4f4f4/#e0e0e0/#525252 radius4 Bold) | 우 강좌 풀네임 Regular. `subjectOf(c)`로 과목 추출. 강좌 0개면 빈 상태.
+- **납부 현황 `paySec`**: 행=`.payrow`. 납부기한 행=[`.pdue`(라벨 placeholder + 날짜 `#da1e28`) 좌 | Tag 우]. 품목 행=[라벨 `.plbl`(placeholder w64) + 내용 `.pdesc`(#161616) 좌 | 금액 `.pv` 우]. 합계=`.pv.b` Bold. 섹션 구분 `border/secondary`(.48), 품목묶음 하단 `border/primary`(.08). 납부필요=노랑Tag, 가상계좌=회색Tag.
+- **결제 내역 `.phitem`**: 항목=[세부(메타행 `날짜 placeholder | 수단/상태 wrap, / 구분자 disabled` + 강좌명행 #161616) + 결제금액 행 + (환불 시 환불금액 행)]. 라벨 placeholder, 값 Bold. 항목 구분 border/secondary(.48), 세부↔금액 border/primary(.08). **카드 아래 `.morebtn`(더 보기 + keyboard_arrow_down, 흰배경 border/secondary radius16 검정 4단 쉐도우)**. **콘텐츠 규칙 유지**: 날짜 `YYYY-MM-DD`(Figma YY/MM/DD 무시), 강좌명 `nameOf`(이름만) + 외N건. PAY_HISTORY 포맷=[날짜,강좌,수단,상태,결제금액,환불금액,외N건].
+- **빈 상태**(입반 없음 `현재 입반된 강좌가 없어요.` / 오늘 출석 없음 `오늘(6/24)은 수업이 없어요.`): 카드 아님 **봇 말풍선** + nav칩, **만족도 미노출**(`navEnd(...,false)`). 코드 분기는 있으나 현재 데모 데이터는 항상 강좌 있어 평소엔 미노출.

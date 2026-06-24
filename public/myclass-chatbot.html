@@ -408,41 +408,45 @@
 @keyframes ckpop{0%{opacity:0;transform:scale(.5)}60%{transform:scale(1.12)}100%{opacity:1;transform:scale(1)}}
 /* 결제내역(수단/금액 2줄 스택) · 입반 리스트 · 긴 라벨 행 */
 /* 결제내역: 좌=날짜+강좌(회색 한 묶음, 줄바꿈) / 우=수단·금액(둘 다 볼드 검정, 우측정렬 스택) */
-.phrow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:12px 0;border-bottom:1px solid var(--border-subtle)}
-.phrow.last{border-bottom:none}
-.ph-l{flex:1;min-width:0;font-size:var(--fs-sm);font-weight:400;line-height:var(--lh-sm);color:var(--text-weak);word-break:break-word}
-.ph-r{flex:1;display:flex;flex-direction:column;align-items:flex-end;text-align:right}
-.ph-r span{font-size:var(--fs-sm);font-weight:700;line-height:var(--lh-sm);color:var(--text-neutral);white-space:nowrap;font-variant-numeric:tabular-nums}
+.phlist{display:flex;flex-direction:column}
+.phitem{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:1px solid rgba(22,22,22,.48)}
+.phitem.last{border-bottom:none;padding-bottom:4px}
+.phtop{display:flex;flex-direction:column;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)}
+.phmeta{display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px;white-space:nowrap}
+.phmeta .phdate{color:#16161666}
+.phmeta .phms{display:flex;flex-wrap:wrap;gap:4px;color:#16161666}
+.phmeta .phms .sep{color:var(--disabled)}
+.phcourse{font-size:14px;line-height:20px;color:var(--text-neutral);word-break:keep-all;overflow-wrap:anywhere}
+.phrow2{display:flex;justify-content:space-between;gap:8px;font-size:14px;line-height:20px}
+.phrow2 .phlbl{color:#16161666}
+.phrow2 .phval{font-weight:700;color:var(--text-neutral);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.morebtn{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(22,22,22,.48);border-radius:16px;padding:12px 16px;font-family:var(--font);font-size:16px;line-height:24px;font-weight:700;color:var(--text-secondary);cursor:pointer;box-shadow:0 2px 2px rgba(0,0,0,.08),0 8px 4px rgba(0,0,0,.06),0 16px 8px rgba(0,0,0,.04),0 32px 8px rgba(0,0,0,.02)}
+.morebtn .ms{font-size:24px;color:#161616}
 .enrline{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);padding:12px 0;border-bottom:1px solid var(--border-subtle);line-height:var(--lh-sm)}
 .enrline:last-child{border-bottom:none}
 .krow.long{align-items:flex-start;gap:12px}
 .krow.long .k{white-space:normal;line-height:1.45;flex:1}
 .krow.long .v{flex-shrink:0;white-space:nowrap}
 /* 결제내역 우측 스택: 수단(helper)·금액(bold)·상태(helper) */
-.ph-r .ph-m{font-weight:400;color:var(--text-weak);font-size:var(--fs-cap);line-height:1.5}
-.ph-r .ph-a{font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm)}
-.ph-r .ph-st{font-weight:600;color:var(--text-weak);font-size:var(--fs-cap);line-height:1.5}
-.ph-date{font-size:var(--fs-sm);color:var(--text-weak);flex-shrink:0;white-space:nowrap}
-.ph-r .ph-course{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:var(--lh-sm)}
-.ph-r .ph-meta{font-size:var(--fs-cap);color:var(--text-weak);line-height:1.5}
+/* 결제내역 구조 = Figma 1530:1183 (.phitem) */
 .ms.up{color:#0e6027}
 .ms.down{color:#a2191f}
 /* 납부 현황 카드(새 디자인) — 문장 제목·태그·납부기한 */
 .paytitle{font-size:16px;line-height:24px;font-weight:700;color:var(--text-neutral);padding-bottom:16px;border-bottom:1px solid rgba(22,22,22,.96)}
 .paytitle b{font-weight:700;color:var(--interactive)}
-.paysec{border-bottom:1px solid rgba(22,22,22,.48)}
-.paysec:last-child{border-bottom:none}
-.payhead{display:flex;align-items:center;justify-content:space-between;padding:10px 0 8px}
-.paytag{display:inline-flex;align-items:center;font-size:14px;line-height:20px;border:.8px solid;border-radius:4px;padding:0 4px;white-space:nowrap}
+.paysec{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:1px solid rgba(22,22,22,.48)}
+.paysec.last{border-bottom:none;padding-bottom:4px}
+.payitems{display:flex;flex-direction:column;gap:8px;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)}
+.payrow{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:14px;line-height:20px}
+.payrow .pk{display:flex;gap:4px;min-width:0;color:var(--text-neutral)}
+.payrow .pk .plbl{width:64px;flex-shrink:0;color:#16161666}
+.payrow .pk .pdesc{min-width:0;color:var(--text-neutral)}
+.payrow .pk.pdue em{color:#da1e28;font-style:normal}
+.payrow .pv{color:var(--text-neutral);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.payrow .pv.b{font-weight:700}
+.paytag{display:inline-flex;align-items:center;font-size:14px;line-height:20px;font-weight:700;border:.8px solid;border-radius:4px;padding:0 4px;white-space:nowrap;flex-shrink:0}
 .paytag.need{background:#fcf4d6;border-color:#fddc69;color:#684e00}
 .paytag.wait{background:#f4f4f4;border-color:#e0e0e0;color:#525252}
-.paydue2{font-size:14px;color:var(--text-neutral);white-space:nowrap}
-.paydue2 em{color:#da1e28;font-style:normal;margin-left:4px}
-.payrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:14px;line-height:20px;padding:8px 0;border-bottom:1px solid var(--border-subtle)}
-.payrow .pk{color:var(--text-weak)}
-.payrow .pv{color:var(--text-neutral);text-align:right;white-space:nowrap}
-.payrow .pv.b{font-weight:700}
-.payrow.paytot{border-bottom:none}
 .krow .v.blue{color:var(--interactive)}
 /* 동영상 보강(VOD) 행 — 회차 + 상세(마이클래스/시청기한/제공시간) */
 .vrow{padding:12px 0;border-bottom:1px solid var(--border-subtle)}
@@ -474,6 +478,13 @@
 .attag.soon{background:#fff2e8;border-color:#ffd9be;color:#8a3800}
 .attag.soon .ms{color:#8a3800}
 .satq{font-size:14px;line-height:20px;color:var(--text-secondary);margin:2px 2px 0}
+.clist{display:flex;flex-direction:column;gap:8px;padding-top:16px}
+.crow{display:flex;gap:8px;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-subtle)}
+.crow:last-child{border-bottom:none;padding-bottom:0}
+.crow .ck{flex-shrink:0;font-size:14px;line-height:20px;color:#16161666}
+.crow .cv{flex:1;min-width:0;font-size:14px;line-height:20px;color:var(--text-neutral);word-break:keep-all;overflow-wrap:anywhere}
+.crow .cv .sep{color:var(--disabled)}
+.subjtag{flex-shrink:0;font-size:14px;line-height:20px;font-weight:700;color:#525252;background:#f4f4f4;border:.8px solid #e0e0e0;border-radius:4px;padding:0 4px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -608,15 +619,15 @@ const NODES={
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'person_check',go:'at_today'},{t:'보강 확인',ic:'add_notes',go:'at_course'},{t:'입반 강좌 확인',ic:'check_circle',go:'en_check'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
-  at_today(){crumb('출결·보강','오늘 출석 확인');const today=[{c:COURSES[0],time:'13:30-17:05',st:'attend',at:'13:58'},{c:COURSES[2],time:'18:25-22:00',st:'soon'}];card(`<div class="paytitle"><b>오늘(6/24) 출석 현황</b>이에요.</div>`+today.map(t=>`<div class="atblk"><div class="atc">${t.c}</div><div class="krow"><span class="k">수업시간</span><span class="v">${t.time}</span></div><div class="krow"><span class="k">출결상태</span>${t.st==='attend'?`<span class="attag ok">${ms('check_circle','fill')}${t.at}</span>`:`<span class="attag soon">${ms('do_not_disturb_on','fill')}출석예정</span>`}</div></div>`).join(''));navEnd('m_attend',true);},
+  at_today(){crumb('출결·보강','오늘 출석 확인');const today=[{c:COURSES[0],time:'13:30-17:05',st:'attend',at:'13:58'},{c:COURSES[2],time:'18:25-22:00',st:'soon'}];if(!today.length){botSay('오늘(6/24)은 수업이 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>오늘(6/24) 출석 현황</b>이에요.</div>`+today.map(t=>`<div class="atblk"><div class="atc">${t.c}</div><div class="krow"><span class="k">수업시간</span><span class="v">${t.time}</span></div><div class="krow"><span class="k">출결상태</span>${t.st==='attend'?`<span class="attag ok">${ms('check_circle','fill')}${t.at}</span>`:`<span class="attag soon">${ms('do_not_disturb_on','fill')}출석예정</span>`}</div></div>`).join(''));navEnd('m_attend',true);},
   at_course(){crumb('출결·보강','보강 확인');botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
-  en_check(){crumb('출결·보강','입반 강좌 확인');card(`<div class="paytitle"><b>입반된 강좌 현황</b>이에요.</div>`+COURSES.map(c=>`<div class="krow long"><span class="k">${nameOf(c)}</span><span class="v">${schedOf(c)}</span></div>`).join(''));navEnd('m_attend',true);},
+  en_check(){crumb('출결·보강','입반 강좌 확인');if(!COURSES.length){botSay('현재 입반된 강좌가 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>입반된 강좌 현황</b>이에요.</div><div class="clist">`+COURSES.map(c=>`<div class="crow"><span class="subjtag">${subjectOf(c)}</span><div class="cv">${c}</div></div>`).join('')+`</div>`);navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부현황',ic:'account_balance_wallet',go:'pay_wait'},{t:'결제내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
-  pay_wait(){crumb('납부·결제','납부현황');cardLoad(`<div class="paytitle">${PAY_DUE.course}의 <b>납부 현황</b>이에요.</div>${paySec('납부필요',PAY_DUE,'need')}${paySec(PAY_PENDING.label,PAY_PENDING,'wait')}`,6);
+  pay_wait(){crumb('납부·결제','납부현황');cardLoad(`<div class="paytitle">${PAY_DUE.course}의 <b>납부 현황</b>이에요.</div>${paySec('납부필요',PAY_DUE,'need')}${paySec(PAY_PENDING.label,PAY_PENDING,'wait',true)}`,6);
     quick([{t:'납부하기',ic:'credit_card',cta:true,full:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}}]);quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_pay');},
-  pay_history(){crumb('납부·결제','결제내역');cardLoad(`<div class="paytitle"><b>최근 3개월 결제 내역</b>이에요.</div>${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}`,6);navEnd('m_pay',true);},
+  pay_history(){crumb('납부·결제','결제내역');cardLoad(`<div class="paytitle"><b>최근 3개월 결제 내역</b>이에요.</div><div class="phlist">${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}</div>`,6);moreBtn();navEnd('m_pay',true);},
 
   /* ③ 수업·시간표 */
   m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
@@ -640,6 +651,8 @@ const teacherOf=c=>c.split(' ')[0];
 const schedOf=c=>String(c).slice(nameOf(c).length).trim();
 /* 강좌명 표기: 칩·납부·종강일=풀네임(스케줄 포함) / 시간표·결제내역·상세문장=이름만(스케줄 제외) */
 const nameOf=c=>String(c).replace(/\s[월화수목금토일]\s\d.*$/,'');
+function segs(s){return String(s).split(' / ').map(t=>'<span>'+t+'</span>').join('<span class="sep"> / </span>');}
+const subjectOf=c=>(['국어','수학','영어','물리','화학','생명','지구','사회','한국사'].find(s=>String(c).includes(s))||'강좌');
 /* [이전] — 노드키(go) 또는 함수(act) 어느 쪽이든 받음. 모든 2Depth+ 화면에 노출(v6 공통 UX) */
 function back(target){if(typeof target==='function')return{t:'이전',ic:'keyboard_arrow_left',act:target};return{t:'이전',ic:'keyboard_arrow_left',go:target};}
 function courseChips(onPick,backKey){quick([...COURSES.map(c=>({t:c,label:nameOf(c)+'\n'+schedOf(c),plain:true,act:()=>onPick(c)}))]);quick([back(backKey),{t:'처음으로',ic:'home',go:'home'}]);}
@@ -656,8 +669,9 @@ function consultEnd(backTarget){quick([{t:'전화 상담 연결',ic:'call',prima
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 납부 대기(배지+금액) / 결제 내역(수단·금액·상태 우측 스택, 강좌명=이름만) */
 /* 납부 현황 섹션 — [납부필요]/[납부대기·가상계좌] 각각 수강료·교재비·합계·납부기한(·입금계좌) */
-function paySec(label,sec,cls){const rows=sec.items.map(it=>`<div class="payrow"><span class="pk">${it[0]} ${it[1]}</span><span class="pv">${it[2]}</span></div>`).join('');return `<div class="paysec"><div class="payhead"><span class="paytag ${cls}">${label}</span><span class="paydue2">납부기한<em>${sec.due}</em></span></div>${rows}<div class="payrow paytot"><span class="pk">합계</span><span class="pv b">${sec.total}</span></div></div>`;}
-function payHistHtml(r,last){const more=r[5]?' '+r[5]:'';return `<div class="phrow${last?' last':''}"><span class="ph-date">${r[0]}</span><span class="ph-r"><span class="ph-course">${nameOf(r[1])}${more}</span><span class="ph-meta">${r[3]} · ${r[2]}</span>${r[4]?`<span class="ph-st">${r[4]}</span>`:''}</span></div>`;}
+function paySec(label,sec,cls,last){const due=`<div class="payrow"><span class="pk pdue"><span class="plbl">납부기한</span><em>${sec.due}</em></span><span class="paytag ${cls}">${label}</span></div>`;const items=sec.items.map(it=>`<div class="payrow"><span class="pk"><span class="plbl">${it[0]}</span><span class="pdesc">${it[1]}</span></span><span class="pv">${it[2]}</span></div>`).join('');return `<div class="paysec${last?' last':''}"><div class="payitems">${due}${items}</div><div class="payrow paytot"><span class="pk"><span class="plbl">합계</span></span><span class="pv b">${sec.total}</span></div></div>`;}
+function payHistHtml(r,last){const more=r[6]?' '+r[6]:'';const refund=r[5]?`<div class="phrow2"><span class="phlbl">환불금액</span><span class="phval">${r[5]}</span></div>`:'';return `<div class="phitem${last?' last':''}"><div class="phtop"><div class="phmeta"><span class="phdate">${r[0]}</span><span class="phms"><span>${r[2]}</span><span class="sep">/</span><span>${r[3]}</span></span></div><div class="phcourse">${nameOf(r[1])}${more}</div></div><div class="phrow2"><span class="phlbl">결제금액</span><span class="phval">${r[4]}</span></div>${refund}</div>`;}
+function moreBtn(){const r=el(`<div class="row bot fadein"><button class="morebtn"><span>더 보기</span>${ms('keyboard_arrow_down')}</button></div>`);r.querySelector('.morebtn').onclick=()=>toast('최근 3개월 내역을 모두 표시했어요');log.appendChild(r);scrollEnd();}
 
 const VIDEO_MAKEUP={[COURSES[0]]:[
   ['4회차','마이클래스(VOD) / 시청 기한 6/17 / 120분 제공 (120분 시청)'],
@@ -689,17 +703,18 @@ const TT={
 const PAY_DUE={course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','320,000원'],['교재비','국어 리바이벌 패키지','20,000원']],total:'340,000원',due:'6/25'};
 const PAY_PENDING={label:'가상계좌 입금 대기',course:'강은양T 국어 서바이벌 일 13:30-17:05 7/12',items:[['수강료','2회','160,000원']],total:'160,000원',due:'6/30'};
 const PAY_HISTORY=[
-  ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','400,000원','결제완료','외 1건'],
-  ['2026-05-15','박종민T 수학 미적분 목 18:30-22:00 4/30','가상계좌','320,000원','부분환불(환불금액: 100,000원)'],
-  ['2026-05-10','박종민T 수학 서바이벌 실전모의 수 18:25-22:00 7/8','카드(신한)','300,000원','결제완료'],
-  ['2026-05-01','김경욱T 진선1 영어 기말 6+1회 화 18:00-21:00 5/12','카드(국민)','280,000원','결제완료'],
+  /* [날짜 YYYY-MM-DD, 강좌, 결제수단, 상태, 결제금액, 환불금액, 외N건] */
+  ['2026-06-01','강은양T 국어 서바이벌 일 13:30-17:05 7/12','카드(신한)','결제완료','400,000원','','외 1건'],
+  ['2026-05-15','박종민T 수학 미적분 목 18:30-22:00 4/30','가상계좌','부분환불','320,000원','-100,000원',''],
+  ['2026-05-10','박종민T 수학 서바이벌 실전모의 수 18:25-22:00 7/8','카드(신한)','결제완료','300,000원','',''],
+  ['2026-05-01','김경욱T 진선1 영어 기말 6+1회 화 18:00-21:00 5/12','카드(국민)','결제완료','280,000원','',''],
 ];
 
 /* ① 강좌 선택 후 내용 선택 → 동영상 보강 / 타반보강 / 추가영상 (항상 3개 고정, 있음=강은양, 그 외=없음) */
 function atAfter(c){crumb('출결·보강','보강 확인');botSay('어떤 내용을 확인할까요?');quick([{t:'타반보강',ic:'meeting_room',act:()=>atOther(c)},{t:'동영상보강',ic:'subscriptions',act:()=>atVideoMakeup(c)},{t:'추가영상',ic:'library_add',act:()=>atVideoExtra(c)}]);quick([back('at_course'),{t:'처음으로',ic:'home',go:'home'}]);}
-function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(c+'의 동영상보강 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>동영상보강 지급 내역</b>이에요.</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
-function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(c+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>추가영상 내역</b>이에요.</div>`+d.map(r=>`<div class="vrow"><div class="vr-t">${r[0]}</div><div class="vr-d">${r[1]}</div></div>`).join(''));navEnd(()=>atAfter(c),true);}
-function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(c+'의 타반보강 가능 일정이 없어요.\n문의는 하단의 상담 연결 버튼을 통해 진행해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="paytitle">${c}의 <b>타반보강 가능 일정</b>이에요.</div>`+d.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join(''));navEnd(()=>atAfter(c),true);}
+function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(c+'의 동영상보강 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>동영상보강 지급 내역</b>이에요.</div><div class="clist">`+d.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);navEnd(()=>atAfter(c),true);}
+function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(c+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>추가영상 내역</b>이에요.</div><div class="clist">`+d.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);navEnd(()=>atAfter(c),true);}
+function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(c+'의 타반보강 가능 일정이 없어요.\n문의는 하단의 상담 연결 버튼을 통해 진행해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="paytitle">${c}의 <b>타반보강 가능 일정</b>이에요.</div><div class="clist">`+d.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);navEnd(()=>atAfter(c),true);}
 /* ③ 전체 회차 */
 function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,go:'time_rounds'}]);quick([back('time_rounds'),{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="paytitle">${nameOf(c)} <b>전체 일정</b>이에요.</div>`+d.list.map(r=>`<div class="krow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`<div class="src">전체 ${d.total}회 중 ${d.cur}회차 진행 중</div>`);tail();}
 /* ③ 내 시간표 (강좌명=이름만, 시각은 별도 열) */
