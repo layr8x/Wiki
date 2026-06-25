@@ -5,7 +5,8 @@
 > **이게 왜 있나(비유):** 화면을 고칠 때마다 "줄자·사다리(렌더+비교 도구)"를 매번 임시로 새로 만들어 썼는데, 그걸 창고(이 폴더)에 박아둔 것. 다음엔 바로 꺼내 쓴다.
 
 ## 들어있는 것
-- **`sweep.py` — "전 화면 자동 점검" (★ 한 줄 실행).** 모든 화면을 자동 렌더 + 캐시된 Figma 캡처와 나란히 → `out/SWEEP.png` 한 장. 캡처 없는 화면은 목록으로 알려줌.
+- **`sweep.py` — "전 화면 자동 점검" (★ 한 줄 실행).** 모든 화면을 자동 렌더 + Figma 캡처와 나란히 → `out/SWEEP.png` 한 장. 캡처 없는 화면은 목록으로 알려줌.
+- **`fetch_figma.py` — Figma 캡처 자동 다운로드(REST API).** `FIGMA_TOKEN` 환경변수로 screens.json의 모든 노드를 받아 `out/fig_<key>.png` 갱신. 이걸 sweep 앞에 돌리면 **완전 무인**(Claude 개입 0).
 - `render.cjs` — 챗봇 화면 한 개를 **Figma 기준폭 400px + 실제 폰트 주입**으로 충실 렌더 → `out/L_<screen>.png`
 - `compare.py` — Figma 스크린샷과 빌드 렌더를 **나란히(왼 Figma · 오 빌드)** 겹쳐 비교 이미지 생성(한 화면)
 - `screens.json` — 화면 키 → **Figma 노드 ID + 빌드 내비게이션 경로** 지도
@@ -17,8 +18,14 @@ python3 tools/design-audit/sweep.py
 #   --parent : 학부모 페이지   --no-render : 재렌더 생략(빠름)   --cols N : 줄당 화면 수
 #   → out/SWEEP.png (왼=Figma · 오=빌드, 전 화면 한 장)
 ```
-- Figma 캡처(`out/fig_<key>.png`)는 Claude가 Figma MCP `get_screenshot`으로 받아 캐시한다. sweep가 "Figma 캡처 없음" 목록을 출력하면 그 노드만 새로 받으면 됨.
-- 추후 **Figma API 토큰** 연동 시 sweep가 캡처까지 직접 받아 **완전 자동**(사람 개입 0)으로 확장.
+### 완전 무인(Claude 없이) — Figma 캡처도 자동
+```bash
+export FIGMA_TOKEN=figd_xxx          # ★ 비밀키 — 저장소(git) 금지. 환경변수/시크릿에만.
+python3 tools/design-audit/fetch_figma.py   # 전 노드 캡처 자동 다운로드(REST API)
+python3 tools/design-audit/sweep.py         # 대조 → out/SWEEP.png
+```
+- **토큰 보관**: `FIGMA_TOKEN` 환경변수로만. 영구 보관은 git이 아니라 환경설정/시크릿(예: Claude Code 환경변수, Vercel env). 토큰=비밀번호 → 노출 시 Figma에서 재발급(Regenerate).
+- Claude 세션 중엔 `get_screenshot` 캐시로도 됨(`fetch_figma.py` 없이). sweep가 "Figma 캡처 없음"을 출력하면 그 노드만 받으면 됨.
 
 ## ⚠️ 시작 전 — Figma 노드가 살아있는지부터 (★ 반복 실패의 원인이었음)
 - Figma 파일이 재구축되면 **노드 ID가 바뀐다.** `get_screenshot`/`get_design_context`가 `invalid node`면 = 그 노드는 **죽음**.
