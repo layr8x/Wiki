@@ -54,9 +54,10 @@ def fig_tile(key):
     if not os.path.exists(fp) or os.path.getsize(fp) == 0:
         return None
     f = Image.open(fp).convert('RGB')
-    if f.size[0] >= 460:  # 위젯400 + 쉐도우32*2
+    if 460 <= f.size[0] <= 520:  # MCP get_screenshot(464px=위젯400+쉐도우32*2) → 쉐도우 크롭
         l = round(f.size[0] * 32 / 464)
         f = f.crop((l, 0, f.size[0] - l, f.size[1]))
+    # REST API 이미지(scale2, ~800px, 쉐도우 없음)는 크롭 안 함
     return f.resize((W, round(f.size[1] * W / f.size[0])))
 
 def build_tile(key):
