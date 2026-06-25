@@ -487,7 +487,7 @@
 .atblk:last-child{border-bottom:none;padding-bottom:0}
 .atc{font-size:var(--fs-sm);font-weight:400;color:var(--text-neutral);line-height:20px;margin-bottom:2px}
 .atblk .krow{border-bottom:none;padding:5px 0}
-.atblk .krow .k{min-width:64px}
+.atblk .krow .k{min-width:64px;color:var(--placeholder)}
 .atsoon{color:#6929c4;font-weight:700}
 .attag{display:inline-flex;align-items:center;gap:2px;padding:0 4px;border:.8px solid;border-radius:4px;font-size:14px;line-height:20px;font-weight:700;white-space:nowrap}
 .attag .ms{font-size:18px}
@@ -655,12 +655,12 @@ const NODES={
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부현황',ic:'account_balance_wallet',go:'pay_wait'},{t:'결제내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   pay_wait(){crumb('납부·결제','납부현황');cardLoad(`<div class="paytitle">${PAY_DUE.course}의 <b>납부 현황</b>이에요.</div>${paySec('납부필요',PAY_DUE,'need')}${paySec(PAY_PENDING.label,PAY_PENDING,'wait',true)}`,6);
     quick([{t:'납부하기',ic:'credit_card',cta:true,full:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}}]);quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_pay');},
-  pay_history(){crumb('납부·결제','결제내역');cardLoad(`<div class="paytitle"><b>최근 3개월 결제 내역</b>이에요.</div><div class="phlist">${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}</div>`,6);moreBtn();navEnd('m_pay',true);},
+  pay_history(){crumb('납부·결제','결제내역');cardLoad(`<div class="paytitle">최근 3개월 <b>결제 내역</b>이에요.</div><div class="phlist">${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}</div>`,6);moreBtn();navEnd('m_pay',true);},
 
   /* ③ 수업·시간표 */
   m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   time_table(){drawWeek('this');},
-  time_end(){crumb('수업·시간표','종강일');card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${fmtYMD(e[1])}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');},
+  time_end(){crumb('수업·시간표','종강일');card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${fmtYMD(e[1])}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');satis('m_time');},
   time_rounds(){crumb('수업·시간표','전체 회차');botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
 
   /* ④ 전반 — 전반 가능한 강좌 확인하기 */
@@ -753,7 +753,7 @@ function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강
 /* ③ 내 시간표 (강좌명=이름만, 시각은 별도 열) */
 function drawWeek(wk){crumb('수업·시간표','내 시간표');const w=TT[wk];let tt='';w.rows.forEach(x=>{const badge=OTHERCLASS[x[2]]?'<span class="ttbadge">타반보강</span>':'';tt+=`<div class="ttrow2"><div class="ttr-top"><div class="ttr-meta"><span class="ttr-day">${x[0]}</span><span class="ttr-sep">/</span><span class="ttr-time">${x[1]}</span></div>${badge}</div><div class="ttr-bot"><span class="ttr-course">${nameOf(x[2])}</span><span class="ttr-sep">/</span><span class="ttr-room">${x[3]}</span></div></div>`;});card(`<div class="paytitle"><b>${wk==='this'?'이번 주':'다음 주'}(${w.range})</b> 시간표예요.</div><div class="ttwrap">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'event_upcoming',cta:true,full:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))}]);quick([back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
 /* ④ 전반 — 같은 강사 다른 시간대(지점단과별 노출) */
-function altResult(c){const a=ALT_SAME[c];if(!a){botSay('현재 '+teacherOf(c)+' 선생님의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="paytitle">${nameOf(c)}의 <b>다른 시간대 강좌</b>예요.</div><div class="clist">`+a.map(r=>`<div class="crow"><span class="subjtag">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`<div class="endnote" style="padding-top:8px">* 반 변경 신청은 상담을 통해 진행해 주세요.</div></div>`);consultEnd('m_overall');}
+function altResult(c){const a=ALT_SAME[c];if(!a){botSay('현재 '+teacherOf(c)+' 선생님의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="paytitle">${nameOf(c)}의 <b>다른 시간대 강좌</b>예요.</div><div class="clist">`+a.map(r=>`<div class="crow"><div class="cv">${r[0]} <span class="sep">/</span> ${segs(r[1])}</div></div>`).join('')+`<div class="endnote" style="padding-top:8px">* 반 변경 신청은 상담을 통해 진행해 주세요.</div></div>`);consultEnd('m_overall');satis('m_overall');}
 function go(k){__nv++;track('chatbot_node_view',{node_id:k});if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
 
 /* 진입 맥락 배너 */
