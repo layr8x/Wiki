@@ -1,0 +1,115 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<!--
+  tools/report/template.html — 범용 A4 리포트 템플릿.
+  데이터(window.REPORT, JSON)를 받아 KPI·막대·추세·실행카드·표를 자동 렌더한다.
+  gen.cjs 가 REPORT 를 주입하고 Pretendard 폰트를 입혀 PNG/PDF 로 굽는다.
+  데이터 스펙은 README.md / example.json 참고.
+-->
+<style>
+  @page{size:A4;margin:0}
+  :root{
+    --ink:#18181b; --muted:#71717a; --line:#e4e4e7; --bg:#fafafa; --card:#fff;
+    --blue:#2563eb; --blue-soft:#dbeafe; --gray:#d4d4d8; --amber:#d97706;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Pretendard Variable',Pretendard,-apple-system,sans-serif;color:var(--ink);background:var(--bg);
+    font-feature-settings:'ss03' 1,'ss05' 1,'tnum' 1;-webkit-font-smoothing:antialiased}
+  .page{width:794px;min-height:1123px;margin:0 auto;background:var(--bg);padding:36px 40px 28px}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:12px;gap:20px}
+  .title{font-size:23px;font-weight:800;letter-spacing:-.4px}
+  .sub{font-size:12px;color:var(--muted);margin-top:4px}
+  .src{font-size:11px;color:var(--muted);text-align:right;line-height:1.5;white-space:pre-line;flex-shrink:0}
+  .kpis{display:grid;gap:12px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .kpi .k{font-size:11px;color:var(--muted);font-weight:600}
+  .kpi .v{font-size:26px;font-weight:800;letter-spacing:-.6px;margin-top:2px}
+  .kpi .v small{font-size:13px;font-weight:700;color:var(--muted)}
+  .kpi .d{font-size:11px;color:var(--muted);margin-top:3px}
+  .kpi.hl{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
+  .kpi.hl .k,.kpi.hl .d{color:#a1a1aa}
+  .sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px}
+  .sh{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .sh h2{font-size:14px;font-weight:800;letter-spacing:-.2px}
+  .sh .note{font-size:11px;color:var(--muted)}
+  .bars{display:flex;flex-direction:column;gap:9px}
+  .bar{display:grid;grid-template-columns:130px 1fr 60px;align-items:center;gap:10px}
+  .bar .lbl{font-size:12px;font-weight:600;text-align:right;color:#3f3f46;line-height:1.2}
+  .bar .track{height:22px;background:#f4f4f5;border-radius:5px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:5px;background:var(--blue)}
+  .bar .fill.g{background:var(--gray)}
+  .bar .fill.top{background:#0a0a0a}
+  .bar .val{font-size:12px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+  .trend{display:flex;gap:14px;align-items:flex-end;height:150px;padding:0 4px;border-bottom:1px solid var(--line)}
+  .tg{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .tg .pair{display:flex;gap:5px;align-items:flex-end;height:118px}
+  .tg .col{width:22px;border-radius:4px 4px 0 0;position:relative;display:flex;justify-content:center;min-height:2px}
+  .tg .col span{position:absolute;top:-15px;font-size:10px;font-weight:700;white-space:nowrap}
+  .tg .col.a{background:var(--gray)} .tg .col.b{background:var(--blue)}
+  .tg .tl{font-size:11px;font-weight:600;margin-top:6px;text-align:center;color:#3f3f46;line-height:1.25;white-space:pre-line}
+  .legend{display:flex;gap:14px;font-size:11px;color:var(--muted);margin-top:8px;justify-content:flex-end}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .acts{display:grid;gap:10px}
+  .act{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fcfcfc}
+  .act .n{width:20px;height:20px;border-radius:6px;background:#0a0a0a;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .act h3{font-size:12.5px;font-weight:800;margin:7px 0 4px} .act p{font-size:11px;color:#52525b;line-height:1.5}
+  .act .tag{display:inline-block;font-size:10px;font-weight:700;color:var(--blue);background:var(--blue-soft);padding:1px 6px;border-radius:4px;margin-top:6px}
+  table.tbl{width:100%;border-collapse:collapse;font-size:12px}
+  table.tbl th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:6px 8px;border-bottom:1px solid var(--line)}
+  table.tbl td{padding:7px 8px;border-bottom:1px solid #f1f1f3;font-variant-numeric:tabular-nums}
+  table.tbl td:not(:first-child),table.tbl th:not(:first-child){text-align:right}
+  .callout{font-size:11.5px;color:#3f3f46;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.5}
+  .foot{font-size:10px;color:var(--muted);line-height:1.6;margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
+</style></head>
+<body><div class="page" id="page"></div>
+<script>
+function esc(s){return String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function el(html){const d=document.createElement('div');d.innerHTML=html.trim();return d.firstChild;}
+function render(R){
+  const page=document.getElementById('page');
+  // 헤더
+  page.appendChild(el(`<div class="head"><div><div class="title">${esc(R.title)}</div>${R.subtitle?`<div class="sub">${esc(R.subtitle)}</div>`:''}</div><div class="src">${(R.meta||[]).map(esc).join('\n')}</div></div>`));
+  // KPI
+  if(R.kpis&&R.kpis.length){
+    const wrap=el(`<div class="kpis"></div>`);
+    wrap.style.gridTemplateColumns=`repeat(${R.kpis.length},1fr)`;
+    R.kpis.forEach(k=>wrap.appendChild(el(`<div class="kpi${k.hl?' hl':''}"><div class="k">${esc(k.k)}</div><div class="v">${esc(k.v)}${k.unit?`<small>${esc(k.unit)}</small>`:''}</div>${k.d?`<div class="d">${esc(k.d)}</div>`:''}</div>`)));
+    page.appendChild(wrap);
+  }
+  // 블록들
+  (R.blocks||[]).forEach(b=>{
+    const sec=el(`<div class="sec"></div>`);
+    if(b.title||b.note) sec.appendChild(el(`<div class="sh">${b.title?`<h2>${esc(b.title)}</h2>`:''}${b.note?`<span class="note">${esc(b.note)}</span>`:''}</div>`));
+    if(b.type==='bars'){
+      const max=Math.max(...b.items.map(i=>i.value))||1;
+      const bars=el(`<div class="bars"></div>`);
+      b.items.forEach(i=>{const cls=i.top?'top':(i.muted?'g':'');
+        bars.appendChild(el(`<div class="bar"><span class="lbl">${esc(i.label)}</span><div class="track"><div class="fill ${cls}" style="width:${(i.value/max*100).toFixed(1)}%"></div></div><span class="val">${i.display!=null?esc(i.display):i.value.toLocaleString()}</span></div>`));});
+      sec.appendChild(bars);
+      if(b.callout) sec.appendChild(el(`<div class="callout">${b.callout}</div>`));
+    } else if(b.type==='trend'){
+      const max=Math.max(...b.groups.flatMap(g=>[g.a,g.b]))||1;
+      const tr=el(`<div class="trend"></div>`);
+      b.groups.forEach(g=>tr.appendChild(el(`<div class="tg"><div class="pair"><div class="col a" style="height:${(g.a/max*100).toFixed(0)}%"><span>${esc(g.a)}</span></div><div class="col b" style="height:${(g.b/max*100).toFixed(0)}%"><span>${esc(g.b)}</span></div></div><div class="tl">${esc(g.label)}</div></div>`)));
+      sec.appendChild(tr);
+      const lg=b.legend||['이전','최근'];
+      sec.appendChild(el(`<div class="legend"><span><i style="background:#d4d4d8"></i>${esc(lg[0])}</span><span><i style="background:#2563eb"></i>${esc(lg[1])}</span></div>`));
+    } else if(b.type==='actions'){
+      const acts=el(`<div class="acts"></div>`);
+      acts.style.gridTemplateColumns=`repeat(${Math.min(b.items.length,3)},1fr)`;
+      b.items.forEach((a,i)=>acts.appendChild(el(`<div class="act"><div class="n">${a.n||i+1}</div><h3>${esc(a.h)}</h3><p>${esc(a.p)}</p>${a.tag?`<span class="tag">${esc(a.tag)}</span>`:''}</div>`)));
+      sec.appendChild(acts);
+    } else if(b.type==='table'){
+      const t=el(`<table class="tbl"></table>`);
+      t.appendChild(el(`<tr>${b.columns.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>`));
+      b.rows.forEach(r=>t.appendChild(el(`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`)));
+      sec.appendChild(t);
+    } else if(b.type==='note'){
+      sec.appendChild(el(`<div style="font-size:12px;line-height:1.6;color:#3f3f46">${b.html||esc(b.text)}</div>`));
+    }
+    page.appendChild(sec);
+  });
+  if(R.footnote) page.appendChild(el(`<div class="foot">${R.footnote}</div>`));
+}
+if(window.REPORT) render(window.REPORT);
+</script>
+</body></html>
