@@ -263,19 +263,19 @@
   .chip.ghost{background:transparent;border-color:transparent;color:var(--text-weak)}
   .chip.ghost:hover{color:var(--text-secondary)}
   /* ── 상담 연락처 선택 모달(바텀시트) ── */
-  .cmodal-scrim{position:absolute;inset:0;background:rgba(22,22,22,.36);opacity:0;transition:opacity .28s var(--ease);z-index:50}
+  .cmodal-scrim{position:absolute;inset:0;background:rgba(22,22,22,.24);opacity:0;transition:opacity .28s var(--ease);z-index:50}
   .cmodal-scrim.open{opacity:1}
   .cmodal{position:absolute;left:0;right:0;bottom:0;background:var(--bg);border-radius:24px 24px 0 0;padding:28px 20px 20px;z-index:51;transform:translateY(100%);transition:transform .36s var(--ease-ios);display:flex;flex-direction:column;gap:16px;box-shadow:0 -8px 40px rgba(22,22,22,.16)}
   .cmodal.open{transform:translateY(0)}
-  .cm-title{font-size:22px;line-height:30px;font-weight:700;letter-spacing:-.2px;color:var(--text)}
-  .cm-sub{font-size:16px;line-height:24px;color:var(--text-2);margin-top:-8px}
+  .cm-title{font-size:24px;line-height:32px;font-weight:300;letter-spacing:-.3px;color:var(--text)}
+  .cm-sub{font-size:18px;line-height:28px;color:var(--text-2);margin-top:-8px}
   .cm-list{display:flex;flex-direction:column;background:var(--surface);border-radius:16px;overflow:hidden}
   .cm-row{display:flex;align-items:center;gap:12px;padding:18px 16px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border-subtle)}
   .cm-row:last-child{border-bottom:none}
   .cm-row:active{background:var(--border-subtle)}
   .cm-row .ms{font-size:24px;color:var(--text);flex-shrink:0}
-  .cm-row span{font-size:17px;font-weight:600;line-height:24px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
-  .cm-close{background:var(--bg);border:1px solid var(--border-strong);border-radius:16px;padding:18px;font-size:17px;font-weight:600;color:var(--text);font-family:var(--font);cursor:pointer;text-align:center;transition:background-color .16s var(--ease)}
+  .cm-row span{font-size:18px;font-weight:700;line-height:28px;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+  .cm-close{background:var(--bg);border:1px solid var(--border-strong);border-radius:16px;padding:18px;font-size:18px;font-weight:700;color:var(--text);font-family:var(--font);cursor:pointer;text-align:center;transition:background-color .16s var(--ease)}
   .cm-close:active{background:var(--surface)}
   .seg{display:inline-flex;background:var(--fill-subtle);border-radius:12px;padding:3px;gap:2px;margin:2px 0 12px}
   .seg button{border:none;background:transparent;font-family:var(--font);font-size:var(--fs-sm);font-weight:600;color:var(--text-weak);padding:7px 15px;border-radius:9px;cursor:pointer;transition:background-color .22s var(--ease),color .22s var(--ease),box-shadow .22s var(--ease)}
@@ -410,16 +410,16 @@
 .ctxsel .ms:last-child{transition:transform .2s}
 .ctxsel.open .ms:last-child{transform:rotate(180deg)}
 /* 드롭다운 카드 — Figma 1358:128 (radius/xl 12 · shadow-lg · border/primary · 선택행 #e0e0e0 · 체크 #0e6027) */
-.ctxmenu{position:absolute;top:calc(100% + 7px);left:0;z-index:60;width:300px;max-width:calc(100% - 24px);background:var(--bg);border:1px solid #1616167a;border-radius:var(--r-card);box-shadow:var(--shadow-xl);padding:8px;display:none;transform-origin:top left}
+.ctxmenu{position:absolute;top:calc(100% + 7px);left:0;z-index:60;width:300px;max-width:calc(100% - 24px);background:var(--bg);border:1px solid #1616167a;border-radius:16px;box-shadow:var(--shadow-xl);padding:8px;display:none;transform-origin:top left}
 .ctxmenu.open{display:block;animation:ddin .22s var(--ease)}
 @keyframes ddin{from{opacity:0;transform:translateY(-7px) scale(.97)}to{opacity:1;transform:none}}
-.ctxmenu .grp{font-size:12px;font-weight:400;color:var(--text-weak);letter-spacing:0;padding:8px 12px}
+.ctxmenu .grp{font-size:14px;line-height:20px;font-weight:400;color:var(--text-weak);letter-spacing:0;padding:8px 12px 12px}
 .ctxmenu button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;border-radius:var(--r-lg);padding:8px 12px;font:inherit;cursor:pointer;transition:background-color .14s var(--ease)}
 .ctxmenu button:hover{background:var(--fill-subtle)}
 .ctxmenu button.cur{background:var(--fill-subtle)}
 .ctxmenu .ci{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ctxmenu .ci b{font-size:var(--fs-sm);font-weight:700;color:var(--text-neutral);line-height:1.45}
-.ctxmenu .ci em{font-size:var(--fs-cap);font-weight:400;font-style:normal;color:var(--text-weak);line-height:1.5}
+.ctxmenu .ci b{font-size:var(--fs-md);font-weight:700;color:var(--text-neutral);line-height:var(--lh-md)}
+.ctxmenu .ci em{font-size:var(--fs-sm);font-weight:400;font-style:normal;color:var(--text-weak);line-height:var(--lh-sm)}
 .ctxmenu .ck{margin-left:auto;flex-shrink:0;width:24px;height:24px;position:relative;display:flex;align-items:center;justify-content:center;animation:ckpop .24s var(--ease)}
 .ctxmenu .ck::before{content:"";position:absolute;width:18px;height:18px;border-radius:50%;background:#0e6027}
 .ctxmenu .ck .ms{position:relative;font-size:14px;color:#fff}
@@ -480,7 +480,7 @@
 .krow.tot .k,.krow.tot .v{font-weight:700;color:var(--text-neutral)}
 .paysec-gap{height:16px}
 /* 각주(강좌 선택 등) */
-.ftn{font-size:12px;color:var(--helper);font-weight:400;display:inline-block;margin-top:6px;line-height:1.5}
+.ftn{font-size:14px;color:var(--helper);font-weight:400;display:inline-block;margin-top:6px;line-height:20px}
 .crumb-sep{color:var(--disabled);margin:0 4px}
 .atblk{padding:8px 0;border-bottom:1px solid var(--border-subtle)}
 .atblk:first-of-type{padding-top:2px}
@@ -648,20 +648,20 @@ const NODES={
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
   m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'person_check',go:'at_today'},{t:'보강 확인',ic:'add_notes',go:'at_course'},{t:'입반 강좌 확인',ic:'check_circle',go:'en_check'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   at_today(){crumb('출결·보강','오늘 출석 확인');const today=[{c:COURSES[0],time:'13:30-17:05',st:'attend',at:'13:58'},{c:COURSES[2],time:'18:25-22:00',st:'soon'}];if(!today.length){botSay('오늘(6/24)은 수업이 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>오늘(6/24) 출석 현황</b>이에요.</div>`+today.map(t=>`<div class="atblk"><div class="atc">${t.c}</div><div class="krow"><span class="k">수업시간</span><span class="v">${t.time}</span></div><div class="krow"><span class="k">출결상태</span>${t.st==='attend'?`<span class="attag ok">${ms('check_circle','fill')}${t.at}</span>`:`<span class="attag soon">${ms('do_not_disturb_on','fill')}출석예정</span>`}</div></div>`).join(''));navEnd('m_attend',true);},
-  at_course(){crumb('출결·보강','보강 확인');botSay('어떤 강좌를 확인할까요?<br><span class="ftn">*입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
+  at_course(){crumb('출결·보강','보강 확인');if(!COURSES.length){botSay('현재 입반 중인 강좌가 없어요.');navEnd('m_attend',false);return;}botSay('어떤 강좌를 확인할까요?<br><span class="ftn">* 입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
   en_check(){crumb('출결·보강','입반 강좌 확인');if(!COURSES.length){botSay('현재 입반된 강좌가 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>입반된 강좌 현황</b>이에요.</div><div class="clist">`+COURSES.map(c=>`<div class="crow"><span class="subjtag">${subjectOf(c)}</span><div class="cv">${c}</div></div>`).join('')+`</div>`);navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부현황',ic:'account_balance_wallet',go:'pay_wait'},{t:'결제내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
-  pay_wait(){crumb('납부·결제','납부현황');cardLoad(`<div class="paytitle">${PAY_DUE.course}의 <b>납부 현황</b>이에요.</div>${paySec('납부필요',PAY_DUE,'need')}${paySec(PAY_PENDING.label,PAY_PENDING,'wait',true)}`,6);
+  pay_wait(){crumb('납부·결제','납부현황');if((!PAY_DUE||!PAY_DUE.items.length)&&(!PAY_PENDING||!PAY_PENDING.items.length)){botSay('모든 수강료가 납부 완료됐어요.');navEnd('m_pay',false);return;}cardLoad(`<div class="paytitle">${PAY_DUE.course}의 <b>납부 현황</b>이에요.</div>${paySec('납부필요',PAY_DUE,'need')}${paySec(PAY_PENDING.label,PAY_PENDING,'wait',true)}`,6);
     quick([{t:'납부하기',ic:'credit_card',cta:true,full:true,act:()=>{botSay('마이클래스 <b>납부하기</b> 화면으로 이동해 결제할게요. 외부 결제창으로 잠깐 넘어갔다 돌아와요.');quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);}}]);quick([back('m_pay'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_pay');},
-  pay_history(){crumb('납부·결제','결제내역');cardLoad(`<div class="paytitle">최근 3개월 <b>결제 내역</b>이에요.</div><div class="phlist">${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}</div>`,6);moreBtn();navEnd('m_pay',true);},
+  pay_history(){crumb('납부·결제','결제내역');if(!PAY_HISTORY.length){botSay('결제 내역이 없어요.');navEnd('m_pay',false);return;}cardLoad(`<div class="paytitle">최근 3개월 <b>결제 내역</b>이에요.</div><div class="phlist">${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}</div>`,6);moreBtn();navEnd('m_pay',true);},
 
   /* ③ 수업·시간표 */
   m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   time_table(){drawWeek('this');},
-  time_end(){crumb('수업·시간표','종강일');card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${fmtYMD(e[1])}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');satis('m_time');},
-  time_rounds(){crumb('수업·시간표','전체 회차');botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
+  time_end(){crumb('수업·시간표','종강일');if(!ENDDATES.length){botSay('종강일 정보를 불러올 수 없어요.\n상담실로 문의해 주세요.');consultEnd('m_time');return;}card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${fmtYMD(e[1])}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');satis('m_time');},
+  time_rounds(){crumb('수업·시간표','강좌별 전체 회차 일정');botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
 
   /* ④ 전반 — 전반 가능한 강좌 확인하기 */
   m_overall(){crumb('전반');botSay('전반 가능한 강좌를 확인해 드릴게요.\n어떤 강좌를 확인할까요?');quick([...OVERALL.map(o=>({t:o.c,label:nameOf(o.c)+'\n'+schedOf(o.c),plain:true,act:()=>altResult(o.c)}))]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
@@ -696,7 +696,7 @@ function navEnd(backTarget,withSatis){quick([back(backTarget),{t:'처음으로',
 /* 상담으로 끝나는 화면 — v6: [전화 상담 연결][이전][처음으로] (상담 등록 버튼 제거). 만족도 미노출 */
 function consultEnd(backTarget){quick([{t:'상담 연결',ic:'call',primary:true,full:true,keep:true,act:()=>openConsultModal()}],false);quick([back(backTarget),{t:'처음으로',ic:'home',go:'home'}]);}
 /* 상담 연결 = 지점별 연락처 선택 모달(바텀시트). 클릭 시 tel: 통화 연결 */
-function openConsultModal(){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const list=(cp.contacts&&cp.contacts.length)?cp.contacts:(cp.phone?[['상담실',cp.phone]]:[]);closeConsultModal();const sh=document.getElementById('sheet');if(!sh)return;const scrim=el(`<div class="cmodal-scrim" id="cmScrim"></div>`);const rows=list.map(c=>`<a class="cm-row" href="tel:${String(c[1]).replace(/[^0-9]/g,'')}">${ms('call')}<span>${c[0]} : ${c[1]}</span></a>`).join('');const m=el(`<div class="cmodal" id="cmodal" role="dialog" aria-modal="true" aria-label="상담 연락처 선택"><div class="cm-title">상담하실 지점을 선택해 주세요.</div><div class="cm-sub">아래의 연락처를 누르면 통화가 연결됩니다.</div><div class="cm-list">${rows}</div><button class="cm-close" type="button">닫기</button></div>`);sh.appendChild(scrim);sh.appendChild(m);scrim.onclick=closeConsultModal;m.querySelector('.cm-close').onclick=closeConsultModal;requestAnimationFrame(()=>{scrim.classList.add('open');m.classList.add('open');});}
+function openConsultModal(){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const list=(cp.contacts&&cp.contacts.length)?cp.contacts:(cp.phone?[['상담실',cp.phone]]:[]);closeConsultModal();const sh=document.getElementById('sheet');if(!sh)return;const scrim=el(`<div class="cmodal-scrim" id="cmScrim"></div>`);const rows=list.map(c=>`<a class="cm-row" href="tel:${String(c[1]).replace(/[^0-9]/g,'')}">${ms('phone_in_talk')}<span>${c[0]} : ${c[1]}</span></a>`).join('');const m=el(`<div class="cmodal" id="cmodal" role="dialog" aria-modal="true" aria-label="상담 연락처 선택"><div class="cm-title">상담하실 지점을 선택해 주세요.</div><div class="cm-sub">아래의 연락처를 누르면 통화가 연결됩니다.</div><div class="cm-list">${rows}</div><button class="cm-close" type="button">닫기</button></div>`);sh.appendChild(scrim);sh.appendChild(m);scrim.onclick=closeConsultModal;m.querySelector('.cm-close').onclick=closeConsultModal;requestAnimationFrame(()=>{scrim.classList.add('open');m.classList.add('open');});}
 function closeConsultModal(){const m=document.getElementById('cmodal'),s=document.getElementById('cmScrim');if(m){m.classList.remove('open');setTimeout(()=>{try{m.remove();}catch(_){}},300);}if(s){s.classList.remove('open');setTimeout(()=>{try{s.remove();}catch(_){}},300);}}
 /* v6: 전화 상담 연결 클릭 시 지점 전화번호 노출 */
 function phoneConnect(backTarget){track('chatbot_phone');const cp=CAMPUSES[CTX.campus]||{};const phone=(cp.phone||'').trim();let night='';try{const h=new Date().getHours();if(h>=22||h<8)night='<br><span class="ftn">지금은 야간(22:00~08:00)이라 연결이 어려울 수 있어요. 운영 시간에 다시 시도해 주세요.</span>';}catch(_){}botSay('<b>{지점} 캠퍼스 상담실</b>로 연결해 드릴게요.'+(phone?`<br>전화번호 <b>${phone}</b>`:'')+night);quick([back(backTarget||'home'),{t:'처음으로',ic:'home',go:'home'}]);}
@@ -749,11 +749,11 @@ function atVideoMakeup(c){const d=VIDEO_MAKEUP[c];if(!d){botSay(c+'의 동영상
 function atVideoExtra(c){const d=VIDEO_EXTRA[c];if(!d){botSay(c+'의 추가영상 내역이 없어요.');navEnd(()=>atAfter(c),false);return;}card(`<div class="paytitle">${c}의 <b>추가영상 내역</b>이에요.</div><div class="clist">`+d.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);navEnd(()=>atAfter(c),true);}
 function atOther(c){const d=OTHERCLASS[c];if(!d){botSay(c+'의 타반보강 가능 일정이 없어요.\n문의는 하단의 상담 연결 버튼을 통해 진행해 주세요.');consultEnd(()=>atAfter(c));return;}card(`<div class="paytitle">${c}의 <b>타반보강 가능 일정</b>이에요.</div><div class="clist">`+d.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);navEnd(()=>atAfter(c),true);}
 /* ③ 전체 회차 */
-function roundsResult(c){const d=ROUNDS[c];const tail=()=>{quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,full:true,go:'time_rounds'}]);quick([{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');};if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');tail();return;}card(`<div class="paytitle">${c} <b>전체 일정</b>이에요.</div><div class="clist">`+d.list.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);tail();}
+function roundsResult(c){const d=ROUNDS[c];if(!d){botSay('회차 일정 정보를 불러올 수 없어요.');quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,full:true,go:'time_rounds'}]);quick([back('time_rounds'),{t:'처음으로',ic:'home',go:'home'}]);return;}card(`<div class="paytitle">${c} <b>전체 일정</b>이에요.</div><div class="clist">`+d.list.map(r=>`<div class="crow"><span class="ck">${r[0]}</span><div class="cv">${segs(r[1])}</div></div>`).join('')+`</div>`);quick([{t:'다른 강좌 보기',ic:'calendar_view_month',cta:true,full:true,go:'time_rounds'}]);quick([{t:'처음으로',ic:'home',go:'home'}]);satis('time_rounds');}
 /* ③ 내 시간표 (강좌명=이름만, 시각은 별도 열) */
-function drawWeek(wk){crumb('수업·시간표','내 시간표');const w=TT[wk];let tt='';w.rows.forEach(x=>{const badge=OTHERCLASS[x[2]]?'<span class="ttbadge">타반보강</span>':'';tt+=`<div class="ttrow2"><div class="ttr-top"><div class="ttr-meta"><span class="ttr-day">${x[0]}</span><span class="ttr-sep">/</span><span class="ttr-time">${x[1]}</span></div>${badge}</div><div class="ttr-bot"><span class="ttr-course">${nameOf(x[2])}</span><span class="ttr-sep">/</span><span class="ttr-room">${x[3]}</span></div></div>`;});card(`<div class="paytitle"><b>${wk==='this'?'이번 주':'다음 주'}(${w.range})</b> 시간표예요.</div><div class="ttwrap">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'event_upcoming',cta:true,full:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))}]);quick([back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
+function drawWeek(wk){crumb('수업·시간표','내 시간표');const w=TT[wk];if(!w.rows.length){botSay((wk==='this'?'이번 주':'다음 주')+'('+w.range+')는 수업이 없어요.');quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'event_upcoming',cta:true,full:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))}]);quick([back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);return;}let tt='';w.rows.forEach(x=>{const badge=OTHERCLASS[x[2]]?'<span class="ttbadge">타반보강</span>':'';tt+=`<div class="ttrow2"><div class="ttr-top"><div class="ttr-meta"><span class="ttr-day">${x[0]}</span><span class="ttr-sep">/</span><span class="ttr-time">${x[1]}</span></div>${badge}</div><div class="ttr-bot"><span class="ttr-course">${nameOf(x[2])}</span><span class="ttr-sep">/</span><span class="ttr-room">${x[3]}</span></div></div>`;});card(`<div class="paytitle"><b>${wk==='this'?'이번 주':'다음 주'}(${w.range})</b> 시간표예요.</div><div class="ttwrap">${tt}</div>`);quick([{t:wk==='this'?'다음 주 보기':'이번 주 보기',ic:'event_upcoming',cta:true,full:true,silent:true,act:()=>typeThen(()=>drawWeek(wk==='this'?'next':'this'))}]);quick([back('m_time'),{t:'처음으로',ic:'home',go:'home'}]);satis('m_time');}
 /* ④ 전반 — 같은 강사 다른 시간대(지점단과별 노출) */
-function altResult(c){const a=ALT_SAME[c];if(!a){botSay('현재 '+teacherOf(c)+' 선생님의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="paytitle">${nameOf(c)}의 <b>다른 시간대 강좌</b>예요.</div><div class="clist">`+a.map(r=>`<div class="crow"><div class="cv">${r[0]} <span class="sep">/</span> ${segs(r[1])}</div></div>`).join('')+`<div class="endnote" style="padding-top:8px">* 반 변경 신청은 상담을 통해 진행해 주세요.</div></div>`);consultEnd('m_overall');satis('m_overall');}
+function altResult(c){crumb('전반','전반 가능한 강좌 확인');const a=ALT_SAME[c];if(!a){botSay('현재 '+nameOf(c)+'의 다른 시간대 강좌가 없어요.\n정확한 일정은 상담을 통해 확인해 주세요.');consultEnd('m_overall');return;}card(`<div class="paytitle">${nameOf(c)}의 <b>다른 시간대 강좌</b>예요.</div><div class="clist">`+a.map(r=>`<div class="crow"><div class="cv">${r[0]} <span class="sep">/</span> ${segs(r[1])}</div></div>`).join('')+`<div class="endnote" style="padding-top:8px">* 반 변경 신청은 상담을 통해 진행해 주세요.</div></div>`);consultEnd('m_overall');satis('m_overall');}
 function go(k){__nv++;track('chatbot_node_view',{node_id:k});if(NODES[k])NODES[k]();else{botSay('처음으로 돌아갈게요.');NODES.home();}}
 
 /* 진입 맥락 배너 */
