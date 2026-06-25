@@ -1,29 +1,21 @@
-name: 카카오 상담 수집 (5분마다)
+name: 카카오 상담 수집 (수동 폴백 — 주 수집은 Supabase Edge Function)
 
-# 항상 켜진 GitHub 클라우드에서 카카오 파트너센터 상담 채팅을 주기적으로 수집한다.
-# (기존: 사용자 맥북의 launchd 데몬 → 노트북이 꺼지면 수집 중단. 이 워크플로는 노트북과
-#  무관하게 상시 수집한다.)
+# ⚠️ 2026-06 이전: 주 수집을 GitHub Actions → Supabase Edge Function(kakao-collect)으로 옮김.
+#   이유: 비공개 저장소 Actions 무료시간(월 ~2,000분)이 5분마다 실행으로 매달 소진돼,
+#   작업이 "러너 미배정"으로 즉시 실패하고 수집이 멈췄다(6/18~). Edge Function 은 항상 켜진
+#   Supabase 안에서 직접 돌아 Actions 사용시간 0 → 매달 멈추는 일이 사라진다.
+#   - 함수: supabase/functions/kakao-collect/index.ts
+#   - 트리거: Supabase pg_cron 'kakao-collect-dispatch' → net.http_post → 함수(5분마다)
+#   - 전환 마이그레이션: supabase/migrations/20260625_kakao_collect_edge_function.sql
 #
-# ⚠️ 스케줄(cron) 워크플로는 기본 브랜치(main)에 머지된 뒤부터 실제로 돌기 시작한다.
+# 이 워크플로는 Edge Function 장애 시 쓰는 '수동 폴백'으로만 남긴다(자동 스케줄 제거).
+# 수동 실행: Actions 탭 → 이 워크플로 → Run workflow. (그때만 Actions 시간 소량 사용)
 #
-# 필요한 저장소 Secrets (Settings → Secrets and variables → Actions → New repository secret):
-#   - KAKAO_PARTNER_COOKIE        : 카카오 파트너센터 로그인 쿠키 (보통 1~4주마다 갱신 필요)
-#   - SUPABASE_URL                : Supabase 프로젝트 URL
-#   - SUPABASE_SERVICE_ROLE_KEY   : Supabase service_role 키 (RLS 우회 — 절대 공개 금지)
-# 선택 Variables:
-#   - KAKAO_PARTNER_PROFILE_IDS   : 수집할 채널 ID(CSV). 미설정 시 아래 기본값 사용.
-#
-# 쿠키가 만료되면 이 워크플로가 "실패"로 끝나며 GitHub 이 저장소 소유자에게 알림 메일을
-# 보낸다 → 그때 KAKAO_PARTNER_COOKIE Secret 만 새 값으로 갱신하면 된다.
-
-# ✅ 실제 "5분마다"의 신뢰성 트리거는 Supabase pg_cron 이 담당한다(항상 켜진 DB → 정확).
-#    Supabase 가 5분마다 아래 workflow_dispatch 를 호출(pg_net)해 이 워크플로를 깨운다.
-#    설정: supabase/migrations/20260617_kakao_collect_pg_cron_dispatch.sql, 문서: docs §12.
-#    아래 schedule(GitHub 자체 cron)은 베스트에포트 백업으로 남겨둔다(중복은 멱등 upsert 로 무해).
+# 필요한 저장소 Secrets (수동 실행 시): KAKAO_PARTNER_COOKIE, SUPABASE_URL,
+#   SUPABASE_SERVICE_ROLE_KEY. 선택 Variables: KAKAO_PARTNER_PROFILE_IDS.
 on:
-  schedule:
-    - cron: '*/5 * * * *'   # 백업용 (GitHub 자체 cron; 부하 시 지연·누락 가능 → Supabase 가 보완)
-  workflow_dispatch: {}     # 수동 실행 버튼 + Supabase pg_cron 이 호출하는 진입점
+  # 자동 schedule 제거됨 — 주 수집은 Supabase Edge Function 이 담당(Actions 0).
+  workflow_dispatch: {}     # 수동 실행 전용(폴백)
 
 # 이전 실행이 안 끝났으면 새 실행을 대기시켜 중복 수집 방지.
 concurrency:
