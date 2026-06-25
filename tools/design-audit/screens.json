@@ -1,0 +1,29 @@
+{
+  "_comment": "챗봇 화면 → Figma 노드 + 빌드 내비게이션 경로 지도. design-audit 툴킷이 이 파일을 읽어 화면을 렌더한다.",
+  "fileKey": "6PSg6RlWrjpnNYk1zirmUp",
+  "phoneWidth": 400,
+  "phoneHeight": 866,
+  "htmlStudent": "public/myclass-chatbot.html",
+  "htmlParent": "public/myclass-chatbot-parent.html",
+  "screens": {
+    "home":        { "figma": "1265:720",   "nav": [] },
+    "m_attend":    { "figma": null,          "nav": ["출결·보강"], "note": "메뉴 진입 — Figma는 빈 템플릿(공통 패턴)" },
+    "at_today":    { "figma": "1519:15645",  "nav": ["출결·보강", "오늘 출석 확인"] },
+    "at_course":   { "figma": null,          "nav": ["출결·보강", "보강 확인"], "note": "강좌선택 — Figma 디자인 없음" },
+    "atafter":     { "figma": "1519:14686",  "nav": ["출결·보강", "보강 확인", "강은양T 국어 서바이벌 일 13:30-17:05 7/12"] },
+    "other":       { "figma": "1519:14736",  "nav": ["출결·보강", "보강 확인", "강은양T 국어 서바이벌 일 13:30-17:05 7/12", "타반보강"] },
+    "other_empty": { "figma": "1519:14712",  "nav": ["출결·보강", "보강 확인", "박종민T 수학 미적분 목 18:30-22:00 4/30", "타반보강"], "note": "타반보강 없음 → 상담 연결" },
+    "vod":         { "figma": "1519:14803",  "nav": ["출결·보강", "보강 확인", "강은양T 국어 서바이벌 일 13:30-17:05 7/12", "동영상보강"], "note": "토큰 신스케일(space/md=12)" },
+    "extra":       { "figma": "1519:14900",  "nav": ["출결·보강", "보강 확인", "강은양T 국어 서바이벌 일 13:30-17:05 7/12", "추가영상"] },
+    "en_check":    { "figma": "1519:17139",  "nav": ["출결·보강", "입반 강좌 확인"] },
+    "m_pay":       { "figma": null,          "nav": ["납부·결제"] },
+    "pay_wait":    { "figma": "1526:2267",   "nav": ["납부·결제", "납부현황"] },
+    "pay_history": { "figma": "1530:1183",   "nav": ["납부·결제", "결제내역"] },
+    "m_time":      { "figma": null,          "nav": ["수업·시간표"] },
+    "time_table":  { "figma": "1537:3331",   "nav": ["수업·시간표", "내 시간표"] },
+    "time_end":    { "figma": "1540:1818",   "nav": ["수업·시간표", "종강일 확인"], "note": "토큰 구스케일(space/md=16)" },
+    "rounds":      { "figma": "1539:1458",   "nav": ["수업·시간표", "강좌별 전체 회차 일정", "강은양T 국어 서바이벌 일 13:30-17:05 7/12"] },
+    "m_overall":   { "figma": null,          "nav": ["전반"] },
+    "altresult":   { "figma": "1540:2802",   "nav": ["전반", "강은양T 국어 서바이벌 일 13:30-17:05 7/12"] }
+  }
+}

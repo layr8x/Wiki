@@ -260,3 +260,14 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 ## 13-9. 챗봇 기준폭 = Figma 400px (헤드리스 폰트 함정)
 - **`.phone` 모바일 목업 폭 430→400**(높이 866)으로 Figma 디자인 기준폭에 정합. (옛 430px는 Figma 400px보다 7.5% 넓어 전체가 커 보였음.)
 - **헤드리스 검증 함정**: Playwright 헤드리스는 Pretendard(jsdelivr)·Material Symbols(gstatic) **CDN 차단** → 대체 폰트(글자 더 큼)로 렌더돼 "빌드가 10% 크다"는 착시 발생. **실측 = `page.route`로 jsdelivr Pretendard·gstatic 폰트를 로컬 woff2/ttf로 fulfill + `.phone` 400 override 후 `#sheet`를 Figma `get_screenshot`(widget 400px crop)과 1:1 대조.** 폰트 로드(`document.fonts.check`로 확인) 안 하면 크기 비교 무의미.
+
+# 14. ★ 디자인 대조 툴킷 = `tools/design-audit/` (★ 매 세션 렌더환경 재구축 금지)
+
+> §13-9의 "헤드리스 폰트 주입 + 400px 1:1 대조" 절차를 **저장소에 영구 도구화**함. 화면 정합 작업 전 **먼저 이걸 쓸 것**(임시 스크립트 새로 만들지 말 것).
+
+- **`tools/design-audit/render.cjs <screen> [--parent] [--full]`** — 챗봇 화면을 Figma 기준폭 400px + 로컬 폰트(fonts/) 주입으로 충실 렌더 → `out/L_<screen>.png`. (CDN 차단 우회 내장. `node`로 실행, 전역 Playwright 자동 탐색.)
+- **`tools/design-audit/compare.py <figma.png> <build.png> <out.png> [fig_top]`** — Figma 스크린샷 vs 빌드 렌더 나란히(왼 Figma·오 빌드).
+- **`tools/design-audit/screens.json`** — 화면키 → Figma 노드ID + 내비게이션 경로 지도(전 화면). Figma 노드는 여기서 회수.
+- **`tools/design-audit/fonts/`** — Pretendard·Material Symbols Rounded wght300(동봉, 재다운 불필요).
+- **절차**: ①`render.cjs <screen>` 으로 빌드 렌더 → ②`get_screenshot(node)` URL을 `out/fig_*.png`로 curl → ③`compare.py`로 비교 → ④`get_design_context(node)`로 정확 토큰 확인 후 수정. **검증 전 "완료" 금지.**
+- 토큰스케일 불일치(출결 12 / 나머지 16, 사용자 16 통일)·의도된 콘텐츠차(실강좌4·맞춤법·YY/MM/DD)는 README 참고.
