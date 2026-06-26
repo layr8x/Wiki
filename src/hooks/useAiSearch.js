@@ -32,10 +32,10 @@ export function useAiSearch(query, enabled = true) {
     const timer = setTimeout(async () => {
       setState(prev => ({ ...prev, status: 'loading', error: null }))
       try {
-        const res = await fetch('/api/ai-search', {
+        const res = await fetch('/api/search-summary', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ query: q }),
+          body: JSON.stringify({ mode: 'ai-search', query: q }),
           signal: ctrl.signal,
         })
         if (res.status === 503) {
