@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AMS LNB 리디자인 — LUMEN 디자인시스템</title>
+<style>
+/* ───────── LUMEN(HICONSY Design System) 토큰 — light theme, Carbon 기반 ─────────
+   ⚠ 모든 색·간격·라운드는 myclass_designsystem 토큰에 1:1 매핑됨(주석에 토큰명).        */
+:root{
+  /* color · interactive (base/blue) */
+  --interactive-primary:#0043ce;   /* interactive/primary  · base/blue/70 */
+  --interactive-hover:#002d9c;     /* interactive/hover     · base/blue/80 */
+  --interactive-active:#001d6c;    /* interactive/active    · base/blue/90 */
+  --interactive-disabled:#c6c6c6;  /* interactive/disabled  · base/gray/30 */
+  /* color · text */
+  --text-primary:#161616;          /* text/primary    · base/gray/100 */
+  --text-secondary:rgba(22,22,22,.72); /* text/secondary */
+  --text-helper:rgba(22,22,22,.64);    /* text/helper */
+  --text-placeholder:rgba(22,22,22,.40);
+  --text-on-color:#ffffff;         /* text/on-color */
+  --text-interactive:#0043ce;      /* text/interactive · base/blue/70 */
+  /* color · icon */
+  --icon-primary:#161616;          /* icon/primary */
+  --icon-secondary:rgba(22,22,22,.68); /* icon/secondary */
+  --icon-interactive:#0043ce;      /* icon/interactive */
+  --icon-on-color:#ffffff;
+  /* color · surface */
+  --background-primary:#ffffff;    /* background/primary · ui-background */
+  --background-secondary:#f4f4f4;  /* background/secondary · base/gray/10 */
+  --background-hover:#e8e8e8;      /* layer hover */
+  --background-selected:#e0e0e0;   /* base/gray/20 */
+  --field-primary:#f4f4f4;         /* field/primary · base/gray/10 */
+  /* color · border */
+  --border-subtle:rgba(0,0,0,.08); /* border/primary · transparent-black/8 */
+  --border-strong:#c6c6c6;         /* base/gray/30 */
+  --border-interactive:#0043ce;    /* border/interactive */
+  /* feedback */
+  --support-error:#da1e28;         /* support/error · base/red/60 */
+  --support-warning:#f1c21b;
+  /* spacing (Carbon spacing scale) */
+  --sp-2:2px; --sp-4:4px; --sp-8:8px; --sp-12:12px; --sp-16:16px; --sp-24:24px; --sp-32:32px;
+  /* radius */
+  --radius-sm:4px;  /* radius/sm */
+  --radius-md:8px;  /* radius/md */
+  /* shell metrics */
+  --sb:256px;       /* 사이드바/헤더 브랜드영역 공유 폭 (확장) */
+  --header-h:56px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Pretendard','Pretendard Variable',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  color:var(--text-primary);
+  background:var(--background-secondary);
+  -webkit-font-smoothing:antialiased;
+  font-size:14px; line-height:1.45;
+}
+.app{display:flex;flex-direction:column;height:100vh;}
+.ms{display:inline-flex;width:1em;height:1em;flex:none;}
+.ms svg{width:100%;height:100%;fill:currentColor;display:block;}
+
+/* ───────── HEADER (full-width, 56) ───────── */
+.header{
+  height:var(--header-h); flex:none; display:flex; align-items:stretch;
+  background:var(--background-primary); border-bottom:1px solid var(--border-subtle);
+  position:relative; z-index:20;
+}
+.header__brand{
+  width:var(--sb); flex:none; display:flex; align-items:center; gap:var(--sp-4);
+  padding-left:var(--sp-8); padding-right:var(--sp-12);
+  border-right:1px solid var(--border-subtle);
+  transition:width .22s cubic-bezier(.2,0,.2,1);
+  overflow:hidden;
+}
+.iconbtn{
+  width:40px;height:40px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  border:none;background:transparent;border-radius:var(--radius-sm);cursor:pointer;
+  color:var(--icon-primary);font-size:22px;
+}
+.iconbtn:hover{background:var(--background-hover);}
+.logo{
+  width:26px;height:26px;flex:none;border-radius:7px;
+  background:linear-gradient(135deg,#0f62fe 0%,#0043ce 60%,#001d6c 100%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18), 0 1px 2px rgba(0,29,108,.35);
+  position:relative;
+}
+.logo::after{content:"";position:absolute;inset:6px;border-radius:3px;
+  background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 55%);}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.2px;white-space:nowrap;color:var(--text-primary);}
+.header__content{flex:1;display:flex;align-items:center;justify-content:space-between;padding:0 var(--sp-16);min-width:0;}
+
+/* breadcrumb */
+.crumb{display:flex;align-items:center;gap:var(--sp-8);font-size:13px;color:var(--text-secondary);min-width:0;}
+.crumb .sep{color:var(--text-placeholder);}
+.crumb .cur{color:var(--text-primary);font-weight:600;}
+
+/* right action cluster */
+.actions{display:flex;align-items:center;gap:var(--sp-8);}
+.pos{display:flex;align-items:center;gap:var(--sp-8);font-size:13px;color:var(--text-secondary);white-space:nowrap;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--support-error);flex:none;
+  box-shadow:0 0 0 3px rgba(218,30,40,.14);}
+.ghostbtn{
+  display:inline-flex;align-items:center;gap:var(--sp-4);height:32px;padding:0 var(--sp-12);
+  border:1px solid var(--border-subtle);background:var(--background-primary);border-radius:var(--radius-sm);
+  font-size:13px;color:var(--text-primary);cursor:pointer;white-space:nowrap;
+}
+.ghostbtn:hover{background:var(--background-hover);}
+.ghostbtn .ms{font-size:16px;color:var(--icon-secondary);}
+.vline{width:1px;height:20px;background:var(--border-subtle);margin:0 var(--sp-4);}
+.chip{
+  display:inline-flex;align-items:center;gap:var(--sp-4);height:36px;padding:0 var(--sp-8);
+  border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text-primary);white-space:nowrap;
+}
+.chip:hover{background:var(--background-hover);}
+.chip .ms{font-size:18px;color:var(--icon-secondary);}
+.chip .caret{font-size:18px;color:var(--icon-secondary);}
+.chip .uname{font-weight:600;}
+
+/* ───────── BODY ───────── */
+.body{display:flex;flex:1;min-height:0;}
+
+/* ───────── SIDEBAR (Carbon UI-Shell SideNav) ───────── */
+.sidebar{
+  width:var(--sb);flex:none;background:var(--background-primary);
+  border-right:1px solid var(--border-subtle);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:width .22s cubic-bezier(.2,0,.2,1);
+}
+.nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:var(--sp-8) 0 var(--sp-32);}
+.nav::-webkit-scrollbar{width:8px;}
+.nav::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:4px;}
+
+/* group */
+.group{display:flex;flex-direction:column;}
+.grp-head{
+  display:flex;align-items:center;gap:var(--sp-12);height:44px;padding:0 var(--sp-16);
+  border:none;background:transparent;cursor:pointer;width:100%;text-align:left;
+  color:var(--text-primary);font-size:14px;font-weight:500;position:relative;
+}
+.grp-head:hover{background:var(--background-hover);}
+.grp-head .gi{font-size:20px;color:var(--icon-secondary);flex:none;}
+.grp-head .glabel{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.grp-head .caret{font-size:20px;color:var(--icon-secondary);flex:none;transition:transform .2s cubic-bezier(.2,0,.2,1);}
+.group.open > .grp-head .caret{transform:rotate(180deg);}
+.group.has-active > .grp-head .gi{color:var(--icon-interactive);}
+.group.has-active > .grp-head{font-weight:600;}
+
+/* items wrapper (accordion) */
+.items{display:grid;grid-template-rows:0fr;transition:grid-template-rows .2s cubic-bezier(.2,0,.2,1);}
+.group.open > .items{grid-template-rows:1fr;}
+.items > .inner{overflow:hidden;min-height:0;}
+
+/* leaf item */
+.item{
+  display:flex;align-items:center;gap:var(--sp-8);min-height:40px;
+  padding:0 var(--sp-16) 0 52px; /* 52 = icon(20)+gap(12)+pad(16)+4 정렬 */
+  border:none;background:transparent;cursor:pointer;width:100%;text-align:left;
+  color:var(--text-secondary);font-size:14px;position:relative;
+}
+.item:hover{background:var(--background-hover);color:var(--text-primary);}
+.item.active{
+  background:var(--background-selected);color:var(--text-interactive);font-weight:600;
+  box-shadow:inset 3px 0 0 0 var(--border-interactive);
+}
+.item .ilabel{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* sub-group (강좌관리/교재관리 등) */
+.subgrp{display:flex;flex-direction:column;}
+.subgrp-head{
+  display:flex;align-items:center;gap:var(--sp-8);min-height:38px;
+  padding:0 var(--sp-16) 0 52px;border:none;background:transparent;cursor:pointer;width:100%;text-align:left;
+  color:var(--text-secondary);font-size:13px;font-weight:600;
+}
+.subgrp-head:hover{background:var(--background-hover);}
+.subgrp-head .caret{font-size:18px;color:var(--icon-secondary);transition:transform .2s;margin-left:auto;}
+.subgrp.open > .subgrp-head .caret{transform:rotate(180deg);}
+.subitems{display:grid;grid-template-rows:0fr;transition:grid-template-rows .2s cubic-bezier(.2,0,.2,1);}
+.subgrp.open > .subitems{grid-template-rows:1fr;}
+.subitems > .inner{overflow:hidden;min-height:0;
+  /* 3depth 세로 연결선 */
+  margin-left:52px;border-left:1px solid var(--border-subtle);}
+.subitem{
+  display:flex;align-items:center;min-height:36px;padding:0 var(--sp-16) 0 var(--sp-16);
+  border:none;background:transparent;cursor:pointer;width:100%;text-align:left;
+  color:var(--text-secondary);font-size:13px;position:relative;
+}
+.subitem:hover{background:var(--background-hover);color:var(--text-primary);}
+.subitem.active{color:var(--text-interactive);font-weight:600;background:var(--background-selected);
+  box-shadow:inset 3px 0 0 0 var(--border-interactive);}
+
+/* divider (운영계 / 관리계) */
+.nav-divider{height:1px;background:var(--border-subtle);margin:var(--sp-8) var(--sp-16);}
+.nav-cap{
+  font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--text-placeholder);
+  padding:var(--sp-12) var(--sp-16) var(--sp-4);white-space:nowrap;text-transform:uppercase;
+}
+
+/* ───── COLLAPSED (rail 56) ───── */
+body.collapsed{--sb:56px;}
+body.collapsed .brand-name{opacity:0;width:0;}
+body.collapsed .grp-head{justify-content:center;padding:0;gap:0;}
+body.collapsed .grp-head .glabel,
+body.collapsed .grp-head .caret,
+body.collapsed .nav-cap,
+body.collapsed .items{display:none;}
+body.collapsed .grp-head .gi{font-size:22px;}
+body.collapsed .group.has-active > .grp-head{box-shadow:inset 3px 0 0 0 var(--border-interactive);background:var(--background-selected);}
+
+/* ───────── MAIN (content placeholder) ───────── */
+.main{flex:1;min-width:0;overflow:auto;background:var(--background-secondary);}
+.page{padding:var(--sp-24) var(--sp-32);}
+.page-title{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0 0 var(--sp-4);}
+.page-sub{color:var(--text-secondary);font-size:13px;margin:0 0 var(--sp-24);}
+.toolbar{display:flex;align-items:center;gap:var(--sp-8);margin-bottom:var(--sp-16);}
+.search{
+  flex:1;max-width:360px;display:flex;align-items:center;gap:var(--sp-8);height:36px;padding:0 var(--sp-12);
+  background:var(--field-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);
+  color:var(--text-placeholder);font-size:13px;
+}
+.btn-primary{
+  display:inline-flex;align-items:center;gap:var(--sp-4);height:36px;padding:0 var(--sp-16);
+  background:var(--interactive-primary);color:var(--text-on-color);border:none;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:600;cursor:pointer;
+}
+.btn-primary:hover{background:var(--interactive-hover);}
+.card{background:var(--background-primary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);overflow:hidden;}
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{text-align:left;background:var(--background-secondary);color:var(--text-secondary);font-weight:600;
+  padding:10px var(--sp-16);border-bottom:1px solid var(--border-subtle);white-space:nowrap;}
+.tbl td{padding:12px var(--sp-16);border-bottom:1px solid var(--border-subtle);color:var(--text-primary);}
+.tbl tr:last-child td{border-bottom:none;}
+.tag{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:2px;font-size:12px;
+  background:var(--background-selected);color:var(--text-secondary);}
+.tag.on{background:#defbe6;color:#0e6027;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header__brand">
+      <button class="iconbtn" id="toggle" title="사이드바 접기/펼치기"><span class="ms" data-i="menu"></span></button>
+      <div class="logo"></div>
+      <span class="brand-name">시대인재 매니저</span>
+    </div>
+    <div class="header__content">
+      <nav class="crumb">
+        <span>고객(원생) 관리</span><span class="sep">|</span><span class="cur" id="crumbCur">회원조회</span>
+      </nav>
+      <div class="actions">
+        <span class="pos"><span class="dot"></span>카드단말기 연결 없음</span>
+        <button class="ghostbtn"><span class="ms" data-i="refresh"></span>연결확인</button>
+        <span class="vline"></span>
+        <button class="chip"><span class="ms" data-i="storefront"></span>시대인재 대치단과<span class="ms caret" data-i="expand_more"></span></button>
+        <button class="chip"><span class="ms" data-i="account_circle"></span><span class="uname">김명준</span><span class="ms caret" data-i="expand_more"></span></button>
+        <button class="chip"><span class="ms" data-i="sticky_note_2"></span>내 메모</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- BODY -->
+  <div class="body">
+    <aside class="sidebar">
+      <nav class="nav" id="nav"></nav>
+    </aside>
+    <main class="main">
+      <div class="page">
+        <h1 class="page-title" id="pageTitle">회원조회</h1>
+        <p class="page-sub" id="pageSub">고객(원생) 관리 · 회원을 검색하고 상세 정보를 확인합니다.</p>
+        <div class="toolbar">
+          <div class="search"><span class="ms" data-i="groups" style="font-size:16px"></span>이름 · 연락처 · 회원번호로 검색</div>
+          <button class="btn-primary"><span class="ms" data-i="how_to_reg" style="font-size:16px"></span>신규 등록</button>
+        </div>
+        <div class="card">
+          <table class="tbl">
+            <thead><tr><th>회원번호</th><th>이름</th><th>학년</th><th>캠퍼스</th><th>상태</th><th>등록일</th></tr></thead>
+            <tbody>
+              <tr><td>2026-00481</td><td>김민준</td><td>고3</td><td>대치단과</td><td><span class="tag on">재원</span></td><td>2026-03-02</td></tr>
+              <tr><td>2026-00482</td><td>이서연</td><td>고2</td><td>대치단과</td><td><span class="tag on">재원</span></td><td>2026-03-02</td></tr>
+              <tr><td>2026-00483</td><td>박지후</td><td>고3</td><td>대치단과</td><td><span class="tag">상담</span></td><td>2026-03-05</td></tr>
+              <tr><td>2026-00484</td><td>최예린</td><td>고1</td><td>대치단과</td><td><span class="tag on">재원</span></td><td>2026-03-08</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const ICONS = __ICONS__;
+function svg(name){const inner=ICONS[name]||'';return '<svg viewBox="0 -960 960 960" aria-hidden="true">'+inner+'</svg>';}
+document.querySelectorAll('.ms[data-i]').forEach(el=>{el.innerHTML=svg(el.getAttribute('data-i'));});
+
+const MENU = [
+  {id:'fav', label:'즐겨찾기', icon:'star', standalone:true},
+  {id:'customer', label:'고객(원생) 관리', icon:'groups', items:[
+    {id:'member', label:'회원조회'},{id:'consult', label:'상담관리'},{id:'faq', label:'FAQ'},
+    {id:'notice', label:'공지사항'},{id:'merge', label:'회원 병합'}]},
+  {id:'recruit', label:'모집/접수 관리', icon:'how_to_reg', items:[
+    {id:'class', label:'반관리'},{id:'screen', label:'전형관리'},{id:'recruitmng', label:'모집관리'},{id:'apply', label:'접수현황'}]},
+  {id:'course', label:'강좌/교재 관리', icon:'menu_book', items:[
+    {sub:'강좌관리', items:[{id:'lecture', label:'강좌'},{id:'mkcode', label:'보강코드'},{id:'extravid', label:'추가영상'}]},
+    {sub:'교재관리', items:[{id:'basicprod', label:'기초상품'},{id:'bookprod', label:'교재상품'},{id:'bookgrp', label:'교재그룹'},{id:'booklink', label:'연결교재'}]}]},
+  {id:'lesson', label:'수업운영 관리', icon:'cast_for_education', items:[{id:'lessonmng', label:'수업관리'}]},
+  {id:'billing', label:'청구/수납 관리', icon:'credit_card', items:[
+    {id:'bill', label:'청구관리'},{id:'pay', label:'납부관리'},{id:'shinhan', label:'신한캠퍼스처리'},
+    {id:'payhist', label:'결제내역관리'},{id:'refund', label:'환불요청처리'},{id:'van', label:'VAN 거래이력'}]},
+  {id:'scholar', label:'장학혜택 관리', icon:'redeem', items:[{id:'coupon', label:'쿠폰관리'}]},
+  {id:'message', label:'메시지발송 관리', icon:'forum', items:[
+    {id:'msg', label:'메시지관리'},{id:'tmpl', label:'템플릿관리'},{id:'optout', label:'080수신거부관리'},
+    {sub:'메시지그룹관리', items:[{id:'adconsent', label:'광고수신동의그룹'},{id:'nonmemdb', label:'비회원문자수신DB'}]}]},
+  {divider:'관리'},
+  {id:'academy', label:'학원관리', icon:'apartment', items:[{id:'space', label:'공간/시설관리'},{id:'subject', label:'영역/과목관리'}]},
+  {id:'teacher', label:'선생님(파트너) 관리', icon:'co_present', standalone:true},
+  {id:'admin', label:'Admin 관리', icon:'shield_person', items:[{id:'menumng', label:'메뉴관리'},{id:'perm', label:'권한그룹관리'},{id:'operator', label:'운영자관리'}]},
+  {id:'revenue', label:'매출/정산 관리', icon:'monitoring', items:[{id:'settle', label:'정산관리'},{id:'prodsettle', label:'상품정산정보관리'},{id:'lessonstat', label:'수업통계관리'}]},
+];
+
+const state = {active:'member', open:{customer:true}, subopen:{}};
+const SECTION_OF = {};   // itemId -> {groupLabel, itemLabel}
+const nav = document.getElementById('nav');
+
+function buildLeaf(it, groupLabel){
+  SECTION_OF[it.id] = {g:groupLabel, l:it.label};
+  const b=document.createElement('button');
+  b.className='item'+(state.active===it.id?' active':'');
+  b.dataset.id=it.id;
+  b.innerHTML='<span class="ilabel">'+it.label+'</span>';
+  b.onclick=()=>setActive(it.id);
+  return b;
+}
+function buildSub(sg, groupLabel){
+  const wrap=document.createElement('div');
+  const key='sub:'+sg.sub;
+  const open=!!state.subopen[key];
+  wrap.className='subgrp'+(open?' open':'');
+  const head=document.createElement('button');
+  head.className='subgrp-head';
+  head.innerHTML='<span>'+sg.sub+'</span><span class="ms caret">'+svg('expand_more')+'</span>';
+  head.onclick=()=>{state.subopen[key]=!state.subopen[key];render();};
+  const items=document.createElement('div'); items.className='subitems';
+  const inner=document.createElement('div'); inner.className='inner';
+  sg.items.forEach(it=>{
+    SECTION_OF[it.id]={g:groupLabel, l:it.label};
+    const b=document.createElement('button');
+    b.className='subitem'+(state.active===it.id?' active':'');
+    b.innerHTML='<span class="ilabel">'+it.label+'</span>';
+    b.onclick=()=>setActive(it.id);
+    inner.appendChild(b);
+  });
+  items.appendChild(inner); wrap.appendChild(head); wrap.appendChild(items);
+  return wrap;
+}
+function groupHasActive(g){
+  if(!g.items) return false;
+  return g.items.some(it=> it.sub ? it.items.some(s=>s.id===state.active) : it.id===state.active);
+}
+function render(){
+  nav.innerHTML='';
+  MENU.forEach(g=>{
+    if(g.divider){
+      const cap=document.createElement('div'); cap.className='nav-divider'; nav.appendChild(cap);
+      return;
+    }
+    if(g.standalone){
+      const wrap=document.createElement('div'); wrap.className='group'+(state.active===g.id?' has-active':'');
+      const head=document.createElement('button'); head.className='grp-head';
+      head.innerHTML='<span class="ms gi">'+svg(g.icon)+'</span><span class="glabel">'+g.label+'</span>';
+      head.onclick=()=>setActive(g.id);
+      if(state.active===g.id) head.style.boxShadow='inset 3px 0 0 0 var(--border-interactive)';
+      wrap.appendChild(head); nav.appendChild(wrap); SECTION_OF[g.id]={g:g.label,l:g.label};
+      return;
+    }
+    const hasA=groupHasActive(g);
+    const open=!!state.open[g.id];
+    const wrap=document.createElement('div'); wrap.className='group'+(open?' open':'')+(hasA?' has-active':'');
+    const head=document.createElement('button'); head.className='grp-head';
+    head.innerHTML='<span class="ms gi">'+svg(g.icon)+'</span><span class="glabel">'+g.label+'</span><span class="ms caret">'+svg('expand_more')+'</span>';
+    head.onclick=()=>{state.open[g.id]=!state.open[g.id];render();};
+    const items=document.createElement('div'); items.className='items';
+    const inner=document.createElement('div'); inner.className='inner';
+    g.items.forEach(it=>{ inner.appendChild(it.sub?buildSub(it,g.label):buildLeaf(it,g.label)); });
+    items.appendChild(inner); wrap.appendChild(head); wrap.appendChild(items);
+    nav.appendChild(wrap);
+  });
+}
+function setActive(id){
+  state.active=id;
+  // open ancestor group/subgroup
+  MENU.forEach(g=>{ if(g.items) g.items.forEach(it=>{
+    if(it.sub){ if(it.items.some(s=>s.id===id)){state.open[g.id]=true;state.subopen['sub:'+it.sub]=true;} }
+    else if(it.id===id) state.open[g.id]=true;
+  });});
+  const meta=SECTION_OF[id]||{g:'',l:id};
+  document.getElementById('crumbCur').textContent=meta.l;
+  document.querySelector('.crumb span:first-child').textContent=meta.g;
+  document.getElementById('pageTitle').textContent=meta.l;
+  document.getElementById('pageSub').textContent=meta.g+' · 화면 미리보기';
+  render();
+}
+document.getElementById('toggle').onclick=()=>document.body.classList.toggle('collapsed');
+render();
+</script>
+</body>
+</html>
