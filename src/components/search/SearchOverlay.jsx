@@ -73,6 +73,7 @@ export default function SearchOverlay() {
   const summary = useSearchSummary(query, results)
 
   const goTo = useCallback((id) => { navigate('/guides/' + id); close() }, [navigate, close])
+  const goToRoute = useCallback((route) => { navigate(route || '/'); close() }, [navigate, close])
   const openFeedback = useCallback((topic) => {
     const qs = topic ? `?topic=${encodeURIComponent(topic)}` : ''
     navigate('/feedback' + qs); close()
@@ -132,6 +133,7 @@ export default function SearchOverlay() {
                 <NoResultFallback
                   query={query}
                   onGoTo={goTo}
+                  onGoToRoute={goToRoute}
                   onNavigateFeedback={openFeedback}
                 />
               ) : results.length === 0 ? (
