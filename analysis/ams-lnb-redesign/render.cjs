@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /* AMS LNB 리디자인 렌더러 — 데스크탑 뷰포트 + 로컬 Pretendard 주입(헤드리스 CDN 차단 우회).
  * 사용: node analysis/ams-lnb-redesign/render.cjs
- * 산출: out/shell.png (기본), out/shell-collapsed.png (접힘) */
+ * 산출: out/wiki-light.png (라이트=Wiki), out/ams-dark.png (다크=AMS),
+ *       out/light-expanded.png (서브그룹), out/light-collapsed.png (rail) */
 const fs = require('fs');
 const path = require('path');
 
@@ -24,37 +25,37 @@ function findPlaywright() {
 
   const url = 'file://' + path.join(DIR, 'index.html');
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900}, deviceScaleFactor: 2 });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+  const prep = async () => { await page.addStyleTag({ content: fontCss }); await page.evaluate(() => document.fonts.ready); await page.waitForTimeout(220); };
+
+  // 1) 라이트 = AMS Wiki
   await page.goto(url, { waitUntil: 'networkidle' });
-  await page.addStyleTag({ content: fontCss });
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForTimeout(250);
+  await prep();
+  await page.screenshot({ path: path.join(OUT, 'wiki-light.png') });
+  console.log('✓ out/wiki-light.png');
 
-  await page.screenshot({ path: path.join(OUT, 'shell.png') });
-  console.log('✓ out/shell.png');
+  // 2) 다크 = AMS (테마 토글)
+  await page.evaluate(() => document.getElementById('themeToggle').click());
+  await page.waitForTimeout(280);
+  await page.screenshot({ path: path.join(OUT, 'ams-dark.png') });
+  console.log('✓ out/ams-dark.png');
+  // 다크 해제
+  await page.evaluate(() => document.getElementById('themeToggle').click());
+  await page.waitForTimeout(200);
 
-  // 강좌/교재 그룹 열어 서브그룹 보이게
-  await page.evaluate(() => { window.state && (window.state.open.course = true, window.state.subopen['sub:강좌관리'] = true); document.querySelector('#nav'); });
-  // 위 evaluate는 state가 클로저라 안 먹을 수 있어, 클릭으로 연다
-  await page.evaluate(() => {
-    const heads = [...document.querySelectorAll('.grp-head')];
-    const course = heads.find(h => h.textContent.includes('강좌/교재'));
-    if (course) course.click();
-  });
+  // 3) 라이트 + 강좌/교재 서브그룹 펼침
+  await page.evaluate(() => { const h = [...document.querySelectorAll('.grp-head')].find(x => x.textContent.includes('강좌/교재')); h && h.click(); });
   await page.waitForTimeout(120);
-  await page.evaluate(() => {
-    const sh = [...document.querySelectorAll('.subgrp-head')].find(h => h.textContent.includes('강좌관리'));
-    if (sh) sh.click();
-  });
+  await page.evaluate(() => { const s = [...document.querySelectorAll('.subgrp-head')].find(x => x.textContent.includes('강좌관리')); s && s.click(); });
   await page.waitForTimeout(250);
-  await page.screenshot({ path: path.join(OUT, 'shell-expanded.png') });
-  console.log('✓ out/shell-expanded.png');
+  await page.screenshot({ path: path.join(OUT, 'light-expanded.png') });
+  console.log('✓ out/light-expanded.png');
 
-  // collapsed rail
+  // 4) 접힘 rail
   await page.evaluate(() => document.getElementById('toggle').click());
   await page.waitForTimeout(350);
-  await page.screenshot({ path: path.join(OUT, 'shell-collapsed.png') });
-  console.log('✓ out/shell-collapsed.png');
+  await page.screenshot({ path: path.join(OUT, 'light-collapsed.png') });
+  console.log('✓ out/light-collapsed.png');
 
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });
