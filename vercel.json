@@ -22,6 +22,10 @@
       "destination": "/myclass-chatbot-parent.html"
     },
     {
+      "source": "/ams-lnb",
+      "destination": "/ams-lnb.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
