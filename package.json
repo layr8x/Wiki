@@ -9,6 +9,8 @@
   "packageManager": "npm@10.9.7",
   "scripts": {
     "dev": "vite",
+    "build:guide-index": "node scripts/build-guide-index.mjs",
+    "prebuild": "node scripts/build-guide-index.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

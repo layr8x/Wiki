@@ -14,8 +14,10 @@ import {
   PaperPlaneTilt,
   SealCheck,
   FileText,
+  Sparkle,
 } from '@phosphor-icons/react'
 import { GUIDES } from '@/data/mockData'
+import { useAiSearch } from '@/hooks/useAiSearch'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
@@ -65,8 +67,10 @@ function queueFeedback(entry) {
   }
 }
 
-export default function NoResultFallback({ query, onGoTo, onNavigateFeedback }) {
+export default function NoResultFallback({ query, onGoTo, onGoToRoute, onNavigateFeedback }) {
   const related = useMemo(() => suggestRelatedGuides(query), [query])
+  const ai = useAiSearch(query)
+  const goRoute = onGoToRoute || ((route) => { const m = /^\/guides\/(.+)$/.exec(route || ''); if (m) onGoTo(m[1]) })
   const [note, setNote] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -96,6 +100,38 @@ export default function NoResultFallback({ query, onGoTo, onNavigateFeedback }) 
         <p className="text-sm font-medium">&ldquo;{query}&rdquo; 에 정확히 일치하는 가이드가 없습니다</p>
         <p className="text-xs text-muted-foreground">유사 주제 가이드를 대신 확인하거나, 필요한 가이드를 요청해 주세요</p>
       </div>
+
+      {ai.status === 'loading' && (
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
+          <Sparkle size={15} weight="fill" className="animate-pulse text-primary" />
+          AI가 위키 전체에서 답을 찾는 중…
+        </div>
+      )}
+
+      {ai.status === 'ready' && ai.answer && (
+        <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+            <Sparkle size={13} weight="fill" /> AI 검색 답변
+          </div>
+          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{ai.answer}</p>
+          {ai.sources?.length > 0 && (
+            <ul className="space-y-1 pt-0.5">
+              {ai.sources.map(s => (
+                <li key={s.id}>
+                  <button
+                    onClick={() => goRoute(s.route)}
+                    className="flex w-full items-center gap-2 rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-left transition-colors hover:bg-accent"
+                  >
+                    <FileText size={12} className="shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{s.title}</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground/70">{s.type}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {related.length > 0 && (
         <div>
