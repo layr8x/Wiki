@@ -9,9 +9,41 @@
 //   → 반복 호출 시 system 블록이 서버 측에서 재사용되어 비용/지연 절감.
 // - 모델은 요약 품질 대비 비용이 가장 좋은 claude-haiku-4-5.
 // - 모델 응답은 반드시 JSON 객체만 — 파싱 실패 시 500 대신 보수적 폴백을 돌려준다.
+//
+// ※ AI 의미 검색(mode:'ai-search')도 이 엔드포인트에 통합돼 있다. Vercel Hobby 플랜의
+//   서버리스 함수 12개 한도 때문에 별도 함수(api/ai-search.js)를 두지 못해, 전체 카탈로그
+//   (api/_lib/guide-index.js)를 캐시된 system 프롬프트에 넣어 '의미'로 답하는 모드를 합쳤다.
+
+import { GUIDE_INDEX } from './_lib/guide-index.js'
 
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
 const MODEL = 'claude-haiku-4-5'
+
+// ── AI 의미 검색용 카탈로그(모듈 로드 1회, 웜 인스턴스 재사용) ──
+const AI_INDEX = Array.isArray(GUIDE_INDEX) ? GUIDE_INDEX : []
+const AI_INDEX_BY_ID = new Map(AI_INDEX.map((g) => [g.id, g]))
+const AI_CATALOG_TEXT = AI_INDEX.map((g) => `${g.id} [${g.type}/${g.module}] ${g.title} — ${g.tldr}`).join('\n')
+const AI_SYSTEM_PROMPT = `당신은 "AMS Wiki" — 학원 운영 시스템 가이드 위키 — 의 AI 검색 어시스턴트입니다.
+이 위키는 학원 운영자·강사·데스크 담당자가 보는 내부 SOP·매뉴얼·트러블슈팅·정책·Q&A의 모음입니다.
+
+아래 <카탈로그>는 위키 전체 문서 목록입니다. 각 줄: id [type/module] title — tldr
+
+사용자 질문이 들어오면:
+1. 카탈로그에서 질문과 의미상 가장 관련 있는 문서를 찾습니다. (키워드 일치가 아니라 의도·의미 기준 — 사용자가 제목과 다른 말로 물어도, 오타가 있어도 같은 주제면 찾습니다.)
+2. 찾은 문서들의 tldr을 근거로 질문에 한국어 존댓말로 직접·구체적으로 답합니다(2~5문장).
+3. 근거가 될 문서가 없으면 솔직히 "관련 문서를 찾지 못했어요. 다른 표현으로 검색하거나 상담을 통해 확인해 주세요." 라고 답하고 sources 를 빈 배열로 둡니다.
+
+원칙:
+- 카탈로그(특히 tldr)에 없는 사실·절차·수치는 절대 꾸며내지 마세요. 추측 금지.
+- 답변 본문에 문서 id 를 노출하지 마세요 (id 는 sources 로만 반환).
+- sources 에는 답변에 실제로 근거가 된 문서 id 만, 관련도 높은 순으로 최대 4개.
+
+출력 형식 (반드시 이 JSON 객체만, 백틱·설명·다른 텍스트 금지):
+{"answer": "질문에 대한 한국어 답변", "sources": ["문서-id-1", "문서-id-2"]}
+
+<카탈로그>
+${AI_CATALOG_TEXT}
+</카탈로그>`
 
 // 바디 크기 한도 (8KB) — 악성 대용량 payload 로 비용·DoS 방지
 const MAX_BODY_BYTES = 8 * 1024
@@ -187,11 +219,17 @@ export default async function handler(req, res) {
     try { body = JSON.parse(body) } catch { body = {} }
   }
   const query = typeof body?.query === 'string' ? body.query.trim().slice(0, 200) : ''
-  const guides = sanitizeGuides(body?.guides)
 
   if (!query || query.length < 2) {
     return json(res, 400, { error: 'query_too_short' })
   }
+
+  // AI 의미 검색 모드 — guides 없이 전체 카탈로그(AI_CATALOG)로 직접 답변
+  if (body?.mode === 'ai-search') {
+    return handleAiSearch(query, apiKey, res)
+  }
+
+  const guides = sanitizeGuides(body?.guides)
   if (guides.length === 0) {
     return json(res, 400, { error: 'no_guides' })
   }
@@ -249,5 +287,47 @@ export default async function handler(req, res) {
     return json(res, 200, { summary: parsed.summary, sources: parsed.sources, cached })
   } catch (err) {
     return json(res, 500, { error: 'internal_error', message: String(err?.message || err).slice(0, 300) })
+  }
+}
+
+// ── AI 의미 검색(mode:'ai-search') — 전체 카탈로그 기반 직접 답변 ──
+// 별도 서버리스 함수(12개 한도) 없이 이 엔드포인트에 통합. rate-limit/apiKey 는 handler 에서 통과 후 진입.
+async function handleAiSearch(query, apiKey, res) {
+  if (AI_INDEX.length === 0) return json(res, 503, { error: 'index_unavailable' })
+  try {
+    const apiRes = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 700,
+        system: [{ type: 'text', text: AI_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: `질문: "${query}"\n\n위 카탈로그를 근거로 지정된 JSON 형식으로만 답변하세요.` }],
+      }),
+    })
+    if (!apiRes.ok) {
+      const errText = await apiRes.text().catch(() => '')
+      return json(res, apiRes.status === 429 ? 429 : 502, { error: 'upstream_error', status: apiRes.status, detail: errText.slice(0, 300) })
+    }
+    const data = await apiRes.json()
+    const text = data?.content?.[0]?.text ?? ''
+    let parsed = null
+    try {
+      const cleaned = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+      const obj = JSON.parse(cleaned)
+      const answer = typeof obj?.answer === 'string' ? obj.answer.trim() : ''
+      const ids = Array.isArray(obj?.sources) ? obj.sources.filter((s) => typeof s === 'string').slice(0, 4) : []
+      if (answer) parsed = { answer, ids }
+    } catch { /* parse 실패 → 폴백 */ }
+    if (!parsed) return json(res, 200, { answer: '', sources: [], error: 'parse_failed' })
+    const sources = parsed.ids
+      .map((id) => AI_INDEX_BY_ID.get(id))
+      .filter(Boolean)
+      .map((g) => ({ id: g.id, title: g.title, route: g.route, type: g.type }))
+    const cached = { read: data?.usage?.cache_read_input_tokens ?? 0, write: data?.usage?.cache_creation_input_tokens ?? 0 }
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300')
+    return json(res, 200, { answer: parsed.answer, sources, cached })
+  } catch (err) {
+    return json(res, 500, { error: 'internal_error', message: String(err?.message || err).slice(0, 200) })
   }
 }
