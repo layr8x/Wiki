@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build:guide-index": "node scripts/build-guide-index.mjs",
-    "prebuild": "node scripts/build-guide-index.mjs",
+    "prebuild": "test -f scripts/build-guide-index.mjs && node scripts/build-guide-index.mjs || true",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
