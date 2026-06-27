@@ -6,9 +6,10 @@
 
 ---
 
-## 워크스트림 1 — 챗봇 화면 정합 마무리 (배포 완료)
+## 워크스트림 1 — 챗봇 화면 정합 마무리 (PR #211·#212, 배포 완료)
 마이클래스 챗봇(`public/myclass-chatbot.html` 학생 / `-parent.html` 학부모) Figma 대조 잔여 수정.
-- gap-audit 수정: `.cv.pend`(데이터 없는 행 흐림), `time_end` 브레드크럼 `종강일`→`종강일 확인`, `.ctxmenu` 타이포 16/14/16, **상담 모달 연락처 줄 = 아이콘엔 밑줄 빼고 글자에만**(`.cm-row span:not(.ms)`).
+- #211 1032:54 전수 감사 반영(빈상태·드롭다운·모달·전반 브레드크럼).
+- #212 gap-audit 수정: `.cv.pend`(데이터 없는 행 흐림), `time_end` 브레드크럼 `종강일`→`종강일 확인`, `.ctxmenu` 타이포 16/14/16, **상담 모달 연락처 줄 = 아이콘엔 밑줄 빼고 글자에만**(`.cm-row span:not(.ms)`).
 - 학부모본은 학생본 복사 + 고유 4곳 재패치(scratchpad `regen_parent.py` 방식). 검증=`tools/design-audit/render.cjs`.
 
 ## 워크스트림 2 — "왜 계속 화면을 못 맞추지" 근본원인 규명 (★ 큰 수확)
@@ -16,7 +17,8 @@
 1. **내가 비교하던 Figma 노드가 삭제/이동돼 있었음**(파일 재구축 시 node id 바뀜). `screens.json`·CLAUDE.md 곳곳 참조가 stale → **없는 화면과 대조**하고 있었음.
    - 마스터보드 `1534:4236`·출결섹션 `1519:*` **삭제됨**. 현재 정본 = 페이지 **`1032:54`**. 출결·보강은 **`1629:*`로 재구축**(매핑은 CLAUDE.md §15-1).
 2. **검증을 "완료 보고 후"에 "눈대중"으로** 함(Figma 공식 필수순서 위반).
-- 조치: `tools/design-audit/screens.json`을 현재 노드로 갱신, **CLAUDE.md §15 신설**(노드 생존 확인 → `get_design_context`로 숫자 대조 → 스크린샷 → 검증 전 "완료" 금지). 전 화면 14개 재검증(13/14 MATCH, 실수정 3건).
+- 조치(PR #213): `tools/design-audit/screens.json`을 현재 노드로 갱신, **CLAUDE.md §15 신설**(노드 생존 확인 → `get_design_context`로 숫자 대조 → 스크린샷 → 검증 전 "완료" 금지). 전 화면 14개 재검증(13/14 MATCH, 실수정 3건).
+- 곁다리: Figma MCP 설치 확인(remote-server-installation·FigJam) + **Figma OAuth 앱 자격증명**을 사용자가 공유("기억해둬"): Client ID `lDNiX547VsvDqD6JDUZxPp`. Client Secret·PAT은 **비밀**(저장소·공개 환경변수칸 금지). 현재 REST PAT은 401 무효(아래 함정).
 
 ## 워크스트림 3 — 효율화 도구 3종 (사용자: "범용적이면서 전문적", "모두 다")
 ### 3a. Figma 자동 대조 툴킷 `tools/design-audit/` (PR #210·#214·#215)
@@ -27,12 +29,16 @@
 - `template.html`(데이터 주입형 A4 1장) + `gen.cjs`(Playwright→PNG+PDF) + `example.json` + README. 범용(아무 데이터나 JSON으로).
 ### 3c. AI 위키 검색 (PR #220→#222→#223) — **워크스트림 별도 정리 아래**
 
-## 워크스트림 4 — 6월 데이터 리포트 산출
-3b 생성기로 6월 문의 리포트 제작: **436건, 전월(5월)比 -11%**. `out/june.json`→`june.png/pdf`.
+## 워크스트림 4 — 카카오 학부모 문의 데이터분석 + 6월 리포트 산출
+사용자가 `data-analyst` 분석루프 지시(카카오 학부모 문의 kakao-webhook **유형별 분류·최근 추세**, "데이터 자동 보고서 1순위 시제품, A4 1장").
+- 분석 산출: 문의 유형분류·추세 → `scratchpad/inquiry_dashboard.html`(공유용 대시보드). 이게 3b 리포트 생성기의 동기.
+- 3b 생성기로 6월 문의 리포트 제작: **436건, 전월(5월)比 −11%**. `tools/report/out/june.json`→`june.png/pdf`.
+- (옵션 후속: 지점별·시간대별 추가 cut, 측정설계 — 미완.)
 
 ## 워크스트림 5 — 카카오 상담수집: GitHub Actions → Supabase Edge Function (PR #216)
 사용자: "이거 계속 실패한다"(스크린샷) → **GitHub Actions 분 소진**으로 즉시 실패(runner_id:0, 2~3초, 로그없음). 사용자 결정: "GitHub 말고 Supabase 안에서 직접 돌려서 Actions 시간 0."
 - `supabase/functions/kakao-collect/index.ts`(+`deno.json`) — KakaoPartnerClient·sanitize·collect를 Deno로 포팅. 쿠키·토큰은 `kakao_partner_secrets` DB에서 읽음. `verify_jwt=false`+DB토큰 인증, 채널당 `MAX_CHANGED=80`.
+- 중간단계: 먼저 "30분 간격으로 조정"(`supabase/migrations/20260625_kakao_collect_30min.sql`) → 사용자가 "GitHub 말고 Supabase 안에서 직접" 결정 → Edge Function 전환.
 - `supabase/migrations/20260625_kakao_collect_edge_function.sql` — pg_cron `kakao-collect-dispatch`를 edge function 호출로 재지정(5분). 적용됨.
 - `.github/workflows/kakao-collect.yml` — `schedule` 제거, `workflow_dispatch`만(수동 폴백).
 - **장애 복구**: 쿠키 만료(401) → 사용자가 맥북에서 `npm run kakao:refresh-cookie` → 수집 재개(6/18→6/25 점프, 629메시지 백필, recent_error=null 확인).
