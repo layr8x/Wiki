@@ -147,11 +147,8 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
   background:var(--background-primary);color:var(--ct-text);}
 
 /* 상단 헤더바 */
-.topbar{flex:none;height:52px;display:flex;align-items:center;justify-content:space-between;
+.topbar{flex:none;height:52px;display:flex;align-items:center;justify-content:flex-end;
   padding:0 20px;border-bottom:1px solid var(--ct-line);background:var(--ct-bg);}
-.crumb{display:flex;align-items:center;gap:9px;font-size:15px;}
-.crumb .cm{color:var(--ct-crumb);} .crumb .cd{color:var(--ct-div);font-weight:300;}
-.crumb b{color:var(--ct-text);font-weight:700;}
 .topright{display:flex;align-items:center;gap:13px;font-size:13px;color:var(--ct-crumb);}
 .topright .ms{width:16px;height:16px;flex:none;}
 .cardst{display:flex;align-items:center;gap:6px;}
@@ -379,7 +376,6 @@ const COLS=['영역','과목','강사명','요일','강좌(반)명','강의실',
 function th(c){return '<th><span class="hc">'+c+'<span class="so">'+svg('keyboard_arrow_down')+'</span><span class="fl">'+svg('filter_alt')+'</span></span></th>';}
 function topbarHTML(){
   return '<header class="topbar">'
-    +'<div class="crumb"><span class="cm">고객(원생) 관리</span><span class="cd">|</span><b>회원조회</b></div>'
     +'<div class="topright">'
       +'<span class="cardst"><span class="dot"></span>카드단말기 연결 없음</span>'
       +'<span class="tlink"><span class="ms">'+svg('refresh')+'</span>연결확인</span>'
@@ -388,7 +384,7 @@ function topbarHTML(){
       +'<span class="vd"></span>'
       +'<span class="tsel">김명준<span class="ms">'+svg('keyboard_arrow_down')+'</span></span>'
       +'<span class="vd"></span>'
-      +'<span class="tmemo"><span class="ms">'+svg('sticky_note_2')+'</span>내 메모</span>'
+      +'<span class="tmemo"><span class="ms">'+svg(RAIL[1].icon)+'</span>내 메모</span>'
     +'</div></header>';
 }
 function contentHTML(){
