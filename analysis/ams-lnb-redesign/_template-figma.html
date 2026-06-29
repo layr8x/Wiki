@@ -133,73 +133,93 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 .item{padding:var(--icon-button-padding-sm) var(--space-xl) var(--icon-button-padding-sm) var(--space-7xl);
   color:var(--text-primary);font-size:var(--type-body-sm-size);}
 .item:hover{background:var(--background-secondary-hover);}
-.item.active{background:var(--background-secondary-hover);}
+/* 선택된 하위메뉴(펼침 시 첫 항목) = 셀렉 배경 + 좌측 강조바(text/primary) — 그룹 펼침 하이라이트와 구분 */
+.item.active{background:var(--background-secondary-hover);box-shadow:inset 3px 0 0 0 var(--text-primary);font-weight:700;}
 
-/* ══ 우측 콘텐츠 = AMS '회원조회 · 강좌(반) 목록' 실화면 100% 재현(헤더 포함) ══ */
+/* ══ 우측 콘텐츠 = AMS '반 목록(반관리)' 실화면 1:1 재현 + 헤더 개선 ══ */
 .shell{display:flex;align-items:stretch;min-height:100vh;width:100%;}
 .content{flex:1;min-width:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;
   --background-primary:#ffffff;
   --ct-bg:#fff; --ct-on:#fff; --ct-line:#dfe3ec; --ct-soft:#eef1f6; --ct-rowhover:#f7f9fd;
-  --ct-text:#2b3245; --ct-muted:#9aa1b2; --ct-crumb:#5f6678; --ct-div:#c8cedb;
-  --ct-th:#4a5266; --ct-so:#9aa3b5; --ct-thbg:#f7f8fb;
-  --ct-blue:#2f57d6; --ct-navy:#283a97; --ct-sel:#3b5bdb; --ct-leftbg:#e9eef8;
-  --ct-okbg:#e4f4e6; --ct-ok:#2f7d32; --ct-soonbg:#e9eafc; --ct-soon:#5b63c4; --ct-red:#e5392f;
+  --ct-text:#2b3245; --ct-muted:#9aa1b2; --ct-sub:#7a8298; --ct-div:#d3d9e4;
+  --ct-th:#4a5266; --ct-so:#9aa3b5; --ct-thbg:#fafbfd;
+  --ct-blue:#2f6fe0; --ct-navy:#2b4ba0; --ct-filterbg:#eef1f7; --ct-filterbd:#e1e6ef;
+  --ct-okbg:#e4f4e6; --ct-ok:#2f7d32;
+  --ct-perbg:#e9f1ff; --ct-perbd:#5b8def; --ct-per:#2f6fe0;
+  --ct-alertbg:#fdeded; --ct-alertbd:#f3c4c4; --ct-alert:#c0392b; --ct-red:#e5392f;
   background:var(--background-primary);color:var(--ct-text);}
 
-/* 상단 헤더바 */
+/* 상단 헤더바(개선): 경보 칩 | 계정 클러스터 */
 .topbar{flex:none;height:52px;display:flex;align-items:center;justify-content:flex-end;
   padding:0 20px;border-bottom:1px solid var(--ct-line);background:var(--ct-bg);}
-.topright{display:flex;align-items:center;gap:13px;font-size:13px;color:var(--ct-crumb);}
+.topright{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--ct-sub);}
 .topright .ms{width:16px;height:16px;flex:none;}
-.cardst{display:flex;align-items:center;gap:6px;}
-.cardst .dot{width:8px;height:8px;border-radius:50%;background:var(--ct-red);flex:none;}
-.tlink{display:flex;align-items:center;gap:4px;color:var(--ct-text);text-decoration:underline;cursor:pointer;}
-.vd{width:1px;height:14px;background:var(--ct-line);}
-.tsel,.tmemo{display:flex;align-items:center;gap:3px;color:var(--ct-text);cursor:pointer;}
-.tsel .ms{color:var(--ct-crumb);}
+.alertchip{display:flex;align-items:center;gap:7px;height:28px;padding:0 6px 0 11px;border-radius:999px;
+  background:var(--ct-alertbg);border:1px solid var(--ct-alertbd);color:var(--ct-alert);font-weight:600;}
+.alertchip .dot{width:7px;height:7px;border-radius:50%;background:var(--ct-red);flex:none;}
+.alertchip .ac-act{display:flex;align-items:center;gap:3px;height:20px;padding:0 8px;border-radius:999px;
+  background:var(--ct-bg);color:var(--ct-alert);cursor:pointer;font-weight:700;}
+.acct{display:flex;align-items:center;gap:4px;}
+.tsel{display:flex;align-items:center;gap:3px;color:var(--ct-text);cursor:pointer;padding:5px 8px;border-radius:6px;}
+.tsel:hover{background:var(--ct-soft);}
+.tsel .ms{color:var(--ct-sub);}
+.vd{width:1px;height:16px;background:var(--ct-div);}
 
-/* 작업영역: 좌측 필터(연한 파랑) + 우측 표 */
-.content .work{flex:1;display:flex;min-height:0;padding:14px;gap:14px;}
-.content .leftcol{width:288px;flex:none;display:flex;flex-direction:column;gap:8px;min-height:0;
-  background:var(--ct-leftbg);border-radius:8px;padding:12px;}
-.content .rightcol{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
-.csearch{display:flex;flex-direction:column;gap:6px;}
-.csearch .row{display:flex;gap:6px;}
-.cinput,.cselect,.fyear{height:34px;border:1px solid var(--ct-line);border-radius:6px;background:var(--ct-bg);
-  padding:0 10px;font:inherit;font-size:13px;color:var(--ct-text);min-width:0;display:flex;align-items:center;}
-.cselect,.fyear{justify-content:space-between;cursor:pointer;gap:6px;}
-.cinput{flex:1;} .cinput::placeholder{color:var(--ct-muted);}
-.cbtn{height:34px;padding:0 12px;border-radius:6px;border:1px solid var(--ct-line);background:var(--ct-bg);
-  color:var(--ct-text);cursor:pointer;font:inherit;font-size:13px;white-space:nowrap;}
-.cbtn.primary{background:var(--ct-navy);border-color:var(--ct-navy);color:var(--ct-on);font-weight:700;}
-.filters{flex:1;display:flex;flex-direction:column;gap:8px;min-height:0;}
-.fyear{justify-content:space-between;}
-.flist{flex:1;border:1px solid var(--ct-line);border-radius:6px;background:var(--ct-bg);overflow:auto;min-height:40px;}
-.flist .fi{padding:7px 12px;color:var(--ct-text);cursor:pointer;border-bottom:1px solid var(--ct-soft);white-space:nowrap;font-size:13px;}
-.flist .fi:hover{background:var(--ct-soft);}
-.flist .fi.sel{background:var(--ct-sel);color:var(--ct-on);}
-.fbot{display:flex;flex-direction:column;gap:6px;}
+/* 반 목록 페이지 */
+.page{flex:1;display:flex;flex-direction:column;min-height:0;padding:16px 20px;gap:12px;}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;}
+.page-head h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--ct-text);}
+.page-head .ts{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ct-muted);}
+.page-head .ts .ms{width:14px;height:14px;}
 
-/* 탭 + 테이블 */
-.ctabs{display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--ct-line);padding:0 2px;flex:none;}
-.ctab{padding:9px 2px;font-size:15px;font-weight:700;color:var(--ct-muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;}
-.ctab.on{color:var(--ct-text);border-bottom-color:var(--ct-blue);}
-.themebtn{margin-left:auto;width:30px;height:26px;border:1px solid var(--ct-line);border-radius:6px;
-  background:var(--ct-bg);color:var(--ct-crumb);cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.themebtn .ms{width:16px;height:16px;}
-.tablewrap{flex:1;border:1px solid var(--ct-line);border-radius:6px;background:var(--ct-bg);overflow:auto;min-height:0;}
+/* 필터바 */
+.filterbar{background:var(--ct-filterbg);border:1px solid var(--ct-filterbd);border-radius:8px;
+  padding:12px;display:flex;flex-direction:column;gap:8px;flex:none;}
+.fb-row{display:flex;align-items:center;gap:8px;}
+.fb-row.r1{flex-wrap:wrap;}
+.fsel,.fdate,.finput{height:34px;border:1px solid var(--ct-line);border-radius:6px;background:var(--ct-bg);
+  padding:0 10px;font:inherit;font-size:13px;color:var(--ct-text);display:flex;align-items:center;min-width:0;}
+.fsel{justify-content:space-between;gap:8px;cursor:pointer;}
+.fsel.ph,.finput::placeholder{color:var(--ct-muted);}
+.fsel.w-op{width:190px;} .fsel.w-sm{flex:1;} .finput{flex:1;}
+.fdate{gap:8px;justify-content:space-between;width:160px;cursor:pointer;}
+.fdate .ms{width:16px;height:16px;color:var(--ct-sub);}
+.tilde{color:var(--ct-muted);padding:0 2px;}
+.period{display:flex;border:1px solid var(--ct-line);border-radius:6px;overflow:hidden;background:var(--ct-bg);}
+.period button{height:34px;padding:0 16px;border:none;background:transparent;color:var(--ct-sub);cursor:pointer;font:inherit;font-size:13px;border-left:1px solid var(--ct-line);}
+.period button:first-child{border-left:none;}
+.period button.on{background:var(--ct-perbg);color:var(--ct-per);font-weight:700;}
+.fb-right{margin-left:auto;display:flex;gap:8px;}
+.fbtn{height:34px;padding:0 18px;border-radius:6px;border:1px solid var(--ct-line);background:var(--ct-bg);
+  color:var(--ct-text);cursor:pointer;font:inherit;font-size:13px;font-weight:600;white-space:nowrap;}
+.fbtn.primary{background:var(--ct-navy);border-color:var(--ct-navy);color:var(--ct-on);}
+
+/* 목록 헤더(전체 N + 전체보기) */
+.listhead{display:flex;align-items:center;justify-content:space-between;flex:none;}
+.listhead .cnt{font-size:14px;font-weight:700;color:var(--ct-text);}
+.listhead .cnt b{color:var(--ct-navy);}
+
+/* 테이블 */
+.tablewrap{flex:1;border:1px solid var(--ct-line);border-radius:8px;background:var(--ct-bg);overflow:auto;min-height:0;}
 .ctable{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
-.ctable th{position:sticky;top:0;background:var(--ct-thbg);color:var(--ct-th);font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--ct-line);}
+.ctable th{position:sticky;top:0;background:var(--ct-thbg);color:var(--ct-th);font-weight:700;text-align:left;
+  padding:10px 12px;border-bottom:1px solid var(--ct-line);z-index:1;}
 .ctable th .hc{display:inline-flex;align-items:center;gap:5px;}
 .ctable th .so,.ctable th .fl{width:14px;height:14px;color:var(--ct-so);flex:none;}
-.ctable td{padding:9px 12px;border-bottom:1px solid var(--ct-soft);color:var(--ct-text);}
+.ctable td{padding:8px 12px;border-bottom:1px solid var(--ct-soft);color:var(--ct-text);vertical-align:middle;}
+.ctable td.room{white-space:normal;min-width:96px;max-width:130px;line-height:1.4;color:var(--ct-sub);}
+.ctable td.cls{min-width:230px;white-space:normal;line-height:1.4;}
 .ctable tr:hover td{background:var(--ct-rowhover);}
 .ctable a{color:var(--ct-blue);text-decoration:none;}
 .ctable a:hover{text-decoration:underline;}
+.ctable .num{color:var(--ct-muted);}
+.ctable .num.pos{color:var(--ct-blue);font-weight:700;}
+.ctable .cap{color:var(--ct-text);}
+.tbtn{height:26px;padding:0 12px;border-radius:5px;border:1px solid var(--ct-line);background:var(--ct-bg);
+  color:var(--ct-text);cursor:pointer;font:inherit;font-size:12px;font-weight:600;white-space:nowrap;}
+.tbtn.navy{background:var(--ct-navy);border-color:var(--ct-navy);color:var(--ct-on);}
 .badge{display:inline-block;border-radius:4px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;}
 .badge.ok{background:var(--ct-okbg);color:var(--ct-ok);}
-.badge.soon{background:var(--ct-soonbg);color:var(--ct-soon);}
-.num{color:var(--ct-blue);font-weight:600;}
 </style>
 </head>
 <body>
@@ -336,86 +356,87 @@ function updateNav(){
 document.getElementById('collapse').onclick=()=>{state.collapsed=!state.collapsed;applyCollapsed();};
 buildRail(); buildNav();
 
-/* ── 우측 콘텐츠: 회원조회 · 강좌(반) 목록 (제공 이미지 100% 재현) ── */
-const F_KIND=['전체','강좌 고3 정규','강좌 고3 정규(종)','강좌 고3 서바이벌 정규','강좌 고3 특강','강좌 고3 1학기 중간내신','강좌 고3 1학기 기말내신','강좌 고1/2 특강','강좌 고1/2 1학기 기말내신'];
-const F_SUBJ=['전체','국어','수학','영어','과학탐구','사회탐구','한국사','수학스쿨특강','직탐'];
-const F_TEACHER=['전체','강기원','강동우(로미오)','강라현','강은양','강정화','강준호','강지연','고경률','고아름','공형준','공형준,박영석','구독 서비스','권정미','권정미,손해광,이준환,최현호','글로리아','기타'];
-/* [영역,과목,강사명,요일,강좌(반)명,강의실,개강일,상태(ok=진행중/soon=개강예정),입반(예정)] — 텍스트·띄어쓰기 이미지 그대로 */
+/* ── 우측 콘텐츠: 반 목록(반관리) 1:1 재현 + 헤더 개선 ── */
+/* [반코드,반속성,지점,영역,과목,개설유형,선생님,강의실,개강일,반명,입반정원,입반예정,퇴반예정,대기,운영시작일,운영종료일] — 텍스트·띄어쓰기 이미지 그대로 */
 const ROWS=[
- ['국어','국어','강은양','토','입반X대기X(C)(165)(정규) 강은양T 국어 토 09:00-12:35 5/2','엣지관 601호','2025-12-27','ok','162'],
- ['국어','국어','강은양','토','입반X대기X(C)(165)(정규) 강은양T 국어 토 13:30-17:05 5/2','엣지관 601호','2025-12-27','ok','152'],
- ['국어','국어','강은양','토','입반X대기X)(C)(165)(정규) 강은양T 국어 토 18:25-22:00 5/2','엣지관 601호','2025-12-27','ok','132'],
- ['국어','국어','강은양','일','입반X대기X(C)(165)(정규) 강은양T 국어 일 09:00-12:35 5/3','엣지관 601호','2025-12-28','ok','148'],
- ['국어','국어','강은양','일','입반X대기X(C)(165)(정규) 강은양T 국어 일 13:30-17:05 5/3','엣지관 601호','2025-12-28','ok','144'],
- ['국어','국어','강은양','토','(C)(165) 강은양T 국어 서바이벌 토 09:00-12:35 7/11','엣지관 601호','2026-07-11','soon','169'],
- ['국어','국어','강은양','토','(C)(165) 강은양T 국어 서바이벌 토 13:30-17:05 7/11','엣지관 601호','2026-07-11','soon','170'],
- ['국어','국어','강은양','토','(C)(165) 강은양T 국어 서바이벌 토 18:25-22:00 7/11','엣지관 601호','2026-07-11','soon','167'],
- ['국어','국어','강은양','일','(C)(165) 강은양T 국어 서바이벌 일 09:00-12:35 7/12','엣지관 601호','2026-07-12','soon','163'],
- ['국어','국어','강은양','일','(C)(165) 강은양T 국어 서바이벌 일 13:30-17:05 7/12','엣지관 601호','2026-07-12','soon','168'],
- ['국어','국어','강정화','금','강정화T 언매 연합반 중간 3회 금 18:00-21:30 4/3','브릿지관 301호','2026-04-03','ok','125'],
- ['국어','국어','강정화','토','(120) 강정화T 은광2 국어 기말 6+1회 토 10:00-13:00 5/16','브릿지관 301호','2026-05-16','ok','106'],
- ['국어','국어','강정화','토','(120) 강정화T 은광1 국어 기말 6+1회 토 14:00-17:00 5/16','브릿지관 301호','2026-05-16','ok','68'],
- ['국어','국어','강정화','토','(120) 강정화T 단대1 국어 기말 6+1회 토 18:00-21:00 5/16','브릿지관 301호','2026-05-16','ok','100'],
- ['국어','국어','강정화','월','(120) 강정화T 단대2 국어 기말 6+1회 월 18:40-21:40 5/18','브릿지관 201호','2026-05-18','ok','78'],
- ['국어','국어','강정화','수','(120) 강정화T 휘문1 국어 기말 6+1회 수 18:00-21:00 5/20','브릿지관 301호','2026-05-20','ok','66'],
- ['국어','국어','강정화','월','(C)(90) 강정화T휘문2 국어 기말 5+1회 월 16:00-18:30 5/25','브릿지관 301호','2026-05-25','ok','89'],
- ['국어','국어','강정화','금','(160) 강정화T 언매 연합반 기말 3회 금 18:00-21:30 6/5','브릿지관 301호','2026-06-05','ok','140'],
- ['국어','국어','강정화','토','(C)(180) 강정화T 고2 국어 정규 5회 토 10:00-13:00 7/11','- -','2026-07-11','soon','183'],
- ['국어','국어','강정화','토','(C)(180) 강정화T 고2 국어 정규 5회 토 14:00-17:00 7/11','- -','2026-07-11','soon','171'],
- ['국어','국어','강정화','토','(C)(180) 강정화T 고1 국어 정규 5회 토 18:00-21:00 7/11','- -','2026-07-11','soon','179'],
- ['국어','국어','강정화','일','(C)(180) 강정화T 고2 국어 정규 5회 일 10:00-13:00 7/12','- -','2026-07-12','soon','183'],
- ['국어','국어','강정화','일','(C)(180) 강정화T 고1 국어 정규 5회 일 14:00-17:00 7/12','- -','2026-07-12','soon','188'],
- ['국어','국어','강정화','화','(C)(신설)(180) 강정화T 고2 국어 정규 5회 화 18:00-21:00 7/14','- -','2026-07-14','soon','176'],
- ['국어','국어','강정화','수','(C)(180) 강정화T 고1 국어 정규 5회 수 18:00-21:00 7/15','- -','2026-07-15','soon','173'],
- ['국어','국어','강정화','수','(C)(180) 강정화T 언어(문법) 특강 4회 수 14:00-17:00 7/22','- -','2026-07-22','soon','178'],
- ['국어','국어','강지연','토','(종) 강지연T 고2 국어 수능 문법 특강 3회 토 19:00-22:00 5/2','대덕관 401호','2026-05-02','ok','32'],
+ ['1939','단과','대치단과','국어','국어','학원지정','강은양','- -','2026-06-08','강은양T 국어 월 6/8','9999','0','0','0','2026-06-29','2026-12-31'],
+ ['1938','단과','대치단과','국어','국어','학원지정','강은양','본관 301호','2026-06-08','설명회_테스트강좌(1)','9999','0','0','0','2026-06-29','2026-12-31'],
+ ['1935','단과','대치단과','국어','국어','학원지정','강은양','- -','2026-05-01','QA 0626 테스트강좌','9999','3','0','0','2026-06-26','2026-12-31'],
+ ['1934','단과','대치단과','국어','국어','학원지정','손창빈','W관 802호','2026-07-11','(40) 복제_손창빈T 국어 서바이벌 목 18:30-22:00 7/9','165','0','0','0','2026-06-25','2026-12-31'],
+ ['1929','단과','대치단과','논술','수리논술','학원지정','박지윤','공간 테스트용 -','2026-06-25','박지윤T 수리논술확통 목 공간 테스트용 6/25','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1928','단과','대치단과','논술','수리논술','학원지정','박지윤','테스트관 -','2026-06-24','박지윤T 수리논술기하 수 테스트관 6/24','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1923','단과','대치단과','국어','국어','학원지정','강은양','- -','2026-03-02','QA 0623정산테스트강좌','9999','7','0','0','2026-06-23','2026-12-31'],
+ ['1922','단과','대치단과','국어','국어','학원지정','강은양','공간 테스트용 분당 라이브러리 101','2026-06-30','분당 6월_+복제','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1921','단과','대치단과','이과면접','서울대 수학심층','학원지정','박지윤','- -','2026-06-30','박지윤T 서울대 수학심층 화 6/30','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1920','단과','대치단과','이과면접','연세대황동우수','학원지정','박지윤','공간공간 -','2026-06-27','박지윤T 연세대황동우수 토 공간공간 6/27','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1919','단과','대치단과','이과면접','메이저 의대면접','학원지정','박지윤','공간 테스트용 -','2026-06-30','박지윤T 메이저 의대면접 화 공간 테스트용 6/30','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1918','단과','대치단과','이과면접','의대MMI','학원지정','박지윤','공간공간 급식식당','2026-06-30','박지윤T 의대MMI 화 공간공간 급식식당 6/30','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1917','단과','대치단과','논술','수리논술(연세대)','학원지정','박지윤','공간 테스트용 라이브러리 시설','2001-01-27','박지윤T 수리논술(연세대) 토 공간 테스트용 라이브러리 시설 1/27','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1916','단과','대치단과','논술','수리논술','학원지정','김종두','본관 301호','2026-06-27','박지윤T 인문논술(연세대) 토 본관 301호 6/27','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1915','단과','대치단과','논술','수리논술','학원지정','김종두','공간공간 -','2026-06-26','김종두T 수리논술 금 공간공간 6/26','9999','0','0','0','2026-06-26','2026-12-31'],
+ ['1914','단과','대치단과','논술','수리논술','학원지정','김기원','공간공간 -','2026-06-26','김기원T 수리논술 금 공간공간 6/26','9999','0','0','0','2026-06-26','2026-12-31'],
+ ['1913','단과','대치단과','국어','국어','학원지정','강은양','공간 테스트용 분당 라이브러리 101','2026-06-30','분당 6월','9999','11','0','0','2026-06-23','2026-12-31'],
+ ['1912','단과','대치단과','수학','미적정규','학원지정','엄나윤','공간23 -','2026-06-26','김재문T 기하 금 공간23 6/26','9999','0','0','0','2026-06-22','2026-12-31'],
 ];
-function flist(items){return '<div class="flist">'+items.map((t,i)=>'<div class="fi'+(i===0?' sel':'')+'">'+t+'</div>').join('')+'</div>';}
-function dcaret(){return '<span class="ms" style="width:18px;height:18px;color:var(--ct-muted)">'+svg('keyboard_arrow_down')+'</span>';}
-const COLS=['영역','과목','강사명','요일','강좌(반)명','강의실','개강일','강좌 운영상태','입반구분','입반(예정)','입반안내','총 대기인원'];
-function th(c){return '<th><span class="hc">'+c+'<span class="so">'+svg('keyboard_arrow_down')+'</span><span class="fl">'+svg('filter_alt')+'</span></span></th>';}
+const COLS=[
+ {n:'반코드',s:1},{n:'반속성',s:1,f:1},{n:'지점',s:1,f:1},{n:'영역',s:1,f:1},{n:'과목',s:1,f:1},
+ {n:'개설유형',s:1,f:1},{n:'선생님',s:1,f:1},{n:'강의실',s:1,f:1},{n:'개강일',s:1,f:1},
+ {n:'반명',f:1},{n:'수업구성'},{n:'입반정원'},{n:'입반(예정)생',s:1},{n:'퇴반(예정)생',s:1},
+ {n:'대기생',s:1},{n:'접수관리'},{n:'운영시작일',s:1},{n:'운영종료일',s:1},{n:'운영상태',f:1}
+];
+function chev(){return '<span class="ms">'+svg('keyboard_arrow_down')+'</span>';}
+function th(c){return '<th><span class="hc">'+c.n
+  +(c.s?'<span class="so">'+svg('keyboard_arrow_down')+'</span>':'')
+  +(c.f?'<span class="fl">'+svg('filter_alt')+'</span>':'')+'</span></th>';}
 function topbarHTML(){
-  return '<header class="topbar">'
-    +'<div class="topright">'
-      +'<span class="cardst"><span class="dot"></span>카드단말기 연결 없음</span>'
-      +'<span class="tlink"><span class="ms">'+svg('refresh')+'</span>연결확인</span>'
-      +'<span class="vd"></span>'
-      +'<span class="tsel">시대인재 대치단과<span class="ms">'+svg('keyboard_arrow_down')+'</span></span>'
-      +'<span class="vd"></span>'
-      +'<span class="tsel">김명준<span class="ms">'+svg('keyboard_arrow_down')+'</span></span>'
-      +'<span class="vd"></span>'
-      +'<span class="tmemo"><span class="ms">'+svg(RAIL[1].icon)+'</span>내 메모</span>'
+  return '<header class="topbar"><div class="topright">'
+    +'<span class="alertchip"><span class="dot"></span>카드단말기 연결 없음'
+      +'<span class="ac-act"><span class="ms">'+svg('refresh')+'</span>연결확인</span></span>'
+    +'<span class="vd"></span>'
+    +'<span class="acct"><span class="tsel">시대인재 대치단과'+chev()+'</span>'
+      +'<span class="tsel">김명준'+chev()+'</span></span>'
     +'</div></header>';
 }
 function contentHTML(){
   const ths=COLS.map(th).join('');
+  const numCell=v=>'<td class="num'+(Number(v)>0?' pos':'')+'">'+v+'</td>';
   const rows=ROWS.map(r=>{
-    const [area,subj,t,day,name,room,open,st,enroll]=r;
-    const badge = st==='ok' ? '<span class="badge ok">진행중</span>' : '<span class="badge soon">개강예정</span>';
-    return '<tr><td>'+area+'</td><td>'+subj+'</td><td>'+t+'</td><td>'+day+'</td>'
-      +'<td><a href="#">'+name+'</a></td><td>'+room+'</td><td>'+open+'</td>'
-      +'<td>'+badge+'</td><td></td>'
-      +'<td class="num">'+enroll+'</td><td><a href="#">복사</a></td><td></td></tr>';
+    const [code,attr,branch,area,subj,type,teacher,room,opendt,cls,cap,ip,toe,wait,startdt,enddt]=r;
+    return '<tr><td>'+code+'</td><td>'+attr+'</td><td>'+branch+'</td><td>'+area+'</td><td>'+subj+'</td>'
+      +'<td>'+type+'</td><td>'+teacher+'</td><td class="room">'+room+'</td><td>'+opendt+'</td>'
+      +'<td class="cls"><a href="#">'+cls+'</a></td>'
+      +'<td><button class="tbtn navy">조회</button></td>'
+      +'<td class="cap">'+cap+'</td>'+numCell(ip)+numCell(toe)+numCell(wait)
+      +'<td><button class="tbtn">관리</button></td>'
+      +'<td>'+startdt+'</td><td>'+enddt+'</td>'
+      +'<td><span class="badge ok">운영중</span></td></tr>';
   }).join('');
   return topbarHTML()
-    +'<div class="work">'
-    +'<div class="leftcol">'
-      +'<div class="csearch">'
-        +'<div class="row"><div class="cselect" style="flex:1">이름/HP/이메일'+dcaret()+'</div>'
-          +'<button class="cbtn">초기화</button><button class="cbtn primary">검색</button></div>'
-        +'<input class="cinput" placeholder="검색어 입력"/></div>'
-      +'<div class="filters">'
-        +'<div class="fyear"><span>2026년</span>'+dcaret()+'</div>'
-        +flist(F_KIND)+flist(F_SUBJ)+flist(F_TEACHER)
-        +'<div class="fbot"><input class="cinput" placeholder="강좌명 입력"/>'
-          +'<div class="row"><button class="cbtn" style="flex:1">초기화</button><button class="cbtn primary" style="flex:1">검색</button></div></div>'
+    +'<div class="page">'
+      +'<div class="page-head"><h1>반 목록</h1>'
+        +'<span class="ts"><span class="ms">'+svg('refresh')+'</span>2026-06-29 15:05:51 기준'
+          +'<button class="themebtn" id="themeBtn" title="LNB 라이트/다크 미리보기"><span class="ms" data-th>'+svg('light_mode')+'</span></button></span></div>'
+      +'<div class="filterbar">'
+        +'<div class="fb-row r1">'
+          +'<div class="fsel w-op">운영시작일'+chev()+'</div>'
+          +'<div class="fdate">2025-06-29<span class="ms">'+svg('calendar_today')+'</span></div>'
+          +'<span class="tilde">~</span>'
+          +'<div class="fdate">2026-06-29<span class="ms">'+svg('calendar_today')+'</span></div>'
+          +'<div class="period"><button>1개월</button><button>3개월</button><button>6개월</button><button class="on">1년</button></div>'
+          +'<div class="fb-right"><button class="fbtn primary">검색</button><button class="fbtn">초기화</button></div>'
+        +'</div>'
+        +'<div class="fb-row">'
+          +'<div class="fsel w-sm">2026년'+chev()+'</div><div class="fsel w-sm">강좌'+chev()+'</div>'
+          +'<div class="fsel w-sm ph">중분류'+chev()+'</div><div class="fsel w-sm ph">소분류'+chev()+'</div>'
+        +'</div>'
+        +'<div class="fb-row">'
+          +'<div class="fsel w-op">반명'+chev()+'</div>'
+          +'<input class="finput" placeholder="검색어를 입력하세요!"/>'
+        +'</div>'
       +'</div>'
-    +'</div>'
-    +'<div class="rightcol">'
-      +'<div class="ctabs"><div class="ctab on">강좌(반) 목록</div><div class="ctab">회원목록</div>'
-        +'<button class="themebtn" id="themeBtn" title="LNB 라이트/다크 미리보기"><span class="ms" data-th>'+svg('light_mode')+'</span></button></div>'
+      +'<div class="listhead"><span class="cnt">전체 <b>605</b></span><button class="fbtn">전체보기</button></div>'
       +'<div class="tablewrap"><table class="ctable"><thead><tr>'+ths+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +'</div></div>';
+    +'</div>';
 }
 document.getElementById('content').innerHTML=contentHTML();
 /* LNB 라이트/다크 미리보기 토글(아이콘만) */
