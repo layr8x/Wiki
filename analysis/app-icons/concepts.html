@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>시대인재 마이클래스 패밀리 — 런처 아이콘 시안</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<style>
+  :root{ --ink:#0e0e12; --tile:200px; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Pretendard',-apple-system,sans-serif;background:#0b0b0d;color:#e9e9ee;
+       -webkit-font-smoothing:antialiased;padding:48px 40px 80px;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  h1{font-size:30px;font-weight:800;letter-spacing:-.4px;margin:0 0 6px;}
+  .sub{color:#9b9ba6;font-size:15px;margin:0 0 8px;line-height:1.6;}
+  .sec{margin-top:54px;}
+  .sec h2{font-size:19px;font-weight:700;margin:0 0 4px;letter-spacing:-.2px;}
+  .sec .desc{color:#9b9ba6;font-size:13.5px;margin:0 0 22px;line-height:1.6;max-width:880px;}
+  .rec{display:inline-block;font-size:11px;font-weight:800;color:#0b0b0d;background:#ffd23f;border-radius:999px;padding:3px 9px;margin-left:8px;vertical-align:middle;}
+  .row{display:flex;gap:34px;flex-wrap:wrap;}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:11px;width:var(--tile);}
+  .cell .ic{width:var(--tile);height:var(--tile);}
+  .cell .nm{font-size:13px;color:#cfcfd6;font-weight:500;text-align:center;}
+  .cell .ro{font-size:11px;color:#80808c;}
+  .before .ic{filter:saturate(.2);}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 0;font-size:12px;color:#9b9ba6;}
+  .legend b{color:#e9e9ee;}
+  .masks{display:flex;gap:30px;align-items:flex-end;flex-wrap:wrap;}
+  .masks .cap{font-size:12px;color:#9b9ba6;text-align:center;margin-top:8px;}
+  .note{font-size:12.5px;color:#8a8a95;line-height:1.6;border-left:2px solid #2a2a33;padding-left:14px;margin-top:14px;max-width:880px;}
+  svg{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>시대인재 마이클래스 패밀리 — 런처 아이콘 시안</h1>
+  <p class="sub">학생 · 학부모 · 매니저(QR출결) 3종 / Apple HIG · Android Adaptive Icon 가이드 준수 · 텍스트리스 심볼 · 한 가족(패밀리) 시스템</p>
+
+  <div id="board"></div>
+</div>
+
+<script>
+/* ───────── iOS 스퀘어클(슈퍼타원) path ───────── */
+function squircle(s, n){ n=n||5; const r=s/2,c=s/2; let d=''; const N=96;
+  for(let i=0;i<=N;i++){ const t=2*Math.PI*i/N, ct=Math.cos(t), st=Math.sin(t);
+    const x=c+r*Math.sign(ct)*Math.pow(Math.abs(ct),2/n), y=c+r*Math.sign(st)*Math.pow(Math.abs(st),2/n);
+    d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2)+' '; } return d+'Z'; }
+
+/* ───────── 글리프(100x100 viewbox, 중앙) ───────── */
+const G = {
+  // 상승 ㅅ/성장 마크 (브랜드 통일 심볼) — 이중 셰브런
+  rise:(c,a)=>`
+    <path d="M22 67 L50 35 L78 67" fill="none" stroke="${c}" stroke-width="12.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M33 49 L50 30 L67 49" fill="none" stroke="${a||c}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="${a?1:.5}"/>`,
+  // 시(ㅅ+ㅣ) 모노그램
+  si:(c)=>`
+    <path d="M45 33 L27 71" fill="none" stroke="${c}" stroke-width="11.5" stroke-linecap="round"/>
+    <path d="M45 33 L61 60" fill="none" stroke="${c}" stroke-width="11.5" stroke-linecap="round"/>
+    <rect x="72" y="31" width="11" height="42" rx="5.5" fill="${c}"/>`,
+  // 인재 스파클(4각 별)
+  spark:(c)=>`<path d="M50 13 C53.5 38 62 46.5 87 50 C62 53.5 53.5 62 50 87 C46.5 62 38 53.5 13 50 C38 46.5 46.5 38 50 13 Z" fill="${c}"/>`,
+  // 학습(모터보드)
+  cap:(c)=>`
+    <path d="M50 29 L81 43 L50 57 L19 43 Z" fill="${c}"/>
+    <path d="M34 50 L34 61 Q50 70 66 61 L66 50" fill="none" stroke="${c}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="81" cy="43" r="3" fill="${c}"/><path d="M81 43 L81 58" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`,
+  // 보호자+자녀(2인)
+  people:(c)=>`
+    <circle cx="40" cy="38" r="10" fill="${c}"/>
+    <path d="M22 72 Q22 53 40 53 Q58 53 58 72 Z" fill="${c}"/>
+    <circle cx="65" cy="45" r="7.5" fill="${c}"/>
+    <path d="M52 74 Q52 60 65 60 Q78 60 78 74 Z" fill="${c}"/>`,
+  // QR 스캔 + 출결 체크
+  scan:(c,a)=>`
+    <g fill="none" stroke="${c}" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M24 39 L24 29 Q24 25 28 25 L38 25"/>
+      <path d="M62 25 L72 25 Q76 25 76 29 L76 39"/>
+      <path d="M24 61 L24 71 Q24 75 28 75 L38 75"/>
+      <path d="M76 61 L76 71 Q76 75 72 75 L62 75"/>
+    </g>
+    <path d="M37 51 L46.5 60 L65 39" fill="none" stroke="${a||c}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>`,
+};
+
+const ROLES = [
+  {key:'student', label:'시대인재 마이클래스', role:'학생',  color:'#2f6bf0'},
+  {key:'parent',  label:'시대인재 마이클래스', role:'학부모', color:'#10b981'},
+  {key:'manager', label:'시대인재 QR 출결',    role:'매니저', color:'#f4a423'},
+];
+
+/* 아이콘 1개 SVG (size px) — mask: 'ios'|'circle'|'rounded' */
+function icon(opts){
+  const s=opts.size||220, vb=1000, id='c'+Math.random().toString(36).slice(2,8);
+  const mask = opts.mask||'ios';
+  let clip;
+  if(mask==='circle') clip=`<circle cx="500" cy="500" r="500"/>`;
+  else if(mask==='rounded') clip=`<rect x="0" y="0" width="1000" height="1000" rx="180"/>`;
+  else clip=`<path d="${squircle(1000,5)}"/>`;
+  // 배경
+  let bg;
+  if(opts.bgType==='color'){ const c=opts.bg; bg=`
+     <stop offset="0" stop-color="${shade(c,18)}"/><stop offset="1" stop-color="${shade(c,-12)}"/>`;
+  } else { bg=`<stop offset="0" stop-color="#1b1b22"/><stop offset="1" stop-color="#0a0a0e"/>`; }
+  // 글리프 그룹: 100단위 → 1000단위 스케일, 세이프존 안에 배치(중앙 64%)
+  const gz = opts.glyphScale||6.2;       // 100*gz=620px(=62%)
+  const off = (1000 - 100*gz)/2;
+  const glyph = `<g transform="translate(${off},${off+ (opts.glyphDy||0)}) scale(${gz})">${opts.glyph}</g>`;
+  // 액센트(선택)
+  let accent='';
+  if(opts.accent){ accent=`<path d="M340 760 Q500 800 660 760" fill="none" stroke="${opts.accent}" stroke-width="26" stroke-linecap="round"/>`; }
+  // 미세 하이라이트(상단 광택) for premium
+  const gloss = `<rect x="0" y="0" width="1000" height="500" fill="url(#gl${id})" opacity=".10"/>`;
+  return `<svg class="ic" viewBox="0 0 1000 1000" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bg${id}" x1="0" y1="0" x2="0" y2="1">${bg}</linearGradient>
+      <linearGradient id="gl${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <clipPath id="cl${id}">${clip}</clipPath>
+    </defs>
+    <g clip-path="url(#cl${id})">
+      <rect x="0" y="0" width="1000" height="1000" fill="url(#bg${id})"/>
+      ${opts.bgType==='color'?gloss:''}
+      ${accent}
+      ${glyph}
+    </g>
+    ${mask==='ios'?`<path d="${squircle(1000,5)}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2"/>`:''}
+  </svg>`;
+}
+function shade(hex,amt){ // lighten/darken hex by amt%
+  const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const f=t=>Math.max(0,Math.min(255,Math.round(t+ (amt/100)*255)));
+  return '#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+/* ───────── 보드 구성 ───────── */
+const board=document.getElementById('board');
+function section(title,desc,rec){ const s=document.createElement('div'); s.className='sec';
+  s.innerHTML=`<h2>${title}${rec?'<span class=rec>추천</span>':''}</h2><div class="desc">${desc}</div><div class="row"></div>`;
+  board.appendChild(s); return s.querySelector('.row'); }
+function cell(row, svg, name, role, before){ const c=document.createElement('div'); c.className='cell'+(before?' before':'');
+  c.innerHTML=svg+`<div class="nm">${name}</div><div class="ro">${role}</div>`; row.appendChild(c); }
+
+/* AS-IS (현재, 글자 아이콘 재현) */
+(function(){ const row=section('현재 (AS-IS) — 글자만 박은 아이콘','셋 다 텍스트 기반 → Apple/Google 모두 "아이콘 텍스트 금지" 권고 위반, 작은 크기에서 가독성↓, 패밀리 정체성이 색띠로만 구분.');
+  const make=(top,band,bandText,topText,topInk,bandInk)=>{
+    const id='b'+Math.random().toString(36).slice(2,7);
+    return `<svg class="ic" viewBox="0 0 1000 1000" width="200" height="200"><defs><clipPath id="${id}"><path d="${squircle(1000,5)}"/></clipPath></defs>
+      <g clip-path="url(#${id})"><rect width="1000" height="1000" fill="${top}"/><rect y="680" width="1000" height="320" fill="${band}"/>
+      <text x="500" y="300" text-anchor="middle" font-family="Pretendard" font-weight="800" font-size="150" fill="${topInk}">시대인재</text>
+      <text x="500" y="470" text-anchor="middle" font-family="Pretendard" font-weight="700" font-size="120" fill="${topInk}">${topText}</text>
+      <text x="500" y="855" text-anchor="middle" font-family="Pretendard" font-weight="800" font-size="150" fill="${bandInk}">${bandText}</text></g></svg>`;
+  };
+  cell(row, make('#f3f3f3','#111','학생','마이클래스','#111','#fff'),'마이클래스','학생',true);
+  cell(row, make('#f3f3f3','#8a8a8a','학부모','마이클래스','#111','#fff'),'마이클래스','학부모',true);
+  cell(row, make('#1d1d1d','#f3f3f3','매니저','QR 출결','#fff','#111'),'QR 출결관리','매니저',true);
+})();
+
+/* 컨셉 1 — 프리미엄 블랙 + 상승 마크 + 역할 액센트 (추천) */
+(function(){ const row=section('컨셉 1 · 프리미엄 블랙 + 상승(成長) 마크','시대인재 특유의 모노크롬 프리미엄(검정 타일) 유지 + 흰 \'상승 셰브런(ㅅ/성장)\' 통일 심볼. 역할은 하단 얇은 액센트 아크 색으로만 구분 → "한 가족"임이 즉시 읽힘(MS Office 패밀리 논리).', true);
+  ROLES.forEach(r=> cell(row, icon({glyph:G.rise('#ffffff', r.color), accent:r.color, glyphScale:5.6, glyphDy:-40}), r.role==='매니저'?'QR 출결관리':'마이클래스', r.role));
+})();
+
+/* 컨셉 2 — 컬러 패밀리(역할별 배경) + 통일 마크 */
+(function(){ const row=section('컨셉 2 · 컬러 패밀리 + 통일 마크','같은 상승 마크를 역할별 컬러 배경(학생=블루 / 학부모=그린 / 매니저=앰버)에. 홈 화면에서 색으로 즉시 구분, 친근·소비자 친화적.');
+  ROLES.forEach(r=> cell(row, icon({glyph:G.rise('#ffffff'), bgType:'color', bg:r.color, glyphScale:5.8}), r.role==='매니저'?'QR 출결관리':'마이클래스', r.role));
+})();
+
+/* 컨셉 3 — 기능형 패밀리(블랙) */
+(function(){ const row=section('컨셉 3 · 기능형 패밀리','한 가족 컨테이너(블랙) + 역할 기능 글리프: 학생=학습(학사모) / 학부모=보호자·자녀(2인) / 매니저=QR 스캔+출결 체크. 무엇 하는 앱인지 한눈에.');
+  cell(row, icon({glyph:G.cap('#ffffff'), accent:ROLES[0].color, glyphScale:5.8}),'마이클래스','학생');
+  cell(row, icon({glyph:G.people('#ffffff'), accent:ROLES[1].color, glyphScale:5.8}),'마이클래스','학부모');
+  cell(row, icon({glyph:G.scan('#ffffff', ROLES[2].color), glyphScale:5.8}),'QR 출결관리','매니저');
+})();
+
+/* 컨셉 4 — 시(ㅅ+ㅣ) 모노그램 */
+(function(){ const row=section('컨셉 4 · \'시\' 모노그램','브랜드 첫 글자 \'시\'를 커스텀 레터폼으로. 가장 절제된 프리미엄. 역할은 컬러 배경 또는 액센트로.');
+  ROLES.forEach(r=> cell(row, icon({glyph:G.si('#ffffff'), bgType:'color', bg:shade(r.color,-40), accent:r.color, glyphScale:5.6}), r.role==='매니저'?'QR 출결관리':'마이클래스', r.role));
+})();
+
+/* 컨셉 5 — 인재 스파클 */
+(function(){ const row=section('컨셉 5 · \'인재\' 스파클','인재=재능이 빛난다 → 4각 스파클. 블랙 프리미엄 위 역할 컬러 스파클. 교육·성장의 긍정적 에너지.');
+  ROLES.forEach(r=> cell(row, icon({glyph:G.spark(r.color), glyphScale:5.4}), r.role==='매니저'?'QR 출결관리':'마이클래스', r.role));
+})();
+
+/* 가이드 준수 데모 — 추천(컨셉1) 학생 아이콘을 iOS / Android 마스크별로 */
+(function(){ const s=document.createElement('div'); s.className='sec';
+  s.innerHTML=`<h2>가이드 준수 — 동일 아이콘, 플랫폼 마스크별 안전성</h2>
+  <div class="desc">같은 마스터(1024px)가 iOS 스퀘어클·Android 원형/스퀘어클/둥근사각 어떤 마스크에서도 잘림 없이 동작(중앙 62% 세이프존 배치).</div>
+  <div class="masks"></div>
+  <div class="note">· <b>Apple</b>: 1024×1024 마스터 1장, 모서리·텍스트 직접 그리지 않음(시스템이 스퀘어클 마스킹). 단일 초점·여백 균형.<br>
+  · <b>Android</b>: 108×108dp 적응형(전경+배경 레이어), 핵심요소는 66dp 세이프 서클 안. 위 마크는 전 마스크 안전.</div>`;
+  board.appendChild(s); const m=s.querySelector('.masks');
+  const g=()=>G.rise('#ffffff', ROLES[0].color);
+  const add=(mask,cap)=>{ const d=document.createElement('div'); d.style.textAlign='center';
+    d.innerHTML=icon({glyph:g(),accent:ROLES[0].color,glyphScale:5.6,glyphDy:-40,mask:mask,size:150})+`<div class="cap">${cap}</div>`; m.appendChild(d); };
+  add('ios','iOS 스퀘어클'); add('circle','Android 원형'); add('rounded','Android 둥근사각'); add('ios','iOS');
+})();
+</script>
+</body>
+</html>
