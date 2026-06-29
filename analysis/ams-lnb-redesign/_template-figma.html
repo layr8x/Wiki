@@ -7,73 +7,68 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
 <style>
-/* ── offplatform.admin.web_v2.0 / LNB(15669:12727) 실측 토큰 ── */
+/* ── offplatform.admin.web_v2.0 / LNB(15670:13206 열림 · 15671:14199 닫힘) 실측 토큰 ── */
 :root{
-  --bg:#161616;             /* background/primary */
-  --hover:#292929;          /* background/primary-hover (활성/호버) */
-  --text:#f4f4f4;           /* text/primary */
-  --helper:rgba(255,255,255,.56); /* text/helper #ffffff8f */
-  --border:rgba(255,255,255,.08); /* border/primary #ffffff14 */
-  --r:4px;                  /* radius/sm · button radius */
-  --xs:4px; --sm:6px; --md:8px; --xl:12px;  /* space/* */
+  --bg:#161616;                    /* background/primary */
+  --hover:#292929;                 /* background/primary-hover (활성) */
+  --text:#f4f4f4;                  /* text/primary */
+  --helper:rgba(255,255,255,.56);  /* text/helper #ffffff8f */
+  --placeholder:rgba(255,255,255,.4); /* text/placeholder (add/delete) */
+  --border:rgba(255,255,255,.08);  /* border/primary #ffffff14 */
+  --r:4px; --xs:4px; --sm:6px; --md:8px; --xl:12px;
 }
 *{box-sizing:border-box;}
 html,body{margin:0;height:100%;}
 body{background:#0b0b0d;min-height:100vh;font-family:'Pretendard','Pretendard Variable',-apple-system,sans-serif;
-  -webkit-font-smoothing:antialiased;display:flex;align-items:stretch;justify-content:flex-start;padding:0;}
+  -webkit-font-smoothing:antialiased;display:flex;align-items:stretch;justify-content:flex-start;}
 .ms{display:inline-flex;width:20px;height:20px;flex:none;}
 .ms svg{width:100%;height:100%;fill:currentColor;display:block;}
 
-/* ── LNB ── */
-.lnb{display:flex;align-items:stretch;width:296px;min-height:100vh;background:var(--bg);color:var(--text);
+.lnb{display:flex;align-items:stretch;min-height:100vh;background:var(--bg);color:var(--text);
   font-size:14px;line-height:20px;font-weight:500;flex:none;}
 
-/* IconNavigation (rail 56) */
+/* ── IconNavigation (rail 56) ── */
 .rail{width:56px;flex:none;border-right:1px solid var(--border);
   display:flex;flex-direction:column;align-items:center;gap:var(--xl);padding:var(--xl);}
-.rail .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none;}
-.rail .logo svg{width:20px;height:20px;}
-.rail .ricons{flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--md);}
+.logo{height:20px;display:flex;align-items:center;justify-content:center;flex:none;color:var(--text);}
+.logo svg{height:20px;width:auto;display:block;}
+.ricons{flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--md);}
 .rbtn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);
-  color:var(--helper);cursor:pointer;border:none;background:transparent;}
+  color:var(--helper);cursor:pointer;border:none;background:transparent;flex:none;}
 .rbtn .ms{font-size:20px;}
 .rbtn:hover{background:var(--hover);}
 .rbtn.active{background:var(--hover);color:var(--text);}
 
-/* DetailSidebar (240) */
+/* ── DetailSidebar (240) ── */
 .detail{width:240px;flex:none;display:flex;flex-direction:column;gap:var(--xl);padding:var(--xl);min-width:0;}
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:var(--sm) var(--xl);}
 .wm{display:flex;align-items:center;gap:var(--md);white-space:nowrap;}
-.wm b{font-size:15px;font-weight:800;letter-spacing:-.2px;color:var(--text);}
-.wm .sub{font-size:14px;font-weight:600;color:var(--helper);}
+.wm .mark{height:18px;color:var(--text);display:inline-flex;}
+.wm .mark svg{height:18px;width:auto;display:block;}
+.wm .sub{height:16px;color:var(--helper);display:inline-flex;}
+.wm .sub svg{height:16px;width:auto;display:block;}
 .iconbtn{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--text);
   cursor:pointer;border:none;background:transparent;}
 .iconbtn .ms{font-size:20px;}
 
 .nav{display:flex;flex-direction:column;}
 .sec{display:flex;flex-direction:column;padding-bottom:var(--xl);}
-/* 캡션 (밑줄선 없음) */
 .cap{display:flex;align-items:center;justify-content:space-between;gap:var(--md);
   padding:var(--sm) var(--xl);color:var(--helper);font-size:14px;font-weight:500;white-space:nowrap;border-radius:var(--r);}
-.cap .add{color:var(--helper);cursor:pointer;}
-/* 즐겨찾기 항목 (bookmark + delete) */
+.cap .add{color:var(--placeholder);cursor:pointer;}
 .favitem{display:flex;align-items:center;gap:var(--md);padding:10px var(--xl);border-radius:var(--r);cursor:pointer;}
 .favitem:hover{background:var(--hover);}
 .favitem .ms{font-size:20px;}
 .favitem .bk{color:var(--text);}
 .favitem .lb{flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;}
-.favitem .del{color:var(--helper);opacity:.0;transition:opacity .12s;}
-.favitem:hover .del{opacity:1;}
+.favitem .del{color:var(--placeholder);}
 
-/* 그룹 행 */
 .grp{display:flex;align-items:center;gap:var(--md);padding:10px var(--xl);border-radius:var(--r);cursor:pointer;color:var(--text);}
 .grp:hover{background:var(--hover);}
-.grp.has-active{background:var(--hover);}
+.grp.active{background:var(--hover);}
 .grp .gi{font-size:20px;color:var(--text);}
 .grp .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.grp .car{font-size:20px;color:var(--text);transition:transform .18s ease;}
-.grp.open .car{transform:rotate(180deg);}
-/* 항목(2뎁스) */
+.grp .car{font-size:20px;color:var(--text);}
 .items{display:grid;grid-template-rows:0fr;transition:grid-template-rows .18s ease;}
 .grp.open + .items{grid-template-rows:1fr;}
 .items > .inner{overflow:hidden;min-height:0;}
@@ -82,22 +77,20 @@ body{background:#0b0b0d;min-height:100vh;font-family:'Pretendard','Pretendard Va
 .item:hover{background:var(--hover);color:var(--text);}
 .item.active{background:var(--hover);color:var(--text);}
 
-/* 접힘: 디테일 숨김 */
 body.collapsed .detail{display:none;}
 </style>
 </head>
 <body>
 <div class="lnb" id="lnb">
-  <!-- IconNavigation -->
   <div class="rail">
-    <div class="logo" data-i="__LOGO__"></div>
+    <div class="logo">__SYMBOL__</div>
     <div class="ricons" id="ricons"></div>
+    <button class="rbtn account" title="계정"><span class="ms" data-i="account_circle"></span></button>
   </div>
-  <!-- DetailSidebar -->
   <div class="detail">
     <div class="hdr">
-      <div class="wm"><b>시대인재</b><span class="sub">매니저</span></div>
-      <button class="iconbtn" id="collapse" title="접기"><span class="ms" data-i="menu_open"></span></button>
+      <div class="wm"><span class="mark">__WORDMARK__</span><span class="sub">__MANAGER__</span></div>
+      <button class="iconbtn" id="collapse" title="패널 접기"><span class="ms" data-i="left_panel_close"></span></button>
     </div>
     <div class="nav" id="nav"></div>
   </div>
@@ -106,16 +99,14 @@ body.collapsed .detail{display:none;}
 <script>
 const ICONS = __ICONS__;
 function svg(name){return '<svg viewBox="0 -960 960 960" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';}
+document.querySelectorAll('.ms[data-i]').forEach(el=>{el.innerHTML=svg(el.getAttribute('data-i'));});
 
-/* 브랜드 마크(레일 로고) — 실제 CI 자리, 얇은 Λ 플레이스홀더 */
-ICONS.__brand = '<path d="M480-720 200-200h120l160-300 160 300h120L480-720Z"/>';
-document.querySelector('.logo').innerHTML = '<span class="ms" style="color:var(--text)">'+svg('__brand')+'</span>';
-document.querySelectorAll('.ms[data-i]').forEach(el=>{ if(el.getAttribute('data-i')!=='__LOGO__') el.innerHTML=svg(el.getAttribute('data-i')); });
-
+/* 레일 아이콘: page_menu_ios(토글·열림시 활성) · checkbook · signpost · robot_2 */
 const RAIL = [
-  {icon:'sticky_note_2', label:'메모'},
-  {icon:'signpost', label:'가이드'},
-  {icon:'robot_2', label:'챗봇'},
+  {icon:'page_menu_ios', toggle:true},
+  {icon:'checkbook'},
+  {icon:'signpost'},
+  {icon:'robot_2'},
 ];
 const FAV = ['회원조회'];
 const SECTIONS = [
@@ -146,50 +137,53 @@ const SECTIONS = [
   ]},
 ];
 
-const state = {railActive:0, open:{}, active:null};
+const state = {activeGroup:'고객(원생) 관리', expanded:{}, activeItem:null, collapsed:false};
 const ricons = document.getElementById('ricons');
 const nav = document.getElementById('nav');
 
 function renderRail(){
   ricons.innerHTML='';
-  RAIL.forEach((r,i)=>{
-    const b=document.createElement('button'); b.className='rbtn'+(i===state.railActive?' active':''); b.title=r.label;
+  RAIL.forEach(r=>{
+    const b=document.createElement('button');
+    const active = r.toggle && !state.collapsed;   // page_menu_ios = 패널 열림 시 활성
+    b.className='rbtn'+(active?' active':'');
     b.innerHTML='<span class="ms">'+svg(r.icon)+'</span>';
-    b.onclick=()=>{state.railActive=i;renderRail();};
+    if(r.toggle) b.onclick=()=>{state.collapsed=!state.collapsed;document.body.classList.toggle('collapsed',state.collapsed);renderRail();};
     ricons.appendChild(b);
   });
 }
-function grpHasActive(g){ return g.items.includes(state.active); }
 function render(){
   nav.innerHTML='';
   // 즐겨찾기
   const fs=document.createElement('div'); fs.className='sec';
   const fcap=document.createElement('div'); fcap.className='cap';
-  fcap.innerHTML='<span>즐겨찾기</span><span class="ms add" data-i="add_2">'+svg('add_2')+'</span>';
+  fcap.innerHTML='<span>즐겨찾기</span><span class="ms add">'+svg('add_2')+'</span>';
   fs.appendChild(fcap);
   FAV.forEach(name=>{
     const it=document.createElement('div'); it.className='favitem';
     it.innerHTML='<span class="ms bk">'+svg('bookmark')+'</span><span class="lb">'+name+'</span><span class="ms del">'+svg('delete')+'</span>';
-    it.onclick=()=>setActive(name);
+    it.onclick=()=>{state.activeGroup='고객(원생) 관리';state.activeItem=name;render();};
     fs.appendChild(it);
   });
   nav.appendChild(fs);
-  // 섹션들
+  // 섹션
   SECTIONS.forEach(sec=>{
     const s=document.createElement('div'); s.className='sec';
     const cap=document.createElement('div'); cap.className='cap'; cap.innerHTML='<span>'+sec.cap+'</span>';
     s.appendChild(cap);
     sec.groups.forEach(g=>{
-      const open=!!state.open[g.label]; const hasA=grpHasActive(g);
-      const grp=document.createElement('div'); grp.className='grp'+(open?' open':'')+(hasA&&!open?' has-active':'');
-      grp.innerHTML='<span class="ms gi">'+svg(g.icon)+'</span><span class="lb">'+g.label+'</span><span class="ms car">'+svg('keyboard_arrow_down')+'</span>';
-      grp.onclick=()=>{state.open[g.label]=!state.open[g.label];render();};
+      const isActive = state.activeGroup===g.label;
+      const isOpen = !!state.expanded[g.label];
+      const grp=document.createElement('div'); grp.className='grp'+(isOpen?' open':'')+(isActive?' active':'');
+      const caret = (isOpen||isActive) ? 'keyboard_arrow_up' : 'keyboard_arrow_down';
+      grp.innerHTML='<span class="ms gi">'+svg(g.icon)+'</span><span class="lb">'+g.label+'</span><span class="ms car">'+svg(caret)+'</span>';
+      grp.onclick=()=>{state.activeGroup=g.label;state.expanded[g.label]=!state.expanded[g.label];render();};
       s.appendChild(grp);
       const items=document.createElement('div'); items.className='items';
       const inner=document.createElement('div'); inner.className='inner';
       g.items.forEach(it=>{
-        const b=document.createElement('div'); b.className='item'+(state.active===it?' active':'');
-        b.textContent=it; b.onclick=(e)=>{e.stopPropagation();setActive(it);};
+        const b=document.createElement('div'); b.className='item'+(state.activeItem===it?' active':'');
+        b.textContent=it; b.onclick=(e)=>{e.stopPropagation();state.activeItem=it;state.activeGroup=g.label;render();};
         inner.appendChild(b);
       });
       items.appendChild(inner); s.appendChild(items);
@@ -197,12 +191,7 @@ function render(){
     nav.appendChild(s);
   });
 }
-function setActive(name){
-  state.active=name;
-  SECTIONS.forEach(sec=>sec.groups.forEach(g=>{ if(g.items.includes(name)) state.open[g.label]=true; }));
-  render();
-}
-document.getElementById('collapse').onclick=()=>document.body.classList.toggle('collapsed');
+document.getElementById('collapse').onclick=()=>{state.collapsed=!state.collapsed;document.body.classList.toggle('collapsed',state.collapsed);renderRail();};
 renderRail(); render();
 </script>
 </body>
