@@ -63,8 +63,9 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 .rbtn:active{transform:scale(.9);}                 /* 누름 피드백 */
 .rbtn.active{background:var(--background-primary-hover);color:var(--text-primary);}
 
-/* DetailSidebar — 접힘 시 width 0 슬라이드 */
-.detail{width:var(--detail-w);flex:none;overflow:hidden;transition:width var(--motion-base) var(--motion-ease);}
+/* DetailSidebar — 배경 = background/secondary(#262626/#f4f4f4), 레일(primary)보다 한 톤 밝음 (Figma 실측). 접힘 시 width 0 슬라이드 */
+.detail{width:var(--detail-w);flex:none;overflow:hidden;background:var(--background-secondary);
+  transition:width var(--motion-base) var(--motion-ease),background var(--motion-base) var(--motion-ease);}
 .detail-inner{width:var(--detail-w);height:100vh;display:flex;flex-direction:column;gap:var(--space-xl);padding:var(--space-xl);
   opacity:1;transition:opacity var(--motion-base) var(--motion-ease);}
 .lnb.collapsed .detail{width:0;}
@@ -80,7 +81,7 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 .iconbtn{width:var(--icon);height:var(--icon);display:flex;align-items:center;justify-content:center;
   color:var(--text-primary);cursor:pointer;border:none;background:transparent;border-radius:var(--radius-sm);
   transition:background var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease);}
-.iconbtn:hover{background:var(--background-primary-hover);}
+.iconbtn:hover{background:var(--background-secondary-hover);}
 .iconbtn:active{transform:scale(.9);}
 
 /* 메뉴 영역만 스크롤(헤더 고정). 펼쳐서 화면을 넘기면 세로 스크롤 */
@@ -106,8 +107,8 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 .favitem,.grp,.item{display:flex;align-items:center;border-radius:var(--radius-sm);cursor:pointer;
   transition:background var(--motion-fast) var(--motion-ease),color var(--motion-fast) var(--motion-ease);}
 .favitem{gap:var(--space-md);padding:var(--icon-button-padding-sm) var(--space-xl);}
-.favitem:hover{background:var(--background-primary-hover);}
-.favitem.active{background:var(--background-primary-hover);}
+.favitem:hover{background:var(--background-secondary-hover);}
+.favitem.active{background:var(--background-secondary-hover);}
 .favitem .ms{font-size:var(--icon);}
 .favitem .bk{color:var(--text-primary);}
 .favitem .lb{flex:1;min-width:0;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;}
@@ -116,7 +117,7 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 .favitem:hover .del{opacity:1;}
 
 .grp{gap:var(--space-md);padding:var(--icon-button-padding-sm) var(--space-xl);color:var(--text-primary);}
-.grp:hover{background:var(--background-primary-hover);}
+.grp:hover{background:var(--background-secondary-hover);}
 .grp.sel{background:var(--background-secondary-hover);}   /* 배경 셀렉 = 가장 마지막에 펼친 한 곳만(secondary-hover) */
 .grp .gi{font-size:var(--icon);color:var(--text-primary);}
 .grp .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
@@ -131,8 +132,8 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 /* 하위메뉴: py-10(h40)·pl-7xl(40)·text-primary — Figma 15671:14469 실측 */
 .item{padding:var(--icon-button-padding-sm) var(--space-xl) var(--icon-button-padding-sm) var(--space-7xl);
   color:var(--text-primary);font-size:var(--type-body-sm-size);}
-.item:hover{background:var(--background-primary-hover);}
-.item.active{background:var(--background-primary-hover);}
+.item:hover{background:var(--background-secondary-hover);}
+.item.active{background:var(--background-secondary-hover);}
 
 /* ══ 우측 콘텐츠 예시 (레거시 AMS '강좌(반) 목록' — 컨텍스트 데모. 새 라이브러리와 별개) ══ */
 .shell{display:flex;align-items:stretch;min-height:100vh;width:100%;}
