@@ -13,7 +13,8 @@
   --background-primary:#161616;
   --background-primary-hover:#292929;       /* hover */
   --background-secondary:#262626;
-  --background-secondary-hover:#333333;     /* 선택(펼친) 그룹 배경 */
+  --background-secondary-hover:#333333;     /* hover(그룹 펼침) */
+  --background-secondary-selected:#525252;  /* 선택 상태 — 라이브러리 실측 */
   --text-primary:#f4f4f4;
   --text-helper:#ffffff8f;                  /* 0.56 */
   --text-placeholder:#ffffff66;             /* 0.4 */
@@ -32,6 +33,7 @@
   --background-primary-hover:#f4f4f4;
   --background-secondary:#f4f4f4;
   --background-secondary-hover:#e8e8e8;
+  --background-secondary-selected:#c6c6c6;
   --text-primary:#161616;
   --text-helper:#1616168f;
   --text-placeholder:#16161666;
@@ -108,7 +110,7 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
   transition:background var(--motion-fast) var(--motion-ease),color var(--motion-fast) var(--motion-ease);}
 .favitem{gap:var(--space-md);padding:var(--icon-button-padding-sm) var(--space-xl);}
 .favitem:hover{background:var(--background-secondary-hover);}
-.favitem.active{background:var(--background-secondary-hover);}
+.favitem.active{background:var(--background-secondary-selected);}
 .favitem .ms{font-size:var(--icon);}
 .favitem .bk{color:var(--text-primary);}
 .favitem .lb{flex:1;min-width:0;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;}
@@ -133,8 +135,8 @@ body{background:var(--background-primary);min-height:100vh;font-family:var(--typ
 .item{padding:var(--icon-button-padding-sm) var(--space-xl) var(--icon-button-padding-sm) var(--space-7xl);
   color:var(--text-primary);font-size:var(--type-body-sm-size);}
 .item:hover{background:var(--background-secondary-hover);}
-/* 선택된 하위메뉴(펼침 시 첫 항목) = 셀렉 배경 + 좌측 강조바(text/primary) — 그룹 펼침 하이라이트와 구분 */
-.item.active{background:var(--background-secondary-hover);box-shadow:inset 3px 0 0 0 var(--text-primary);font-weight:700;}
+/* 선택된 하위메뉴 = 라이브러리 선택상태 토큰(background/secondary-selected). 그룹 펼침(secondary-hover)보다 밝아 구분됨 */
+.item.active{background:var(--background-secondary-selected);}
 
 /* ══ 우측 콘텐츠 = AMS '반 목록(반관리)' 실화면 1:1 재현 + 헤더 개선 ══ */
 .shell{display:flex;align-items:stretch;min-height:100vh;width:100%;}
@@ -348,8 +350,11 @@ function toggleGroup(g){
 }
 function updateNav(){
   nav.querySelectorAll('.grp').forEach(grp=>{
-    grp.classList.toggle('open', !!state.expanded[grp.dataset.g]);
-    grp.classList.toggle('sel', state.activeGroup===grp.dataset.g);
+    const label=grp.dataset.g;
+    grp.classList.toggle('open', !!state.expanded[label]);
+    const items=(SECTIONS.flatMap(s=>s.groups).find(g=>g.label===label)||{}).items||[];
+    /* 하위 메뉴가 선택돼 있으면 그 그룹의 셀렉은 해제(선택은 한 곳만) */
+    grp.classList.toggle('sel', state.activeGroup===label && !items.includes(state.activeItem));
   });
   nav.querySelectorAll('.favitem,.item').forEach(el=>el.classList.toggle('active', state.activeItem===el.dataset.item));
 }
