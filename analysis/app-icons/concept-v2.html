@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>시대인재 — 결과로 증명되는 상승 (방향 2+3)</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<style>
+  *{box-sizing:border-box;} :root{--tile:200px;}
+  body{margin:0;font-family:'Pretendard',sans-serif;background:#0b0b0d;color:#e9e9ee;-webkit-font-smoothing:antialiased;padding:48px 40px 80px;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  h1{font-size:29px;font-weight:800;letter-spacing:-.4px;margin:0 0 6px;}
+  .sub{color:#9b9ba6;font-size:14.5px;margin:0 0 4px;line-height:1.6;}
+  .sec{margin-top:50px;} .sec h2{font-size:19px;font-weight:700;margin:0 0 4px;}
+  .sec .desc{color:#9b9ba6;font-size:13.5px;margin:0 0 22px;line-height:1.6;max-width:900px;}
+  .rec{display:inline-block;font-size:11px;font-weight:800;color:#0b0b0d;background:#ffd23f;border-radius:999px;padding:3px 9px;margin-left:8px;}
+  .row{display:flex;gap:34px;flex-wrap:wrap;}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:10px;width:var(--tile);}
+  .cell .nm{font-size:13px;color:#cfcfd6;font-weight:500;} .cell .ro{font-size:11px;color:#80808c;}
+  .note{font-size:12.5px;color:#8a8a95;line-height:1.6;border-left:2px solid #2a2a33;padding-left:14px;margin-top:16px;max-width:900px;}
+  .lockup{display:flex;align-items:center;gap:18px;margin-top:34px;padding:22px 26px;background:#111;border-radius:18px;border:1px solid #222;}
+  .lockup .wm{font-size:34px;font-weight:800;letter-spacing:-1px;color:#fff;}
+  .lockup .wm small{font-weight:600;color:#9b9ba6;font-size:20px;margin-left:8px;}
+  svg{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>시대인재 — '결과로 증명되는 상승'</h1>
+  <p class="sub">방향 2(실제 브랜드 기반) + 3(상승·증명) 합성 · 순수 블랙 프리미엄 · 텍스트리스 · 학생·학부모·매니저 패밀리</p>
+  <p class="sub" style="color:#6f6f78">첫 자음 <b style="color:#cfcfd6">ㅅ</b> = 사람(人=인재) + 위로 오르는 형태. 같은 블랙 타일로 한 가족, 역할은 절제된 액센트 색으로만 구분.</p>
+  <div id="board"></div>
+</div>
+<script>
+function squircle(s,n){n=n||5;const r=s/2,c=s/2;let d='';const N=96;for(let i=0;i<=N;i++){const t=2*Math.PI*i/N,ct=Math.cos(t),st=Math.sin(t);const x=c+r*Math.sign(ct)*Math.pow(Math.abs(ct),2/n),y=c+r*Math.sign(st)*Math.pow(Math.abs(st),2/n);d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2)+' ';}return d+'Z';}
+
+/* 글리프 (100 viewbox) */
+const G={
+  // A. 브랜드 자음 ㅅ (사람=인재, 상승) — 비대칭(셰브런 아님). 오른쪽 획이 왼쪽 획 중간에서 분기.
+  sieut:(c,a)=>`
+    <path d="M49 26 L27 76" fill="none" stroke="${c}" stroke-width="13" stroke-linecap="round"/>
+    <path d="M41.5 43 L73 76" fill="none" stroke="${c}" stroke-width="13" stroke-linecap="round"/>
+    ${a?`<circle cx="49" cy="26" r="6.5" fill="${a}"/>`:''}`,
+  // B. 증명 상승 (체크 → 위로 길게) : ✓ + ↗
+  proof:(c,a)=>`
+    <path d="M22 53 L40 71 L80 23" fill="none" stroke="${c}" stroke-width="12.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${a?`<circle cx="80" cy="23" r="6.5" fill="${a}"/>`:''}`,
+  // C. 정점 궤적 : 저점에서 솟아 정점 노드에 도달
+  summit:(c,a)=>`
+    <path d="M22 74 C40 72 50 50 72 27" fill="none" stroke="${c}" stroke-width="11.5" stroke-linecap="round"/>
+    <circle cx="72" cy="27" r="8.5" fill="${a||c}"/>`,
+};
+const ROLES=[
+  {role:'학생',  nm:'마이클래스', color:'#3b82f6'},
+  {role:'학부모', nm:'마이클래스', color:'#14b8a6'},
+  {role:'매니저', nm:'QR 출결관리', color:'#d9a23b'},
+];
+function icon(glyph,size){ size=size||200; const id='c'+Math.random().toString(36).slice(2,8); const gz=5.7, off=(1000-100*gz)/2;
+  return `<svg viewBox="0 0 1000 1000" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+   <defs><linearGradient id="bg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1c22"/><stop offset=".55" stop-color="#121216"/><stop offset="1" stop-color="#08080b"/></linearGradient>
+   <linearGradient id="gl${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+   <clipPath id="cl${id}"><path d="${squircle(1000,5)}"/></clipPath></defs>
+   <g clip-path="url(#cl${id})"><rect width="1000" height="1000" fill="url(#bg${id})"/>
+   <rect width="1000" height="520" fill="url(#gl${id})"/>
+   <g transform="translate(${off},${off}) scale(${gz})">${glyph}</g></g>
+   <path d="${squircle(1000,5)}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="2"/></svg>`;
+}
+const board=document.getElementById('board');
+function sec(t,d,rec,fn){const s=document.createElement('div');s.className='sec';s.innerHTML=`<h2>${t}${rec?'<span class=rec>추천</span>':''}</h2><div class="desc">${d}</div><div class="row"></div>`;board.appendChild(s);const row=s.querySelector('.row');
+  ROLES.forEach(r=>{const c=document.createElement('div');c.className='cell';c.innerHTML=icon(fn(r))+`<div class="nm">${r.nm}</div><div class="ro">${r.role}</div>`;row.appendChild(c);});return s;}
+
+sec('A · 브랜드 자음 ㅅ 마크','시대인재 첫 자음 ㅅ = 사람(人=인재) + 상승. 비대칭 획(셰브런 아님)으로 한글 ㅅ이 또렷이 읽힘. 정점에 역할 액센트 점. 가장 시대인재다움 + 절제.', true,
+  r=>G.sieut('#ffffff', r.color));
+sec('B · 증명 상승 (✓ → ↗)','체크(증명)의 긴 팔이 높이 솟음 = "결과로 증명되는 성장". 메시지 직결, 역동적.', false,
+  r=>G.proof('#ffffff', r.color));
+sec('C · 정점 궤적','저점에서 솟아 정점 노드에 도달 — "정점에 오른다". 가장 미니멀·고급, 노드에 역할색.', false,
+  r=>G.summit('#ffffff', r.color));
+
+/* 실제 워드마크 페어링 데모 (방향 2) */
+(function(){const s=document.createElement('div');s.className='sec';
+ s.innerHTML=`<h2>실제 시대인재 워드마크와 페어링 (방향 2)</h2>
+ <div class="desc">아이콘은 시대인재 워드마크 옆/위에 놓였을 때 한 시스템으로 보이도록 설계. (※ 공식 로고 벡터를 주시면 자간·획 두께를 실제 CI에 1:1로 맞춰 마무리합니다.)</div>
+ <div class="lockup"><span id="lk"></span><span class="wm">시대인재<small>마이클래스</small></span></div>`;
+ board.appendChild(s); s.querySelector('#lk').innerHTML=icon(G.sieut('#ffffff','#3b82f6'),84);
+})();
+
+(function(){const n=document.createElement('div');n.className='note';
+ n.innerHTML='· 셋 다 <b>순수 블랙</b>(브랜드 톤) + 텍스트리스 + 동일 타일 = 한 가족. 역할은 액센트 점/노드 색으로만(블루·틸·골드).<br>· iOS 1024 마스터 1장 · Android 적응형(전경=마크, 배경=블랙) 모두 동일 마스터에서 안전(중앙 57% 세이프존).<br>· <b>다음</b>: A·B·C 중 하나 고르시면 — 획 두께·정점 위치·액센트까지 미세 튜닝 후 <b>양산 에셋 풀세트</b>(전 사이즈·적응형 레이어) 출력.';
+ document.getElementById('board').appendChild(n);})();
+</script>
+</body>
+</html>
