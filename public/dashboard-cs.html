@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>카카오 3채널 상담 대시보드</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --bd:#e6e8ec; --ink:#1c2024; --sub:#6b7280;
+    --navy:#1f3a8a; --navy2:#3b5bd6; --accent:#0043ce; --warn-bg:#fff4ed; --warn-bd:#ffd9be; --warn-ink:#8a3800;
+    --g1:#1f3a8a; --g2:#4f74d8; --g3:#9db4ee; --slate:#cbd2dc;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased;padding:28px 30px 36px}
+  .wrap{max-width:1120px;margin:0 auto}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .sub{color:var(--sub);font-size:14px;margin-top:4px}
+  .asof{font-size:12px;color:var(--sub);background:#eef1f7;padding:6px 12px;border:1px solid var(--bd);font-weight:600}
+  .warn{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--warn-ink);padding:12px 16px;margin:14px 0 18px;font-size:13.5px;line-height:1.5}
+  .warn b{font-weight:800}
+  .warn.hidden{display:none}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--bd);padding:18px 20px}
+  .kpi .n{font-size:30px;font-weight:800;letter-spacing:-1px;color:var(--navy)}
+  .kpi .l{font-size:13px;color:var(--sub);margin-top:4px}
+  .kpi.alert .n{color:#b3261e}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .panel{background:var(--card);border:1px solid var(--bd);padding:20px 22px}
+  .panel.full{grid-column:1 / -1}
+  .pt{font-size:15px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .pt .tag{font-size:11px;font-weight:700;color:var(--sub);border:1px solid var(--bd);padding:2px 8px;margin-left:auto}
+  .row{display:flex;align-items:center;gap:12px;margin:9px 0;font-size:13.5px}
+  .row .lab{width:140px;color:var(--ink);flex:none;font-weight:600}
+  .row .lab.sm{width:120px}
+  .bar{flex:1;height:20px;background:#eef1f7;position:relative;overflow:hidden}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--g1),var(--g2))}
+  .row .val{width:88px;text-align:right;flex:none;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+  .mut > i{background:linear-gradient(90deg,#64748b,#94a3b8)}
+  .small{color:var(--sub);font-size:12px;margin-top:10px}
+  .chan{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .chan .cc{border:1px solid var(--bd);padding:14px}
+  .chan .cn{font-weight:800;font-size:14px}
+  .chan .cm{font-size:12px;color:var(--sub);margin:3px 0 10px}
+  .chan .li{display:flex;justify-content:space-between;font-size:12.5px;margin:5px 0;padding-bottom:5px;border-bottom:1px solid #f0f2f5}
+  .chan .li b{color:var(--accent);font-weight:700}
+  svg{display:block;width:100%;height:160px}
+  .lg{display:flex;gap:16px;font-size:12px;color:var(--sub);margin-top:8px}
+  .lg span{display:inline-flex;align-items:center;gap:5px}
+  .dot{width:10px;height:10px;display:inline-block}
+  .foot{color:var(--sub);font-size:11.5px;margin-top:18px;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>카카오 3채널 상담 대시보드</h1>
+      <div class="sub">학생·학부모 ↔ 학원 비즈채팅 자동 수집 · 마이클래스 · 라이브 · 시대인재C</div>
+    </div>
+    <div class="asof" id="asof">2026-06-30 기준 · 라이브 DB 실측</div>
+  </div>
+
+  <div class="warn" id="warn">
+    <span>⚠️</span>
+    <div id="warntext"><b>수집 일시 중단 감지</b> — 3개 채널 모두 <b>06-26 이후 신규 수집 0건</b> (인증 쿠키 만료, <code>401 Unauthorized</code>). 인프라(heartbeat)는 정상이나 인증이 끊긴 상태입니다. <b>맥 스튜디오 쿠키 재로그인</b> 필요. <i>(이 화면이 바로 그 중단을 즉시 보여주는 사례)</i></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kpiMsgs">85,936</div><div class="l">누적 메시지</div></div>
+    <div class="kpi"><div class="n" id="kpiChats">7,291</div><div class="l">누적 대화</div></div>
+    <div class="kpi"><div class="n" id="kpiChannels">3</div><div class="l">서비스 채널</div></div>
+    <div class="kpi alert"><div class="n" id="kpiLast">06-26</div><div class="l">최근 수집일 (중단 중)</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="pt">채널별 수집량 <span class="tag">메시지</span></div>
+      <div id="channels">
+        <div class="row"><div class="lab">시대인재C</div><div class="bar"><i style="width:100%"></i></div><div class="val">41,348</div></div>
+        <div class="row"><div class="lab">라이브</div><div class="bar"><i style="width:67.8%"></i></div><div class="val">28,041</div></div>
+        <div class="row"><div class="lab">마이클래스</div><div class="bar"><i style="width:40.0%"></i></div><div class="val">16,547</div></div>
+      </div>
+      <div class="small" id="channelsChats">대화 기준: 시대인재C 3,350 · 라이브 2,301 · 마이클래스 1,640</div>
+    </div>
+
+    <div class="panel">
+      <div class="pt">발신자 구성 <span class="tag">진짜 양방향 상담</span></div>
+      <div id="senders">
+        <div class="row"><div class="lab sm">학생·학부모</div><div class="bar"><i style="width:100%"></i></div><div class="val">46.2%</div></div>
+        <div class="row"><div class="lab sm">상담원</div><div class="bar"><i style="width:63.4%"></i></div><div class="val">29.3%</div></div>
+        <div class="row mut"><div class="lab sm">시스템</div><div class="bar"><i style="width:53.0%"></i></div><div class="val">24.5%</div></div>
+      </div>
+      <div class="small">학생·학부모(질문) ↔ 상담원(응답)이 함께 잡혀 단순 알림이 아닌 상담 데이터임을 확인</div>
+    </div>
+
+    <div class="panel full">
+      <div class="pt">문의 유형 분포 <span class="tag">자동 분류 98.7%</span></div>
+      <div id="categories">
+        <div class="row"><div class="lab">계정·로그인·앱</div><div class="bar"><i style="width:100%"></i></div><div class="val">36.2%</div></div>
+        <div class="row mut"><div class="lab">기타(분류 보류)</div><div class="bar"><i style="width:77.3%"></i></div><div class="val">28.0%</div></div>
+        <div class="row"><div class="lab">환불</div><div class="bar"><i style="width:22.1%"></i></div><div class="val">8.0%</div></div>
+        <div class="row"><div class="lab">라이브 수강</div><div class="bar"><i style="width:16.3%"></i></div><div class="val">5.9%</div></div>
+        <div class="row"><div class="lab">교재·배송</div><div class="bar"><i style="width:14.4%"></i></div><div class="val">5.2%</div></div>
+        <div class="row"><div class="lab">입반·등록</div><div class="bar"><i style="width:11.3%"></i></div><div class="val">4.1%</div></div>
+        <div class="row"><div class="lab">미납·결제</div><div class="bar"><i style="width:11.3%"></i></div><div class="val">4.1%</div></div>
+        <div class="row"><div class="lab">대기 / 출결·보강</div><div class="bar"><i style="width:9.4%"></i></div><div class="val">3.4 / 3.1%</div></div>
+      </div>
+      <div class="small">★ 디지털 채널 최대 수요 = <b style="color:var(--accent)">계정·로그인(36.2%)</b> — 전화 채널에선 0.2%뿐. "앱에 못 들어가는 것"이 디지털의 핵심 장벽.</div>
+    </div>
+
+    <div class="panel full">
+      <div class="pt">채널별 문의 색깔 (상위 3 · '기타' 제외)</div>
+      <div class="chan" id="channelTop">
+        <div class="cc">
+          <div class="cn">마이클래스</div><div class="cm">재원생 앱</div>
+          <div class="li"><span>계정·로그인·앱</span><b>56.5%</b></div>
+          <div class="li"><span>입반·등록</span><b>6.0%</b></div>
+          <div class="li"><span>출결·보강</span><b>5.6%</b></div>
+        </div>
+        <div class="cc">
+          <div class="cn">라이브</div><div class="cm">온라인 수강</div>
+          <div class="li"><span>계정·로그인·앱</span><b>56.2%</b></div>
+          <div class="li"><span>라이브 수강</span><b>14.8%</b></div>
+          <div class="li"><span>입반·등록</span><b>4.8%</b></div>
+        </div>
+        <div class="cc">
+          <div class="cn">시대인재C</div><div class="cm">통합회원·재종</div>
+          <div class="li"><span>환불</span><b>14.4%</b></div>
+          <div class="li"><span>계정·로그인·앱</span><b>13.6%</b></div>
+          <div class="li"><span>교재·배송</span><b>9.7%</b></div>
+        </div>
+      </div>
+      <div class="small">마이클래스·라이브 = 로그인 장벽 / 시대인재C = 환불·교재. <b>채널을 분리 수집했기에 보이는 차이</b> → 채널별 다른 FAQ·응대 필요.</div>
+    </div>
+
+    <div class="panel full">
+      <div class="pt">일별 수집 추세 <span class="tag" id="trendTag">최근 18일 → 06-26 이후 중단</span></div>
+      <svg id="trend" viewBox="0 0 1060 160" preserveAspectRatio="none"></svg>
+      <div class="lg">
+        <span><i class="dot" style="background:var(--g2)"></i> 정상 수집(메시지/일)</span>
+        <span><i class="dot" style="background:#f3b4ab"></i> 수집 중단(401)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">출처: Supabase <code>kakao_partner_*</code> 라이브 실측 · 개인정보 원문 미반입(수집 시 마스킹) · <span id="footMode">프로토타입 스냅샷</span></div>
+</div>
+
+<script>
+(function(){
+  // ── fallback(하드코딩) 데이터: fetch 실패 시 이 값으로 정상 렌더 ──
+  var FALLBACK_DAYS = ['06-09','06-10','06-11','06-12','06-13','06-14','06-15','06-16','06-17','06-18','06-19','06-20','06-21','06-22','06-23','06-24','06-25','06-26','06-27','06-28','06-29','06-30'];
+  var FALLBACK_VALS = [90,168,185,206,78,56,244,199,202,86,59,40,45,119,124,110,183,66,0,0,0,0];
+
+  var CH_SUB = {'마이클래스':'재원생 앱','라이브':'온라인 수강','시대인재C':'통합회원·재종'};
+  var SENDER_LABEL = {user:'학생·학부모', manager:'상담원', system:'시스템'};
+  var SENDER_MUT = {system:true};
+
+  function fmt(n){ return (n==null||isNaN(n))?'–':Number(n).toLocaleString('en-US'); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function mmdd(iso){ if(!iso) return null; var d=new Date(new Date(iso).getTime()+9*3600*1000); return String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0'); }
+
+  // ── 막대 추세 그리기 (정상 = 그라데이션, 0건 구간 = 빨강 밴드) ──
+  function drawTrend(days, vals){
+    var W=1060,H=160,pad=22,base=H-22,top=10;
+    var max=Math.max.apply(null, vals.concat([1]));
+    var n=vals.length, bw=(W-pad*2)/n*0.62, gap=(W-pad*2)/n;
+    var svg=document.getElementById('trend'), parts='';
+    // 0건이 처음 시작되는 지점부터 "중단" 구간으로 표시 (꼬리의 연속 0)
+    var outageStart=n;
+    for(var k=n-1;k>=0;k--){ if(vals[k]===0) outageStart=k; else break; }
+    for(var i=0;i<n;i++){
+      var x=pad+gap*i+(gap-bw)/2;
+      var h=vals[i]/max*(base-top);
+      var y=base-h;
+      var out=(i>=outageStart && vals[i]===0);
+      if(out){
+        parts+='<rect x="'+x+'" y="'+top+'" width="'+bw+'" height="'+(base-top)+'" fill="#fdece8"/>';
+        parts+='<rect x="'+x+'" y="'+(base-3)+'" width="'+bw+'" height="3" fill="#e8897c"/>';
+      } else {
+        parts+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" fill="url(#bg)"/>';
+      }
+      if(i%3===0||i===n-1){
+        parts+='<text x="'+(x+bw/2)+'" y="'+(H-4)+'" font-size="10" fill="#9aa3b0" text-anchor="middle">'+esc(days[i].slice(3))+'</text>';
+      }
+    }
+    parts+='<line x1="'+pad+'" y1="'+base+'" x2="'+(W-pad)+'" y2="'+base+'" stroke="#e6e8ec"/>';
+    if(outageStart<n){
+      var span=n-outageStart;
+      parts+='<text x="'+(pad+gap*outageStart+(gap*span)/2)+'" y="'+(top+14)+'" font-size="11" font-weight="700" fill="#b3261e" text-anchor="middle">수집 중단</text>';
+    }
+    svg.innerHTML='<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b5bd6"/><stop offset="1" stop-color="#9db4ee"/></linearGradient></defs>'+parts;
+  }
+
+  // ── 가로 막대 행 렌더 (라벨/값/비율) ──
+  function barRows(items, opt){
+    opt=opt||{};
+    var maxW=0;
+    items.forEach(function(it){ if(it.w>maxW) maxW=it.w; });
+    return items.map(function(it){
+      var pctW = maxW>0 ? (it.w/maxW*100) : 0;
+      var mut = it.mut ? ' mut' : '';
+      var labCls = 'lab' + (opt.smallLab?' sm':'');
+      return '<div class="row'+mut+'"><div class="'+labCls+'">'+esc(it.lab)+'</div>'
+        + '<div class="bar"><i style="width:'+pctW.toFixed(1)+'%"></i></div>'
+        + '<div class="val">'+esc(it.val)+'</div></div>';
+    }).join('');
+  }
+
+  function render(d){
+    // KPI
+    document.getElementById('kpiMsgs').textContent = fmt(d.totals.messages);
+    document.getElementById('kpiChats').textContent = fmt(d.totals.chats);
+    document.getElementById('kpiChannels').textContent = d.totals.channels;
+
+    // 채널별 수집량 (메시지 기준 막대)
+    var ch = d.channels || [];
+    document.getElementById('channels').innerHTML = barRows(ch.map(function(c){
+      return { lab:c.name, w:c.messages, val:fmt(c.messages) };
+    }));
+    document.getElementById('channelsChats').textContent =
+      '대화 기준: ' + ch.map(function(c){ return c.name+' '+fmt(c.chats); }).join(' · ');
+
+    // 최근 수집일 (채널 lastMsg 중 가장 최신) + 중단 경고
+    var lastMsgs = ch.map(function(c){return c.lastMsg;}).filter(Boolean);
+    var newest = lastMsgs.sort().slice(-1)[0] || null;
+    var outage = (d.health||[]).some(function(h){return h.status==='🔴';});
+    var kpiLastEl = document.getElementById('kpiLast');
+    var kpiLastCard = kpiLastEl.parentElement;
+    if(newest){ kpiLastEl.textContent = mmdd(newest); }
+    if(outage){
+      kpiLastCard.classList.add('alert');
+      kpiLastCard.querySelector('.l').textContent = '최근 수집일 (중단 중)';
+      document.getElementById('warn').classList.remove('hidden');
+    } else {
+      kpiLastCard.classList.remove('alert');
+      kpiLastCard.querySelector('.l').textContent = '최근 수집일';
+      document.getElementById('warn').classList.add('hidden');
+    }
+
+    // 발신자 구성
+    var ss = d.senderSplit || [];
+    document.getElementById('senders').innerHTML = barRows(ss.map(function(s){
+      return { lab:SENDER_LABEL[s.type]||s.type, w:s.pct, val:s.pct.toFixed(1)+'%', mut:!!SENDER_MUT[s.type] };
+    }), {smallLab:true});
+
+    // 문의 유형 분포 ('기타' 는 mut 처리)
+    var cats = d.categories || [];
+    document.getElementById('categories').innerHTML = barRows(cats.map(function(c){
+      var isEtc = (c.name==='기타');
+      return { lab:isEtc?'기타(분류 보류)':c.name, w:c.pct, val:c.pct.toFixed(1)+'%', mut:isEtc };
+    }));
+
+    // 채널별 상위 유형
+    var top = d.channelTop || {};
+    var order = ['마이클래스','라이브','시대인재C'].filter(function(k){return top[k];});
+    Object.keys(top).forEach(function(k){ if(order.indexOf(k)<0) order.push(k); });
+    document.getElementById('channelTop').innerHTML = order.map(function(name){
+      var rows = (top[name]||[]).map(function(t){
+        return '<div class="li"><span>'+esc(t.cat)+'</span><b>'+Number(t.pct).toFixed(1)+'%</b></div>';
+      }).join('');
+      return '<div class="cc"><div class="cn">'+esc(name)+'</div><div class="cm">'+esc(CH_SUB[name]||'')+'</div>'+rows+'</div>';
+    }).join('');
+
+    // 일별 추세
+    var dt = d.dailyTrend || [];
+    if(dt.length){
+      drawTrend(dt.map(function(r){return '2026-'+r.d;}), dt.map(function(r){return r.msgs;}));
+      var zeros=0; for(var i=dt.length-1;i>=0;i--){ if(dt[i].msgs===0) zeros++; else break; }
+      var active=dt.length-zeros;
+      document.getElementById('trendTag').textContent = zeros>0
+        ? ('최근 '+active+'일 → '+dt[dt.length-zeros].d+' 이후 중단')
+        : ('최근 '+dt.length+'일');
+    }
+
+    // asof / 모드
+    if(d.asOf){
+      var a=new Date(d.asOf);
+      var ymd=a.getFullYear()+'-'+String(a.getMonth()+1).padStart(2,'0')+'-'+String(a.getDate()).padStart(2,'0');
+      document.getElementById('asof').textContent = ymd+' 기준 · 라이브 DB 실측';
+    }
+    document.getElementById('footMode').textContent = '라이브 실측';
+  }
+
+  // ── 1) 먼저 fallback 으로 추세를 그려 빈 화면 방지 ──
+  drawTrend(FALLBACK_DAYS, FALLBACK_VALS);
+
+  // ── 2) 실데이터 fetch → 성공 시 전체 갱신, 실패 시 하드코딩 유지 ──
+  fetch('/api/cs-stats', {headers:{'Accept':'application/json'}})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(d){ if(d && d.totals) render(d); })
+    .catch(function(e){
+      // fetch 실패 = 페이지에 이미 박힌 하드코딩 값(2026-06-30 스냅샷)을 그대로 보여줌.
+      console.warn('cs-stats fetch 실패 — 스냅샷 값 유지:', e && e.message);
+    });
+})();
+</script>
+</body>
+</html>
