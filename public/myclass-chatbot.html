@@ -65,21 +65,23 @@
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
   /* 진입 아이콘 — '숨쉬는 비콘': 미세 호흡 + 절제된 단일 펄스 / 호버=떠오르며 눈↑·미소·펄스정지 / 클릭=탄력 */
   #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:transparent;cursor:pointer;transition:transform .34s cubic-bezier(.34,1.56,.64,1)}
-  #openBtn svg{overflow:visible;animation:obreathe 2s ease-in-out infinite}
-  #openBtn:hover{transform:translateY(-2px) scale(1.06)}
-  #openBtn:active{transform:scale(.9);transition:transform .1s ease-out}
-  #openBtn .bub{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-linejoin:miter}
+  #openBtn svg{overflow:visible;animation:oidle 6s ease-in-out infinite}
+  #openBtn:hover{transform:translateY(-3px) scale(1.1)}
+  #openBtn:hover svg{animation:owiggle .55s var(--ease)}
+  #openBtn:active{transform:scale(.88);transition:transform .1s ease-out}
+  #openBtn .bub{fill:none;stroke:var(--icon-primary);stroke-width:1.2;stroke-linejoin:miter}
   #openBtn .face{transform-box:fill-box;transform-origin:center;transition:transform .32s var(--ease)}
   #openBtn:hover .face{transform:translateY(-0.9px)}
-  #openBtn .eye{fill:var(--accent);transform-box:fill-box;transform-origin:center;animation:oblink 5.6s ease-in-out infinite}
-  #openBtn .smile{fill:none;stroke:var(--accent);stroke-width:1.2;stroke-linecap:round;transform-box:fill-box;transform-origin:center bottom;opacity:0;transform:scaleY(.45);transition:opacity .32s var(--ease),transform .32s var(--ease)}
+  #openBtn .eye{fill:var(--icon-primary);transform-box:fill-box;transform-origin:center;animation:oblink 5.6s ease-in-out infinite}
+  #openBtn .smile{fill:none;stroke:var(--icon-primary);stroke-width:1.2;stroke-linecap:round;transform-box:fill-box;transform-origin:center bottom;opacity:0;transform:scaleY(.45);transition:opacity .32s var(--ease),transform .32s var(--ease)}
   #openBtn:hover .smile{opacity:1;transform:scaleY(1)}
-  #openBtn::after{content:"";position:absolute;inset:0;border-radius:50%;border:1.4px solid var(--accent);opacity:0;pointer-events:none;animation:obeacon 3.6s var(--ease) infinite}
+  #openBtn::after{content:"";position:absolute;inset:0;border-radius:50%;border:1.4px solid var(--icon-primary);opacity:0;pointer-events:none;animation:obeacon 3.6s var(--ease) infinite}
   #openBtn:hover::after{animation:none;opacity:0}
-  @keyframes obreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  @keyframes oidle{0%,26%,58%,94%,100%{transform:translateY(0) scale(1) rotate(0)}12%{transform:translateY(0) scale(1.05) rotate(0)}66%{transform:translateY(-3.5px) scale(1.07) rotate(-7deg)}74%{transform:translateY(0) scale(1) rotate(5deg)}82%{transform:translateY(-1.5px) scale(1.03) rotate(-3deg)}88%{transform:translateY(0) scale(1) rotate(1deg)}}
+  @keyframes owiggle{0%{transform:rotate(0)}24%{transform:rotate(-8deg)}52%{transform:rotate(5deg)}78%{transform:rotate(-2deg)}100%{transform:rotate(0)}}
   @keyframes oblink{0%,93%,100%{transform:scaleY(1)}95.5%{transform:scaleY(.08)}98%{transform:scaleY(1)}}
-  @keyframes obeacon{0%{transform:scale(.7);opacity:0}18%{opacity:.32}72%{opacity:0}100%{transform:scale(1.55);opacity:0}}
-  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::after{animation:none}#openBtn .face,#openBtn .smile{transition:none}}
+  @keyframes obeacon{0%{transform:scale(.7);opacity:0}18%{opacity:.34}72%{opacity:0}100%{transform:scale(1.6);opacity:0}}
+  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::after{animation:none}#openBtn:hover svg{animation:none}#openBtn .face,#openBtn .smile{transition:none}}
   .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
   .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
