@@ -26,6 +26,14 @@
       "destination": "/ams-lnb.html"
     },
     {
+      "source": "/dashboard-cs",
+      "destination": "/dashboard-cs.html"
+    },
+    {
+      "source": "/dashboard-chatbot",
+      "destination": "/dashboard-chatbot.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
@@ -34,6 +42,10 @@
     {
       "path": "/api/sync/jira",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cs-health-alert",
+      "schedule": "0 * * * *"
     }
   ],
   "headers": [

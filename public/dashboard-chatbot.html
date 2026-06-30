@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>마이클래스 챗봇 효과 측정 대시보드</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--bd:#e6e8ec;--ink:#1c2024;--sub:#6b7280;--navy:#1f3a8a;--accent:#0043ce;
+    --ok-bg:#defbe6;--ok-bd:#a7f0ba;--ok-ink:#0e6027;--ph-bg:#f1f3f7;--ph-ink:#9aa3b0;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased;padding:28px 30px 36px}
+  .wrap{max-width:1120px;margin:0 auto}
+  .head{display:flex;justify-content:space-between;align-items:flex-end}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .sub{color:var(--sub);font-size:14px;margin-top:4px}
+  .asof{font-size:12px;color:var(--sub);background:#eef1f7;padding:6px 12px;border:1px solid var(--bd);font-weight:600}
+  .stage{display:flex;gap:8px;align-items:center;margin:16px 0 18px;font-size:13px;color:var(--sub)}
+  .pill{padding:5px 12px;border:1px solid var(--bd);background:#fff;font-weight:700;font-size:12.5px}
+  .pill.done{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-ink)}
+  .pill.now{background:#fff7e6;border-color:#ffe1a8;color:#8a5a00}
+  .pill.todo{background:var(--ph-bg);color:var(--ph-ink)}
+  .arrow{color:#c4cad3}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .panel{background:var(--card);border:1px solid var(--bd);padding:20px 22px}
+  .panel.full{grid-column:1/-1}
+  .pt{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .pt .tag{font-size:11px;font-weight:700;color:var(--sub);border:1px solid var(--bd);padding:2px 8px;margin-left:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid #eef0f3}
+  th{color:var(--sub);font-weight:700;font-size:12px}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+  .base{font-weight:800;color:var(--navy)}
+  .ph{display:inline-block;background:var(--ph-bg);color:var(--ph-ink);padding:3px 12px;font-weight:700;font-size:12px;letter-spacing:1px}
+  .note{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.5}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+  .kpi{background:#fff;border:1px solid var(--bd);padding:16px 18px}
+  .kpi .n{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
+  .kpi .l{font-size:12.5px;color:var(--sub);margin-top:3px}
+  .qa{display:flex;gap:10px;flex-wrap:wrap}
+  .qa .b{border:1px solid var(--bd);padding:8px 12px;font-size:12.5px;font-weight:600}
+  .qa .b.ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-ink)}
+  .qa .b.fix{background:#fff4ed;border-color:#ffd9be;color:#8a3800}
+  .foot{color:var(--sub);font-size:11.5px;margin-top:18px;text-align:right}
+  .accent{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>마이클래스 챗봇 효과 측정 대시보드</h1>
+      <div class="sub">재원생 챗봇 1차(조회) · Before/After 전화 상담 흡수 측정 틀</div>
+    </div>
+    <div class="asof">2026-06-30 · 배포 전(기준선 세팅)</div>
+  </div>
+
+  <div class="stage">
+    <span class="pill done">개발 완료</span><span class="arrow">→</span>
+    <span class="pill done">QA 통과(블로커 0)</span><span class="arrow">→</span>
+    <span class="pill now">경미 수정 5건</span><span class="arrow">→</span>
+    <span class="pill todo">론칭</span><span class="arrow">→</span>
+    <span class="pill todo">효과 측정(이 대시보드 자동 채움)</span>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">30.7%</div><div class="l">전화 상담 1위 = 출결(흡수 1순위)</div></div>
+    <div class="kpi"><div class="n">~57%</div><div class="l">1차(조회) 즉시 흡수 잠재 (추정)</div></div>
+    <div class="kpi"><div class="n">~83%</div><div class="l">2차까지 흡수 상한 (추정)</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="panel full">
+      <div class="pt">핵심 측정 지표 <span class="tag">배포 후 자동 채움</span></div>
+      <table>
+        <tr><th>지표</th><th class="r">현재(기준선·실측)</th><th class="r">배포 후</th><th class="r">목표</th></tr>
+        <tr><td>출결·보강 전화 상담(월)</td><td class="r base">≈ 22,000건*</td><td class="r"><span class="ph">측정 대기</span></td><td class="r">↓</td></tr>
+        <tr><td>입반·대기 전화 상담(월)</td><td class="r base">≈ 19,000건*</td><td class="r"><span class="ph">측정 대기</span></td><td class="r">↓</td></tr>
+        <tr><td>챗봇 자가해결률(자가종료/전체)</td><td class="r base">—</td><td class="r"><span class="ph">측정 대기</span></td><td class="r">↑</td></tr>
+        <tr><td>챗봇 → 상담 연결률</td><td class="r base">—</td><td class="r"><span class="ph">측정 대기</span></td><td class="r">↓</td></tr>
+        <tr><td>출결·보강 자가해결 잠재(7일 분석)</td><td class="r base">83% 자동화 가능</td><td class="r"><span class="ph">측정 대기</span></td><td class="r">—</td></tr>
+      </table>
+      <div class="note">* 기준선 = AMS 전화 상담 실측(2026 월평균, 대치단과). 배포 후 동일 지표를 월별로 자동 비교해 <b class="accent">전화 상담 감소량</b>을 측정. ⚠️ 챗봇 미배포 상태이므로 현재 추세는 효과로 귀속하지 않음(기준선 용도).</div>
+    </div>
+
+    <div class="panel">
+      <div class="pt">측정 사슬 (Before / After)</div>
+      <table>
+        <tr><th>단계</th><th>지표</th></tr>
+        <tr><td>선행</td><td>챗봇 세션·메뉴 진입·자가해결률·상담연결률</td></tr>
+        <tr><td>결과</td><td>출결·보강·입반·결제 <b>전화 상담 건수 감소</b></td></tr>
+        <tr><td>보정</td><td>시즌(수강신청 7~8월·기말)·자연 추세·대조군</td></tr>
+      </table>
+      <div class="note">데이터 출처: 챗봇 자체 로그 + AMS 상담관리(접수형태 '챗봇' 추가, 자동 레코드).</div>
+    </div>
+
+    <div class="panel">
+      <div class="pt">1차 QA 상태 <span class="tag">2026-06-30 검수</span></div>
+      <div class="qa">
+        <span class="b ok">✓ 론칭 블로커 0</span>
+        <span class="b ok">✓ 1차 범위 준수(직접 처리 없음)</span>
+        <span class="b ok">✓ 4메뉴·11기능 동작</span>
+      </div>
+      <div class="qa" style="margin-top:10px">
+        <span class="b fix">⏳ 빈 화면 만족도</span>
+        <span class="b fix">⏳ 전체 회차 문구·정렬</span>
+        <span class="b fix">⏳ 시간표 시간 빈칸</span>
+        <span class="b fix">⏳ 전반 안내문</span>
+        <span class="b fix">⏳ 납부기한 표기</span>
+      </div>
+      <div class="note">경미 수정 5건 + 수업 있는 계정 재검수 후 론칭 가능. (상세 = QA 결과 리포트)</div>
+    </div>
+  </div>
+
+  <div class="foot">기준선 출처: AMS 전화상담 실측 · GA4 · 카카오 라이브 · 챗봇 배포 후 자동 갱신 예정 · 프로토타입 스냅샷</div>
+</div>
+</body>
+</html>

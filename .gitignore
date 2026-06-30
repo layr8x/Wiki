@@ -43,6 +43,11 @@ files/
 # CSV exports (상담 데이터 — 커밋 금지)
 exports/
 
+# Q-A 데이터셋 추출물 (상담 원문·PII — 절대 커밋 금지). 샘플(≤20행)만 별도 커밋.
+/qa-dataset.jsonl
+qa-dataset*.jsonl
+!analysis/outputs/data/qa_dataset_sample.jsonl
+
 # Google 서비스계정 키 + 동기화 상태 (커밋 금지)
 google-service-account.json
 .sheets-sync-state.json
