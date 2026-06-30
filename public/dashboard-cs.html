@@ -263,10 +263,10 @@
       return '<div class="cc"><div class="cn">'+esc(name)+'</div><div class="cm">'+esc(CH_SUB[name]||'')+'</div>'+rows+'</div>';
     }).join('');
 
-    // 일별 추세
+    // 일별 추세 (d.d 는 'MM-DD' 형식 — fallback 과 동일하게 그대로 전달)
     var dt = d.dailyTrend || [];
     if(dt.length){
-      drawTrend(dt.map(function(r){return '2026-'+r.d;}), dt.map(function(r){return r.msgs;}));
+      drawTrend(dt.map(function(r){return r.d;}), dt.map(function(r){return r.msgs;}));
       var zeros=0; for(var i=dt.length-1;i>=0;i--){ if(dt[i].msgs===0) zeros++; else break; }
       var active=dt.length-zeros;
       document.getElementById('trendTag').textContent = zeros>0
