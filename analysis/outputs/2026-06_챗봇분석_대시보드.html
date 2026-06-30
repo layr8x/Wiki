@@ -78,16 +78,16 @@ thead th{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:none
 
   <div class="hd">마이클래스 챗봇 · 2026년 6월 상담 빅데이터 분석 · 대치단과 전수</div>
   <h1>챗봇이 상담을 얼마나 대체할 수 있는가</h1>
-  <p class="lede">6월 상담 <b>81,863건</b>(전화)을 전수 분석. 챗봇은 상담실장의 <b>컨설팅(37.5%)을 대체할 수 없고</b>, 현실적 대체 상한은 <b>전체의 약 42~46%</b>(2차 완성 시). 따라서 정식 오픈 게이트의 <b>"80%"는 전체 상담이 아니라 "챗봇이 담당하는 조회형 문의"를 분모</b>로 정의해야 도달 가능하다. <b>QA 블로커 0</b>으로 챗봇은 "거의 다 된 다듬기 단계".</p>
+  <p class="lede">6월 상담 <b>81,863건</b>(전화) + 카카오 162대화를 전수 분석. 챗봇은 상담실장의 <b>컨설팅(37.5%)을 대체할 수 없어</b> 전화 대체 상한은 <b>약 42~46%</b>(2차 완성 시). <b>진짜 대체 타깃은 컨설팅이 적은 카카오 기술지원 채널</b> — 챗봇+계정 수정으로 <b>약 88%</b>까지 대체 가능. 오픈 게이트의 <b>"80%"는 전체 상담이 아니라 "조회형 문의"를 분모</b>로 정의해야 도달 가능. <b>QA 블로커 0</b>으로 거의 완성 단계.</p>
 
   <div class="gatebox">
-    <b>오픈 게이트 판정</b> — 전체 콜의 80%: <span class="n">불가</span>(컨설팅 37.5% 천장) · 조회형 컨테인먼트 80%: <span class="y">도달 가능</span>(보강+파일럿 실측). <span class="badge">측정값은 2중 검증, 성공률은 3중분류+적대검증 추정(범위)</span>
+    <b>오픈 게이트 판정</b> — 전체 콜의 80%: <span class="n">불가</span>(컨설팅 37.5%가 구조적 한계) · 조회형 컨테인먼트 80%: <span class="y">도달 가능</span>(보강+파일럿 실측). <span class="badge">측정값은 2중 검증, 성공률은 3중분류+적대검증 추정(범위)</span>
   </div>
 
   <div class="grid kpis">
     <div class="kpi"><div class="n">81,863</div><div class="l">6월 전화상담 (건)</div><div class="s">전월比 +18.7%</div></div>
     <div class="kpi"><div class="n">31.6%</div><div class="l">1위 문의 = 입반</div><div class="s">입반 시즌 (+54%)</div></div>
-    <div class="kpi"><div class="n" style="color:var(--red)">37.5%</div><div class="l">컨설팅 (사람 필수)</div><div class="s">대체 불가 천장</div></div>
+    <div class="kpi"><div class="n" style="color:var(--red)">37.5%</div><div class="l">컨설팅 (사람 필수)</div><div class="s">대체 불가 상한</div></div>
     <div class="kpi"><div class="n">~45%</div><div class="l">챗봇 대체 상한</div><div class="s">2차 완성 시</div></div>
     <div class="kpi"><div class="n" style="color:var(--green)">0</div><div class="l">QA 론칭 블로커</div><div class="s">경미 5건만</div></div>
   </div>
@@ -107,7 +107,7 @@ thead th{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:none
 
     <div class="card">
       <h2>상담의 성격 — 의도 구성 <span class="badge">측정·분류</span></h2>
-      <div class="cap">컨설팅 37.5%가 챗봇 성공률의 구조적 천장</div>
+      <div class="cap">컨설팅 37.5%가 챗봇 성공률의 구조적 한계</div>
       <div class="stack">
         <div style="width:20.1%;background:var(--green)">20.1%</div>
         <div style="width:31.6%;background:var(--amber)">31.6%</div>
@@ -151,7 +151,7 @@ thead th{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:none
 
     <div class="card">
       <h2>요일 패턴 <span class="badge">측정</span></h2>
-      <div class="cap">주말 평균이 평일의 약 1.36배 → 챗봇 24시간 운영 가치</div>
+      <div class="cap">주말 평균이 평일의 약 1.4배 → 챗봇 24시간 운영 가치</div>
       <div class="wk">
         <div class="col"><div class="cb" style="height:83%"></div><div class="cl">월</div></div>
         <div class="col"><div class="cb" style="height:78%"></div><div class="cl">화</div></div>
@@ -165,11 +165,12 @@ thead th{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:none
 
     <div class="card">
       <h2>카카오 기술 채널 (별도) <span class="badge">추정·n=162</span></h2>
-      <div class="cap">진짜 대체 타깃 — 단 통증의 절반은 챗봇 밖</div>
+      <div class="cap">진짜 대체 타깃 · 단 문제의 절반은 챗봇 밖</div>
       <div class="bar"><div class="lab">조회 전용</div><div class="track"><div class="fill" style="width:76%;background:var(--green)">76%</div></div><div class="val">대체 가능</div></div>
       <div class="bar"><div class="lab">전체</div><div class="track"><div class="fill" style="width:23%;background:#52525b">23%</div></div><div class="val">현재</div></div>
       <div class="bar"><div class="lab">계정·번호 꼬임</div><div class="track"><div class="fill" style="width:22.2%;background:var(--red)">22.2%</div></div><div class="val">접수 수정</div></div>
-      <div style="font-size:12px;color:var(--muted);margin-top:12px;line-height:1.6">계정·번호 꼬임 22%는 "앱이 나를 못 알아봄" → <b style="color:var(--fg)">조회 챗봇 전제가 깨진 영역</b>. 챗봇이 아니라 <b style="color:var(--fg)">가입·접수 프로세스 수정</b>이 대체 주체.</div>
+      <div style="font-size:12.5px;color:#3f3f46;margin-top:12px;line-height:1.6"><b>챗봇(66%) + 계정 수정(22%) = 약 88% 제품 대체</b> — 전화 상한(~45%)보다 높아 진짜 타깃임.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6">계정·번호 꼬임 22%는 "앱이 나를 못 알아봄" → <b style="color:var(--fg)">조회 챗봇 전제가 깨진 영역</b>. 챗봇이 아니라 <b style="color:var(--fg)">가입·접수 프로세스 수정</b>이 대체 주체.</div>
     </div>
 
   </div>
