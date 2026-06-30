@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AMS LNB — Figma 1:1 프로토타입</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<style>
+/* ══ 디자인 라이브러리 토큰 (offplatform.admin.web_v2.0 · theme) — 값은 여기 한 곳만. 규칙은 var()만(하드코딩 금지) ══ */
+:root{
+  /* theme/color (dark 기본) — get_variable_defs(15671:14422) 실측 */
+  --background-primary:#161616;
+  --background-primary-hover:#292929;       /* hover */
+  --background-secondary:#262626;
+  --background-secondary-hover:#333333;     /* hover(그룹 펼침) */
+  --background-secondary-selected:#525252;  /* 선택 상태 — 라이브러리 실측 */
+  --text-primary:#f4f4f4;
+  --text-helper:#ffffff8f;                  /* 0.56 */
+  --text-placeholder:#ffffff66;             /* 0.4 */
+  --border-primary:#ffffff14;               /* 0.08 */
+  --radius-sm:4px;
+  --space-none:0px; --space-xs:4px; --space-sm:6px; --space-md:8px; --space-xl:12px; --space-7xl:40px;
+  --icon-button-padding-sm:10px;
+  --type-family:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;
+  --type-body-sm-size:14px; --type-body-sm-lh:20px; --type-body-sm-weight:500;
+  --motion-fast:120ms; --motion-base:200ms; --motion-ease:cubic-bezier(.2,0,.38,.9);
+  --rail-w:56px; --detail-w:216px; --icon:20px; --hit:32px; /* 폭: rail56 + detail216 = 272 (Figma 실측) */
+}
+/* theme/color (light) — get_variable_defs(15671:14750) 실측 */
+.lnb.light{
+  --background-primary:#ffffff;
+  --background-primary-hover:#f4f4f4;
+  --background-secondary:#f4f4f4;
+  --background-secondary-hover:#e8e8e8;
+  --background-secondary-selected:#c6c6c6;
+  --text-primary:#161616;
+  --text-helper:#1616168f;
+  --text-placeholder:#16161666;
+  --border-primary:#16161614;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;height:100%;}
+body{background:var(--background-primary);min-height:100vh;font-family:var(--type-family);
+  -webkit-font-smoothing:antialiased;display:flex;align-items:stretch;justify-content:flex-start;}
+.ms{display:inline-flex;width:var(--icon);height:var(--icon);flex:none;}
+.ms svg{width:100%;height:100%;fill:currentColor;display:block;}
+
+.lnb{display:flex;align-items:stretch;height:100vh;position:sticky;top:0;align-self:flex-start;
+  background:var(--background-primary);
+  color:var(--text-primary);font-size:var(--type-body-sm-size);line-height:var(--type-body-sm-lh);
+  font-weight:var(--type-body-sm-weight);flex:none;transition:background var(--motion-base) var(--motion-ease);}
+
+/* IconNavigation */
+.rail{width:var(--rail-w);flex:none;border-right:1px solid var(--border-primary);
+  display:flex;flex-direction:column;align-items:center;gap:var(--space-xl);padding:var(--space-xl);}
+/* 심볼 박스 = 32×32(rail 아이콘과 동일). 심볼 20px 중앙 → center y = pad12+16 = 28 (Figma 실측) */
+.logo{width:var(--hit);height:var(--hit);display:flex;align-items:center;justify-content:center;flex:none;color:var(--text-primary);}
+.logo svg{height:var(--icon);width:auto;display:block;}
+.ricons{flex:1;display:flex;flex-direction:column;align-items:center;gap:var(--space-md);}
+.rbtn{width:var(--hit);height:var(--hit);display:flex;align-items:center;justify-content:center;
+  border-radius:var(--radius-sm);color:var(--text-helper);cursor:pointer;border:none;background:transparent;flex:none;
+  transition:background var(--motion-fast) var(--motion-ease),color var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease);}
+.rbtn:hover{background:var(--background-primary-hover);}
+.rbtn:active{transform:scale(.9);}                 /* 누름 피드백 */
+.rbtn.active{background:var(--background-primary-hover);color:var(--text-primary);}
+
+/* DetailSidebar — 배경 = background/secondary(#262626/#f4f4f4), 레일(primary)보다 한 톤 밝음 (Figma 실측). 접힘 시 width 0 슬라이드 */
+.detail{width:var(--detail-w);flex:none;overflow:hidden;background:var(--background-secondary);
+  transition:width var(--motion-base) var(--motion-ease),background var(--motion-base) var(--motion-ease);}
+.detail-inner{width:var(--detail-w);height:100vh;display:flex;flex-direction:column;gap:var(--space-xl);padding:var(--space-xl);
+  opacity:1;transition:opacity var(--motion-base) var(--motion-ease);}
+.lnb.collapsed .detail{width:0;}
+.lnb.collapsed .detail-inner{opacity:0;}   /* 접힘 시 내용 페이드아웃(슬라이드와 함께) */
+
+/* 헤더 = 32 높이(SectionTitle), 워드마크 수직중앙 → center y = pad12+16 = 28 → 좌측 심볼과 수평 정렬 */
+.hdr{flex:none;height:var(--hit);display:flex;align-items:center;justify-content:space-between;padding:0 var(--space-xl);}
+.wm{display:flex;align-items:center;gap:var(--space-md);white-space:nowrap;}
+.wm .mark{height:18px;color:var(--text-primary);display:inline-flex;}
+.wm .mark svg{height:18px;width:auto;display:block;}
+.wm .sub{height:16px;color:var(--text-helper);display:inline-flex;}
+.wm .sub svg{height:16px;width:auto;display:block;}
+.iconbtn{width:var(--icon);height:var(--icon);display:flex;align-items:center;justify-content:center;
+  color:var(--text-primary);cursor:pointer;border:none;background:transparent;border-radius:var(--radius-sm);
+  transition:background var(--motion-fast) var(--motion-ease),transform var(--motion-fast) var(--motion-ease);}
+.iconbtn:hover{background:var(--background-secondary-hover);}
+.iconbtn:active{transform:scale(.9);}
+
+/* 메뉴 영역만 스크롤(헤더 고정). 펼쳐서 화면을 넘기면 세로 스크롤 */
+/* 스크롤바는 평소 숨김 → 메뉴 위에 마우스 올렸을 때만 자연스럽게 표시 */
+.nav{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;
+  scrollbar-width:thin;scrollbar-color:transparent transparent;
+  transition:scrollbar-color var(--motion-base) var(--motion-ease);}
+.nav:hover{scrollbar-color:var(--border-primary) transparent;}
+.nav::-webkit-scrollbar{width:8px;}
+.nav::-webkit-scrollbar-thumb{background:transparent;border-radius:999px;
+  transition:background var(--motion-base) var(--motion-ease);}
+.nav:hover::-webkit-scrollbar-thumb{background:var(--border-primary);}
+.nav::-webkit-scrollbar-thumb:hover{background:var(--text-placeholder);}
+.nav::-webkit-scrollbar-track{background:transparent;}
+.sec{display:flex;flex-direction:column;padding-bottom:var(--space-xl);}
+.cap{display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);
+  padding:var(--space-sm) var(--space-xl);color:var(--text-helper);
+  font-size:var(--type-body-sm-size);font-weight:var(--type-body-sm-weight);white-space:nowrap;border-radius:var(--radius-sm);}
+.cap .add{color:var(--text-placeholder);cursor:pointer;border-radius:var(--radius-sm);
+  transition:color var(--motion-fast) var(--motion-ease);}
+.cap .add:hover{color:var(--text-primary);}
+
+.favitem,.grp,.item{display:flex;align-items:center;border-radius:var(--radius-sm);cursor:pointer;
+  transition:background var(--motion-fast) var(--motion-ease),color var(--motion-fast) var(--motion-ease);}
+.favitem{gap:var(--space-md);padding:var(--icon-button-padding-sm) var(--space-xl);}
+.favitem:hover{background:var(--background-secondary-hover);}
+.favitem.active{background:var(--background-secondary-selected);}
+.favitem .ms{font-size:var(--icon);}
+.favitem .bk{color:var(--text-primary);}
+.favitem .lb{flex:1;min-width:0;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;}
+/* 삭제 버튼 = 해당 항목 마우스 오버 시에만 노출 */
+.favitem .del{color:var(--text-placeholder);opacity:0;transition:opacity var(--motion-fast) var(--motion-ease);}
+.favitem:hover .del{opacity:1;}
+
+.grp{gap:var(--space-md);padding:var(--icon-button-padding-sm) var(--space-xl);color:var(--text-primary);}
+.grp:hover{background:var(--background-secondary-hover);}
+.grp.sel{background:var(--background-secondary-hover);}   /* 배경 셀렉 = 가장 마지막에 펼친 한 곳만(secondary-hover) */
+.grp .gi{font-size:var(--icon);color:var(--text-primary);}
+.grp .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.grp .car{font-size:var(--icon);color:var(--text-primary);transition:transform var(--motion-base) var(--motion-ease);}
+.grp.open .car{transform:rotate(180deg);}   /* down→up 회전 = 펼친 동안 */
+
+.items{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--motion-base) var(--motion-ease);}
+.grp.open + .items{grid-template-rows:1fr;}
+/* 하위메뉴 펼침 = 높이(0fr→1fr) + 살짝 페이드인 */
+.items > .inner{overflow:hidden;min-height:0;opacity:0;transition:opacity var(--motion-base) var(--motion-ease);}
+.grp.open + .items > .inner{opacity:1;}
+/* 하위메뉴: py-10(h40)·pl-7xl(40)·text-primary — Figma 15671:14469 실측 */
+.item{padding:var(--icon-button-padding-sm) var(--space-xl) var(--icon-button-padding-sm) var(--space-7xl);
+  color:var(--text-primary);font-size:var(--type-body-sm-size);}
+.item:hover{background:var(--background-secondary-hover);}
+/* 선택된 하위메뉴 = 라이브러리 선택상태 토큰(background/secondary-selected). 그룹 펼침(secondary-hover)보다 밝아 구분됨 */
+.item.active{background:var(--background-secondary-selected);}
+
+/* ══ 우측 콘텐츠 = AMS '반 목록(반관리)' 실화면 1:1 재현 + 헤더 개선 ══ */
+.shell{display:flex;align-items:stretch;min-height:100vh;width:100%;}
+.content{flex:1;min-width:0;height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;
+  --background-primary:#ffffff;
+  --ct-bg:#fff; --ct-on:#fff; --ct-line:#dfe3ec; --ct-soft:#eef1f6; --ct-rowhover:#f7f9fd;
+  --ct-text:#2b3245; --ct-muted:#9aa1b2; --ct-sub:#7a8298; --ct-div:#d3d9e4;
+  --ct-th:#4a5266; --ct-so:#9aa3b5; --ct-thbg:#fafbfd;
+  --ct-blue:#2f6fe0; --ct-navy:#2b4ba0; --ct-filterbg:#eef1f7; --ct-filterbd:#e1e6ef;
+  --ct-okbg:#e4f4e6; --ct-ok:#2f7d32;
+  --ct-perbg:#e9f1ff; --ct-perbd:#5b8def; --ct-per:#2f6fe0;
+  --ct-alertbg:#fdeded; --ct-alertbd:#f3c4c4; --ct-alert:#c0392b; --ct-red:#e5392f;
+  background:var(--background-primary);color:var(--ct-text);}
+
+/* 상단 헤더바(개선): 경보 칩 | 계정 클러스터 */
+.topbar{flex:none;height:52px;display:flex;align-items:center;justify-content:flex-end;
+  padding:0 20px;border-bottom:1px solid var(--ct-line);background:var(--ct-bg);}
+.topright{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--ct-sub);}
+.topright .ms{width:16px;height:16px;flex:none;}
+.alertchip{display:flex;align-items:center;gap:7px;height:28px;padding:0 6px 0 11px;border-radius:999px;
+  background:var(--ct-alertbg);border:1px solid var(--ct-alertbd);color:var(--ct-alert);font-weight:600;}
+.alertchip .dot{width:7px;height:7px;border-radius:50%;background:var(--ct-red);flex:none;}
+.alertchip .ac-act{display:flex;align-items:center;gap:3px;height:20px;padding:0 8px;border-radius:999px;
+  background:var(--ct-bg);color:var(--ct-alert);cursor:pointer;font-weight:700;}
+.acct{display:flex;align-items:center;gap:4px;}
+.tsel{display:flex;align-items:center;gap:3px;color:var(--ct-text);cursor:pointer;padding:5px 8px;border-radius:6px;}
+.tsel:hover{background:var(--ct-soft);}
+.tsel .ms{color:var(--ct-sub);}
+.vd{width:1px;height:16px;background:var(--ct-div);}
+
+/* 반 목록 페이지 */
+.page{flex:1;display:flex;flex-direction:column;min-height:0;padding:16px 20px;gap:12px;}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;}
+.page-head h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.3px;color:var(--ct-text);}
+.page-head .ts{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--ct-muted);}
+.page-head .ts .ms{width:14px;height:14px;}
+
+/* 필터바 */
+.filterbar{background:var(--ct-filterbg);border:1px solid var(--ct-filterbd);border-radius:8px;
+  padding:12px;display:flex;flex-direction:column;gap:8px;flex:none;}
+.fb-row{display:flex;align-items:center;gap:8px;}
+.fb-row.r1{flex-wrap:wrap;}
+.fsel,.fdate,.finput{height:34px;border:1px solid var(--ct-line);border-radius:6px;background:var(--ct-bg);
+  padding:0 10px;font:inherit;font-size:13px;color:var(--ct-text);display:flex;align-items:center;min-width:0;}
+.fsel{justify-content:space-between;gap:8px;cursor:pointer;}
+.fsel.ph,.finput::placeholder{color:var(--ct-muted);}
+.fsel.w-op{width:190px;} .fsel.w-sm{flex:1;} .finput{flex:1;}
+.fdate{gap:8px;justify-content:space-between;width:160px;cursor:pointer;}
+.fdate .ms{width:16px;height:16px;color:var(--ct-sub);}
+.tilde{color:var(--ct-muted);padding:0 2px;}
+.period{display:flex;border:1px solid var(--ct-line);border-radius:6px;overflow:hidden;background:var(--ct-bg);}
+.period button{height:34px;padding:0 16px;border:none;background:transparent;color:var(--ct-sub);cursor:pointer;font:inherit;font-size:13px;border-left:1px solid var(--ct-line);}
+.period button:first-child{border-left:none;}
+.period button.on{background:var(--ct-perbg);color:var(--ct-per);font-weight:700;}
+.fb-right{margin-left:auto;display:flex;gap:8px;}
+.fbtn{height:34px;padding:0 18px;border-radius:6px;border:1px solid var(--ct-line);background:var(--ct-bg);
+  color:var(--ct-text);cursor:pointer;font:inherit;font-size:13px;font-weight:600;white-space:nowrap;}
+.fbtn.primary{background:var(--ct-navy);border-color:var(--ct-navy);color:var(--ct-on);}
+
+/* 목록 헤더(전체 N + 전체보기) */
+.listhead{display:flex;align-items:center;justify-content:space-between;flex:none;}
+.listhead .cnt{font-size:14px;font-weight:700;color:var(--ct-text);}
+.listhead .cnt b{color:var(--ct-navy);}
+
+/* 테이블 */
+.tablewrap{flex:1;border:1px solid var(--ct-line);border-radius:8px;background:var(--ct-bg);overflow:auto;min-height:0;}
+.ctable{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
+.ctable th{position:sticky;top:0;background:var(--ct-thbg);color:var(--ct-th);font-weight:700;text-align:left;
+  padding:10px 12px;border-bottom:1px solid var(--ct-line);z-index:1;}
+.ctable th .hc{display:inline-flex;align-items:center;gap:5px;}
+.ctable th .so,.ctable th .fl{width:14px;height:14px;color:var(--ct-so);flex:none;}
+.ctable td{padding:8px 12px;border-bottom:1px solid var(--ct-soft);color:var(--ct-text);vertical-align:middle;}
+.ctable td.room{white-space:normal;min-width:96px;max-width:130px;line-height:1.4;color:var(--ct-sub);}
+.ctable td.cls{min-width:230px;white-space:normal;line-height:1.4;}
+.ctable tr:hover td{background:var(--ct-rowhover);}
+.ctable a{color:var(--ct-blue);text-decoration:none;}
+.ctable a:hover{text-decoration:underline;}
+.ctable .num{color:var(--ct-muted);}
+.ctable .num.pos{color:var(--ct-blue);font-weight:700;}
+.ctable .cap{color:var(--ct-text);}
+.tbtn{height:26px;padding:0 12px;border-radius:5px;border:1px solid var(--ct-line);background:var(--ct-bg);
+  color:var(--ct-text);cursor:pointer;font:inherit;font-size:12px;font-weight:600;white-space:nowrap;}
+.tbtn.navy{background:var(--ct-navy);border-color:var(--ct-navy);color:var(--ct-on);}
+.badge{display:inline-block;border-radius:4px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;}
+.badge.ok{background:var(--ct-okbg);color:var(--ct-ok);}
+</style>
+</head>
+<body>
+<div class="shell">
+<div class="lnb" id="lnb">
+  <div class="rail">
+    <div class="logo">__SYMBOL__</div>
+    <div class="ricons" id="ricons"></div>
+    <button class="rbtn account" title="계정"><span class="ms" data-i="account_circle"></span></button>
+  </div>
+  <div class="detail">
+    <div class="detail-inner">
+      <div class="hdr">
+        <div class="wm"><span class="mark">__WORDMARK__</span><span class="sub">__MANAGER__</span></div>
+        <button class="iconbtn" id="collapse" title="패널 접기"><span class="ms" data-i="left_panel_close"></span></button>
+      </div>
+      <div class="nav" id="nav"></div>
+    </div>
+  </div>
+</div>
+<main class="content" id="content"></main>
+</div>
+
+<script>
+const ICONS = __ICONS__;
+function svg(name){return '<svg viewBox="0 -960 960 960" aria-hidden="true">'+(ICONS[name]||'')+'</svg>';}
+document.querySelectorAll('.ms[data-i]').forEach(el=>{el.innerHTML=svg(el.getAttribute('data-i'));});
+const lnbEl=document.getElementById('lnb');
+
+const RAIL=[{icon:'page_menu_ios',toggle:true},{icon:'checkbook'},{icon:'signpost'},{icon:'robot_2'}];
+const FAV=['회원조회'];
+const SECTIONS=[
+  {cap:'원생∙모집', groups:[
+    {icon:'people', label:'고객(원생) 관리', items:['회원 조회','상담 관리','FAQ','공지사항','회원병합']},
+    {icon:'person_check', label:'모집/접수 관리', items:['반관리','일괄접수/입반처리','전형관리','모집관리','접수현황']},
+  ]},
+  {cap:'학사∙수업', groups:[
+    {icon:'article_person', label:'강좌 관리', items:['강좌','보강코드','추가영상']},
+    {icon:'menu_book', label:'교재 관리', items:['기초상품','교재상품','교재그룹','연결교재']},
+    {icon:'box', label:'물류(교재) 상품', items:['물류단품','간행물','물류관리']},
+    {icon:'transcribe', label:'수업운영 관리', items:['수업관리']},
+  ]},
+  {cap:'소통', groups:[
+    {icon:'question_answer', label:'메시지발송 관리', items:['메시지관리','템플릿관리','080수신거부관리']},
+    {icon:'ad_group', label:'메시지그룹 관리', items:['회원그룹','광고수신동의그룹','비회원문자수신DB']},
+  ]},
+  {cap:'수납 ∙ 정산', groups:[
+    {icon:'credit_card', label:'청구/수납 관리', items:['청구관리','납부관리','신한캠퍼스처리','결제내역관리','환불요청처리','VAN 거래이력']},
+    {icon:'card_giftcard', label:'장학혜택 관리', items:['쿠폰관리']},
+    {icon:'monitoring', label:'매출/정산 관리', items:['정산관리','상품정산정보관리','수업통계관리']},
+  ]},
+  {cap:'설정∙권한', groups:[
+    {icon:'corporate_fare', label:'학원정보 관리', items:['학원관리','지점관리','공간/시설관리','영역/과목관리']},
+    {icon:'cast_for_education', label:'선생님(파트너) 관리', items:['선생님관리']},
+    {icon:'shield_person', label:'Admin 관리', items:['메뉴관리','권한그룹관리','운영자관리']},
+    {icon:'settings', label:'System 관리', items:['공통코드관리','메모리데이터 갱신','개인정보취급관리','이용약관관리','일괄 작업 이력']},
+  ]},
+];
+
+/* 기본: 아무 그룹도 선택/펼침 안 됨 (전부 ∨·하이라이트 없음) */
+const state={expanded:{}, activeGroup:null, activeItem:null, collapsed:false};
+const ricons=document.getElementById('ricons');
+const nav=document.getElementById('nav');
+
+/* ── DOM은 한 번만 빌드, 상호작용은 class 토글만 → CSS 트랜지션이 실제로 재생됨 ── */
+function applyCollapsed(){ lnbEl.classList.toggle('collapsed', state.collapsed); updateRail(); }
+function buildRail(){
+  ricons.innerHTML='';
+  RAIL.forEach(r=>{
+    const b=document.createElement('button'); b.className='rbtn';
+    b.innerHTML='<span class="ms">'+svg(r.icon)+'</span>';
+    if(r.toggle) b.onclick=()=>{state.collapsed=!state.collapsed;applyCollapsed();};
+    ricons.appendChild(b);
+  });
+  updateRail();
+}
+function updateRail(){
+  [...ricons.children].forEach((b,i)=>b.classList.toggle('active', !!RAIL[i].toggle && !state.collapsed));
+}
+function buildNav(){
+  nav.innerHTML='';
+  const fs=document.createElement('div'); fs.className='sec';
+  const fcap=document.createElement('div'); fcap.className='cap';
+  fcap.innerHTML='<span>즐겨찾기</span><span class="ms add">'+svg('add_2')+'</span>';
+  fs.appendChild(fcap);
+  FAV.forEach(name=>{
+    const it=document.createElement('div'); it.className='favitem'; it.dataset.item=name;
+    it.innerHTML='<span class="ms bk">'+svg('bookmark')+'</span><span class="lb">'+name+'</span><span class="ms del">'+svg('delete')+'</span>';
+    it.onclick=()=>{state.activeItem=name;updateNav();};
+    fs.appendChild(it);
+  });
+  nav.appendChild(fs);
+  SECTIONS.forEach(sec=>{
+    const s=document.createElement('div'); s.className='sec';
+    const cap=document.createElement('div'); cap.className='cap'; cap.innerHTML='<span>'+sec.cap+'</span>';
+    s.appendChild(cap);
+    sec.groups.forEach(g=>{
+      const grp=document.createElement('div'); grp.className='grp'; grp.dataset.g=g.label;
+      grp.innerHTML='<span class="ms gi">'+svg(g.icon)+'</span><span class="lb">'+g.label+'</span><span class="ms car">'+svg('keyboard_arrow_down')+'</span>';
+      grp.onclick=()=>toggleGroup(g);
+      s.appendChild(grp);
+      const items=document.createElement('div'); items.className='items';
+      const inner=document.createElement('div'); inner.className='inner';
+      g.items.forEach(it=>{
+        const b=document.createElement('div'); b.className='item'; b.dataset.item=it;
+        b.textContent=it; b.onclick=(e)=>{e.stopPropagation();state.activeItem=it;updateNav();};
+        inner.appendChild(b);
+      });
+      items.appendChild(inner); s.appendChild(items);
+    });
+    nav.appendChild(s);
+  });
+  updateNav();
+}
+function toggleGroup(g){
+  const willOpen=!state.expanded[g.label];
+  state.expanded[g.label]=willOpen;
+  if(willOpen){
+    state.activeGroup=g.label;       /* 배경 셀렉 = 가장 마지막에 펼친 그룹 한 곳 */
+    state.activeItem=g.items[0];      /* 펼치면 첫 하위메뉴(예: 회원 조회)만 셀렉 */
+  }else{
+    if(state.activeGroup===g.label) state.activeGroup=null;
+    if(g.items.includes(state.activeItem)) state.activeItem=null;
+  }
+  updateNav();
+}
+function updateNav(){
+  nav.querySelectorAll('.grp').forEach(grp=>{
+    const label=grp.dataset.g;
+    grp.classList.toggle('open', !!state.expanded[label]);
+    const items=(SECTIONS.flatMap(s=>s.groups).find(g=>g.label===label)||{}).items||[];
+    /* 하위 메뉴가 선택돼 있으면 그 그룹의 셀렉은 해제(선택은 한 곳만) */
+    grp.classList.toggle('sel', state.activeGroup===label && !items.includes(state.activeItem));
+  });
+  nav.querySelectorAll('.favitem,.item').forEach(el=>el.classList.toggle('active', state.activeItem===el.dataset.item));
+}
+document.getElementById('collapse').onclick=()=>{state.collapsed=!state.collapsed;applyCollapsed();};
+buildRail(); buildNav();
+
+/* ── 우측 콘텐츠: 반 목록(반관리) 1:1 재현 + 헤더 개선 ── */
+/* [반코드,반속성,지점,영역,과목,개설유형,선생님,강의실,개강일,반명,입반정원,입반예정,퇴반예정,대기,운영시작일,운영종료일] — 텍스트·띄어쓰기 이미지 그대로 */
+const ROWS=[
+ ['1939','단과','대치단과','국어','국어','학원지정','강은양','- -','2026-06-08','강은양T 국어 월 6/8','9999','0','0','0','2026-06-29','2026-12-31'],
+ ['1938','단과','대치단과','국어','국어','학원지정','강은양','본관 301호','2026-06-08','설명회_테스트강좌(1)','9999','0','0','0','2026-06-29','2026-12-31'],
+ ['1935','단과','대치단과','국어','국어','학원지정','강은양','- -','2026-05-01','QA 0626 테스트강좌','9999','3','0','0','2026-06-26','2026-12-31'],
+ ['1934','단과','대치단과','국어','국어','학원지정','손창빈','W관 802호','2026-07-11','(40) 복제_손창빈T 국어 서바이벌 목 18:30-22:00 7/9','165','0','0','0','2026-06-25','2026-12-31'],
+ ['1929','단과','대치단과','논술','수리논술','학원지정','박지윤','공간 테스트용 -','2026-06-25','박지윤T 수리논술확통 목 공간 테스트용 6/25','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1928','단과','대치단과','논술','수리논술','학원지정','박지윤','테스트관 -','2026-06-24','박지윤T 수리논술기하 수 테스트관 6/24','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1923','단과','대치단과','국어','국어','학원지정','강은양','- -','2026-03-02','QA 0623정산테스트강좌','9999','7','0','0','2026-06-23','2026-12-31'],
+ ['1922','단과','대치단과','국어','국어','학원지정','강은양','공간 테스트용 분당 라이브러리 101','2026-06-30','분당 6월_+복제','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1921','단과','대치단과','이과면접','서울대 수학심층','학원지정','박지윤','- -','2026-06-30','박지윤T 서울대 수학심층 화 6/30','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1920','단과','대치단과','이과면접','연세대황동우수','학원지정','박지윤','공간공간 -','2026-06-27','박지윤T 연세대황동우수 토 공간공간 6/27','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1919','단과','대치단과','이과면접','메이저 의대면접','학원지정','박지윤','공간 테스트용 -','2026-06-30','박지윤T 메이저 의대면접 화 공간 테스트용 6/30','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1918','단과','대치단과','이과면접','의대MMI','학원지정','박지윤','공간공간 급식식당','2026-06-30','박지윤T 의대MMI 화 공간공간 급식식당 6/30','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1917','단과','대치단과','논술','수리논술(연세대)','학원지정','박지윤','공간 테스트용 라이브러리 시설','2001-01-27','박지윤T 수리논술(연세대) 토 공간 테스트용 라이브러리 시설 1/27','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1916','단과','대치단과','논술','수리논술','학원지정','김종두','본관 301호','2026-06-27','박지윤T 인문논술(연세대) 토 본관 301호 6/27','9999','0','0','0','2026-06-23','2026-12-31'],
+ ['1915','단과','대치단과','논술','수리논술','학원지정','김종두','공간공간 -','2026-06-26','김종두T 수리논술 금 공간공간 6/26','9999','0','0','0','2026-06-26','2026-12-31'],
+ ['1914','단과','대치단과','논술','수리논술','학원지정','김기원','공간공간 -','2026-06-26','김기원T 수리논술 금 공간공간 6/26','9999','0','0','0','2026-06-26','2026-12-31'],
+ ['1913','단과','대치단과','국어','국어','학원지정','강은양','공간 테스트용 분당 라이브러리 101','2026-06-30','분당 6월','9999','11','0','0','2026-06-23','2026-12-31'],
+ ['1912','단과','대치단과','수학','미적정규','학원지정','엄나윤','공간23 -','2026-06-26','김재문T 기하 금 공간23 6/26','9999','0','0','0','2026-06-22','2026-12-31'],
+];
+const COLS=[
+ {n:'반코드',s:1},{n:'반속성',s:1,f:1},{n:'지점',s:1,f:1},{n:'영역',s:1,f:1},{n:'과목',s:1,f:1},
+ {n:'개설유형',s:1,f:1},{n:'선생님',s:1,f:1},{n:'강의실',s:1,f:1},{n:'개강일',s:1,f:1},
+ {n:'반명',f:1},{n:'수업구성'},{n:'입반정원'},{n:'입반(예정)생',s:1},{n:'퇴반(예정)생',s:1},
+ {n:'대기생',s:1},{n:'접수관리'},{n:'운영시작일',s:1},{n:'운영종료일',s:1},{n:'운영상태',f:1}
+];
+function chev(){return '<span class="ms">'+svg('keyboard_arrow_down')+'</span>';}
+function th(c){return '<th><span class="hc">'+c.n
+  +(c.s?'<span class="so">'+svg('keyboard_arrow_down')+'</span>':'')
+  +(c.f?'<span class="fl">'+svg('filter_alt')+'</span>':'')+'</span></th>';}
+function topbarHTML(){
+  return '<header class="topbar"><div class="topright">'
+    +'<span class="alertchip"><span class="dot"></span>카드단말기 연결 없음'
+      +'<span class="ac-act"><span class="ms">'+svg('refresh')+'</span>연결확인</span></span>'
+    +'<span class="vd"></span>'
+    +'<span class="acct"><span class="tsel">시대인재 대치단과'+chev()+'</span>'
+      +'<span class="tsel">김명준'+chev()+'</span></span>'
+    +'</div></header>';
+}
+function contentHTML(){
+  const ths=COLS.map(th).join('');
+  const numCell=v=>'<td class="num'+(Number(v)>0?' pos':'')+'">'+v+'</td>';
+  const rows=ROWS.map(r=>{
+    const [code,attr,branch,area,subj,type,teacher,room,opendt,cls,cap,ip,toe,wait,startdt,enddt]=r;
+    return '<tr><td>'+code+'</td><td>'+attr+'</td><td>'+branch+'</td><td>'+area+'</td><td>'+subj+'</td>'
+      +'<td>'+type+'</td><td>'+teacher+'</td><td class="room">'+room+'</td><td>'+opendt+'</td>'
+      +'<td class="cls"><a href="#">'+cls+'</a></td>'
+      +'<td><button class="tbtn navy">조회</button></td>'
+      +'<td class="cap">'+cap+'</td>'+numCell(ip)+numCell(toe)+numCell(wait)
+      +'<td><button class="tbtn">관리</button></td>'
+      +'<td>'+startdt+'</td><td>'+enddt+'</td>'
+      +'<td><span class="badge ok">운영중</span></td></tr>';
+  }).join('');
+  return topbarHTML()
+    +'<div class="page">'
+      +'<div class="page-head"><h1>반 목록</h1>'
+        +'<span class="ts"><span class="ms">'+svg('refresh')+'</span>2026-06-29 15:05:51 기준'
+          +'<button class="themebtn" id="themeBtn" title="LNB 라이트/다크 미리보기"><span class="ms" data-th>'+svg('light_mode')+'</span></button></span></div>'
+      +'<div class="filterbar">'
+        +'<div class="fb-row r1">'
+          +'<div class="fsel w-op">운영시작일'+chev()+'</div>'
+          +'<div class="fdate">2025-06-29<span class="ms">'+svg('calendar_today')+'</span></div>'
+          +'<span class="tilde">~</span>'
+          +'<div class="fdate">2026-06-29<span class="ms">'+svg('calendar_today')+'</span></div>'
+          +'<div class="period"><button>1개월</button><button>3개월</button><button>6개월</button><button class="on">1년</button></div>'
+          +'<div class="fb-right"><button class="fbtn primary">검색</button><button class="fbtn">초기화</button></div>'
+        +'</div>'
+        +'<div class="fb-row">'
+          +'<div class="fsel w-sm">2026년'+chev()+'</div><div class="fsel w-sm">강좌'+chev()+'</div>'
+          +'<div class="fsel w-sm ph">중분류'+chev()+'</div><div class="fsel w-sm ph">소분류'+chev()+'</div>'
+        +'</div>'
+        +'<div class="fb-row">'
+          +'<div class="fsel w-op">반명'+chev()+'</div>'
+          +'<input class="finput" placeholder="검색어를 입력하세요!"/>'
+        +'</div>'
+      +'</div>'
+      +'<div class="listhead"><span class="cnt">전체 <b>605</b></span><button class="fbtn">전체보기</button></div>'
+      +'<div class="tablewrap"><table class="ctable"><thead><tr>'+ths+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'</div>';
+}
+document.getElementById('content').innerHTML=contentHTML();
+/* LNB 라이트/다크 미리보기 토글(아이콘만) */
+document.getElementById('themeBtn').onclick=function(){
+  const light=lnbEl.classList.toggle('light');
+  this.querySelector('[data-th]').innerHTML=svg(light?'dark_mode':'light_mode');
+};
+</script>
+</body>
+</html>

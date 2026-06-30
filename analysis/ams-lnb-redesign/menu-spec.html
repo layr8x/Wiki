@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<style>
+*{box-sizing:border-box;} body{margin:0;background:#eceef2;font-family:'Pretendard',sans-serif;color:#161616;-webkit-font-smoothing:antialiased;padding:40px;}
+.doc{max-width:1000px;margin:0 auto;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.hd{padding:26px 32px 20px;border-bottom:1px solid rgba(0,0,0,.08);}
+.hd h1{margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:-.4px;}
+.hd .meta{font-size:13px;color:#6f6f78;}
+.hd .meta b{color:#161616;}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.bg{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;}
+.bg.승격{background:#e7efff;color:#0043ce;} .bg.평탄화{background:#d7f5ef;color:#0d7d68;}
+.bg.재배치{background:#eceef2;color:#525252;} .bg.유지{background:#f4f4f4;color:#8d8d8d;} .bg.확인{background:#fff2e0;color:#9a5b00;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;}
+th{background:#f7f8fa;color:#525252;font-weight:700;text-align:left;padding:11px 16px;border-bottom:1px solid rgba(0,0,0,.10);font-size:12px;letter-spacing:.02em;}
+td{padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.06);vertical-align:top;}
+.cap td{background:#161616;color:#fff;font-weight:800;font-size:13px;letter-spacing:.04em;padding:9px 16px;}
+.g{font-weight:700;white-space:nowrap;}
+.items{color:#393939;line-height:1.7;}
+.items .sep{color:#c6c6c6;margin:0 5px;}
+.note{color:#8d8d8d;font-size:12px;}
+.foot{padding:20px 32px 26px;font-size:12.5px;color:#6f6f78;line-height:1.7;border-top:1px solid rgba(0,0,0,.08);}
+.foot b{color:#161616;}
+.foot .q{color:#9a5b00;}
+</style></head>
+<body><div class="doc">
+  <div class="hd">
+    <h1>AMS LNB 전체 메뉴 정의서</h1>
+    <div class="meta">5 대분류 · <b>16 그룹</b>(중분류) · <b>51 메뉴</b>(소분류) · <b>전부 2뎁스</b> · 2026-06-29 기준</div>
+    <div class="legend">
+      <span class="bg 승격">승격</span><span class="bg 평탄화">평탄화</span>
+      <span class="bg 재배치">재배치</span><span class="bg 유지">유지</span><span class="bg 확인">확인</span>
+    </div>
+  </div>
+  <table><thead><tr><th style="width:170px">중분류(그룹)</th><th style="width:80px">변경</th><th>소분류(메뉴)</th><th style="width:210px">비고</th></tr></thead>
+  <tbody id="tb"></tbody></table>
+  <div class="foot">
+    <b>변경 요약</b><br>
+    · 3뎁스→2뎁스: <b>강좌/교재 관리</b>의 3서브그룹(강좌관리·물류(교재)상품·교재관리)을 <b>그룹 승격</b> / <b>메시지그룹 관리</b> 독립 분리.<br>
+    · <b>재배치</b>: 흩어진 그룹을 5개 업무 도메인(원생·모집 / 학사·수업 / 소통 / 수납·정산 / 설정·권한)으로 묶고 순서 정리.<br><br>
+    <b class="q">확인 필요</b> ① 강좌/교재 우산 제거(승격) vs 유지(라벨)　② 소통 별도 vs 학사·수업 통합　③ 전체처리 기능 정의　④ 일괄접수/입반처리 = 정본대로 포함
+  </div>
+</div>
+<script>
+const DATA=[
+ ['원생 · 모집',[['고객(원생) 관리','재배치',['회원조회','상담관리','FAQ','공지사항','회원 병합'],''],['모집/접수 관리','유지',['반관리','일괄접수/입반처리','전형관리','모집관리','접수현황'],'']]],
+ ['학사 · 수업',[['강좌 관리','승격',['강좌','보강코드','추가영상'],'기존 강좌/교재 ▸ 강좌관리'],['교재 관리','승격',['기초상품','교재상품','교재그룹','연결교재'],'기존 강좌/교재 ▸ 교재관리'],['물류(교재)상품','승격',['물류단품','간행물','물류관리'],'기존 강좌/교재 ▸ 물류(교재)상품'],['수업운영 관리','유지',['수업관리'],'']]],
+ ['소통',[['메시지발송 관리','평탄화',['메시지관리','템플릿관리','080수신거부관리'],'메시지그룹관리 분리'],['메시지그룹 관리','승격',['회원그룹','광고수신동의그룹','비회원문자수신DB'],'기존 메시지발송 ▸ 메시지그룹관리']]],
+ ['수납 · 정산',[['청구/수납 관리','재배치',['청구관리','납부관리','신한캠퍼스처리','결제내역관리','환불요청처리','VAN 거래이력'],''],['장학혜택 관리','재배치',['쿠폰관리'],''],['매출/정산 관리','재배치',['정산관리','상품정산정보관리','수업통계관리'],'']]],
+ ['설정 · 권한',[['학원정보 관리','재배치',['학원관리','지점관리','공간/시설관리','영역/과목관리'],''],['선생님(파트너) 관리','재배치',['선생님관리'],''],['Admin 관리','유지',['메뉴관리','권한그룹관리','운영자관리'],''],['시스템 관리','유지',['공통코드관리','메모리데이터 갱신','개인정보취급관리','이용약관관리','일괄 작업 이력'],''],['전체처리','확인',['(단일 링크)'],'기능 확인 필요']]],
+];
+const tb=document.getElementById('tb');
+DATA.forEach(([cap,gs])=>{
+  tb.insertAdjacentHTML('beforeend',`<tr class="cap"><td colspan="4">${cap}</td></tr>`);
+  gs.forEach(([g,chg,items,note])=>{
+    tb.insertAdjacentHTML('beforeend',`<tr><td class="g">${g}</td><td><span class="bg ${chg}">${chg}</span></td>
+      <td class="items">${items.join('<span class="sep">·</span>')}</td><td class="note">${note||'—'}</td></tr>`);
+  });
+});
+</script>
+</body></html>

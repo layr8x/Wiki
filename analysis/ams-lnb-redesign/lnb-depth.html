@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"/>
+<style>
+:root{--surface:#262626;--text:rgba(255,255,255,.72);--strong:rgba(255,255,255,.94);--accent:#78a9ff;
+  --sel:#393939;--bd:rgba(255,255,255,.10);--hover:rgba(255,255,255,.06);--cap:rgba(255,255,255,.42);}
+*{box-sizing:border-box;} body{margin:0;background:#0b0b0d;color:#e9e9ee;font-family:'Pretendard',sans-serif;padding:44px 36px 60px;-webkit-font-smoothing:antialiased;}
+h1{font-size:25px;font-weight:800;margin:0 0 4px;letter-spacing:-.3px;}
+.sub{color:#9b9ba6;font-size:14px;margin:0 0 30px;}
+.cols{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;}
+.col{width:300px;}
+.coltag{font-size:13px;font-weight:700;color:#e9e9ee;margin:0 0 10px;display:flex;align-items:center;gap:8px;}
+.coltag .b{font-size:11px;font-weight:800;color:#0b0b0d;border-radius:999px;padding:2px 8px;}
+.b.bad{background:#5b5b66;color:#e9e9ee;} .b.rec{background:#ffd23f;} .b.alt{background:#78a9ff;color:#0b0b0d;}
+.nav{background:var(--surface);border:1px solid var(--bd);border-radius:14px;padding:8px 0;overflow:hidden;}
+.gh{display:flex;align-items:center;gap:12px;height:44px;padding:0 16px;color:var(--strong);font-size:14px;font-weight:600;cursor:default;}
+.gh .ic{width:20px;height:20px;color:var(--text);flex:none;} .gh .ic svg{width:100%;height:100%;fill:currentColor;display:block;}
+.gh .car{margin-left:auto;width:20px;height:20px;color:var(--text);} .gh .car svg{width:100%;height:100%;fill:currentColor;}
+.gh:hover{background:var(--hover);}
+.sgh{display:flex;align-items:center;height:38px;padding:0 16px 0 52px;color:var(--text);font-size:13px;font-weight:600;}
+.sgh .car{margin-left:auto;width:18px;height:18px;color:var(--text);} .sgh .car svg{width:100%;height:100%;fill:currentColor;}
+.lf{display:flex;align-items:center;height:38px;padding:0 16px 0 52px;color:var(--text);font-size:13.5px;}
+.lf.d3{padding-left:64px;} /* 3뎁스 들여쓰기 */
+.lf.active{background:var(--sel);color:var(--accent);font-weight:700;box-shadow:inset 3px 0 0 0 var(--accent);}
+.lf.d2act{padding-left:16px;} /* 2뎁스 항목 정렬 보정용(승격안) */
+.conn{position:relative;}
+.conn::before{content:"";position:absolute;left:52px;top:0;bottom:0;width:1px;background:var(--bd);} /* 3뎁스 연결선 */
+.sublabel{font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--cap);padding:10px 16px 4px 16px;display:flex;align-items:center;gap:8px;}
+.sublabel::after{content:"";flex:1;height:1px;background:var(--bd);}
+.note{font-size:12px;color:#8a8a95;line-height:1.6;margin-top:12px;}
+.note b{color:#cfcfd6;}
+.lead{background:#13131a;border:1px solid #23232c;border-radius:12px;padding:16px 18px;margin:0 0 26px;font-size:13.5px;line-height:1.7;color:#c7c7cf;max-width:960px;}
+.lead b{color:#fff;}
+</style></head>
+<body>
+<h1>세부 메뉴(3뎁스) 어떻게 구성할까</h1>
+<p class="sub">원칙: LNB는 2뎁스로 — 3번째 레벨은 ①승격 / ②항상펼침 라벨 / ③페이지 탭 중 하나로 해소</p>
+<div class="lead"><b>핵심:</b> AMS에서 3뎁스는 <b>강좌/교재 관리</b>·<b>메시지발송 관리</b> 단 2곳뿐. 전체를 3뎁스로 설계하지 말고, 이 예외만 아래 방식으로 풀면 사이드바 전체가 2뎁스로 단순해집니다. (강좌/교재 관리 예시)</div>
+<div class="cols" id="cols"></div>
+<script>
+const I={book:'<path d="M300-160q-58 0-99-41t-41-99v-400q0-58 41-99t99-41h440q25 0 42.5 17.5T840-780v451q0 11-7.5 20T813-296q-25 8-39 29.5t-14 50.5q0 29 14 50.5t39 29.5q12 4 19.5 13t7.5 20v6q0 17-11.5 28.5T760-160H300Z"/>',
+  down:'<path d="M480-345 240-585l56-56 184 184 184-184 56 56-240 240Z"/>',
+  right:'<path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>'};
+function ic(n){return '<svg viewBox="0 -960 960 960">'+I[n]+'</svg>';}
+const cols=[
+{tag:'현재 · 3뎁스', b:'복잡', bc:'bad', html:`
+  <div class="gh"><span class="ic">${ic('book')}</span>강좌/교재 관리<span class="car">${ic('down')}</span></div>
+  <div class="sgh">강좌관리<span class="car">${ic('down')}</span></div>
+  <div class="conn"><div class="lf d3 active">강좌</div><div class="lf d3">보강코드</div><div class="lf d3">추가영상</div></div>
+  <div class="sgh">교재관리<span class="car">${ic('right')}</span></div>`,
+  note:'그룹▸서브그룹▸항목 3단 아코디언. 들여쓰기 깊고(64px) 펼침 단계가 많아 길 잃기 쉬움. 한글 라벨이 좁아짐.'},
+{tag:'안 A · 2뎁스로 승격', b:'추천', bc:'rec', html:`
+  <div class="gh"><span class="ic">${ic('book')}</span>강좌 관리<span class="car">${ic('down')}</span></div>
+  <div class="lf active">강좌</div><div class="lf">보강코드</div><div class="lf">추가영상</div>
+  <div class="gh"><span class="ic">${ic('book')}</span>교재 관리<span class="car">${ic('right')}</span></div>`,
+  note:'서브그룹(강좌관리·교재관리)을 <b>최상위 그룹으로 승격</b> → 3번째 레벨 소멸. "학사·수업" 슈퍼섹션이 묶어주니 그룹이 늘어도 안 복잡. <b>가장 단순.</b>'},
+{tag:'안 B · 서브 라벨(항상 펼침)', b:'대안', bc:'alt', html:`
+  <div class="gh"><span class="ic">${ic('book')}</span>강좌/교재 관리<span class="car">${ic('down')}</span></div>
+  <div class="sublabel"><span>강좌관리</span></div>
+  <div class="lf active">강좌</div><div class="lf">보강코드</div><div class="lf">추가영상</div>
+  <div class="sublabel"><span>교재관리</span></div>
+  <div class="lf">기초상품</div><div class="lf">교재상품</div><div class="lf">교재그룹</div>`,
+  note:'umbrella(강좌/교재 관리)를 유지하되 서브그룹을 <b>접지 않는 라벨</b>로 → 3번째 아코디언 제거, 클릭 단계 ↓. 펼친 길이는 길어짐.'},
+];
+document.getElementById('cols').innerHTML=cols.map(c=>`<div class="col">
+  <div class="coltag">${c.tag}<span class="b ${c.bc}">${c.b}</span></div>
+  <div class="nav">${c.html}</div>
+  <div class="note">${c.note}</div></div>`).join('');
+</script>
+</body></html>
