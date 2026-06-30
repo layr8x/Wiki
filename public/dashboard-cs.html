@@ -286,13 +286,14 @@
   // ── 1) 먼저 fallback 으로 추세를 그려 빈 화면 방지 ──
   drawTrend(FALLBACK_DAYS, FALLBACK_VALS);
 
-  // ── 2) 실데이터 fetch → 성공 시 전체 갱신, 실패 시 하드코딩 유지 ──
-  fetch('/api/cs-stats', {headers:{'Accept':'application/json'}})
+  // ── 2) 빌드 시 생성된 정적 스냅샷(/cs-stats.json) fetch → 성공 시 갱신, 실패 시 하드코딩 유지 ──
+  //    (Vercel 서버리스 함수 한도 회피: 라이브 API 대신 빌드타임 집계 JSON. prebuild가 생성)
+  fetch('/cs-stats.json', {headers:{'Accept':'application/json'}, cache:'no-cache'})
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(function(d){ if(d && d.totals) render(d); })
     .catch(function(e){
       // fetch 실패 = 페이지에 이미 박힌 하드코딩 값(2026-06-30 스냅샷)을 그대로 보여줌.
-      console.warn('cs-stats fetch 실패 — 스냅샷 값 유지:', e && e.message);
+      console.warn('cs-stats.json fetch 실패 — 스냅샷 값 유지:', e && e.message);
     });
 })();
 </script>

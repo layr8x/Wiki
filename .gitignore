@@ -51,3 +51,6 @@ qa-dataset*.jsonl
 # Google 서비스계정 키 + 동기화 상태 (커밋 금지)
 google-service-account.json
 .sheets-sync-state.json
+
+# 빌드타임 생성 (대시보드 스냅샷) — prebuild가 매 배포마다 새로 만듦
+public/cs-stats.json

@@ -42,10 +42,6 @@
     {
       "path": "/api/sync/jira",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cs-health-alert",
-      "schedule": "0 * * * *"
     }
   ],
   "headers": [
