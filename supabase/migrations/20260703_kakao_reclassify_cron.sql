@@ -2,7 +2,7 @@
 -- 매일 08:50 KST(=23:50 UTC): 신규 유입 중 '기타'로 떨어진 대화를 rule_v3 규칙으로 재분류.
 -- 목적: 분류 함수(kakao-classify)의 라이브 버전을 재배포하지 않고도 기타 비중을 낮게 유지.
 --   (rule_v3 = 모의고사·서바이벌 신설 + 영상재생/기기/사이트 보강 + 첫 3개 고객 메시지 결합.
---    함수 index.ts 의 RULE_ENGINE 과 동일 규칙 — 둘을 함께 갱신할 것.)
+--    함수 index.ts 의 RULE_ENGINE 과 동일 규칙. 둘을 함께 갱신할 것.)
 select cron.schedule('kakao-reclassify-etc', '50 23 * * *', $cmd$
   with tgt as (
     select c.chat_id,
