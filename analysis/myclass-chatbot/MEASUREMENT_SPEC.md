@@ -1,14 +1,16 @@
 # 마이클래스 챗봇 — 측정 설계서 (Analytics Measurement Spec)
 
+> ⚠️ 2026-07-02 갱신 — 정본은 v6 4메뉴. SSOT = `public/myclass-chatbot.html` + `기획서_v6_요약.md`. (옛 8메뉴 `prototype.html` 기록은 폐기)
+
 > **목적**: "챗봇이 실제로 효과가 있는가"를 숫자로 알기 위한 측정 이벤트·지표 정의.
-> **배경**: GA4 분석 결과 현재 앱에는 챗봇 효과 측정용 이벤트가 **계측되어 있지 않음**(자가해결·핸드오프·인증 성공/실패 모두 0건). 본 문서는 그 공백을 메우는 설계안이다.
-> **SSOT**: `prototype.html`(NODES·헬퍼·배열 기준) · 연결: `DATA_ANALYSIS.md`(기존 GA4 근거)
+> **배경**: GA4 분석 결과 현재 앱에는 챗봇 효과 측정용 이벤트가 **계측되어 있지 않음**(자가해결·상담 연결 모두 0건). 본 문서는 그 공백을 메우는 설계안이다.
+> **SSOT**: `public/myclass-chatbot.html`(NODES·헬퍼·배열 기준) · 연결: `DATA_ANALYSIS.md`(기존 GA4 근거)
 > **상태**: 설계안(개발 연동 시 실제 GA4/gtag 스키마에 맞춰 확정 — [확인필요] 표기)
 
 ---
 
 ## 0. 한 줄 요약
-챗봇의 **North Star = 자가해결율**(self-resolution rate). `자가해결율 = chatbot_self_resolved / chatbot_open`. 이 값이 오르고 핸드오프가 줄면 챗봇이 일하는 것이다.
+챗봇의 **North Star = 자가해결율**(self-resolution rate). `자가해결율 = chatbot_close(resolved=true) / chatbot_open`(상담 연결 없이 해결로 끝난 세션). 이 값이 오르고 상담 연결이 줄면 챗봇이 일하는 것이다.
 
 ---
 
@@ -16,43 +18,33 @@
 
 | 지표 | 정의 | 왜 보나 |
 |---|---|---|
-| **자가해결율** (North Star) | 핸드오프 없이 '다 해결됐어요'/완료로 끝난 세션 비율 | 챗봇의 본질 효과(디플렉션) |
-| **핸드오프율 (채널별)** | 전화 / 마이클래스 카톡 / LIVE 카톡으로 넘어간 비율 | 어디로, 왜 사람에게 가는지 |
-| **메뉴별 진입·완주** | 8개 메뉴(account·pay·enroll·live·attend·time·quit·help) 진입 수 · 해결 도달률 | 어떤 메뉴가 효과 있나/막히나 |
-| **이탈 노드 Top** | 해결도 핸드오프도 없이 닫은 직전 노드 | 시나리오 구멍 발견 |
-| **만족도** | 도움됐어요 / 아쉬웠어요 비율 | 체감 품질 |
-| **배너 전환율** | 진입 배너 클릭 / 노출 | 선제 안내 효과(결제·로그인·특강) |
-| **특강 본인인증 성공/실패** | 인증 시도 대비 성공률 | GA4 6월 최대 마찰 정량화 |
+| **자가해결율** (North Star) | 상담 연결 없이 '해결됐어요'/완료로 끝난 세션 비율 | 챗봇의 본질 효과(디플렉션) |
+| **상담 연결율** | 상담 연결(전화, 지점별)로 넘어간 비율 | 어디서·왜 사람에게 가는지 |
+| **메뉴별 진입·완주** | 4개 메뉴(attend·pay·time·overall) 진입 수 · 해결 도달률 | 어떤 메뉴가 효과 있나/막히나 |
+| **이탈 노드 Top** | 해결도 상담 연결도 없이 닫은 직전 노드 | 시나리오 구멍 발견 |
+| **만족도** | 해결됐어요(😄) / 아직 안 됐어요(😭) 비율 | 체감 품질 |
+| **컨텍스트 전환** | 지점·자녀 변경(`chatbot_ctx_change`) 빈도 | 학부모 다자녀·다지점 사용 패턴 |
 
 ---
 
 ## 2. 이벤트 스키마 (GA4 커스텀 이벤트)
 
 > 명명: `chatbot_*` 스네이크케이스. 모든 파라미터는 **PII 비포함**(노드ID·카테고리·채널만). 사용자 식별은 앱의 기존 로그인 컨텍스트 사용([확인필요]).
-> ✅ **프로토타입 배선 완료(2026-06-18)** — 아래 이벤트는 `prototype.html`의 `track()` 헬퍼로 `window.dataLayer`에 푸시됨(헤드리스 렌더로 발화 검증). 프로덕션 전환 시 `track()` 내부만 gtag로 교체하면 됨.
+> ✅ **SSOT 배선 완료** — 아래 이벤트는 `public/myclass-chatbot.html`(v6 4메뉴)의 `track()` 헬퍼로 `window.dataLayer`에 푸시됨(헤드리스 렌더로 발화 검증). 프로덕션 전환 시 `track()` 내부만 gtag로 교체하면 됨.
 
-| event_name | 발생 시점(프로토타입 함수) | 주요 파라미터 |
+| event_name | 발생 시점(SSOT 함수) | 주요 파라미터 |
 |---|---|---|
 | `chatbot_open` | `openChat(ctx)` | `entry_context`: normal·payment·auth·recruitment |
-| `chatbot_menu_select` | 메뉴 타일 클릭 (`menuGrid`) | `menu_key`: account·pay·enroll·live·attend·time·quit·help |
-| `chatbot_node_view` | `go(node)` 진입 | `node_id`: 예) pay_status·pay_sms·pay_va·pay_cert·en_reg·en_waitset·en_check·en_wait·at_makeup·time_table |
-| `chatbot_quickfaq_click` | 홈 '자주 찾는 것' 칩 | `faq`: refund·makeup·app |
-| `chatbot_self_resolved` | '다 해결됐어요' 또는 핸드오프 없이 `endActions` 종료 | `nodes_visited` |
-| `chatbot_self_action` | 셀프 신고·접수 완료(결석·지각 등) | `action`: absent_report / `kind` |
-| `chatbot_handoff` | `handoff` / `handoffTech` / `handoffLive` 호출 | `channel`: phone·myclass_kakao·live_kakao / `reason` |
-| `chatbot_handoff_open` | '전화 연결' / '카카오톡 상담 열기' 실제 클릭 | `channel` |
-| `chatbot_satisfaction` | 👍/👎 (`endActions` 피드백) | `rating`: up·down / `last_node` |
-| `chatbot_banner_click` | 진입 배너 클릭 (`setBanner`) | `context`: payment·auth·recruitment |
-| `chatbot_copy` | 번호 복사 버튼(copybtn) | `copy_type`: phone(상담실 전화)·sms(상담실 문자)·account(가상계좌) |
+| `chatbot_menu_select` | 메뉴 타일 클릭 (`menuGrid`) | `menu_key`: **attend·pay·time·overall** |
+| `chatbot_node_view` | `go(node)` 진입 | `node_id`: 예) at_today·at_course·en_check·pay_wait·pay_history·time_table·time_rounds·time_end·m_overall |
+| `chatbot_satisfaction` | 😄/😭 (`satis` 피드백) | `rating`: up·down |
+| `chatbot_phone` | 상담 연결/전화 연결(`openConsultModal`·`phoneConnect`) | (지점별 전화 연결 = v6 유일 핸드오프) |
+| `chatbot_copy` | 번호 복사 버튼(copybtn) | `copy_type`: 상담실 번호 |
+| `chatbot_ctx_change` | 지점·자녀 변경 | (전환된 컨텍스트) |
 | `chatbot_close` | `closeChat` | `resolved`(bool) · `nodes_visited`(int) |
 
-### 앱 본체(챗봇 밖) 추가 권고 — GA4 공백 해소
-| event_name | 화면 | 파라미터 |
-|---|---|---|
-| `auth_sms_request` | `/recruitment-special` 인증번호 받기 | `screen` |
-| `auth_sms_result` | 인증하기 결과 | `result`: success·fail / `fail_reason`[확인필요] |
-
-→ 현재는 클릭 반복(인증번호 받기 1.47회·인증하기 1.44회)으로만 추정. 성공/실패 결과 이벤트가 있어야 특강 마찰을 **정량화**할 수 있다.
+> **자가해결 산출**: 별도 `chatbot_self_resolved` 이벤트 대신, 만족도 😄(`rating:up`) 시 세션 `resolved=true`로 표시되고 `chatbot_close`의 `resolved`로 집계된다. 자가해결율 = `close(resolved=true) / open`.
+> (옛 8메뉴 이벤트 `chatbot_quickfaq_click`·`chatbot_self_action`·`chatbot_handoff`(카톡 채널)·`chatbot_handoff_open`·`chatbot_banner_click`, 앱 본체 `auth_sms_*`(특강 인증)는 v6 UI에 해당 요소가 없어 **폐기**. v6 홈에는 진입 배너·'자주 찾는 것' 칩이 없고, 핸드오프는 지점별 전화 하나다.)
 
 ---
 
@@ -61,38 +53,37 @@
 **핵심 퍼널**
 ```
 chatbot_open → chatbot_menu_select → chatbot_node_view
-  → (chatbot_self_resolved  |  chatbot_handoff)
+  → (close(resolved=true)  |  chatbot_phone)
 ```
 
 | 대시보드 카드 | 쿼리 개념 |
 |---|---|
-| 자가해결율 추이 | self_resolved / open (일·주) |
-| 핸드오프 채널 분포 | handoff group by channel |
-| 메뉴별 해결률 | menu_select 대비 그 흐름의 self_resolved |
+| 자가해결율 추이 | close(resolved=true) / open (일·주) |
+| 상담 연결율 | chatbot_phone / open |
+| 메뉴별 해결률 | menu_select(menu_key) 대비 그 흐름의 close(resolved=true) |
 | 이탈 노드 Top10 | close(resolved=false) 직전 node_id 빈도 |
-| 배너 전환 | banner_click / open(entry_context≠normal) |
 | 만족도 | satisfaction up / (up+down) |
-| 특강 인증 성공률 | auth_sms_result success / auth_sms_request |
+| 컨텍스트 전환 | ctx_change 세션 비율(학부모 다자녀) |
 
 ---
 
 ## 4. 구현 메모 (프로토타입 → 프로덕션)
 
-✅ **프로토타입에 배선 완료.** 아래 **얇은 `track()` 헬퍼** 한 개로 위 이벤트를 `window.dataLayer`에 연결했고, 프로덕션 전환 시 `track()` 내부 전송만 gtag로 교체한다([확인필요]):
+✅ **SSOT(`public/myclass-chatbot.html`)에 배선 완료.** 아래 **얇은 `track()` 헬퍼** 한 개로 위 이벤트를 `window.dataLayer`에 연결했고, 프로덕션 전환 시 `track()` 내부 전송만 gtag로 교체한다([확인필요]):
 
 ```js
 function track(event, params){ try{ (window.dataLayer=window.dataLayer||[]).push({event, ...params}); }catch(_){} }
 // 연결 지점(예):
-// openChat(c)       → track('chatbot_open',{entry_context:c})
-// menuGrid 타일       → track('chatbot_menu_select',{menu_key:m.k})
-// go(k)             → track('chatbot_node_view',{node_id:k})
-// handoff(reason)   → track('chatbot_handoff',{channel:'phone',reason})
-// handoffTech       → track('chatbot_handoff',{channel:'myclass_kakao',reason})
-// handoffLive       → track('chatbot_handoff',{channel:'live_kakao',reason})
+// openChat(c)         → track('chatbot_open',{entry_context:c})
+// menuGrid 타일         → track('chatbot_menu_select',{menu_key:m.k})   // attend·pay·time·overall
+// go(k)               → track('chatbot_node_view',{node_id:k})
+// satis 😄/😭          → track('chatbot_satisfaction',{rating})        // up 시 __resolved=true
+// openConsultModal()  → track('chatbot_phone')                          // v6 유일 핸드오프(지점별 전화)
+// closeChat()         → track('chatbot_close',{resolved:__resolved, nodes_visited:__nv})
 ```
 
-- **단일 수정점**: `go()`·`handoff*()`·`openChat()`·`closeChat()`·`endActions()`에만 1줄씩 → 전 노드 자동 커버.
-- **세션 상태**: `nodes_visited`·`resolved`는 세션 변수로 누적 후 `chatbot_close`에서 1회 전송.
+- **단일 수정점**: `go()`·`openChat()`·`closeChat()`·`satis()`·`openConsultModal()`에만 1줄씩 → 전 노드 자동 커버.
+- **세션 상태**: `nodes_visited`(`__nv`)·`resolved`(`__resolved`)는 세션 변수로 누적 후 `chatbot_close`에서 1회 전송.
 
 ---
 
@@ -107,9 +98,8 @@ function track(event, params){ try{ (window.dataLayer=window.dataLayer||[]).push
 | 지표 | 1차 목표 |
 |---|---|
 | 자가해결율 | ≥ 40% (야간 ≥ 60%) |
-| 핸드오프 중 '자가해결 시도 후' 비율 | ≥ 90% |
-| 만족도(👍) | ≥ 80% |
-| 특강 인증 성공률 | 측정 시작 후 베이스라인 확보 → +10%p |
+| 상담 연결 중 '자가해결 시도 후' 비율 | ≥ 90% |
+| 만족도(😄) | ≥ 80% |
 
 ---
 

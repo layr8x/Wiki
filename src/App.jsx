@@ -23,7 +23,10 @@ function PageSkeleton() {
     </div>
   )
 }
-import SearchOverlay from './components/search/SearchOverlay'
+// SearchOverlay: 닫힌 상태(초기값)에선 null만 렌더 — 위키 전체 가이드 데이터(GUIDES 등)를
+// 끌고 다니므로 lazy 전환해 첫 진입 번들에서 제외. 단축키(Cmd+K)는 GlobalHeaderActions가
+// 독립적으로 처리하므로 청크 로드 전에도 정상 동작.
+const SearchOverlay = lazy(() => import('./components/search/SearchOverlay'))
 import { SearchProvider } from './store/searchStore'
 import { I18nProvider } from './store/i18nStore'
 import { AuthProvider } from './store/authStore'
@@ -154,7 +157,9 @@ export default function App() {
                       } />
                     </Route>
                   </Routes>
-                  <SearchOverlay />
+                  <Suspense fallback={null}>
+                    <SearchOverlay />
+                  </Suspense>
                   </BrowserRouter>
                   <Analytics />
                   <SpeedInsights />

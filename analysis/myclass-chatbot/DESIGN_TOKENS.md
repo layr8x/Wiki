@@ -1,9 +1,11 @@
 # HICONSY · LUMEN 디자인 시스템 — 챗봇 UI 토큰 (실측 추출 + TDS 구조 반영)
 
+> ⚠️ 2026-07-02 갱신 — 정본은 v6 **4메뉴**(출결·보강 / 납부·결제 / 수업·시간표 / 전반) 챗봇. SSOT = `public/myclass-chatbot.html`(학생) + `public/myclass-chatbot-parent.html`(학부모) + `기획서_v6_요약.md`. 이 디자인 토큰은 메뉴와 무관하게 동일하며(값 변경 없음), 아래 "운영 빌드" 참조는 옛 v3 프로토타입에서 현재 빌드로 갱신함. (옛 v3 시절 8-메뉴 프로토타입 기록은 폐기)
+
 > **LUMEN** — *명료하게. 일관되게. 누구에게나.* (HICONSY DESIGN SYSTEM)
 > 규모: **508 토큰 · 55 컴포넌트 · 2 모드(light/dark) · WCAG AA** · v1.1 · 2026. (Figma 커버 노드 `58:2763` 실측)
 >
-> 출처: LUMEN DS(`AWBOevxn4v0sjp6w22PPco`, 커버 노드 `58:2763`), 앱 참조(`A3JqKGl3NJD7CIRtjj6aNj/29431-133932`), AMS 챗봇(`6PSg6RlWrjpnNYk1zirmUp/830-5936`). 토큰 값은 Figma 변수 정의·컴포넌트 `get_design_context` 실측치 및 운영 `prototype.html` `:root` 적용치. Carbon 기반(gray/blue/red 10~100). 컬렉션: `global`(원시) + `theme`(시맨틱 light/dark).
+> 출처: LUMEN DS(`AWBOevxn4v0sjp6w22PPco`, 커버 노드 `58:2763`), 앱 참조(`A3JqKGl3NJD7CIRtjj6aNj/29431-133932`), AMS 챗봇(`6PSg6RlWrjpnNYk1zirmUp/830-5936`). 토큰 값은 Figma 변수 정의·컴포넌트 `get_design_context` 실측치 및 운영 `public/myclass-chatbot.html` `:root` 적용치. Carbon 기반(gray/blue/red 10~100). 컬렉션: `global`(원시) + `theme`(시맨틱 light/dark).
 >
 > **이 문서의 토큰 모델은 토스 디자인 시스템(TDS)의 3계층(Base→Semantic→Component) 구조를 차용해 정식화했다. 단, LUMEN은 단색 `#161616` 흑백 정체성을 유지하므로 TDS에서 가져온 것은 "색"이 아니라 _구조·원칙·네이밍·컴포넌트 스펙_ 이다. 색 액센트(토스 블루 등)는 도입하지 않는다.**
 
@@ -44,7 +46,7 @@
   --tb-40:#16161666; --tb-48:#1616167a; --tb-56:#1616168f; --tb-64:#161616a3;
   --tb-72:#161616b8; --tb-80:#161616cc; --tb-88:#161616e0; --tb-96:#161616f5;
   --tw-8:#ffffff14; --tw-64:#ffffffa3;  /* 흰색 위 알파(다크용), 중간단계 [확인필요] */
-  /* Radius — 운영 prototype.html 적용치 (LUMEN 부유형 UI) */
+  /* Radius — 운영 public/myclass-chatbot.html 적용치 (LUMEN 부유형 UI) */
   --radius-xs:1px; --radius-sm:2px; --radius-md:4px; --radius-lg:8px; --radius-xl:12px; --radius-full:9999px;
   --r-tag:2px; --r-btn:2px; --r-card:14px; --r-pill:999px; --r-bubble:20px; --r-sheet:16px; --r-chip:6px;
   /* (그 외 부품별 고정 radius: 말풍선 tail 7px · .tt-block 10px · .seg 12px) */
@@ -100,7 +102,7 @@
 
 TDS는 시맨틱을 **대상(Text/Fill/Border/Icon) × 역할(Neutral/Brand/…) × 변형(Weak/Alt/Strong)** 으로 짠다. 이를 LUMEN 흑백에 맞춰 정리하면 아래와 같다. **"역할" 자리에 Brand 대신 흑백 위계(Strong/Subtle)를 둔다** — 이것이 LUMEN의 핵심 번역이다.
 
-운영(`prototype.html`)에는 이미 다음 단축 시맨틱이 적용되어 있고(아래 매핑의 LUMEN 별칭), `--text-primary` 등 풀네임과 1:1 대응한다:
+운영(`public/myclass-chatbot.html`)에는 이미 다음 단축 시맨틱이 적용되어 있고(아래 매핑의 LUMEN 별칭), `--text-primary` 등 풀네임과 1:1 대응한다:
 `--text-neutral / --text-weak / --text-inverse`, `--fill-strong / --fill-subtle`, `--border-subtle / --border-strong`.
 
 #### Text (텍스트)
@@ -208,7 +210,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | heading-xs (`--fs-xs`) | 20/32 | 400 (강조 600/800) | 강좌 제목·`.big` 강조 숫자(800, ls −0.4) |
 | heading-md / display (`--fs-h`) | 32/40 | **200 ExtraLight, ls −0.64px** | 큰 타이틀(섹션 제목·데스크탑 내비) |
 
-## 4. 컴포넌트 스펙 (운영 prototype.html 실측 — 부유형 LUMEN)
+## 4. 컴포넌트 스펙 (운영 public/myclass-chatbot.html 실측 — 부유형 LUMEN)
 > 공통 원칙: **테두리 대신 흰 면 + 소프트 섀도우로 분리.** 카드·타일·말풍선은 테두리 없음, 칩만 헤어라인.
 
 - **버튼/CTA**: 칩 형태가 기본. primary 칩 = bg `--fill-strong #161616`/텍스트 흰색/weight 700/섀도우 `0 2px 10px rgba(22,22,22,.22)`. tertiary(보조) = ghost 칩(텍스트 `--text-weak`). 본문 카드 내 링크는 underline.
@@ -224,7 +226,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 - **리스트 아이템(`.citem`)**: 하단 border 1px, py-24, Tag+상태 → 제목 20/32 → tertiary 액션.
 
 ### 4.1 세그먼트 컨트롤 (`.seg`) — 신규 정식 스펙
-하나의 트랙 안에서 thumb(흰 알약)가 선택 항목으로 이동하는 컨트롤. (운영 `prototype.html` 실측)
+하나의 트랙 안에서 thumb(흰 알약)가 선택 항목으로 이동하는 컨트롤. (운영 `public/myclass-chatbot.html` 실측)
 
 | 부위 | 토큰/값 |
 |---|---|
@@ -292,7 +294,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 > **명도=의미 매핑이 곧 접근성**: 색맹·흑백 인쇄에도 진하기 순서(출석>지각>결석)가 그대로 읽힌다. 토스의 "정밀=신뢰"를 LUMEN은 *명도 위계의 일관성*으로 구현.
 
 ## 5. 챗봇 적용 매핑 (AMS 패턴 → LUMEN 부유형 흑백)
-> AMS의 네이비/파랑 강조를 **검정(`--fill-strong #161616`)으로 일괄 치환**, 파랑은 링크에만. **표면 위계 = 회색 캔버스(`#f1f1f3`) 위에 흰 부유 요소를 섀도우로 띄움**(테두리 최소). 운영 `prototype.html` 실측.
+> AMS의 네이비/파랑 강조를 **검정(`--fill-strong #161616`)으로 일괄 치환**, 파랑은 링크에만. **표면 위계 = 회색 캔버스(`#f1f1f3`) 위에 흰 부유 요소를 섀도우로 띄움**(테두리 최소). 운영 `public/myclass-chatbot.html` 실측.
 
 | 챗봇 요소 | LUMEN 토큰 |
 |---|---|
@@ -310,7 +312,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 ## 6. 디자인 원칙 (TDS 철학 → LUMEN 번역, 챗봇 맥락 예시)
 
-토스가 색·브랜드로 구현한 원칙을, LUMEN은 **흑백·여백·모션**으로 구현한다. 각 원칙에 우리 챗봇(`prototype.html`) 적용 예시를 붙인다.
+토스가 색·브랜드로 구현한 원칙을, LUMEN은 **흑백·여백·모션**으로 구현한다. 각 원칙에 우리 챗봇(`public/myclass-chatbot.html`) 적용 예시를 붙인다.
 
 ### 6.1 극단적 단순함 — "한 화면에 한 일"
 - **TDS**: 화면당 핵심 액션 하나, 나머지는 덜어낸다.
@@ -345,6 +347,6 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 ---
 
 ## [확인필요] · Figma 추출 차단 사실
-- **이번 세션 Figma 변수 컬렉션(508 토큰) 전체 추출은 차단됨.** 파일 `AWBOevxn4v0sjp6w22PPco`는 MCP에 **COVER 페이지(`58:2763`)만 노출**되고, 토큰/컴포넌트 정의 페이지가 노출되지 않았다. `get_variable_defs`는 선택 레이어가 없어 빈 결과(`{}`)·`layout/gap/80` 단일값만 반환. 따라서 **본 문서의 토큰 값은 (1) 기존 DESIGN_TOKENS.md 실측분 + (2) 운영 `prototype.html` `:root` 적용치**를 출처로 한다. 컴포넌트 스펙(세그/pill/바/점/히트맵)은 `prototype.html` 코드 실측이다.
+- **이번 세션 Figma 변수 컬렉션(508 토큰) 전체 추출은 차단됨.** 파일 `AWBOevxn4v0sjp6w22PPco`는 MCP에 **COVER 페이지(`58:2763`)만 노출**되고, 토큰/컴포넌트 정의 페이지가 노출되지 않았다. `get_variable_defs`는 선택 레이어가 없어 빈 결과(`{}`)·`layout/gap/80` 단일값만 반환. 따라서 **본 문서의 토큰 값은 (1) 기존 DESIGN_TOKENS.md 실측분 + (2) 운영 `public/myclass-chatbot.html` `:root` 적용치**를 출처로 한다. 컴포넌트 스펙(세그/pill/바/점/히트맵)은 `public/myclass-chatbot.html` 코드 실측이다.
 - **커버에서 새로 확정한 사실(실측)**: 시스템명 `HICONSY DESIGN SYSTEM / LUMEN`, 슬로건 "명료하게. 일관되게. 누구에게나.", 규모 **508 토큰·55 컴포넌트·2 모드·WCAG AA**, 버전 **v1.1 · 2026**. → 본 문서의 대비 기준(AA)·2모드 전제의 1차 근거.
 - **여전히 미노출(원시값 미확인)**: red 10~50·90~100, transparent-white(tw-*) 중간단계, shadow/s·l, dark `--bg-danger`·`--text-placeholder`·`--border-secondary` 다크 원시값. 명암비 수치는 hex→상대휘도 계산 근사치(소수 반올림).
