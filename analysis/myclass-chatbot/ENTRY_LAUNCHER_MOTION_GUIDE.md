@@ -1,10 +1,11 @@
 # 진입 버튼(호스트 앱 헤더 런처) — Figma 빌드 · 모션 스펙 · 개발 가이드
 
-> **갱신**: 2026-07-02(2차) · 작업: Claude
-> **무엇**: 마이클래스 앱(호스트 앱) 헤더에서 챗봇을 여는 진입 아이콘 — "말풍선+얼굴" 모양, 대기 중엔 숨쉬듯 움직이는 비콘.
+> **갱신**: 2026-07-02(3차) · 작업: Claude
+> **무엇**: 마이클래스 앱(호스트 앱) 헤더에서 챗봇을 여는 진입 아이콘 — "말풍선+얼굴" 모양, 대기 중엔 부드럽게 숨쉬는 글로우.
 > **정본(코드)**: `public/myclass-chatbot.html` / `public/myclass-chatbot-parent.html` — `#openBtn` (CSS·마크업·클릭 핸들러, 검색 `openBtn`으로 위치 확인). **이 문서의 모든 수치는 코드에서 그대로 옮겨온 것 — 코드가 항상 1차 진실.**
-> **Figma 빌드**: 파일 `offplatform_챗봇` (`6PSg6RlWrjpnNYk1zirmUp`) · 페이지 `MYCLASS_Chatbot`(`1032:54`) · 섹션 **`Flow-5. 챗봇 진입 버튼`**(`1991:2632`).
-> **2차 개정 내용(사용자가 Figma에서 직접 아이콘 리디자인 → 코드에 그대로 반영, 이 갱신)**: 버튼 크기 36×36(여백 있는 원형 히트영역)→**24×24**(아이콘=버튼) · 말풍선 path 재작도(더 크고 둥근 tail) · 눈 모양 원형→**세로 캡슐(pill, 2×3 rx=1)** · 스트로크 두께 1.2→**1.5** · 비콘 링 색 `icon/primary`(검정)→**`border/focus` `#0043ce`(파랑, 코드 기존 `--interactive` 변수 재사용)** · 비콘 링 두께 1.4→**1px** · Hover 시 컨테이너 전체 lift 대신 **`bub` -1.5px / `face` -2px 개별 이동** · Pressed 스케일 .86→**.8333(=20/24)**.
+> **Figma 빌드(2차까지 반영, 3차 모션은 아직 Figma 미반영 — §7 참고)**: 파일 `offplatform_챗봇` (`6PSg6RlWrjpnNYk1zirmUp`) · 페이지 `MYCLASS_Chatbot`(`1032:54`) · 섹션 **`Flow-5. 챗봇 진입 버튼`**(`1991:2632`).
+> **3차 개정(이 갱신) — "숨쉬는 컴패니언 + 클릭 리플" 모션 재설계**: 사용자 피드백("모션을 더 센스있게, 펄스가 단순하다") 반영. 딱딱한 링 펄스가 계속 순환하던 **앰비언트**와, 사용자가 실제로 누른 순간의 **피드백**이 뒤섞여 있던 걸 역할별로 분리 — ① 대기 중엔 부드러운 이중 글로우가 은은하게 호흡(딱딱한 링 삭제) ② 아이콘 자체의 "점프+갸웃" 제스처 제거 → 글로우와 같은 리듬의 미세한 scale 호흡으로 차분하게 ③ 호버 시 회전 위글 제거 → 호흡 일시정지 + 글로우가 확 밝아지는 반응 ④ 클릭 시 옛 "링 핑" 모션을 **1회성 클릭 리플**로 재배치(피드백 전용). 아이콘 도형·색·크기는 2차와 동일 — 변경 없음.
+> **2차 개정 내용(사용자가 Figma에서 직접 아이콘 리디자인)**: 버튼 크기 36×36(여백 있는 원형 히트영역)→**24×24**(아이콘=버튼) · 말풍선 path 재작도(더 크고 둥근 tail) · 눈 모양 원형→**세로 캡슐(pill, 2×3 rx=1)** · 스트로크 두께 1.2→**1.5** · 비콘 링 색 `icon/primary`(검정)→**`border/focus` `#0043ce`(파랑, 코드 기존 `--interactive` 변수 재사용)** · Pressed 스케일 .86→**.8333(=20/24)**.
 
 ---
 
@@ -50,21 +51,47 @@ State=Idle (COMPONENT, 24×24 — 아이콘 자체가 버튼, 별도 히트패�
 
 | 상태 | 트리거(코드) | 시각 변화 |
 |---|---|---|
-| **Idle** | 기본값 | 미소 숨김(`opacity:0`), 앰비언트 모션 재생(§4) |
-| **Hover** | `:hover` | `bub` `translateY(-1.5px)`(.32s), `face` 그룹(눈+미소) `translateY(-2px)`(.32s), 아이콘 위글(`owiggle` .6s), 미소 노출(`opacity:1`), 비콘 정지·숨김 |
-| **Pressed** | `:active` | 컨테이너 `scale(.8333)`(.1s ease-out) — 미소는 `:hover`가 겹쳐 있으면 계속 노출(브라우저에서 마우스는 클릭 전 항상 hover를 거치므로 실사용에서 자연히 노출됨) |
+| **Idle** | 기본값 | 미소 숨김(`opacity:0`), 아이콘 미세 scale 호흡 + 이중 글로우 호흡 재생(§4) |
+| **Hover** | `:hover` | `bub` `translateY(-1.5px)`(.32s), `face` 그룹(눈+미소) `translateY(-2px)`(.32s), 미소 노출(`opacity:1`), **아이콘 호흡 일시정지**(`animation-play-state:paused`), **글로우가 순간적으로 밝고 크게 반응**(`.28s`) |
+| **Pressed** | `:active` | 컨테이너 `scale(.8333)`(.1s ease-out) + **클릭 리플 1회 재생**(§4-4). 미소는 `:hover`가 겹쳐 있으면 계속 노출 |
 
-> **2차 개정으로 사라진 것**: 컨테이너 레벨 `translateY(-3px) scale(1.12)` hover 리프트. 아이콘=버튼(24×24)이 되면서 Figma 새 디자인은 컨테이너 전체가 아니라 **`bub`/`face`를 개별적으로** 들어올리는 방식으로 바뀌었다 — 코드도 동일하게 반영.
+> **3차 개정으로 사라진 것**: 아이콘 위글(`owiggle`, 회전 흔들림 — 장난감 같은 느낌이라 제거), 컨테이너 레벨 hover 리프트(2차에서 이미 제거됨). **호버는 이제 "관심을 보임"이라는 하나의 은유로 통일** — 호흡을 멈추고 글로우가 밝아지는 것으로만 표현.
 
 > Hover/Pressed는 변형(variant)으로 만들었고, **Figma 프로토타입(reactions)으로 Idle↔Hover↔Pressed 실시간 전환까지 연결**했다 — Present 모드에서 마우스 오버·클릭하면 실제로 스와이프된다. 상세: 아래 §5.
 
 ---
 
-## 4. Idle 앰비언트 모션 — 정확한 키프레임 스펙
+## 4. 모션 스펙 — "숨쉬는 컴패니언 + 클릭 리플" (3차, 현재 프로덕션)
 
-세 애니메이션이 **서로 다른 주기로 독립적으로 무한 반복**된다(코드 `animation: X Ys ease-in-out infinite`). Figma는 하나의 유한 타임라인(6초)이므로, **가장 긴 주기(6s)를 1 사이클 기준으로 삼아 나머지를 그 안에 정확한 시각으로 배치**했다.
+### 4-0. 현재 모션 (코드 정본, `public/myclass-chatbot.html:66-90` 부근)
 
-### 4-1. 아이콘 바운스 (`oidle`, 6s, ease-in-out) — 대상: `Icon` 프레임
+역할을 셋으로 분리했다 — **앰비언트(계속 순환)** / **인터랙션(호버·프레스 반응)** / **피드백(클릭 1회성)**.
+
+| 레이어 | 대상 | 애니메이션 | 주기·duration | easing |
+|---|---|---:|---:|---|
+| 아이콘 호흡 | `svg` (아이콘 전체) | `obreathe`: `scale(1)↔scale(1.035)` | 3.6s 무한 | ease-in-out |
+| 글로우(바깥) | `::before` | `oglow`: opacity `.12↔.32`, scale `.9↔1.1`, blur 3px | 3.6s 무한 | ease-in-out |
+| 글로우(안쪽) | `::after` | `oglow`(0.3s 지연), blur 1.5px, opacity .7 배수 | 3.6s 무한 | ease-in-out |
+| 눈 깜빡임 | `.eye`×2 | `oblink` (§4-2, 변경 없음) | 3.4s 무한 | ease-in-out |
+| **호버 진입** | `svg` | `animation-play-state:paused`(호흡 정지) | — | — |
+| 호버 진입 | `::before`,`::after` | `oglowHover`: opacity `.55`, scale `1.22`로 스냅 | .28s 1회 | ease-out |
+| 호버 진입 | `.bub` | `translateY(-1.5px)` | .32s | `var(--ease)` |
+| 호버 진입 | `.face` | `translateY(-2px)` | .32s | `var(--ease)` |
+| 호버 진입 | `.smile` | `opacity:0→1`, `scaleY(.45→1)` | .32s | `var(--ease)` |
+| **클릭** | `.ripple`(실제 DOM 요소) | `oripple`: `scale(.6→1.6)`, `opacity(.6→0)` | .5s **1회** (JS가 클래스 토글로 재생) | ease-out |
+| 프레스 | 컨테이너 | `scale(.8333)` | .1s | ease-out |
+
+**클릭 리플 구현 메모**: `.ripple`은 `::before`/`::after`(글로우가 이미 점유)와 별개인 **실제 `<span>` 요소**. JS `onclick`에서 `classList.remove('go')` → `void offsetWidth`(강제 리플로우) → `classList.add('go')` 순서로 **매번 재생 가능**하게 처리(연속 클릭에도 애니메이션이 재시작됨).
+
+**색**: 글로우·리플 전부 `var(--interactive)`(`#0043ce`, Figma `border/focus`와 동일). **아이콘 도형(bub·eye·smile)과 그 좌표는 2차 개정과 동일 — 이번엔 손대지 않음.**
+
+**변경 이유**: 기존엔 딱딱한 링(`obeacon`)이 대기 중에도 계속 순환해 "펄스가 단순하다"는 피드백을 받았다. 앰비언트는 부드러운 글로우 호흡으로, 명확한 피드백이 필요한 순간(클릭)엔 리플을 **그때만** 터뜨리는 것으로 역할을 분리해 더 정제된 느낌을 의도.
+
+### 4-1 ~ 4-3. 이전(1~2차) 앰비언트 모션 — Figma 빌드에 남아있는 스펙 (참고용, 코드와 다름)
+
+> ⚠️ **아래는 3차 개정 이전(=Figma 키프레임 타임라인에 아직 남아있는) 스펙이다.** 코드는 이미 위 §4-0으로 교체됐고, **Figma 쪽 모션은 아직 3차로 동기화되지 않았다**(§7 참고). 아이콘 바운스(`Icon` 프레임의 점프+갸웃)와 비콘 링(하드엣지 핑)은 **더 이상 프로덕션에 없다** — 역사적 기록 + Figma 재동기화 시 참고용으로만 남긴다.
+
+### 4-1. (구) 아이콘 바운스 (`oidle`, 6s, ease-in-out) — 대상: `Icon` 프레임
 
 | 시각(초) | %(코드) | translateY | scale | rotate |
 |---:|---:|---:|---:|---:|
@@ -82,7 +109,7 @@ State=Idle (COMPONENT, 24×24 — 아이콘 자체가 버튼, 별도 히트패�
 
 Figma 트랙: `TRANSLATION_Y` · `SCALE_X` · `SCALE_Y` · `ROTATION`, 전 구간 easing `EASE_IN_AND_OUT`.
 
-### 4-2. 눈 깜빡임 (`oblink`, 3.4s, ease-in-out) — 대상: `eye_l`·`eye_r` (각각 동일 트랙)
+### 4-2. 눈 깜빡임 (`oblink`, 3.4s, ease-in-out) — 대상: `eye_l`·`eye_r` (각각 동일 트랙) — ✅ 3차에서도 변경 없이 유지
 
 | 시각(초) | %(코드) | scaleY |
 |---:|---:|---:|
@@ -99,7 +126,7 @@ Figma 트랙: `TRANSLATION_Y` · `SCALE_X` · `SCALE_Y` · `ROTATION`, 전 구�
 
 Figma 트랙: `SCALE_Y`, easing `EASE_IN_AND_OUT`. ⚠️ 코드는 이 사이클을 3.4초마다 무한 반복하지만, Figma 6초 타임라인엔 **1사이클만** 배치(3.4~6s는 뜬 눈 상태 유지). 실제 앱에서는 6s 구간 안에 눈 깜빡임이 한 번 더(약 3.4~6.8s에) 겹쳐 일어난다 — 개발 시 코드의 `infinite` 반복이 정본.
 
-### 4-3. 비콘 링 (`obeacon`, 4s, `var(--ease)`=`cubic-bezier(.23,1,.32,1)`) — 대상: `beacon_1`(오프셋 0) · `beacon_2`(오프셋 +1.45s)
+### 4-3. (구) 비콘 링 핑 (`obeacon`, 4s, `var(--ease)`=`cubic-bezier(.23,1,.32,1)`) — 대상: `beacon_1`(오프셋 0) · `beacon_2`(오프셋 +1.45s) — ❌ 3차에서 `oglow`(글로우 호흡)로 대체됨
 
 | 시각(초, ring1 / ring2) | %(코드) | scale | opacity |
 |---:|---:|---:|---:|
@@ -118,42 +145,38 @@ Figma 트랙: `SCALE_X`·`SCALE_Y`(0→4s: .6→1.75) · `OPACITY`(0→.64→2.8
 
 ---
 
-## 5. 인터랙션 전환 — Figma 프로토타이핑(reactions)으로 실제 연결됨
+## 5. 인터랙션 전환 — Figma 프로토타이핑(reactions), 2차 시점 기준
 
-Hover·Pressed는 정적 변형일 뿐 아니라, **Figma 프로토타입(reactions)으로 실제 스와이프 전환까지 연결**했다. Figma에서 `1978:2636`(Entry Launcher Variant Set)을 Present 모드로 열어 마우스를 올리고/눌러보면 실제로 전환된다.
+> ⚠️ 이 섹션은 **2차 개정 시점**에 연결한 Figma reactions 기록이다. 3차의 "호흡 정지 + 글로우 반응"(§4-0)은 Figma에 아직 반영되지 않았다 — Figma를 열면 지금도 §5 표의 동작(위글·컨테이너 트랜지션)이 재생된다.
 
-| 전환 | 트리거(Figma) | 대상 | duration | easing(Figma) | 코드 근거 |
-|---|---|---|---:|---|---|
-| Idle → Hover | `ON_HOVER`(while hovering, 자동 되돌림) | `State=Hover`(`1978:2622`) | .34s | `CUSTOM_CUBIC_BEZIER {.34,1.56,.64,1}` | 컨테이너 `transition: transform .34s cubic-bezier(.34,1.56,.64,1)` |
-| Hover → Pressed | `ON_PRESS`(while pressing, 자동 되돌림) | `State=Pressed`(`1978:2629`) | .1s | `EASE_OUT` | `#openBtn:active{transition:transform .1s ease-out}` |
+Hover·Pressed는 정적 변형일 뿐 아니라, **Figma 프로토타입(reactions)으로 실제 스와이프 전환까지 연결**했다. Figma에서 `1978:2636`(Entry Launcher Variant Set)을 Present 모드로 열어 마우스를 올리고/눌러보면 전환된다.
 
-두 트리거 모두 Figma의 "누르고 있는/올리고 있는 동안"(self-reverting) 의미라 — 마우스가 떠나거나 손을 떼면 **별도 역방향 reaction 없이 자동으로 이전 상태로 복귀**한다(코드의 `:hover`/`:active` 의사클래스가 자동으로 해제되는 것과 동일한 개념). Idle 자체에도 §4의 앰비언트 모션이 계속 걸려 있으므로, Hover에서 벗어나 Idle로 돌아가면 숨쉬는 비콘 모션이 자연스럽게 이어진다.
+| 전환 | 트리거(Figma) | 대상 | duration | easing(Figma) |
+|---|---|---|---:|---|
+| Idle → Hover | `ON_HOVER`(while hovering, 자동 되돌림) | `State=Hover`(`1978:2622`) | .34s | `CUSTOM_CUBIC_BEZIER {.34,1.56,.64,1}` |
+| Hover → Pressed | `ON_PRESS`(while pressing, 자동 되돌림) | `State=Pressed`(`1978:2629`) | .1s | `EASE_OUT` |
 
-**참고**: 아이콘 위글(`owiggle` .6s)·`face` 이동/미소 노출(.32s)은 Hover 진입 시 코드에서 함께 발생하는 세부 트랜지션이지만, Figma의 Hover 변형은 이 중간 동작 없이 **최종 정착 모습**만 표현한다(Smart Animate는 시작~끝 사이를 자동 보간하므로 이 미세 디테일은 근사치가 된다). 정확한 세부 타이밍이 필요하면 아래 표를 참고:
-
-| 세부 트랜지션 | duration | easing |
-|---|---:|---|
-| Hover 진입 시 아이콘 위글(`owiggle`) | .6s | `var(--ease)` = `cubic-bezier(.23,1,.32,1)` |
-| `face` 이동 / 미소 노출 | .32s | `var(--ease)` |
+두 트리거 모두 Figma의 "누르고 있는/올리고 있는 동안"(self-reverting) 의미라 — 마우스가 떠나거나 손을 떼면 별도 역방향 reaction 없이 자동으로 이전 상태로 복귀한다.
 
 ---
 
 ## 6. 접근성
 
-코드에 `prefers-reduced-motion: reduce` 가드가 있음 — 이 값이 켜지면 `oidle`·`oblink`·비콘 애니메이션과 hover 위글이 전부 꺼지고, `face`/`smile` 트랜지션도 즉시 전환된다(라인 85). **Figma 빌드에는 이 축소-모션 변형을 별도로 만들지 않았다** — 개발 시 코드의 미디어쿼리 가드를 그대로 유지할 것.
+코드에 `prefers-reduced-motion: reduce` 가드가 있음 — 이 값이 켜지면 `obreathe`·`oblink`·글로우 애니메이션이 전부 꺼지고, `face`/`smile` 트랜지션도 즉시 전환되며, 클릭 리플은 스케일 없이 짧은 opacity 페이드로만 대체된다(코드 마지막 `@media (prefers-reduced-motion:reduce)` 블록). **Figma 빌드에는 이 축소-모션 변형을 별도로 만들지 않았다** — 개발 시 코드의 미디어쿼리 가드를 그대로 유지할 것.
 
 ---
 
-## 7. 의도적으로 생략한 것 (정직하게 기록)
+## 7. 의도적으로 생략한 것 · Figma-코드 간극 (정직하게 기록)
 
-- **Hover의 중간 디테일(위글·face 이동)**: §5에서 설명한 대로, Smart Animate는 시작~끝 상태만 보간해 Idle→Hover 사이의 미세한 위글(`owiggle`)이나 `face`만 별도로 이동하는 세부 동작까지는 재현하지 않는다. 최종 정착 모습(미소 노출·눈 위치)은 정확히 일치.
-- **눈 깜빡임·비콘의 무한 반복**: §4-2·4-3에서 설명한 대로, Figma 6초 타임라인엔 대표 1~1.5사이클만 배치. 실제 반복 주기(3.4s / 4s+1.45s)는 이 문서 표가 정본.
-- **개발 시 우선순위**: Figma 빌드는 **디자인 검토·시각 스펙 확인용**이다. 실제 구현은 계속 `public/myclass-chatbot.html`의 CSS(`#openBtn` 관련 규칙, 라인 66-85)를 정본으로 사용할 것 — 이 문서는 그 CSS를 사람이 읽기 쉬운 표로 옮긴 것이지, CSS를 대체하지 않는다.
+- **Figma 모션이 3차 개정을 반영하지 않음**: §4-0(현재 코드 모션)은 이번 세션에서 코드만 재설계했다. Figma의 키프레임 타임라인(§4-1~4-3)과 reactions(§5)는 여전히 **2차 시점 모션**(점프+갸웃 바운스, 하드엣지 비콘 링, 위글)을 담고 있다 — Figma를 열어 재생해보면 코드와 다르게 보인다. 필요하면 후속 작업으로 Figma도 §4-0 스펙(글로우 호흡·클릭 리플)에 맞춰 재동기화할 수 있다.
+- **Hover의 중간 디테일**: (2차 기준 기록) Smart Animate는 시작~끝 상태만 보간해 세부 트랜지션 타이밍까지는 재현하지 않았다.
+- **눈 깜빡임의 무한 반복**: §4-2에서 설명한 대로, Figma 6초 타임라인엔 대표 1~1.5사이클만 배치. 실제 반복 주기(3.4s)는 이 문서 표가 정본.
+- **개발 시 우선순위**: Figma 빌드는 **디자인 검토·시각 스펙 확인용**이다. 실제 구현은 항상 `public/myclass-chatbot.html`의 CSS(`#openBtn` 관련 규칙)를 정본으로 사용할 것 — 이 문서는 그 CSS를 사람이 읽기 쉬운 표로 옮긴 것이지, CSS를 대체하지 않는다.
 
 ---
 
 ## 8. 참고
 
-- 코드 정본: `public/myclass-chatbot.html:66-85`(CSS) · `:547`(마크업) · `:778`(클릭 핸들러)
-- 관련 커밋: `#241` 헤더 진입 아이콘 icon/primary 색 + 대기 모션, `#242` 진입 아이콘 전체 모션·비콘 링 디벨롭
+- 코드 정본: `public/myclass-chatbot.html:66-90`(CSS, 검색 `openBtn`) · `:554`(마크업) · `:785`(클릭 핸들러) — `myclass-chatbot-parent.html`도 라인 위치만 다르고 내용 동일
+- 관련 커밋: `#241`·`#242`(1차 CSS 전용 모션) → 2차(아이콘 리디자인, Figma 빌드 최초) → 3차(글로우 호흡+클릭 리플 모션 재설계, 이 갱신)
 - 디자인 토큰 원칙·검증 절차: `DESIGN_TOKENS.md`, `../../CLAUDE.md` §2(디자인시스템 적용법)·§14(design-audit 툴킷)

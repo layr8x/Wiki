@@ -63,10 +63,11 @@
   .headicons .ms{font-size:24px;color:#161616;cursor:pointer}
   .bell{position:relative}
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
-  /* 진입 아이콘 — Figma 2026-07-02 개정(아이콘=버튼 24x24, 캡슐형 눈, 파란 비콘): 숨쉬는 비콘 / 호버=bub·face 개별 상승·미소·펄스정지 / 클릭=탄력 */
+  /* 진입 아이콘 — 2026-07-02 3차 개정: '숨쉬는 컴패니언 + 클릭 리플'. 앰비언트(부드러운 이중 글로우 호흡)와
+     피드백(클릭 시 1회성 링 리플)의 역할을 분리 — 이전엔 딱딱한 링 펄스가 계속 순환해 밋밋했던 것을 개선. */
   #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:transparent;cursor:pointer}
-  #openBtn svg{overflow:visible;animation:oidle 6s ease-in-out infinite}
-  #openBtn:hover svg{animation:owiggle .6s var(--ease)}
+  #openBtn svg{position:relative;z-index:1;overflow:visible;animation:obreathe 3.6s ease-in-out infinite}
+  #openBtn:hover svg{animation-play-state:paused}
   #openBtn:active{transform:scale(.8333);transition:transform .1s ease-out}
   #openBtn .bub{fill:none;stroke:var(--icon-primary);stroke-width:1.5;stroke-linejoin:miter;transform-box:fill-box;transform-origin:center;transition:transform .32s var(--ease)}
   #openBtn:hover .bub{transform:translateY(-1.5px)}
@@ -75,14 +76,20 @@
   #openBtn .eye{fill:var(--icon-primary);transform-box:fill-box;transform-origin:center;animation:oblink 3.4s ease-in-out infinite}
   #openBtn .smile{fill:none;stroke:var(--icon-primary);stroke-width:1.5;stroke-linecap:round;transform-box:fill-box;transform-origin:center bottom;opacity:0;transform:scaleY(.45);transition:opacity .32s var(--ease),transform .32s var(--ease)}
   #openBtn:hover .smile{opacity:1;transform:scaleY(1)}
-  #openBtn::before,#openBtn::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid var(--interactive);opacity:0;pointer-events:none;animation:obeacon 4s var(--ease) infinite}
-  #openBtn::before{animation-delay:1.45s}
-  #openBtn:hover::before,#openBtn:hover::after{animation:none;opacity:0}
-  @keyframes oidle{0%,24%,56%,96%,100%{transform:translateY(0) scale(1) rotate(0)}11%{transform:translateY(0) scale(1.05) rotate(0)}61%{transform:translateY(1px) scale(.97) rotate(0)}68%{transform:translateY(-4px) scale(1.08) rotate(-8deg)}75%{transform:translateY(0) scale(1) rotate(6deg)}81%{transform:translateY(-1.5px) scale(1.03) rotate(-3deg)}87%{transform:translateY(0) scale(1) rotate(1deg)}}
-  @keyframes owiggle{0%{transform:rotate(0) scale(1)}20%{transform:rotate(-9deg) scale(1.05)}45%{transform:rotate(6deg) scale(1.02)}70%{transform:rotate(-3deg) scale(1.01)}100%{transform:rotate(0) scale(1)}}
+  /* 앰비언트 글로우 — 이중 레이어(바깥 넓고 흐림 + 안쪽 좁고 또렷)를 살짝 다른 위상으로 겹쳐 숨쉬는 깊이감 */
+  #openBtn::before,#openBtn::after{content:"";position:absolute;z-index:0;border-radius:50%;background:radial-gradient(circle,var(--interactive) 0%,transparent 72%);pointer-events:none;animation:oglow 3.6s ease-in-out infinite}
+  #openBtn::before{inset:-9px;filter:blur(3px)}
+  #openBtn::after{inset:-5px;filter:blur(1.5px);opacity:.7;animation-delay:.3s}
+  #openBtn:hover::before,#openBtn:hover::after{animation:oglowHover .28s ease-out forwards}
+  /* 클릭 리플 — 앰비언트와 분리된 1회성 피드백(실제 DOM 요소, JS가 클릭마다 재생) */
+  #openBtn .ripple{position:absolute;z-index:1;inset:-8px;border-radius:50%;border:1.5px solid var(--interactive);opacity:0;pointer-events:none;transform:scale(.6)}
+  #openBtn .ripple.go{animation:oripple .5s ease-out}
+  @keyframes obreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+  @keyframes oglow{0%,100%{opacity:.12;transform:scale(.9)}50%{opacity:.32;transform:scale(1.1)}}
+  @keyframes oglowHover{to{opacity:.55;transform:scale(1.22)}}
+  @keyframes oripple{0%{opacity:.6;transform:scale(.6)}100%{opacity:0;transform:scale(1.6)}}
   @keyframes oblink{0%,30%,100%{transform:scaleY(1)}34%{transform:scaleY(.08)}38%{transform:scaleY(1)}78%{transform:scaleY(1)}81%{transform:scaleY(.08)}84%{transform:scaleY(1)}87%{transform:scaleY(.08)}90%{transform:scaleY(1)}}
-  @keyframes obeacon{0%{transform:scale(.6);opacity:0}16%{opacity:.36}70%{opacity:0}100%{transform:scale(1.75);opacity:0}}
-  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::before,#openBtn::after{animation:none}#openBtn:hover svg{animation:none}#openBtn .face,#openBtn .smile{transition:none}}
+  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::before,#openBtn::after{animation:none}#openBtn .face,#openBtn .smile{transition:none}#openBtn .ripple.go{animation:none;transition:opacity .2s}}
   .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
   .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
@@ -544,7 +551,7 @@
     <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
     <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">김시대 님</span><span class="ms">keyboard_arrow_down</span></span><span class="ms cached">cached</span></div>
     <div class="headicons">
-      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path class="bub" d="M3 4.5H21V16.5H7L3 20.5V4.5Z"/><g class="face"><rect class="eye" x="8" y="8" width="2" height="3" rx="1"/><rect class="eye" x="14" y="8" width="2" height="3" rx="1"/><path class="smile" d="M10 12C11 13 13 13 14 12"/></g></svg></span>
+      <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미"><span class="ripple" aria-hidden="true"></span><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path class="bub" d="M3 4.5H21V16.5H7L3 20.5V4.5Z"/><g class="face"><rect class="eye" x="8" y="8" width="2" height="3" rx="1"/><rect class="eye" x="14" y="8" width="2" height="3" rx="1"/><path class="smile" d="M10 12C11 13 13 13 14 12"/></g></svg></span>
       <span class="ms bell" aria-label="알림">notifications</span>
       <span class="ms deskonly" aria-label="전체메뉴">menu</span>
     </div>
@@ -775,7 +782,11 @@ function closeChat(){track('chatbot_close',{resolved:__resolved,nodes_visited:__
  function en(e){if(!drag)return;drag=false;sheet.classList.remove('dragging');const cy=(e.changedTouches?e.changedTouches[0]:e).clientY;const dy=Math.max(0,cy-y0),v=dy/Math.max(1,Date.now()-t0);sheet.style.transform='';if(dy>h*0.25||v>0.4)closeChat();}
  [grab,chead].forEach(elm=>{if(!elm)return;elm.addEventListener('touchstart',s,{passive:true});elm.addEventListener('mousedown',s);});
  window.addEventListener('touchmove',m,{passive:true});window.addEventListener('touchend',en);window.addEventListener('mousemove',m);window.addEventListener('mouseup',en);})();
-document.getElementById('openBtn').onclick=()=>openChat('normal');
+document.getElementById('openBtn').onclick=function(){
+  var r=this.querySelector('.ripple');
+  if(r){r.classList.remove('go');void r.offsetWidth;r.classList.add('go');}
+  openChat('normal');
+};
 document.addEventListener('click',()=>{const m=document.querySelector('.ctxmenu.open');if(m){m.classList.remove('open');const bt=m.parentNode&&m.parentNode.querySelector('.ctxsel');if(bt){bt.classList.remove('open');bt.setAttribute('aria-expanded','false');}}});
 document.getElementById('closeBtn').onclick=closeChat;
 document.getElementById('scrim').onclick=closeChat;
