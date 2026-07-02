@@ -25,6 +25,7 @@ language sql stable security invoker set search_path = '' as $$
             group by category order by count(*) desc limit 7) x),
     'topic_pain', public.kakao_topic_pain(14),
     'sla', public.kakao_sla_attainment(7),
+    'sla_status', public.kakao_sla_status(),
     'weekly', public.kakao_weekly_trend(3),
     'hourly', public.kakao_hourly_inflow(14),
     'channels', public.kakao_channel_analysis(7),

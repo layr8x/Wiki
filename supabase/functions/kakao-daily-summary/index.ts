@@ -1,9 +1,7 @@
 // supabase/functions/kakao-daily-summary/index.ts
 // 카카오 상담 파이프라인 일일 요약. pg_cron 매일 09:00 KST.
 // 메시지 원칙: 결론 먼저·평문. 비율·평균 같은 계산·해석이 필요한 수치는 노출하지 않는다.
-// 구조: 상단 "오늘 볼 것"(조치 필요 항목만) + 채널별 통합 카드 + Slack Block Kit(헤더·구분선).
-// 데이터: kakao_status_summary · kakao_channel_analysis · kakao_category_spike · kakao_sla_status ·
-//   kakao_weekly_trend · kakao_sentiment_trend. 이력: kakao_partner_daily_snapshot.
+// 응답 속도는 운영시간(평일 09~19시) 기준 영업분/영업시간(kakao_sla_status). 야간·주말 제외.
 // 인증: kakao_partner_secrets.key='kakao_daily_summary_token'. Slack: SLACK_WEBHOOK_URL 미설정 시 로그만.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -36,23 +34,22 @@ function friendlyAlert(key: string): string {
   return key;
 }
 
-// 급증 카테고리 -> 점검할 시스템 힌트.
 const CATEGORY_HINT: Record<string, string> = {
   '환불': '결제·환불',
   '미납·결제': '결제·수납',
-  '계정·로그인·앱': '앱 로그인/인증',
+  '계정·로그인·앱': '앱 로그인/사이트',
   '교재·배송': '교재 배송',
   '라이브': '라이브 송출',
+  '모의고사·서바이벌': '모의고사 응시/성적',
 };
 
 const HEMOJI: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
 
-// ── "오늘 볼 것": 조치가 필요한 항목만 모음(수집 이상 · 응답 지연 · 급증 · 감정 악화) ──
+// "오늘 볼 것": 조치가 필요한 항목만 모음
 function buildActions(channels: any[], sla: any[], spikes: any[], sentTrend: any[]): { lines: string[]; hasRed: boolean } {
   const lines: string[] = [];
   let hasRed = false;
 
-  // 1) 수집 이상(원인별)
   for (const c of channels) {
     if (c.health === 'ok') continue;
     if (c.health_reason === 'auth') { lines.push(`🔴 *${c.channel}* 수집이 멈췄어요 · 쿠키 재발급 필요`); hasRed = true; }
@@ -60,21 +57,21 @@ function buildActions(channels: any[], sla: any[], spikes: any[], sentTrend: any
     else lines.push(`🟠 *${c.channel}* 새 상담이 뜸해요 (프로그램은 정상)`);
   }
 
-  // 2) 응답 지연(채널당 한 줄: 장기 대기 또는 첫 응답 느림)
+  // 응답 지연/대기 누적. 운영시간 기준(med·oldest 는 영업분/영업시간, 야간·주말 제외).
   for (const s of sla) {
     const w = num(s.waiting), oldest = num(s.oldest_wait_h), med = num(s.median_first_response_min), ans = num(s.answered_n);
     const slow = ans >= 5 && med >= 60;
-    const longWait = oldest >= 24;
-    if (!slow && !longWait) continue;
-    const red = med >= 120 || oldest >= 36;
+    const queue = w >= 5 || oldest >= 8;
+    if (!slow && !queue) continue;
+    const red = med >= 90 || oldest >= 16;
     if (red) hasRed = true;
     const parts: string[] = [];
-    if (longWait) parts.push(`대기 ${w}건 최장 ${Math.round(oldest)}시간`);
+    if (queue) parts.push(`대기 ${w}건(최장 영업 ${Math.round(oldest)}시간)`);
     if (slow) parts.push(`첫 응답 ${med}분`);
-    lines.push(`${red ? '🔴' : '🟠'} *${s.channel}* 응답 지연 · ${parts.join(', ')}`);
+    lines.push(`${red ? '🔴' : '🟠'} *${s.channel}* ${slow ? '응답 지연' : '대기 누적'} · ${parts.join(', ')} → 오전 중 우선 처리`);
   }
 
-  // 3) 카테고리 급증. "평소보다 N배" 결론만(평균·배수 원값 노출 금지)
+  // 카테고리 급증. "평소보다 N배" 결론만(평균·배수 원값 노출 금지)
   for (const s of spikes) {
     const bd = (s.channel_breakdown as any[]) || [];
     const total = bd.reduce((a, b) => a + num(b.cnt), 0);
@@ -86,7 +83,6 @@ function buildActions(channels: any[], sla: any[], spikes: any[], sentTrend: any
     lines.push(`🔴 *${s.category}* 문의 급증 · 오늘 ${s.cnt}건, 평소보다 ${mult}배 → ${tail}`);
   }
 
-  // 4) 감정 악화(주간 부정률 상승, 게이트 통과 시만)
   for (const c of sentTrend) {
     if (!c.worsening) continue;
     lines.push(`🟠 *${c.channel} 감정 악화* · 부정 ${c.prev_rate}%→${c.cur_rate}% → 상담 내용 점검`);
@@ -95,7 +91,7 @@ function buildActions(channels: any[], sla: any[], spikes: any[], sentTrend: any
   return { lines, hasRed };
 }
 
-// ── 채널별 통합 블록: 상태·대기·문의 Top·감정·추세를 한 덩어리로 ──
+// 채널별 통합 블록: 상태·대기·문의 Top·감정·추세를 한 덩어리로
 function channelBlock(label: string, coll: any, ana: any, s: any, tr: any): any {
   const hEmo = coll ? (HEMOJI[coll.health] || '⚪') : '⚪';
   const avg = coll?.avg_per_day ?? ana?.avg_per_day_30d ?? '?';
@@ -103,7 +99,7 @@ function channelBlock(label: string, coll: any, ana: any, s: any, tr: any): any 
   const line1 = `${hEmo} *${label}*  ·  하루 ${avg}건${low}`;
 
   const w = num(s?.waiting);
-  const wait = w > 0 ? `대기 *${w}건* (최장 ${Math.round(num(s.oldest_wait_h))}시간)` : '대기 *0건*';
+  const wait = w > 0 ? `대기 *${w}건* (최장 영업 ${Math.round(num(s.oldest_wait_h))}시간)` : '대기 *0건*';
   const frt = num(s?.answered_n) >= 5 ? ` · 첫 응답 *${s.median_first_response_min}분*` : '';
   const line2 = `　⤷ ${wait}${frt}`;
 
@@ -128,7 +124,6 @@ function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], t
   const { lines: actions, hasRed } = buildActions(channels, sla, spikes, sentTrend);
   const worseningN = sentTrend.filter((c) => c.worsening).length;
 
-  // 종합 상태 한 줄
   const totalWaiting = sla.reduce((a, s) => a + num(s.waiting), 0);
   const collBad = channels.some((c) => c.health !== 'ok');
   const emo = hasRed ? '🔴' : actions.length ? '🟠' : '🟢';
@@ -137,13 +132,11 @@ function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], t
 
   const actionText = actions.length ? actions.map((a) => `• ${a}`).join('\n') : '🟢 특이사항 없음 (급증·감정 악화·장기 지연 없음)';
 
-  // 채널 순서: 활동량 많은 순
   const order = [...analysis].sort((a, b) => num(b.chats) - num(a.chats)).map((c) => c.channel);
   for (const c of ['시대인재C', '마이클래스', '라이브']) if (!order.includes(c)) order.push(c);
   const find = (arr: any[], k: string) => arr.find((x) => x.channel === k);
   const channelBlocks = order.map((lb) => channelBlock(lb, find(channels, lb), find(analysis, lb), find(sla, lb), find(trend, lb)));
 
-  // 메타(작게): 파이프라인 + 어제 대비 + 진행 알림
   const sentTotal = num(sen.total_user_msgs), sentDone = num(sen.done);
   let yestStr = '';
   if (yesterday) {
@@ -203,7 +196,6 @@ Deno.serve(async (req: Request) => {
   const trend = (trendRaw as any[]) || [];
   const sentTrend = (sentTrendRaw as any[]) || [];
 
-  // 어제 스냅샷(어제 대비용)
   const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
   const yesterdayDate = new Date(new Date(snapshotDate + 'T00:00:00Z').getTime() - 86400000).toISOString().slice(0, 10);
   const { data: ySnap } = await supabase
@@ -215,7 +207,6 @@ Deno.serve(async (req: Request) => {
   const { blocks, fallback } = buildBlocks(summary, analysis, spikes, sla, trend, sentTrend, (ySnap as any)?.summary ?? null);
   const sent = await sendSlack(fallback, blocks);
 
-  // 이력 저장(어제 대비 + 채널별 추세·SLA·감정추세 보관)
   const { error: snapErr } = await supabase.from('kakao_partner_daily_snapshot').upsert(
     { snapshot_date: snapshotDate, summary: { ...summary, channel_analysis: analysis, spikes, sla, weekly_trend: trend, sentiment_trend: sentTrend } },
     { onConflict: 'snapshot_date' },
