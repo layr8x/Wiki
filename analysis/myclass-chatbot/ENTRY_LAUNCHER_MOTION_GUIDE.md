@@ -61,15 +61,18 @@ State=Idle (COMPONENT, 24×24 — 아이콘 자체가 버튼, 별도 히트패�
 
 ---
 
-## 4. 모션 스펙 — "숨쉬는 컴패니언 + 클릭 리플" (4차, 현재 프로덕션)
+## 4. 모션 스펙 — "숨쉬는 컴패니언 + 클릭 리플" (5차, 현재 프로덕션)
 
-### 4-0. 현재 모션 (코드 정본, `public/myclass-chatbot.html:66-92` 부근)
+### 4-0. 현재 모션 (코드 정본, `public/myclass-chatbot.html:66-95` 부근)
 
-역할을 셋으로 분리했다 — **앰비언트(계속 순환)** / **인터랙션(호버·프레스 반응)** / **피드백(클릭 1회성)**.
+역할을 넷으로 분리했다 — **앰비언트(계속 순환)** / **스펙큘러(빛 스윕)** / **인터랙션(호버·프레스 반응)** / **피드백(클릭 1회성)**.
 
-> **4차 개정(2026-07-02) 변경 사유** — 사용자 피드백: "이 블러 효과가 좋다고 생각하는거야? 시퍼래서 아이콘이 잘 보이지도 않는데? 그라데이션은 왜이렇게 촌스러운거야" + "명색이 챗봇 아이콘인데 입체적인 모션 효과를 줄 수 없어? 3차원으로". 3차의 글로우(`radial-gradient(circle,var(--interactive) 0%,transparent 72%)`, hover 시 opacity `.55`)가 (a) 0% 지점이 단색으로 시작해 가장자리만 blur로 문질러 **"평평한 원반"처럼 보이고**, (b) 불투명도가 높아 **아이콘 선이 파란 배경에 묻혀 가독성이 떨어짐** — 두 가지를 지적받아 아래처럼 교체:
-> - **글로우 = 그라데이션 대신 "단색 원 + blur"**: `background`를 `var(--interactive)` 단색으로 채우고 `filter:blur()`만으로 가장자리를 부드럽게 만듦(그라데이션의 하드 0%-스탑 제거). 최대 불투명도도 `.55→.16`(idle 피크) / `.55→.26`(hover)로 대폭 낮춤 — 아이콘(`--icon-primary:#161616`, 진한 회흑색)이 어떤 상태에서도 또렷이 보이도록.
-> - **입체(3D) 모션 신규 추가**: `#openBtn`에 `perspective:300px`, 아이콘(`svg`)에 `transform-style:preserve-3d`로 진짜 원근 왜곡이 생기게 함. 대기 중엔 `rotateX`/`rotateY`를 미세하게(±2~4deg) 오가며 스케일 호흡과 합성 → 살아있는 듯한 미묘한 흔들림. 호버는 "보는 사람 쪽으로 살짝 기울이는" 인사 제스처(`rotateX(-10deg) rotateY(10deg) scale(1.08)`), 프레스는 "화면 안으로 눌려 들어가는" 느낌(`rotateX(8deg) rotateY(-6deg) scale(.88)`)으로 방향을 반대로 줘 대비. `filter:drop-shadow()`로 대기 시 은은한 그림자, 호버 시 파란빛이 도는 살짝 더 짙은 그림자를 추가해 "떠 있는" 입체감을 보강.
+> **5차 개정(2026-07-02) 변경 사유** — 4차를 본 사용자가 검은 배경 위에서 도는 유리질 3D 링(반사광 스윕 + 블룸, 전문 3D 렌더링 툴로 만든 참고 영상)을 공유하며 "이 정도 격은 돼야지, 쓰레기를 만들었다"고 지적. 영상을 프레임 단위로 분석한 뒤 사용자에게 확인한 결과 — **그 영상을 그대로 복제(검은 배지로 통째 교체)하라는 게 아니라, 그 모션의 "아이디어"를 학습해 지금 흰 헤더 안 아이콘에 반영**하라는 의도였음. 반영한 것 세 가지:
+> - **회전하는 스펙큘러 하이라이트 신규**: 참고 영상에서 링을 따라 빛이 도는 반사광이 가장 눈에 띄는 특징이었다. 이를 얇은 `conic-gradient` 링(`.sheen`, 실제 `<span>`)으로 재현 — `mask`로 도넛 모양만 남기고, 흰색→인터랙티브 블루로 이어지는 짧은 "빛 조각"이 원을 따라 천천히(6s) 돌다가 호버 시 1.5s로 가속+밝아짐. "유리질 표면에 빛이 흐른다"는 인상을 만드는 핵심 레이어.
+> - **더 확신 있는 3D 회전 + 스프링 이징**: 호버 각도를 `±10deg→±13deg`로 키우고, 새 `--ease-spring:cubic-bezier(.34,1.56,.64,1)`(살짝 오버슈트되는 "탄성" 곡선)를 적용해 딱딱한 ease-out 대신 통통 튀는 듯한 확신 있는 전환으로 바꿈. 프레스도 각도를 키워(`±6~8deg→±8~10deg`) 대비를 강화.
+> - **더 깊은 블룸**: hover 글로우 피크를 `.26→.3`, scale을 `1.15→1.18`로 살짝 키워 존재감을 더함(단, 4차에서 낮춘 가독성 우선 원칙은 유지 — 여전히 아이콘 선이 항상 또렷이 보이는 범위 안에서만 조정).
+>
+> 검은 배경 참고 영상은 별도 3D 렌더링 프로그램으로 만든 동영상 자산이라 반사광·블룸의 "질감" 자체는 코드로 100% 동일 재현이 불가능하다는 점을 사용자에게 설명하고 동의를 구한 뒤 진행함(§7 Figma-코드 간극과 같은 맥락의 "재현 가능 범위" 문제).
 
 | 레이어 | 대상 | 애니메이션 | 주기·duration | easing |
 |---|---|---:|---:|---|
@@ -77,22 +80,26 @@ State=Idle (COMPONENT, 24×24 — 아이콘 자체가 버튼, 별도 히트패�
 | 아이콘 그림자 | `svg` | `filter:drop-shadow(0 1px 1.5px rgba(22,22,22,.14))` (정적) | — | — |
 | 글로우(바깥) | `::before` | `oglow`: 단색 원 + `blur(6px)`, opacity `.07↔.16`, scale `.92↔1.06` | 3.6s 무한 | ease-in-out |
 | 글로우(안쪽) | `::after` | `oglow`(0.3s 지연), 단색 원 + `blur(2.5px)` | 3.6s 무한 | ease-in-out |
+| **스펙큘러 스윕(신규)** | `.sheen`(실제 DOM 요소) | `osheen`: `conic-gradient` 빛 조각이 `rotate(360deg)`로 계속 회전 | 6s 무한(호버 시 1.5s) | linear |
 | 눈 깜빡임 | `.eye`×2 | `oblink` (§4-2, 변경 없음) | 3.4s 무한 | ease-in-out |
-| **호버 진입** | `svg` | `animation-play-state:paused`(호흡 정지) + `rotateX(-10deg) rotateY(10deg) scale(1.08)`로 기울임 | .32s | `var(--ease)` |
-| 호버 진입 | `svg` (그림자) | `drop-shadow(0 4px 6px rgba(0,67,206,.22))`로 전환 | .32s | `var(--ease)` |
-| 호버 진입 | `::before`,`::after` | `oglowHover`: opacity `.26`, scale `1.15`로 스냅 (3차 `.55`→대폭 하향) | .28s 1회 | ease-out |
+| **호버 진입** | `svg` | `animation-play-state:paused`(호흡 정지) + `rotateX(-13deg) rotateY(13deg) scale(1.1)`로 기울임 | .42s | `var(--ease-spring)`(신규, 탄성) |
+| 호버 진입 | `svg` (그림자) | `drop-shadow(0 5px 8px rgba(0,67,206,.26))`로 전환 | .32s | `var(--ease)` |
+| 호버 진입 | `::before`,`::after` | `oglowHover`: opacity `.3`, scale `1.18`로 스냅 | .28s 1회 | ease-out |
+| 호버 진입 | `.sheen` | opacity `.5→.85`, 회전 주기 `6s→1.5s` | .32s(opacity) | `var(--ease)` |
 | 호버 진입 | `.bub` | `translateY(-1.5px)` | .32s | `var(--ease)` |
 | 호버 진입 | `.face` | `translateY(-2px)` | .32s | `var(--ease)` |
 | 호버 진입 | `.smile` | `opacity:0→1`, `scaleY(.45→1)` | .32s | `var(--ease)` |
 | **클릭** | `.ripple`(실제 DOM 요소) | `oripple`: `scale(.6→1.6)`, `opacity(.6→0)` | .5s **1회** (JS가 클래스 토글로 재생) | ease-out |
 | 프레스 | 컨테이너 | `scale(.8333)` | .1s | ease-out |
-| 프레스 | `svg` | `rotateX(8deg) rotateY(-6deg) scale(.88)`로 반대방향 눌림 | .1s | ease-out |
+| 프레스 | `svg` | `rotateX(10deg) rotateY(-8deg) scale(.85)`로 반대방향 눌림 | .12s | ease-out |
 
-**클릭 리플 구현 메모**: `.ripple`은 `::before`/`::after`(글로우가 이미 점유)와 별개인 **실제 `<span>` 요소**. JS `onclick`에서 `classList.remove('go')` → `void offsetWidth`(강제 리플로우) → `classList.add('go')` 순서로 **매번 재생 가능**하게 처리(연속 클릭에도 애니메이션이 재시작됨).
+**클릭 리플 구현 메모**: `.ripple`은 `::before`/`::after`(글로우)·`.sheen`(스펙큘러)과 별개인 **실제 `<span>` 요소**. JS `onclick`에서 `classList.remove('go')` → `void offsetWidth`(강제 리플로우) → `classList.add('go')` 순서로 **매번 재생 가능**하게 처리(연속 클릭에도 애니메이션이 재시작됨).
 
-**색**: 글로우·리플 전부 `var(--interactive)`(`#0043ce`, Figma `border/focus`와 동일). **아이콘 도형(bub·eye·smile)과 그 좌표는 그대로 — 선/면 형태는 이번에도 손대지 않고 모션(transform·filter)만 조정.**
+**색**: 글로우·리플·스펙큘러 전부 `var(--interactive)`(`#0043ce`, Figma `border/focus`와 동일) 기반, 스펙큘러의 "빛 조각" 끝부분만 흰색(`rgba(255,255,255,.95)`)으로 하이라이트. **아이콘 도형(bub·eye·smile)과 그 좌표는 그대로 — 선/면 형태는 이번에도 손대지 않고 모션(transform·filter)·신규 레이어(`.sheen`)만 추가.**
 
-**검증**: Playwright(`deviceScaleFactor:6`, 요소 바운딩박스에 16px 여유를 준 `clip` 캡처 — 기본 요소 스크린샷은 `overflow:visible`로 튀어나온 글로우가 잘려 보이지 않으므로 반드시 패딩 필요)로 idle 3구간·hover·press 5프레임을 확대 비교. 모든 프레임에서 아이콘 선이 배경 글로우와 명확히 대비되어 또렷이 보임을 육안 확인, hover·press 프레임에서 말풍선 윤곽이 좌우 비대칭으로 찌그러져(원근 왜곡) 실제 3D 회전이 적용됨을 확인. `prefers-reduced-motion:reduce`에서는 호흡·글로우 애니메이션은 물론 호버/프레스의 3D 기울임·그림자도 전부 무효화(`transform:none;filter:none`)해 정적 아이콘으로 폴백.
+**검증**: Playwright(`deviceScaleFactor:3`, 아이콘 바운딩박스에 좌우 70px·상하 50/30px 여유를 준 `clip` 캡처)로 idle 4s·hover 전환+유지·press 총 49프레임을 캡처해 애니메이션 GIF로 합성 후 육안 확인 — 정지 스크린샷 비교만으로는 회전형 모션(스펙큘러 스윕, 3D 틸트)이 실제로 동작하는지 사용자가 확인할 수 없었던 이전 시행착오(§8-스타일 교훈)를 반영해 이번엔 처음부터 GIF로 검증. 모든 프레임에서 아이콘 선이 배경 글로우와 명확히 대비되어 또렷이 보임을 확인, hover·press 프레임에서 말풍선 윤곽이 좌우 비대칭으로 찌그러져(원근 왜곡) 실제 3D 회전이 적용됨을 확인, 스펙큘러 하이라이트가 프레임마다 다른 각도에 위치해 실제로 회전 중임을 확인. `prefers-reduced-motion:reduce`에서는 호흡·글로우·스펙큘러 애니메이션은 물론 호버/프레스의 3D 기울임·그림자도 전부 무효화(`transform:none;filter:none;opacity:0`)해 정적 아이콘으로 폴백.
+
+**참고 레퍼런스 영상 프레임 분석 방법 메모**: 이 세션에서 사용자가 업로드한 mp4를 분석해야 했는데, 이 샌드박스의 Chromium은 특허 코덱(H.264) 디코더가 없는 오픈소스 빌드라 `<video>` 태그로 직접 재생이 안 됨(`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`). `apt-get install ffmpeg`도 미러 404로 실패. **해결**: `pip install imageio-ffmpeg`로 정적 ffmpeg 바이너리를 받아(`imageio_ffmpeg.get_ffmpeg_exe()`) 프레임을 PNG로 추출. 향후 비디오 레퍼런스 분석 시 이 경로를 먼저 시도할 것.
 
 **변경 이유(3차, 유지)**: 기존엔 딱딱한 링(`obeacon`)이 대기 중에도 계속 순환해 "펄스가 단순하다"는 피드백을 받았다. 앰비언트는 부드러운 글로우 호흡으로, 명확한 피드백이 필요한 순간(클릭)엔 리플을 **그때만** 터뜨리는 것으로 역할을 분리해 더 정제된 느낌을 의도.
 
