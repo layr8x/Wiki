@@ -394,3 +394,71 @@ GitHub 쪽은 Actions 탭에 `event: workflow_dispatch` 실행이 5분 간격으
   멈춘다 → §12-1 의 `update_secret` 으로 새 PAT 로 교체. (만료 없는 PAT 를 쓰면 무인 운영.)
 - §10 의 GitHub 자체 schedule 백업은 그대로라, Supabase 트리거가 멈춰도 GitHub 이
   (지연은 있어도) 최소한의 수집은 이어간다.
+
+---
+
+## 13. ✅ 분류·이상탐지 자동화 (2026-07-02)
+
+**문제**: 수집(§1~12)은 상시 자동화돼 있었지만, **분류(category)·감정(sentiment)은 사람이
+`npm run classify:kakao:db` 를 수동 실행해야만 동작**했다. 실측 결과 분류는 2026-06-17
+단 하루만 돌고 완전히 멈춰 신규 채팅 207건이 미분류로 방치돼 있었고, 감정분석은 40,261건의
+user 메시지 중 **0건**이었다(`analysis/outputs/05_상담분류_고도화.md`·`00_운영화_체크리스트.md`의
+"남은 과제"). 또한 이상탐지 SQL(`analysis/outputs/08_이상탐지_알림.md`)은 검증만 됐을 뿐
+실제 알림 발송은 없었다.
+
+**해결**: 수집과 동일한 pg_cron → Edge Function 패턴으로 두 함수를 추가했다.
+
+```
+Supabase pg_cron(15분) ──▶ Edge Function kakao-classify ──▶ chats.category / messages.sentiment
+Supabase pg_cron(10분) ──▶ Edge Function kakao-alert     ──▶ Slack(선택) + kakao_partner_alert_state
+```
+
+### 13-1. kakao-classify — 분류·감정 자동화
+
+- **입력 개선**: `chats.last_message`(대개 상담원의 종료 인사) 대신, 그 대화의 **첫 user
+  메시지**(실제 문의 내용)를 기준으로 분류한다(`05_상담분류_고도화.md` §8 실측 발견 반영).
+- **2단계 폴백(자동 감지, 재배포 불필요)**:
+  - `ANTHROPIC_API_KEY` 시크릿이 있으면 → Claude Haiku few-shot 분류(연속 신뢰도).
+  - 없으면 → 재구성 키워드 규칙(confidence 0.70/0.30 컨벤션 유지).
+- **처리 대상**: ① 신규 미분류 채팅 ② 레거시 '기타'(confidence=0.30) 재검토 큐(한 번 처리되면
+  다시 안 걸림 — 수렴) ③ 감정 미분류 user 메시지(최신순). 확정 분류(0.70)는 절대 안 건드림.
+- **적용 마이그레이션**: `supabase/migrations/20260702_kakao_classify_pipeline.sql`
+  (`category_model`/`sentiment_model` 컬럼 + `kakao_classify_token` 발급 + pg_cron 등록).
+- **함수 배포**: `supabase functions deploy kakao-classify --no-verify-jwt`
+
+**LLM 분류로 격상하려면(선택)**: Supabase Dashboard → Edge Functions → **kakao-classify** →
+Secrets → `ANTHROPIC_API_KEY` 추가. 다음 실행부터 자동 적용(비용은 05번 문서 §6-1 참고).
+
+### 13-2. kakao-alert — 이상탐지 Slack 알림
+
+- **감지 2종**: (A) 카테고리 급증(오늘자, 직전 7일 평균 대비) (B) 수집 중단
+  (heartbeat + 최근 에러 + 메시지 공백을 함께 판정 — "심장은 뛰는데 데이터 0" 함정 방지).
+- **중복 억제**: `kakao_partner_alert_state` 테이블에 사고별 상태 저장 — 같은 사고는
+  쿨다운(1시간) 내 1회만, 해소되면 "복구" 알림 1회.
+- **적용 마이그레이션**: `supabase/migrations/20260702_kakao_alert_pipeline.sql`
+  (`kakao_collection_health()`/`kakao_category_spike()` RPC + `kakao_partner_alert_state`
+  테이블 + `kakao_alert_token` 발급 + pg_cron 등록).
+- **함수 배포**: `supabase functions deploy kakao-alert --no-verify-jwt`
+
+**Slack 알림을 받으려면(선택)**: Slack에서 Incoming Webhook URL 발급 → Supabase Dashboard →
+Edge Functions → **kakao-alert** → Secrets → `SLACK_WEBHOOK_URL` 추가. 미등록 상태에서도
+함수는 정상 동작하며 로그와 `kakao_partner_alert_state` 테이블에는 계속 기록된다(대시보드 등에서
+나중에 조회 가능).
+
+### 13-3. 점검 SQL
+
+```sql
+-- 분류 진행 상황
+select category_model, count(*) from kakao_partner_chats group by 1 order by 2 desc;
+select count(*) from kakao_partner_chats where category is null;                              -- 미분류 잔여
+select count(*) from kakao_partner_messages where sender_type='user' and sentiment is null;    -- 감정 미분류 잔여
+
+-- 이상탐지 현재 상태
+select * from kakao_collection_health();
+select * from kakao_category_spike();
+select * from kakao_partner_alert_state order by updated_at desc;
+
+-- 두 잡 모두 정상 등록됐는지
+select jobname, schedule, active from cron.job
+where jobname in ('kakao-classify-dispatch','kakao-alert-dispatch');
+```
