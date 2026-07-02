@@ -9,7 +9,7 @@
 <style>
   @font-face{font-family:'Pretendard Variable';font-weight:45 920;font-style:normal;font-display:swap;src:url('https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2')}
   /* ── 마이클래스 디자인 토큰 (myclass.designsystem · LUMEN) ── */
-  :root{--accent:#3182f6;--accent-rgb:49,130,246;--interactive:#0043ce;--button2:#001d6c;--tag-blue-bg:#edf5ff;
+  :root{--accent:#3182f6;--accent-rgb:49,130,246;--interactive:#0043ce;--glow-tint:color-mix(in srgb,var(--interactive) 38%,white);--button2:#001d6c;--tag-blue-bg:#edf5ff;
     --text:#161616; --text-2:#161616b8; --helper:#1616168f; --placeholder:#16161666; --disabled:#1616163d; --icon-secondary:#161616b8; --icon-primary:#161616;
     --bg:#ffffff; --surface:#f4f4f4; --border:#16161614; --gray20:#e0e0e0; --gray30:#c6c6c6; --gray60:#6f6f6f;
     --tag-bg:#f4f4f4; --tag-border:#e0e0e0; --tag-text:#525252;
@@ -69,7 +69,7 @@
      ③더 깊은 블룸을 얹어 격을 끌어올렸다. */
   #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:transparent;cursor:pointer;perspective:300px}
   #openBtn svg{position:relative;z-index:1;overflow:visible;transform-style:preserve-3d;transform-origin:center;filter:drop-shadow(0 1px 1.5px rgba(22,22,22,.14));animation:obreathe 3.6s ease-in-out infinite}
-  #openBtn:hover svg{animation-play-state:paused;transform:rotateX(-13deg) rotateY(13deg) scale(1.1);filter:drop-shadow(0 5px 8px rgba(0,67,206,.26));transition:transform .42s var(--ease-spring),filter .32s var(--ease)}
+  #openBtn:hover svg{animation-play-state:paused;transform:rotateX(-13deg) rotateY(13deg) scale(1.1);filter:drop-shadow(0 5px 8px rgba(91,141,235,.2));transition:transform .42s var(--ease-spring),filter .32s var(--ease)}
   #openBtn:active{transform:scale(.8333);transition:transform .1s ease-out}
   #openBtn:active svg{transform:rotateX(10deg) rotateY(-8deg) scale(.85);transition:transform .12s ease-out}
   #openBtn .bub{fill:none;stroke:var(--icon-primary);stroke-width:1.5;stroke-linejoin:miter;transform-box:fill-box;transform-origin:center;transition:transform .32s var(--ease)}
@@ -79,21 +79,25 @@
   #openBtn .eye{fill:var(--icon-primary);transform-box:fill-box;transform-origin:center;animation:oblink 3.4s ease-in-out infinite}
   #openBtn .smile{fill:none;stroke:var(--icon-primary);stroke-width:1.5;stroke-linecap:round;transform-box:fill-box;transform-origin:center bottom;opacity:0;transform:scaleY(.45);transition:opacity .32s var(--ease),transform .32s var(--ease)}
   #openBtn:hover .smile{opacity:1;transform:scaleY(1)}
-  /* 앰비언트 글로우 — 단색 원 + 흐림(그라데이션 원반 금지, 가독성 우선) */
-  #openBtn::before,#openBtn::after{content:"";position:absolute;z-index:0;border-radius:50%;background:var(--interactive);pointer-events:none;animation:oglow 3.6s ease-in-out infinite}
+  /* 앰비언트 글로우 — 단색 원 + 흐림(그라데이션 원반 금지, 가독성 우선). 원색 브랜드 블루(--interactive)는
+     버튼·포커스링 등 "기능색"으로 남겨두고, 은은한 장식용 헤일로엔 흰색을 섞어 채도를 낮춘 --glow-tint 사용
+     — 진한 원색을 그대로 쓰면 촌스럽고 무거워 보인다는 피드백 반영(2026-07-02) */
+  #openBtn::before,#openBtn::after{content:"";position:absolute;z-index:0;border-radius:50%;background:var(--glow-tint);pointer-events:none;animation:oglow 3.6s ease-in-out infinite}
   #openBtn::before{inset:-10px;filter:blur(6px)}
   #openBtn::after{inset:-4px;filter:blur(2.5px);animation-delay:.3s}
   #openBtn:hover::before,#openBtn:hover::after{animation:oglowHover .28s ease-out forwards}
   /* 스펙큘러 하이라이트 스윕 — 레퍼런스의 "회전하는 링 반사광"을 얇은 conic-gradient 링으로 재현(실제 DOM
-     요소). 평소엔 느리게 계속 돌다 호버 시 가속+밝아짐 — "유리질 표면에 빛이 흐른다"는 인상을 줌 */
-  #openBtn .sheen{position:absolute;z-index:0;inset:-9px;border-radius:50%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0deg,transparent 250deg,rgba(255,255,255,.95) 300deg,var(--interactive) 322deg,transparent 348deg,transparent 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));opacity:.5;animation:osheen 6s linear infinite}
-  #openBtn:hover .sheen{opacity:.85;animation-duration:1.5s}
-  /* 클릭 리플 — 앰비언트와 분리된 1회성 피드백(실제 DOM 요소, JS가 클릭마다 재생) */
+     요소). 평소엔 느리게 계속 돌다 호버 시 가속+밝아짐 — "유리질 표면에 빛이 흐른다"는 인상을 줌.
+     끝부분도 진한 원색 대신 --glow-tint로 옅게 처리 */
+  #openBtn .sheen{position:absolute;z-index:0;inset:-9px;border-radius:50%;pointer-events:none;background:conic-gradient(from 0deg,transparent 0deg,transparent 250deg,rgba(255,255,255,.95) 300deg,var(--glow-tint) 322deg,transparent 348deg,transparent 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));opacity:.4;animation:osheen 6s linear infinite}
+  #openBtn:hover .sheen{opacity:.7;animation-duration:1.5s}
+  /* 클릭 리플 — 앰비언트와 분리된 1회성 피드백(실제 DOM 요소, JS가 클릭마다 재생). 순간적인 확인 신호라
+     원색 브랜드 블루 유지 — 계속 떠 있는 글로우와 달리 0.5초 뒤 사라지므로 "촌스럽다"는 지적과 무관 */
   #openBtn .ripple{position:absolute;z-index:1;inset:-8px;border-radius:50%;border:1.5px solid var(--interactive);opacity:0;pointer-events:none;transform:scale(.6)}
   #openBtn .ripple.go{animation:oripple .5s ease-out}
   @keyframes obreathe{0%,100%{transform:rotateX(0deg) rotateY(0deg) scale(1)}25%{transform:rotateX(2deg) rotateY(3deg) scale(1.015)}50%{transform:rotateX(0deg) rotateY(0deg) scale(1.035)}75%{transform:rotateX(-2deg) rotateY(-4deg) scale(1.015)}}
-  @keyframes oglow{0%,100%{opacity:.07;transform:scale(.92)}50%{opacity:.16;transform:scale(1.06)}}
-  @keyframes oglowHover{to{opacity:.3;transform:scale(1.18)}}
+  @keyframes oglow{0%,100%{opacity:.07;transform:scale(.92)}50%{opacity:.15;transform:scale(1.06)}}
+  @keyframes oglowHover{to{opacity:.22;transform:scale(1.18)}}
   @keyframes osheen{to{transform:rotate(360deg)}}
   @keyframes oripple{0%{opacity:.6;transform:scale(.6)}100%{opacity:0;transform:scale(1.6)}}
   @keyframes oblink{0%,30%,100%{transform:scaleY(1)}34%{transform:scaleY(.08)}38%{transform:scaleY(1)}78%{transform:scaleY(1)}81%{transform:scaleY(.08)}84%{transform:scaleY(1)}87%{transform:scaleY(.08)}90%{transform:scaleY(1)}}
