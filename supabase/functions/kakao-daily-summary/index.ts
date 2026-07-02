@@ -76,6 +76,33 @@ function channelSection(analysis: any[]): string {
     .join('\n');
 }
 
+// ── 응답 현황(SLA): 지금 답 기다리는 대화 + 첫 응답 중앙값 ──
+function slaSection(sla: any[]): string {
+  if (!sla.length) return '(응답 현황 데이터 없음)';
+  return sla
+    .map((s) => {
+      const w = Number(s.waiting || 0);
+      const emoji = w >= 10 ? '🔴' : w >= 5 ? '🟠' : '🟢';
+      const oldest = w > 0 ? `, 최장 ${s.oldest_wait_h}시간 대기` : '';
+      const frt = Number(s.answered_n || 0) >= 5 ? ` · 첫 응답 중앙값 ${s.median_first_response_min}분` : '';
+      return `${emoji} ${s.channel} · 대기 ${w}건${oldest}${frt}`;
+    })
+    .join('\n');
+}
+
+// ── 주간 추세: 채널별 지난주 대비 늘고 있는 카테고리(급증 이전 완만한 상승 포착) ──
+function trendSection(trend: any[]): string {
+  if (!trend.length) return '(추세 데이터 없음)';
+  return trend
+    .map((c) => {
+      const rising = (c.rising as any[]) || [];
+      if (!rising.length) return `▫️ ${c.channel}: 특이 상승 없음`;
+      const items = rising.map((r) => `${r.category} ${r.prev}→${r.cur}(+${r.delta})`).join(' · ');
+      return `📈 ${c.channel}: ${items}`;
+    })
+    .join('\n');
+}
+
 // ── 이상 징후(문제 예측): 급증 채널 분해 + 부정감정 상승 채널 ──
 const CATEGORY_HINT: Record<string, string> = {
   '환불': '결제·환불',
@@ -110,7 +137,7 @@ function anomalySection(spikes: any[], analysis: any[]): string {
   return lines.length ? lines.join('\n') : '특이사항 없음 (급증·부정감정 상승 채널 없음)';
 }
 
-function formatDaily(summary: any, analysis: any[], spikes: any[], yesterday: any | null): string {
+function formatDaily(summary: any, analysis: any[], spikes: any[], sla: any[], trend: any[], yesterday: any | null): string {
   const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric' });
   const cls = summary?.classify ?? {};
   const sen = summary?.sentiment ?? {};
@@ -142,17 +169,21 @@ function formatDaily(summary: any, analysis: any[], spikes: any[], yesterday: an
     `*수집 (채널별 상태)*`,
     collectionLines((summary?.channels ?? []) as any[]),
     ``,
-    `*분류·감정 진행*`,
-    `미분류 ${cls.unclassified ?? '?'}건 · 레거시 '기타' 재검토 큐 ${(cls.review_queue ?? 0).toLocaleString?.() ?? cls.review_queue}건`,
-    `감정분석 ${sentDone.toLocaleString()} / ${sentTotal.toLocaleString()}건 (${pct(sentDone, sentTotal)}%)`,
+    `*응답 현황 (지금 답 기다리는 학부모)*`,
+    slaSection(sla),
     ``,
     `*채널별 분석 (최근 7일)*`,
     channelSection(analysis),
+    ``,
+    `*주간 추세 (지난주 대비 상승)*`,
+    trendSection(trend),
     ``,
     `*이상 징후 / 주의*`,
     anomalySection(spikes, analysis),
     delta,
     ``,
+    `*파이프라인*`,
+    `미분류 ${cls.unclassified ?? '?'}건 · 재검토 큐 ${(cls.review_queue ?? 0).toLocaleString?.() ?? cls.review_queue}건 · 감정분석 ${sentDone.toLocaleString()}/${sentTotal.toLocaleString()} (${pct(sentDone, sentTotal)}%)`,
     alertLine,
   ].join('\n');
 }
@@ -176,9 +207,15 @@ Deno.serve(async (req: Request) => {
   if (aErr) log('channel analysis rpc fail:', aErr.message);
   const { data: spikeRaw, error: sErr } = await supabase.rpc('kakao_category_spike', { min_ratio: 2.0, min_count: 5 });
   if (sErr) log('spike rpc fail:', sErr.message);
+  const { data: slaRaw, error: slErr } = await supabase.rpc('kakao_sla_status');
+  if (slErr) log('sla rpc fail:', slErr.message);
+  const { data: trendRaw, error: tErr } = await supabase.rpc('kakao_weekly_trend', { min_count: 3 });
+  if (tErr) log('weekly trend rpc fail:', tErr.message);
 
   const analysis = (analysisRaw as any[]) || [];
   const spikes = (spikeRaw as any[]) || [];
+  const sla = (slaRaw as any[]) || [];
+  const trend = (trendRaw as any[]) || [];
 
   // 어제 스냅샷(어제 대비용)
   const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
@@ -189,12 +226,12 @@ Deno.serve(async (req: Request) => {
     .eq('snapshot_date', yesterdayDate)
     .maybeSingle();
 
-  const text = formatDaily(summary, analysis, spikes, (ySnap as any)?.summary ?? null);
+  const text = formatDaily(summary, analysis, spikes, sla, trend, (ySnap as any)?.summary ?? null);
   const sent = await sendSlack(text);
 
-  // 이력 저장(어제 대비 + 채널별 추세 보관)
+  // 이력 저장(어제 대비 + 채널별 추세·SLA 보관)
   const { error: snapErr } = await supabase.from('kakao_partner_daily_snapshot').upsert(
-    { snapshot_date: snapshotDate, summary: { ...summary, channel_analysis: analysis, spikes } },
+    { snapshot_date: snapshotDate, summary: { ...summary, channel_analysis: analysis, spikes, sla, weekly_trend: trend } },
     { onConflict: 'snapshot_date' },
   );
   if (snapErr) log('snapshot save fail:', snapErr.message);
