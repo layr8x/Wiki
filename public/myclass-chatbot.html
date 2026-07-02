@@ -90,12 +90,12 @@
   .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-variant-numeric:tabular-nums}
   .sectiontitle{padding:16px 16px 24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
   .classwrap{padding:0 16px 24px}
-  .tabs{display:flex;margin:16px 0 24px;border-left:1px solid var(--gray20);border-right:1px solid var(--gray20)}
-  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;line-height:24px;border-top:1px solid var(--border);position:relative;white-space:nowrap;overflow:hidden}
+  .tabs{display:flex;align-items:stretch;margin:16px 0 24px;border-left:1px solid var(--gray20);border-right:1px solid var(--gray20)}
+  .tab{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px 24px;font-size:16px;line-height:24px;border-top:1px solid var(--border);position:relative;white-space:nowrap;overflow:hidden;box-sizing:border-box}
   .tab.on{background:#fff;color:#161616}
   .tab.mid{background:var(--surface);color:var(--helper);border-bottom:1px solid var(--border);opacity:.9}
   .tab.mid::after{content:"";position:absolute;right:0;top:0;bottom:0;width:1px;background:var(--border)}
-  .tab.off{background:var(--surface);color:rgba(22,22,22,.32);font-weight:500;padding-top:20px;padding-bottom:20px;border-bottom:1px solid var(--border);opacity:.9}
+  .tab.off{background:var(--surface);color:rgba(22,22,22,.32);font-weight:500;border-bottom:1px solid var(--border);opacity:.9}
   .clist{border-top:1px solid rgba(22,22,22,.96)}
   .citem{padding:24px 0;border-bottom:1px solid var(--border)}
   .citem:last-child{border-bottom:none}
