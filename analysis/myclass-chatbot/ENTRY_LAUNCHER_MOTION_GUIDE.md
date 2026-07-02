@@ -1,9 +1,10 @@
 # 진입 버튼(호스트 앱 헤더 런처) — Figma 빌드 · 모션 스펙 · 개발 가이드
 
-> **갱신**: 2026-07-02 · 작업: Claude
+> **갱신**: 2026-07-02(2차) · 작업: Claude
 > **무엇**: 마이클래스 앱(호스트 앱) 헤더에서 챗봇을 여는 진입 아이콘 — "말풍선+얼굴" 모양, 대기 중엔 숨쉬듯 움직이는 비콘.
-> **정본(코드)**: `public/myclass-chatbot.html` / `public/myclass-chatbot-parent.html` — `#openBtn` (라인 66-85 CSS, 라인 547 마크업, 라인 778 클릭 핸들러). **이 문서의 모든 수치는 코드에서 그대로 옮겨온 것 — 코드가 항상 1차 진실.**
-> **Figma 빌드**: 파일 `myclass_designsystem` (`6PSg6RlWrjpnNYk1zirmUp`) · 페이지 `MYCLASS_Chatbot`(`1032:54`) · 섹션 **`Flow-5. 진입 버튼 (호스트 앱 헤더 런처)`**(`1991:2632`).
+> **정본(코드)**: `public/myclass-chatbot.html` / `public/myclass-chatbot-parent.html` — `#openBtn` (CSS·마크업·클릭 핸들러, 검색 `openBtn`으로 위치 확인). **이 문서의 모든 수치는 코드에서 그대로 옮겨온 것 — 코드가 항상 1차 진실.**
+> **Figma 빌드**: 파일 `offplatform_챗봇` (`6PSg6RlWrjpnNYk1zirmUp`) · 페이지 `MYCLASS_Chatbot`(`1032:54`) · 섹션 **`Flow-5. 챗봇 진입 버튼`**(`1991:2632`).
+> **2차 개정 내용(사용자가 Figma에서 직접 아이콘 리디자인 → 코드에 그대로 반영, 이 갱신)**: 버튼 크기 36×36(여백 있는 원형 히트영역)→**24×24**(아이콘=버튼) · 말풍선 path 재작도(더 크고 둥근 tail) · 눈 모양 원형→**세로 캡슐(pill, 2×3 rx=1)** · 스트로크 두께 1.2→**1.5** · 비콘 링 색 `icon/primary`(검정)→**`border/focus` `#0043ce`(파랑, 코드 기존 `--interactive` 변수 재사용)** · 비콘 링 두께 1.4→**1px** · Hover 시 컨테이너 전체 lift 대신 **`bub` -1.5px / `face` -2px 개별 이동** · Pressed 스케일 .86→**.8333(=20/24)**.
 
 ---
 
@@ -28,20 +29,20 @@
 | State 쇼케이스 | `1991:2647` | 3상태 나란히 + 라벨 |
 | 라이브 모션 프리뷰 | `1988:2631` | Idle 인스턴스, **Figma에서 타임라인 스크럽으로 실제 재생 확인 가능**(6초) |
 
-**아이콘 하위 구조** (Idle 기준, Hover/Pressed도 동일 구조):
+**아이콘 하위 구조** (Idle 기준 — 2차 개정 후):
 ```
-State=Idle (COMPONENT, 36×36, 원형 히트영역)
- ├─ beacon_1 (ELLIPSE, 36×36, 스트로크만) ← 코드 ::after
- ├─ beacon_2 (ELLIPSE, 36×36, 스트로크만) ← 코드 ::before (1.45s 지연)
- └─ Icon (FRAME, 24×24, 중앙정렬)
-     ├─ bub   (VECTOR)  ← 말풍선 외곽선
+State=Idle (COMPONENT, 24×24 — 아이콘 자체가 버튼, 별도 히트패딩 없음)
+ ├─ beacon_1 (ELLIPSE, 40×40, inset -8px, 스트로크만) ← 코드 ::after
+ ├─ beacon_2 (ELLIPSE, 40×40, inset -8px, 스트로크만) ← 코드 ::before (1.45s 지연)
+ └─ Icon (FRAME, 24×24)
+     ├─ bub   (VECTOR, stroke-width 1.5)  ← 말풍선 외곽선(재작도)
      └─ face  (GROUP)
-         ├─ eye_l  (ELLIPSE)
-         ├─ eye_r  (ELLIPSE)
-         └─ smile  (VECTOR, Idle/Pressed는 opacity 0)
+         ├─ eye_l  (RECTANGLE, 2×3, rx=1 — 세로 캡슐)
+         ├─ eye_r  (RECTANGLE, 2×3, rx=1)
+         └─ smile  (VECTOR, cubic curve, Idle은 opacity 0)
 ```
 
-**토큰**: `bub`·`smile`의 stroke, `eye_l`·`eye_r`의 fill, `beacon_1`·`beacon_2`의 stroke 전부 **`icon/primary`** 변수에 바인딩(`myclass_designsystem` 라이브러리, key `0d1617069788cd9d8a1a2e30ff8e31e01d9cfd3a`). raw hex 없음 — `get_variable_defs`로 검증됨.
+**토큰**: `bub`·`smile`의 stroke, `eye_l`·`eye_r`의 fill 은 **`icon/primary`**(`#161616`), `beacon_1`·`beacon_2`의 stroke 는 **`border/focus`**(`#0043ce`, 코드의 `--interactive`와 동일 값)에 바인딩(`myclass_designsystem` 라이브러리). raw hex 없음 — `get_variable_defs`로 검증됨. **비콘 링 색이 1차 개정과 달라졌다(검정→파랑)** — 사용자가 명시적으로 바꾼 부분.
 
 ---
 
@@ -50,8 +51,10 @@ State=Idle (COMPONENT, 36×36, 원형 히트영역)
 | 상태 | 트리거(코드) | 시각 변화 |
 |---|---|---|
 | **Idle** | 기본값 | 미소 숨김(`opacity:0`), 앰비언트 모션 재생(§4) |
-| **Hover** | `:hover` | 컨테이너 `translateY(-3px) scale(1.12)`(.34s), 아이콘 그룹 위글, `face` 그룹 `translateY(-0.9px)`, 미소 노출(`opacity:1`), 비콘 정지·숨김 |
-| **Pressed** | `:active` | 컨테이너 `scale(.86)`(.1s ease-out) |
+| **Hover** | `:hover` | `bub` `translateY(-1.5px)`(.32s), `face` 그룹(눈+미소) `translateY(-2px)`(.32s), 아이콘 위글(`owiggle` .6s), 미소 노출(`opacity:1`), 비콘 정지·숨김 |
+| **Pressed** | `:active` | 컨테이너 `scale(.8333)`(.1s ease-out) — 미소는 `:hover`가 겹쳐 있으면 계속 노출(브라우저에서 마우스는 클릭 전 항상 hover를 거치므로 실사용에서 자연히 노출됨) |
+
+> **2차 개정으로 사라진 것**: 컨테이너 레벨 `translateY(-3px) scale(1.12)` hover 리프트. 아이콘=버튼(24×24)이 되면서 Figma 새 디자인은 컨테이너 전체가 아니라 **`bub`/`face`를 개별적으로** 들어올리는 방식으로 바뀌었다 — 코드도 동일하게 반영.
 
 > Hover/Pressed는 변형(variant)으로 만들었고, **Figma 프로토타입(reactions)으로 Idle↔Hover↔Pressed 실시간 전환까지 연결**했다 — Present 모드에서 마우스 오버·클릭하면 실제로 스와이프된다. 상세: 아래 §5.
 
@@ -107,9 +110,11 @@ Figma 트랙: `SCALE_Y`, easing `EASE_IN_AND_OUT`. ⚠️ 코드는 이 사이�
 
 Figma 트랙: `SCALE_X`·`SCALE_Y`(0→4s: .6→1.75) · `OPACITY`(0→.64→2.8s: 0→.36→0), easing `CUSTOM_CUBIC_BEZIER {x1:.23, y1:1, x2:.32, y2:1}`. ring2는 전 키프레임 타이밍에 **+1.45초** 오프셋.
 
-### 4-4. 검증 결과 (export_video 프레임 샘플링)
+### 4-4. 검증 결과
 
-`export_video`로 6.17초 클립을 렌더링해 0.64s(비콘1 피크)·1.16s(눈 감김)·2.09s(비콘2 피크)·4.08s(점프 피크) 프레임을 확인 — 코드와 시각적으로 일치.
+**1차 개정**: `export_video`로 6.17초 클립을 렌더링해 0.64s(비콘1 피크)·1.16s(눈 감김)·2.09s(비콘2 피크)·4.08s(점프 피크) 프레임을 확인 — 코드와 시각적으로 일치. 위 표의 **타이밍·이징 수치는 2차 개정에서도 변하지 않았다**(사용자가 바꾼 건 도형·색·크기이지 모션 타이밍이 아님).
+
+**2차 개정 시 발견**: 사용자가 눈을 원형→캡슐로 다시 그리면서 **새 eye 노드로 교체**돼(`eye_l`/`eye_r` 노드 ID 변경) 눈깜빡임(`oblink`) 키프레임이 유실되어 있었음 — Figma 파일에 동일 스펙(§4-2)으로 **재적용 완료**(프로덕션 코드는 CSS 클래스 기반이라 애초에 영향 없었음). `Icon` 프레임의 바운스(§4-1)·비콘 링(§4-3) 키프레임은 노드 정체성이 유지돼 그대로 살아있었다.
 
 ---
 
