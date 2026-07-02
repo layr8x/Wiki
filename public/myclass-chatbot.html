@@ -62,7 +62,6 @@
   .headicons{grid-area:icons;display:flex;gap:16px;align-items:center}
   .headicons .ms{font-size:24px;color:#161616;cursor:pointer}
   .bell{position:relative}
-  .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
   /* 진입 아이콘 — 2026-07-02 6차 개정: 사용자가 준 Face ID·모찌·베이맥스 레퍼런스 4개를 분석한 결과 — 전부
      글로우·블러·반사광 없이 완전 플랫, 색도 거의 없거나 단색, 모션은 "표정"(눈 깜빡임·미세한 갸웃) 중심이고
      화려한 3D 회전은 상태가 바뀌는 순간(Face ID 스캔→완료)에만 "동전 뒤집기"로 딱 한 번 쓰였음. 이전까지의
@@ -89,19 +88,21 @@
 
   /* ── 본문 ── */
   .scroll{flex:1;overflow:auto;background:#fff;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-variant-numeric:tabular-nums}
-  .sectiontitle{padding:24px;font-size:32px;font-weight:200;letter-spacing:-.64px;line-height:40px;color:#161616}
-  .classwrap{padding:0 24px 24px}
-  .tabs{display:flex}
-  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;border:1px solid var(--border);border-bottom:none}
-  .tab+.tab{border-left:none}
+  .sectiontitle{padding:16px 16px 24px;font-size:32px;font-weight:200;letter-spacing:-.32px;line-height:40px;color:#161616}
+  .classwrap{padding:0 16px 24px}
+  .tabs{display:flex;margin:16px 0 24px;border-left:1px solid var(--gray20);border-right:1px solid var(--gray20)}
+  .tab{flex:1;text-align:center;padding:18px 24px;font-size:16px;line-height:24px;border-top:1px solid var(--border);position:relative}
   .tab.on{background:#fff;color:#161616}
-  .tab.off{background:var(--surface);color:var(--helper);border-bottom:1px solid var(--border)}
+  .tab.mid{background:var(--surface);color:var(--helper);border-bottom:1px solid var(--border);opacity:.9}
+  .tab.mid::after{content:"";position:absolute;right:0;top:0;bottom:0;width:1px;background:var(--border)}
+  .tab.off{background:var(--surface);color:rgba(22,22,22,.32);font-weight:500;padding-top:20px;padding-bottom:20px;border-bottom:1px solid var(--border);opacity:.9}
+  .clist{border-top:1px solid rgba(22,22,22,.96)}
   .citem{padding:24px 0;border-bottom:1px solid var(--border)}
-  .cinfo{display:flex;gap:8px;align-items:center;padding-bottom:16px}
-  .tag{background:var(--tag-bg);border:.8px solid var(--tag-border);border-radius:var(--r-tag);padding:2px 6px;font-size:14px;color:var(--tag-text);line-height:24px}
-  .cinfo .status{font-size:14px;color:#161616;line-height:24px}
-  .cdesc{font-size:20px;line-height:32px;color:#161616;padding-bottom:16px}
-  .cdetail{display:flex;align-items:center;gap:4px;color:#161616;padding:10px 0}
+  .citem:last-child{border-bottom:none}
+  .ctag{display:inline-flex;background:var(--tag-bg);border:.8px solid var(--tag-border);border-radius:4px;padding:2px 4px;font-size:12px;line-height:16px;color:var(--tag-text);font-weight:500;margin-bottom:12px}
+  .cname{font-size:20px;line-height:28px;color:#161616}
+  .cname b{font-weight:600}
+  .cdetail{display:flex;align-items:center;justify-content:flex-end;gap:4px;color:#161616;height:32px;margin-top:8px}
   .cdetail span.t{font-size:16px;text-decoration:underline;text-underline-offset:3px}
   .cdetail .ms{font-size:24px}
 
@@ -540,10 +541,10 @@
   <!-- 앱 헤더 (Figma 100% 재현) -->
   <div class="apphead">
     <div class="brand"><svg viewBox="0 0 76 20" fill="#161616" role="img" aria-label="시대인재" xmlns="http://www.w3.org/2000/svg"><path d="M17.1291 0.262284H14.8707V19.7705H17.1291V0.262284Z"/><path d="M0 13.235H2.51602L6.38734 4.95904L10.2587 13.235H12.7747L6.38734 0.0328189L0 13.235Z"/><path d="M55.743 0.262284H53.4202V14.4494H55.743V0.262284Z"/><path d="M44.9999 13.2022H42.6449V20H55.323L56.2261 17.8989H44.9999V13.2022Z"/><path d="M22.9032 2.5287H28.1942V0.460398H20.5482V13.1694H28.0976L29.0007 11.0342H22.9032V2.5287Z"/><path d="M73.7752 0.262284V5.81283H71.8388V0.327858H69.614V19.7049H71.8388V8.01364H73.7752V20H76V0.262284H73.7752Z"/><path d="M67.4844 2.49592L68.3553 0.460398H59.2265V2.49592H62.3222V5.12296L58.6455 13.1694H60.9361L63.4843 7.61886L66.0325 13.1694H68.3553L64.6772 5.12296V2.49592H67.4844Z"/><path d="M34.7748 5.81283H32.8385V0.327858H30.6136V19.7049H32.8385V8.01364H34.7748V20H36.9996V0.262284H34.7748V5.81283Z"/><path d="M42.033 5.55054C42.033 3.38251 42.9039 2.06967 44.9368 2.06967C46.8074 2.06967 47.9373 3.28552 47.9373 5.55054C47.9373 7.81557 46.841 9.03141 44.9368 9.03141C43.0327 9.03141 42.033 7.78278 42.033 5.55054ZM50.2909 5.55054C50.2265 2.0041 47.9037 0 44.9355 0C41.7418 0 39.6123 2.29918 39.6123 5.55054C39.6123 9.22813 42.1927 11.1011 44.9355 11.1011C47.8715 11.1011 50.2909 8.99863 50.2909 5.55054Z"/></svg></div>
-    <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">김시대 님</span><span class="ms">keyboard_arrow_down</span></span><span class="ms cached">cached</span></div>
+    <div class="userrow"><span class="loc"><span class="branch">대치</span><span class="name">김시대 님</span><span class="ms">keyboard_arrow_down</span></span></div>
     <div class="headicons">
       <span class="ms" id="openBtn" role="button" aria-label="AI 도우미 챗봇 열기" title="AI 도우미"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path class="bub" d="M3 5.5C3 4.94772 3.44772 4.5 4 4.5H20C20.5523 4.5 21 4.94772 21 5.5V15.5C21 16.0523 20.5523 16.5 20 16.5H7.41421C7.149 16.5 6.89464 16.6054 6.70711 16.7929L3.42678 20.0732C3.26928 20.2307 3 20.1192 3 19.8964V5.5Z"/><g class="face"><rect class="eye" x="8" y="8" width="2" height="3" rx="1"/><rect class="eye" x="14" y="8" width="2" height="3" rx="1"/><path class="smile" d="M10 12C11 13 13 13 14 12"/></g></svg></span>
-      <span class="ms bell" aria-label="알림">notifications</span>
+      <span class="ms bell" aria-label="알림">notifications_unread</span>
       <span class="ms deskonly" aria-label="전체메뉴">menu</span>
     </div>
   </div>
@@ -552,40 +553,42 @@
     <nav class="desknav"><a class="on">수업관리</a><a>출결과제</a><a>납부하기</a></nav>
     <div class="sectiontitle">수업관리</div>
     <div class="classwrap">
-      <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab off">강좌 예약 현황</div></div>
-      <div class="citem">
-        <div class="cinfo"><span class="tag">국어영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">강은양T 국어 서바이벌<br>일 13:30-17:05 본관 204호 (7/12 개강)</div>
-        <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
-      </div>
-      <div class="citem">
-        <div class="cinfo"><span class="tag">수학영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">박종민T 수학 미적분<br>목 18:30-22:00 별관 301호 (4/30 개강)</div>
-        <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
-      </div>
-      <div class="citem">
-        <div class="cinfo"><span class="tag">수학영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">박종민T 수학 서바이벌 실전모의<br>수 18:25-22:00 별관 305호 (7/8 개강)</div>
-        <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
-      </div>
-      <div class="citem">
-        <div class="cinfo"><span class="tag">영어영역</span><span class="status">수강중</span></div>
-        <div class="cdesc">김경욱T 진선1 영어 기말 6+1회<br>화 18:00-21:00 본관 105호 (5/12 개강)</div>
-        <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
+      <div class="tabs"><div class="tab on">수강 강좌</div><div class="tab mid">대기 접수 현황</div><div class="tab off">추가 대기 신청</div></div>
+      <div class="clist">
+        <div class="citem">
+          <div class="ctag">물리학1</div>
+          <div class="cname">현정훈T 물리1 <b>토 09:00-12:30 12/27</b></div>
+          <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
+        </div>
+        <div class="citem">
+          <div class="ctag">수학1+수학2</div>
+          <div class="cname">박종민T 수학 수1+2 <b>토 13:30-17:00 12/27</b></div>
+          <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
+        </div>
+        <div class="citem">
+          <div class="ctag">미적분</div>
+          <div class="cname">강기원T 수학 미적분 <b>일 09:00-12:30 12/28</b></div>
+          <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
+        </div>
+        <div class="citem">
+          <div class="ctag">국어</div>
+          <div class="cname">강은양T 국어 <b>일 13:30-17:00 12/28</b></div>
+          <div class="cdetail"><span class="t">강좌 상세보기</span><span class="ms">keyboard_arrow_right</span></div>
+        </div>
       </div>
     </div>
   </div>
   <!-- 하단 탭바 -->
   <div class="bottomnav">
-    <div class="navitem on"><span class="ms fill">book_ribbon</span>수업관리</div>
+    <div class="navitem on"><span class="ms">book_ribbon</span>수업관리</div>
     <div class="navitem"><span class="ms">fact_check</span>출결과제</div>
-    <div class="navitem"><span class="ms">receipt_long</span>납부내역</div>
+    <div class="navitem"><span class="ms">qr_code_2</span>QR출석</div>
     <div class="navitem"><span class="ms">menu</span>전체메뉴</div>
   </div>
   <!-- 브라우저 하단 chrome -->
   <div class="chrome-bot">
     <span class="ms">arrow_back_ios</span><span class="ms">arrow_forward_ios</span>
-    <span class="ms" style="font-size:25px">ios_share</span>
+    <span class="ms" style="font-size:25px">add</span>
     <span class="tabs-count">4</span><span class="ms">more_horiz</span>
   </div>
   <div class="home-indicator"><span></span></div>
