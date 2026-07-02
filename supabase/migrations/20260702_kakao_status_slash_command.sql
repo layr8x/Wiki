@@ -1,10 +1,13 @@
 -- 20260702_kakao_status_slash_command.sql
--- Slack 슬래시 명령(예: /카카오상태)으로 파이프라인 현재 상태를 즉시 조회하기 위한 RPC + 토큰.
+-- kakao_status_summary() RPC — 파이프라인 현재 상태(수집 헬스·분류 진행률·감정분석 진행률·
+-- 진행 중인 알림)를 한 번에 묶어 반환한다.
 --
--- 배경: kakao-alert(supabase/migrations/20260702_kakao_alert_pipeline.sql)는 "이상이 있을
--- 때만" 알린다. 이 마이그레이션은 그와 별개로 "지금 당장" 상태를 사람이 원할 때 물어볼 수
--- 있게, 수집 헬스·분류 진행률·감정분석 진행률·진행 중인 알림을 한 번에 묶어 반환하는 RPC를
--- 추가한다. Slack 쪽 호출은 supabase/functions/kakao-status 가 처리(동기 응답, 봇 토큰 불요).
+-- ⚠️ 2026-07-02 업데이트: 원래 이 RPC는 Slack 슬래시 명령(/카카오상태, kakao-status Edge
+-- Function)이 즉시 조회용으로 쓰려고 만들었으나, 그 기능은 워크스페이스 관리자 승인이 필요해
+-- (현실적으로 승인 가능성이 낮다고 판단) 폐기했다(kakao-status 함수·토큰 제거,
+-- supabase/functions/kakao-status 디렉터리 삭제). 이 RPC 자체는 kakao-daily-summary
+-- (supabase/migrations/20260702_kakao_daily_summary.sql, 관리자 승인 불요 경로)가 계속
+-- 사용 중이라 유지한다. 이제 이름은 "슬래시 명령용"이 아니라 "상태 조회용 공용 RPC"로 읽을 것.
 
 create or replace function public.kakao_status_summary()
 returns jsonb
@@ -43,12 +46,4 @@ $$;
 
 grant execute on function public.kakao_status_summary() to anon, authenticated;
 
--- 슬래시 명령 Request URL 인증용 토큰(1회 발급, 재적용해도 기존 값 유지).
--- 이 값은 Slack 앱 설정(Slash Commands > Request URL)에 사람이 직접 붙여넣어야 하므로,
--- kakao-collect/-classify/-alert 와 달리 값 자체를 사람이 한 번은 봐야 한다.
-insert into public.kakao_partner_secrets(key, value, updated_at)
-values ('kakao_status_token', encode(gen_random_bytes(24), 'hex'), now())
-on conflict (key) do nothing;
-
 -- 점검: select kakao_status_summary();
---       select value from kakao_partner_secrets where key = 'kakao_status_token';
