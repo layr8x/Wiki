@@ -31,7 +31,7 @@
 | `scripts/kakao-partner-refresh-cookie.mjs` | 로그인 쿠키 자동 갱신·배달 |
 | `scripts/kakao-partner-status.mjs` | 수집 상태·heartbeat·마지막 오류 점검 |
 | `scripts/kakao-partner-export-csv.mjs` · `-dashboard.mjs` · `-sheets-sync.mjs` | 정제 CSV 추출 · 로컬 대시보드 · 시트 동기화 |
-| `scripts/classify-kakao-stream.mjs` · `classify-kakao-csv.mjs` | Claude 기반 카테고리·감정 자동 분류 |
+| `scripts/classify-kakao-stream.mjs` · `classify-kakao-csv.mjs` | Claude 기반 카테고리·감정 자동 분류(수동 실행용 — 상시 자동화는 §3 의 `kakao-classify` 참고) |
 | `scripts/lib/kakao-partner-client.mjs` | 파트너센터 REST 클라이언트(쿠키 인증) |
 | `scripts/lib/kakao-sanitize.mjs` | **PII(개인정보) 마스킹 공통 모듈** (저장 전 마스킹) |
 | `scripts/lib/kakao-cookie.mjs` | 쿠키 추출·관리 |
@@ -44,6 +44,8 @@
 | 파일 | 역할 |
 |---|---|
 | `supabase/functions/kakao-collect/index.ts` | **현재 수집 실행 서버**(항상 켜진 Edge Function) |
+| `supabase/functions/kakao-classify/index.ts` | ★2026-07-02 **분류·감정 자동 실행 서버**(pg_cron 15분 — first-user-message 기준, LLM/규칙 자동 폴백) |
+| `supabase/functions/kakao-alert/index.ts` | ★2026-07-02 **이상탐지 자동 실행 서버**(pg_cron 10분 — 수집중단·카테고리급증 → Slack) |
 | `supabase/migrations/20260512_kakao_partner.sql` | 적재 테이블(chats·messages·stream_state) + RLS |
 | `supabase/migrations/20260524_kakao_partner_stream_health.sql` | heartbeat·오류 기록 컬럼 |
 | `supabase/migrations/20260526_kakao_mask_functions.sql` | 표시용 2차 마스킹 함수 |
@@ -51,6 +53,8 @@
 | `supabase/migrations/20260617_kakao_partner_secrets.sql` | 쿠키 자동 배달 보관함(RLS 잠금) |
 | `supabase/migrations/20260617_kakao_collect_pg_cron_dispatch.sql` | pg_cron 5분 트리거(1차) |
 | `supabase/migrations/20260625_kakao_collect_edge_function.sql` | **pg_cron → Edge Function 직접 호출**(현재 정본) |
+| `supabase/migrations/20260702_kakao_classify_pipeline.sql` | ★분류 자동화 — category_model 컬럼 + 재분류 큐 인덱스 + pg_cron 15분 |
+| `supabase/migrations/20260702_kakao_alert_pipeline.sql` | ★이상탐지 자동화 — alert_state 테이블 + 헬스/급증 RPC + pg_cron 10분 |
 | `.github/workflows/kakao-collect.yml` | 수동 폴백용 GitHub Actions 경로 |
 | `scripts/launchd/com.amswiki.kakao-*.plist` | (구) 맥북 상시 실행·쿠키 갱신 — 인프라 이전 전 방식 |
 
@@ -84,9 +88,20 @@ pg_cron(5분) ──▶ Edge Function(kakao-collect) ──▶ PII 마스킹(kak
    회사 맥 크롬                                              ▼
  (6시간마다 쿠키 자동 배달)              Supabase 테이블(chats·messages·state)
                                                              │
-                                          Claude 자동 분류(카테고리·감정)
+                                        pg_cron(15분) ──▶ Edge Function(kakao-classify)
+                                        first-user-message 기준 분류·감정
+                                        (ANTHROPIC_API_KEY 있으면 LLM, 없으면 규칙 폴백)
+                                                             │
+                                        pg_cron(10분) ──▶ Edge Function(kakao-alert)
+                                        수집중단·카테고리급증 탐지 → Slack(선택)
                                                              ▼
                                           3채널 교차분석 → 챗봇 우선순위 의사결정
 ```
 
-*(개인정보 원문은 저장소·문서에 미반입. 수치는 2026‑06‑30 기준 라이브 DB 실측.)*
+*(개인정보 원문은 저장소·문서에 미반입. 수치는 2026‑07‑02 기준 라이브 DB 실측.)*
+
+★ **2026-07-02 고도화**: 분류(`kakao-classify`)·이상탐지(`kakao-alert`)를 "사람이 수동 실행"에서
+"pg_cron 자동 실행"으로 전환. 실측 결과 기존 분류는 2026-06-17 하루만 돌고 완전히 멈춰 있었고
+(신규 chat 207건 미분류), 감정분석은 40,261건 중 0건이었던 것이 근본 원인. 상세는
+`analysis/outputs/05_상담분류_고도화.md` §9, `analysis/outputs/08_이상탐지_알림.md` §6,
+`docs/KAKAO_PARTNER_SETUP.md` §13 참고.
