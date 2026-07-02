@@ -53,7 +53,7 @@ State=Idle (COMPONENT, 36×36, 원형 히트영역)
 | **Hover** | `:hover` | 컨테이너 `translateY(-3px) scale(1.12)`(.34s), 아이콘 그룹 위글, `face` 그룹 `translateY(-0.9px)`, 미소 노출(`opacity:1`), 비콘 정지·숨김 |
 | **Pressed** | `:active` | 컨테이너 `scale(.86)`(.1s ease-out) |
 
-> Figma 빌드는 Hover/Pressed를 **정적 최종 상태(end-state) 변형**으로 표현했다. 실시간 hover↔idle 전환 애니메이션(Smart Animate 프로토타이핑)은 이번 범위에 포함하지 않음 — 아래 §6 참고.
+> Hover/Pressed는 변형(variant)으로 만들었고, **Figma 프로토타입(reactions)으로 Idle↔Hover↔Pressed 실시간 전환까지 연결**했다 — Present 모드에서 마우스 오버·클릭하면 실제로 스와이프된다. 상세: 아래 §5.
 
 ---
 
@@ -113,14 +113,23 @@ Figma 트랙: `SCALE_X`·`SCALE_Y`(0→4s: .6→1.75) · `OPACITY`(0→.64→2.8
 
 ---
 
-## 5. 인터랙션 전환 타이밍 (코드 기준, Figma는 정적 변형으로만 표현)
+## 5. 인터랙션 전환 — Figma 프로토타이핑(reactions)으로 실제 연결됨
 
-| 전환 | duration | easing |
+Hover·Pressed는 정적 변형일 뿐 아니라, **Figma 프로토타입(reactions)으로 실제 스와이프 전환까지 연결**했다. Figma에서 `1978:2636`(Entry Launcher Variant Set)을 Present 모드로 열어 마우스를 올리고/눌러보면 실제로 전환된다.
+
+| 전환 | 트리거(Figma) | 대상 | duration | easing(Figma) | 코드 근거 |
+|---|---|---|---:|---|---|
+| Idle → Hover | `ON_HOVER`(while hovering, 자동 되돌림) | `State=Hover`(`1978:2622`) | .34s | `CUSTOM_CUBIC_BEZIER {.34,1.56,.64,1}` | 컨테이너 `transition: transform .34s cubic-bezier(.34,1.56,.64,1)` |
+| Hover → Pressed | `ON_PRESS`(while pressing, 자동 되돌림) | `State=Pressed`(`1978:2629`) | .1s | `EASE_OUT` | `#openBtn:active{transition:transform .1s ease-out}` |
+
+두 트리거 모두 Figma의 "누르고 있는/올리고 있는 동안"(self-reverting) 의미라 — 마우스가 떠나거나 손을 떼면 **별도 역방향 reaction 없이 자동으로 이전 상태로 복귀**한다(코드의 `:hover`/`:active` 의사클래스가 자동으로 해제되는 것과 동일한 개념). Idle 자체에도 §4의 앰비언트 모션이 계속 걸려 있으므로, Hover에서 벗어나 Idle로 돌아가면 숨쉬는 비콘 모션이 자연스럽게 이어진다.
+
+**참고**: 아이콘 위글(`owiggle` .6s)·`face` 이동/미소 노출(.32s)은 Hover 진입 시 코드에서 함께 발생하는 세부 트랜지션이지만, Figma의 Hover 변형은 이 중간 동작 없이 **최종 정착 모습**만 표현한다(Smart Animate는 시작~끝 사이를 자동 보간하므로 이 미세 디테일은 근사치가 된다). 정확한 세부 타이밍이 필요하면 아래 표를 참고:
+
+| 세부 트랜지션 | duration | easing |
 |---|---:|---|
-| Idle → Hover (컨테이너) | .34s | `cubic-bezier(.34, 1.56, .64, 1)` (오버슈트) |
 | Hover 진입 시 아이콘 위글(`owiggle`) | .6s | `var(--ease)` = `cubic-bezier(.23,1,.32,1)` |
 | `face` 이동 / 미소 노출 | .32s | `var(--ease)` |
-| Hover → Pressed(`:active`) | .1s | `ease-out` |
 
 ---
 
@@ -132,7 +141,7 @@ Figma 트랙: `SCALE_X`·`SCALE_Y`(0→4s: .6→1.75) · `OPACITY`(0→.64→2.8
 
 ## 7. 의도적으로 생략한 것 (정직하게 기록)
 
-- **Smart Animate 기반 실시간 hover/press 전환 프로토타이핑**: Hover·Pressed는 정적 최종 상태 변형만 만들었다. Figma의 reactions(ON_HOVER/ON_PRESS) API로 실제 스와이프 전환을 시연하는 것은 API 확신도가 낮아(문서화가 얕음) 이번 범위에서 제외 — 원하면 후속 작업으로 진행 가능.
+- **Hover의 중간 디테일(위글·face 이동)**: §5에서 설명한 대로, Smart Animate는 시작~끝 상태만 보간해 Idle→Hover 사이의 미세한 위글(`owiggle`)이나 `face`만 별도로 이동하는 세부 동작까지는 재현하지 않는다. 최종 정착 모습(미소 노출·눈 위치)은 정확히 일치.
 - **눈 깜빡임·비콘의 무한 반복**: §4-2·4-3에서 설명한 대로, Figma 6초 타임라인엔 대표 1~1.5사이클만 배치. 실제 반복 주기(3.4s / 4s+1.45s)는 이 문서 표가 정본.
 - **개발 시 우선순위**: Figma 빌드는 **디자인 검토·시각 스펙 확인용**이다. 실제 구현은 계속 `public/myclass-chatbot.html`의 CSS(`#openBtn` 관련 규칙, 라인 66-85)를 정본으로 사용할 것 — 이 문서는 그 CSS를 사람이 읽기 쉬운 표로 옮긴 것이지, CSS를 대체하지 않는다.
 
