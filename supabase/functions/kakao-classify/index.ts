@@ -126,8 +126,9 @@ const LIMITS = LLM_ENABLED
 
 // ───────────────────── 카테고리 taxonomy(라이브 DB 실측 기준 — 05번 문서 §1-1) ─────────────────────
 const CATEGORIES: { id: string; desc: string }[] = [
-  { id: '계정·로그인·앱', desc: '로그인/아이디/비밀번호/앱 접속 오류·먹통' },
+  { id: '계정·로그인·앱', desc: '로그인/아이디/비밀번호/앱·사이트 접속·영상 재생·기기 오류' },
   { id: '환불', desc: '결제 취소·환불 요청' },
+  { id: '모의고사·서바이벌', desc: '서바이벌 프로·전국모의평가·모의고사 응시/성적/등수/해설' },
   { id: '라이브', desc: '라이브(실시간) 수업 관련' },
   { id: '교재·배송', desc: '교재 배송·미수령·재고' },
   { id: '입반·등록', desc: '반 배정·수강신청·개강' },
@@ -220,19 +221,22 @@ async function classifySentimentLLM(text: string): Promise<{ sentiment: string; 
 // 분류기의 산출물이라 원본 규칙을 알 수 없다. 아래는 05번 문서(analysis/outputs/05_상담분류_고도화.md)
 // §3·§8 의 실측 사례를 근거로 재구성한 근사치이며, ANTHROPIC_API_KEY 등록 시 자동으로 LLM
 // 분류가 이를 대체한다. 순서 = 우선순위(좁은 카테고리를 넓은 카테고리보다 먼저 검사).
+// 우선순위 순(좁은 카테고리 먼저). rule_v3: 모의고사·서바이벌 신설 + 영상재생/기기/사이트 기술문의 보강.
+// SQL 일괄 재분류(migration 20260703_kakao_backfill_reclassify)와 동일 규칙. 둘을 함께 갱신할 것.
 const RULE_ENGINE: { category: string; re: RegExp }[] = [
   { category: '환불', re: /환불/ },
   { category: '통합회원', re: /통합\s*회원|계정\s*통합|형제.{0,4}계정|자매.{0,4}계정/ },
-  { category: '미납·결제', re: /미납|결제|수강료|납부|가상계좌|청구|카드\s*승인|중복\s*결제/ },
+  { category: '미납·결제', re: /미납|결제|수강료|납부|가상계좌|청구|카드\s*승인|중복\s*결제|환급/ },
+  { category: '모의고사·서바이벌', re: /서바이벌|서바\s|서프|전국\s*모의|모의\s*평가|모의고사|모평|응시|성적표|등수|채점|분석\s*결과|해설[지강]/ },
   { category: '출결·보강', re: /출석|출결|보강|결석/ },
-  { category: '입반·등록', re: /입반|반\s*배정|수강\s*신청|개강|접수/ },
+  { category: '입반·등록', re: /입반|반\s*배정|수강\s*신청|개강|접수|인강|인터넷\s*강의|온라인\s*강의|정규반|신청\s*내역/ },
   { category: '대기', re: /대기|웨이팅/ },
   { category: '시간표·수업', re: /시간표|커리큘럼|강의실|강사|수업\s*시간/ },
-  { category: '교재·배송', re: /교재|배송|택배|도착|미수령/ },
+  { category: '교재·배송', re: /교재|배송|택배|도착|미수령|문제집|도서/ },
   { category: '퇴원·취소', re: /퇴원|그만\s*두|수강\s*취소|재수강\s*안/ },
   { category: '설명회·컨설팅', re: /설명회|컨설팅|입시\s*상담/ },
   { category: '라이브', re: /라이브|LIVE/i },
-  { category: '계정·로그인·앱', re: /로그인|아이디|비밀번호|비번|계정|앱|접속|인증|회원가입|연동|오류|에러|튕|먹통|실행|진입/ },
+  { category: '계정·로그인·앱', re: /로그인|아이디|비밀번호|비번|계정|앱|접속|인증|회원가입|연동|오류|에러|튕|먹통|실행|진입|플레이어|비디오|재생|영상|아이패드|맥북|mac\s*os|다운로드|버퍼|끊김|수강.{0,4}안|홈페이지|사이트/i },
 ];
 function classifyCategoryRule(text: string): { category: string; confidence: number } {
   for (const r of RULE_ENGINE) if (r.re.test(text)) return { category: r.category, confidence: 0.7 };
@@ -250,6 +254,8 @@ function classifySentimentLexicon(text: string): { sentiment: string; score: num
 }
 
 // ───────────────────── 채팅 카테고리 분류 ─────────────────────
+// 첫 3개 고객 메시지를 이어붙여 분류에 사용. "문의드려도 될까요?" 같은 오프너 뒤에 실제 의도가
+// 오는 경우가 많아, 첫 메시지 하나만 보면 기타로 오분류된다(재분류 진단으로 확인).
 async function firstUserMessage(chatId: string, fallback: string | null): Promise<string> {
   const { data } = await supabase
     .from('kakao_partner_messages')
@@ -258,10 +264,9 @@ async function firstUserMessage(chatId: string, fallback: string | null): Promis
     .eq('sender_type', 'user')
     .not('message', 'is', null)
     .order('sent_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  const text = (data as any)?.message || fallback || '';
-  return String(text).trim();
+    .limit(3);
+  const joined = ((data as any[]) || []).map((r) => r.message).filter(Boolean).join(' ').trim();
+  return (joined || fallback || '').toString().trim();
 }
 
 async function classifyChatBatch(rows: { chat_id: string; last_message: string | null }[]) {
@@ -274,7 +279,7 @@ async function classifyChatBatch(rows: { chat_id: string; last_message: string |
       continue;
     }
     let result: { category: string; confidence: number } | null = null;
-    let model = 'rule_v2';
+    let model = 'rule_v3';
     if (LLM_ENABLED) {
       result = await classifyCategoryLLM(text);
       if (result) model = 'llm';
@@ -282,7 +287,7 @@ async function classifyChatBatch(rows: { chat_id: string; last_message: string |
     }
     if (!result) {
       result = classifyCategoryRule(text);
-      model = 'rule_v2';
+      model = 'rule_v3';
     }
     const { error } = await supabase
       .from('kakao_partner_chats')

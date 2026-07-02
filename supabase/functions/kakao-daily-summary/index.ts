@@ -1,15 +1,10 @@
 // supabase/functions/kakao-daily-summary/index.ts
-// 카카오 상담 파이프라인 일일 요약 (채널별 분석 + 이상 징후 진단형). pg_cron 매일 09:00 KST.
-//
-// 왜(고도화 배경): 초기 요약은 3채널을 뭉뚱그린 전체 수치만 줘서, 어느 채널에 무슨 문제가
-//   생기는지·왜 그런지·무엇을 할지를 유추할 수 없었다. 이 버전은 (1) 수집 상태를 채널별 평소
-//   유입량 기준으로 정확히 판정하고, (2) 채널별 최근 7일 문의 Top·감정을 구분해 보여주고,
-//   (3) 급증·부정감정 상승 같은 이상 징후를 채널과 함께 짚어 "문제 예측·원인·조치"가 가능하게 한다.
-//
-// 인증: kakao_partner_secrets.key='kakao_daily_summary_token'. 배포: --no-verify-jwt.
-// 데이터: kakao_status_summary(운영상태+채널헬스) · kakao_channel_analysis(채널별 7일) ·
-//   kakao_category_spike(급증). 이력: kakao_partner_daily_snapshot(어제 대비 + 추세 보관).
-// Slack: SLACK_WEBHOOK_URL 미설정 시 로그만.
+// 카카오 상담 파이프라인 일일 요약. pg_cron 매일 09:00 KST.
+// 메시지 원칙: 결론 먼저·평문. 비율·평균 같은 계산·해석이 필요한 수치는 노출하지 않는다.
+// 구조: 상단 "오늘 볼 것"(조치 필요 항목만) + 채널별 통합 카드 + Slack Block Kit(헤더·구분선).
+// 데이터: kakao_status_summary · kakao_channel_analysis · kakao_category_spike · kakao_sla_status ·
+//   kakao_weekly_trend · kakao_sentiment_trend. 이력: kakao_partner_daily_snapshot.
+// 인증: kakao_partner_secrets.key='kakao_daily_summary_token'. Slack: SLACK_WEBHOOK_URL 미설정 시 로그만.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -26,84 +21,22 @@ const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 
 const pct = (n: number, d: number) => (d > 0 ? Math.round((100 * n) / d) : 0);
+const num = (v: unknown) => Number(v ?? 0);
 function fmtDelta(n: number): string {
   if (n > 0) return `+${n.toLocaleString()}`;
   if (n < 0) return `${n.toLocaleString()}`;
-  return '변화 없음';
+  return '0';
 }
 
-// 진행 중인 알림 키를 사람이 읽는 문구로.
 const CHANNEL_BY_PID: Record<string, string> = { _xfxilXn: '시대인재C', _TkpPG: '라이브', _VGAQn: '마이클래스' };
 function friendlyAlert(key: string): string {
-  if (key.startsWith('health:')) return `${CHANNEL_BY_PID[key.slice('health:'.length)] || key.slice(7)} 수집 상태`;
-  if (key.startsWith('spike:')) return `${key.slice('spike:'.length)} 문의 급증`;
+  if (key.startsWith('health:')) return `${CHANNEL_BY_PID[key.slice('health:'.length)] || key.slice(7)} 수집`;
+  if (key.startsWith('spike:')) return `${key.slice('spike:'.length)} 급증`;
   if (key.startsWith('milestone:')) return '재분류 완료';
   return key;
 }
 
-// ── 수집 상태(채널별, 원인 반영) ──
-function collectionLines(channels: any[]): string {
-  const emoji: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
-  return channels
-    .map((c) => {
-      const head = `${emoji[c.health] ?? '⚪'} ${c.channel} · 마지막 ${c.hrs_since_msg ?? '?'}시간 전`;
-      const lowTraffic = Number(c.avg_per_day) < 1 ? ' 저트래픽' : '';
-      if (c.health === 'ok') return `${head} (평소 하루 ${c.avg_per_day}건${lowTraffic}, 정상)`;
-      if (c.health_reason === 'auth') return `${head} (수집 중단: 쿠키 만료, 재발급 필요)`;
-      if (c.health_reason === 'heartbeat') return `${head} (수집기 지연, 함수·스케줄러 점검)`;
-      return `${head} (유입 뜸함, 평소 ${c.avg_per_day}건·임계 ${c.gap_threshold_h}h. 쿠키 문제 아님)`;
-    })
-    .join('\n');
-}
-
-// ── 채널별 분석(최근 7일): 문의 Top3 + 부정 감정률 ──
-function channelSection(analysis: any[]): string {
-  if (!analysis.length) return '(채널 분석 데이터 없음)';
-  return analysis
-    .map((c) => {
-      const chats = Number(c.chats || 0);
-      const low = Number(c.avg_per_day_30d) < 1 ? ' (저트래픽)' : '';
-      const tops = (c.top_categories as any[]) || [];
-      const topLine = tops.length
-        ? tops.map((t) => `${t.category} ${t.cnt}(${pct(Number(t.cnt), chats)}%)`).join(' · ')
-        : '(분류된 문의 없음)';
-      const s = c.sentiment || {};
-      const sTotal = Number(s.total || 0);
-      const senLine =
-        sTotal > 0 ? `감정: 부정 ${s.neg} / ${sTotal} (${pct(Number(s.neg), sTotal)}%)` : '감정: 표본 부족';
-      return `🔸 ${c.channel} · ${chats}건${low}\n   문의 Top: ${topLine}\n   ${senLine}`;
-    })
-    .join('\n');
-}
-
-// ── 응답 현황(SLA): 지금 답 기다리는 대화 + 첫 응답 중앙값 ──
-function slaSection(sla: any[]): string {
-  if (!sla.length) return '(응답 현황 데이터 없음)';
-  return sla
-    .map((s) => {
-      const w = Number(s.waiting || 0);
-      const emoji = w >= 10 ? '🔴' : w >= 5 ? '🟠' : '🟢';
-      const oldest = w > 0 ? `, 최장 ${s.oldest_wait_h}시간 대기` : '';
-      const frt = Number(s.answered_n || 0) >= 5 ? ` · 첫 응답 중앙값 ${s.median_first_response_min}분` : '';
-      return `${emoji} ${s.channel} · 대기 ${w}건${oldest}${frt}`;
-    })
-    .join('\n');
-}
-
-// ── 주간 추세: 채널별 지난주 대비 늘고 있는 카테고리(급증 이전 완만한 상승 포착) ──
-function trendSection(trend: any[]): string {
-  if (!trend.length) return '(추세 데이터 없음)';
-  return trend
-    .map((c) => {
-      const rising = (c.rising as any[]) || [];
-      if (!rising.length) return `▫️ ${c.channel}: 특이 상승 없음`;
-      const items = rising.map((r) => `${r.category} ${r.prev}→${r.cur}(+${r.delta})`).join(' · ');
-      return `📈 ${c.channel}: ${items}`;
-    })
-    .join('\n');
-}
-
-// ── 이상 징후(문제 예측): 급증 채널 분해 + 부정감정 상승 채널 ──
+// 급증 카테고리 -> 점검할 시스템 힌트.
 const CATEGORY_HINT: Record<string, string> = {
   '환불': '결제·환불',
   '미납·결제': '결제·수납',
@@ -111,81 +44,131 @@ const CATEGORY_HINT: Record<string, string> = {
   '교재·배송': '교재 배송',
   '라이브': '라이브 송출',
 };
-function anomalySection(spikes: any[], analysis: any[]): string {
-  const lines: string[] = [];
 
+const HEMOJI: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
+
+// ── "오늘 볼 것": 조치가 필요한 항목만 모음(수집 이상 · 응답 지연 · 급증 · 감정 악화) ──
+function buildActions(channels: any[], sla: any[], spikes: any[], sentTrend: any[]): { lines: string[]; hasRed: boolean } {
+  const lines: string[] = [];
+  let hasRed = false;
+
+  // 1) 수집 이상(원인별)
+  for (const c of channels) {
+    if (c.health === 'ok') continue;
+    if (c.health_reason === 'auth') { lines.push(`🔴 *${c.channel}* 수집이 멈췄어요 · 쿠키 재발급 필요`); hasRed = true; }
+    else if (c.health_reason === 'heartbeat') lines.push(`🟠 *${c.channel}* 수집이 잠깐 느려요`);
+    else lines.push(`🟠 *${c.channel}* 새 상담이 뜸해요 (프로그램은 정상)`);
+  }
+
+  // 2) 응답 지연(채널당 한 줄: 장기 대기 또는 첫 응답 느림)
+  for (const s of sla) {
+    const w = num(s.waiting), oldest = num(s.oldest_wait_h), med = num(s.median_first_response_min), ans = num(s.answered_n);
+    const slow = ans >= 5 && med >= 60;
+    const longWait = oldest >= 24;
+    if (!slow && !longWait) continue;
+    const red = med >= 120 || oldest >= 36;
+    if (red) hasRed = true;
+    const parts: string[] = [];
+    if (longWait) parts.push(`대기 ${w}건 최장 ${Math.round(oldest)}시간`);
+    if (slow) parts.push(`첫 응답 ${med}분`);
+    lines.push(`${red ? '🔴' : '🟠'} *${s.channel}* 응답 지연 · ${parts.join(', ')}`);
+  }
+
+  // 3) 카테고리 급증. "평소보다 N배" 결론만(평균·배수 원값 노출 금지)
   for (const s of spikes) {
     const bd = (s.channel_breakdown as any[]) || [];
-    const dist = bd.map((b) => `${b.channel} ${b.cnt}`).join(' · ') || '채널 정보 없음';
+    const total = bd.reduce((a, b) => a + num(b.cnt), 0);
     const top = bd[0];
-    const total = bd.reduce((a: number, b: any) => a + Number(b.cnt || 0), 0);
-    const share = top && total ? pct(Number(top.cnt), total) : 0;
+    const share = top && total ? pct(num(top.cnt), total) : 0;
     const hint = CATEGORY_HINT[s.category] || '관련 업무';
-    const tail = top && share >= 50 ? `${top.channel} ${hint} 우선 점검` : '전 채널 분산(정책·이벤트 확인)';
-    lines.push(`🟠 ${s.category} 급증: 오늘 ${s.cnt}건(평소 ${s.baseline_7d}, ×${s.ratio}) · ${dist} → ${tail}`);
+    const mult = Math.max(2, Math.round(num(s.ratio) || 2));
+    const tail = top && share >= 50 ? `${top.channel} ${hint} 확인` : '이벤트·공지 영향 확인';
+    lines.push(`🔴 *${s.category}* 문의 급증 · 오늘 ${s.cnt}건, 평소보다 ${mult}배 → ${tail}`);
   }
 
-  // 부정 감정 비율이 눈에 띄게 높은 채널(표본 20건 이상, 8% 초과) 사전 경고.
-  for (const c of analysis) {
-    const s = c.sentiment || {};
-    const t = Number(s.total || 0);
-    if (t >= 20 && pct(Number(s.neg), t) > 8) {
-      lines.push(`🟠 ${c.channel} 부정 감정 비율 높음: ${s.neg}/${t} (${pct(Number(s.neg), t)}%) → 최근 문의 내용 점검 권장`);
-    }
+  // 4) 감정 악화(주간 부정률 상승, 게이트 통과 시만)
+  for (const c of sentTrend) {
+    if (!c.worsening) continue;
+    lines.push(`🟠 *${c.channel} 감정 악화* · 부정 ${c.prev_rate}%→${c.cur_rate}% → 상담 내용 점검`);
   }
 
-  return lines.length ? lines.join('\n') : '특이사항 없음 (급증·부정감정 상승 채널 없음)';
+  return { lines, hasRed };
 }
 
-function formatDaily(summary: any, analysis: any[], spikes: any[], sla: any[], trend: any[], yesterday: any | null): string {
-  const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric' });
+// ── 채널별 통합 블록: 상태·대기·문의 Top·감정·추세를 한 덩어리로 ──
+function channelBlock(label: string, coll: any, ana: any, s: any, tr: any): any {
+  const hEmo = coll ? (HEMOJI[coll.health] || '⚪') : '⚪';
+  const avg = coll?.avg_per_day ?? ana?.avg_per_day_30d ?? '?';
+  const low = Number(avg) < 1 ? ' · 저트래픽' : '';
+  const line1 = `${hEmo} *${label}*  ·  하루 ${avg}건${low}`;
+
+  const w = num(s?.waiting);
+  const wait = w > 0 ? `대기 *${w}건* (최장 ${Math.round(num(s.oldest_wait_h))}시간)` : '대기 *0건*';
+  const frt = num(s?.answered_n) >= 5 ? ` · 첫 응답 *${s.median_first_response_min}분*` : '';
+  const line2 = `　⤷ ${wait}${frt}`;
+
+  const chats = num(ana?.chats);
+  const tops = ((ana?.top_categories as any[]) || []).slice(0, 2).map((t) => `${t.category} ${pct(num(t.cnt), chats)}%`).join(' · ') || '분류 없음';
+  const sTot = num(ana?.sentiment?.total);
+  const sen = sTot > 0 ? `부정 *${pct(num(ana.sentiment.neg), sTot)}%*` : '표본 부족';
+  const line3 = `　⤷ 문의 ${tops}  ·  감정 ${sen}`;
+
+  const rising = (tr?.rising as any[]) || [];
+  const line4 = rising.length ? `　⤷ 📈 ${rising.map((r) => `${r.category} ${r.prev}→${r.cur}`).join(' · ')}` : '';
+
+  return { type: 'section', text: { type: 'mrkdwn', text: [line1, line2, line3, line4].filter(Boolean).join('\n') } };
+}
+
+function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], trend: any[], sentTrend: any[], yesterday: any | null): { blocks: any[]; fallback: string } {
+  const dateShort = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' });
+  const channels = (summary?.channels ?? []) as any[];
   const cls = summary?.classify ?? {};
   const sen = summary?.sentiment ?? {};
-  const sentTotal = Number(sen.total_user_msgs || 0);
-  const sentDone = Number(sen.done || 0);
-  const alerts = (summary?.active_alerts ?? []) as string[];
 
-  let delta = '';
+  const { lines: actions, hasRed } = buildActions(channels, sla, spikes, sentTrend);
+  const worseningN = sentTrend.filter((c) => c.worsening).length;
+
+  // 종합 상태 한 줄
+  const totalWaiting = sla.reduce((a, s) => a + num(s.waiting), 0);
+  const collBad = channels.some((c) => c.health !== 'ok');
+  const emo = hasRed ? '🔴' : actions.length ? '🟠' : '🟢';
+  const label = hasRed ? '조치 필요' : actions.length ? '주의' : '정상';
+  const statusText = `${emo} *${label}*   ·   대기 ${totalWaiting}명   ·   이상 ${spikes.length + worseningN}건   ·   수집 ${collBad ? '점검' : '정상'}`;
+
+  const actionText = actions.length ? actions.map((a) => `• ${a}`).join('\n') : '🟢 특이사항 없음 (급증·감정 악화·장기 지연 없음)';
+
+  // 채널 순서: 활동량 많은 순
+  const order = [...analysis].sort((a, b) => num(b.chats) - num(a.chats)).map((c) => c.channel);
+  for (const c of ['시대인재C', '마이클래스', '라이브']) if (!order.includes(c)) order.push(c);
+  const find = (arr: any[], k: string) => arr.find((x) => x.channel === k);
+  const channelBlocks = order.map((lb) => channelBlock(lb, find(channels, lb), find(analysis, lb), find(sla, lb), find(trend, lb)));
+
+  // 메타(작게): 파이프라인 + 어제 대비 + 진행 알림
+  const sentTotal = num(sen.total_user_msgs), sentDone = num(sen.done);
+  let yestStr = '';
   if (yesterday) {
-    const yCls = yesterday.classify ?? {};
-    const ySen = yesterday.sentiment ?? {};
-    const rq = Number(cls.review_queue ?? 0) - Number(yCls.review_queue ?? 0);
-    const sd = sentDone - Number(ySen.done ?? 0);
-    delta =
-      `\n*어제 대비*\n` +
-      `재검토 큐: ${fmtDelta(rq)}건 (어제 ${yCls.review_queue ?? '?'} → 오늘 ${cls.review_queue ?? '?'})\n` +
-      `감정분석 처리: ${fmtDelta(sd)}건`;
-  } else {
-    delta = `\n*어제 대비*\n(어제 기록 없음, 내일부터 비교 표시)`;
+    const rq = num(cls.review_queue) - num((yesterday.classify ?? {}).review_queue);
+    const sd = sentDone - num((yesterday.sentiment ?? {}).done);
+    yestStr = `   ·   어제比 재검토 ${fmtDelta(rq)}, 감정 ${fmtDelta(sd)}`;
   }
+  const alerts = (summary?.active_alerts ?? []) as string[];
+  const alertStr = alerts.length ? `   ·   ⚠️ ${alerts.map(friendlyAlert).join(', ')}` : '';
+  const metaText = `미분류 ${cls.unclassified ?? '?'} · 재검토큐 ${cls.review_queue ?? '?'} · 감정분석 ${pct(sentDone, sentTotal)}% (${sentDone.toLocaleString()}/${sentTotal.toLocaleString()})${yestStr}${alertStr}`;
 
-  const alertLine = alerts.length
-    ? `⚠️ 진행 중인 알림: ${alerts.map(friendlyAlert).join(', ')}`
-    : '✅ 진행 중인 알림 없음';
+  const blocks = [
+    { type: 'header', text: { type: 'plain_text', text: `📅 카카오 상담 요약 · ${dateShort}`, emoji: true } },
+    { type: 'section', text: { type: 'mrkdwn', text: statusText } },
+    { type: 'divider' },
+    { type: 'section', text: { type: 'mrkdwn', text: `*⚡ 오늘 볼 것*\n${actionText}` } },
+    { type: 'divider' },
+    { type: 'section', text: { type: 'mrkdwn', text: '*📊 채널별 현황 (최근 7일)*' } },
+    ...channelBlocks,
+    { type: 'divider' },
+    { type: 'context', elements: [{ type: 'mrkdwn', text: metaText }] },
+  ];
 
-  return [
-    `📅 *카카오 상담 파이프라인 일일 요약* · ${today}`,
-    ``,
-    `*수집 (채널별 상태)*`,
-    collectionLines((summary?.channels ?? []) as any[]),
-    ``,
-    `*응답 현황 (지금 답 기다리는 학부모)*`,
-    slaSection(sla),
-    ``,
-    `*채널별 분석 (최근 7일)*`,
-    channelSection(analysis),
-    ``,
-    `*주간 추세 (지난주 대비 상승)*`,
-    trendSection(trend),
-    ``,
-    `*이상 징후 / 주의*`,
-    anomalySection(spikes, analysis),
-    delta,
-    ``,
-    `*파이프라인*`,
-    `미분류 ${cls.unclassified ?? '?'}건 · 재검토 큐 ${(cls.review_queue ?? 0).toLocaleString?.() ?? cls.review_queue}건 · 감정분석 ${sentDone.toLocaleString()}/${sentTotal.toLocaleString()} (${pct(sentDone, sentTotal)}%)`,
-    alertLine,
-  ].join('\n');
+  const fallback = `카카오 상담 요약 ${dateShort} · ${label} · 대기 ${totalWaiting}명 · 이상 ${spikes.length + worseningN}건`;
+  return { blocks, fallback };
 }
 
 Deno.serve(async (req: Request) => {
@@ -211,11 +194,14 @@ Deno.serve(async (req: Request) => {
   if (slErr) log('sla rpc fail:', slErr.message);
   const { data: trendRaw, error: tErr } = await supabase.rpc('kakao_weekly_trend', { min_count: 3 });
   if (tErr) log('weekly trend rpc fail:', tErr.message);
+  const { data: sentTrendRaw, error: stErr } = await supabase.rpc('kakao_sentiment_trend', { min_samples: 30 });
+  if (stErr) log('sentiment trend rpc fail:', stErr.message);
 
   const analysis = (analysisRaw as any[]) || [];
   const spikes = (spikeRaw as any[]) || [];
   const sla = (slaRaw as any[]) || [];
   const trend = (trendRaw as any[]) || [];
+  const sentTrend = (sentTrendRaw as any[]) || [];
 
   // 어제 스냅샷(어제 대비용)
   const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
@@ -226,12 +212,12 @@ Deno.serve(async (req: Request) => {
     .eq('snapshot_date', yesterdayDate)
     .maybeSingle();
 
-  const text = formatDaily(summary, analysis, spikes, sla, trend, (ySnap as any)?.summary ?? null);
-  const sent = await sendSlack(text);
+  const { blocks, fallback } = buildBlocks(summary, analysis, spikes, sla, trend, sentTrend, (ySnap as any)?.summary ?? null);
+  const sent = await sendSlack(fallback, blocks);
 
-  // 이력 저장(어제 대비 + 채널별 추세·SLA 보관)
+  // 이력 저장(어제 대비 + 채널별 추세·SLA·감정추세 보관)
   const { error: snapErr } = await supabase.from('kakao_partner_daily_snapshot').upsert(
-    { snapshot_date: snapshotDate, summary: { ...summary, channel_analysis: analysis, spikes, sla, weekly_trend: trend } },
+    { snapshot_date: snapshotDate, summary: { ...summary, channel_analysis: analysis, spikes, sla, weekly_trend: trend, sentiment_trend: sentTrend } },
     { onConflict: 'snapshot_date' },
   );
   if (snapErr) log('snapshot save fail:', snapErr.message);
@@ -240,15 +226,15 @@ Deno.serve(async (req: Request) => {
   return json({ sent, slack_configured: !!SLACK_WEBHOOK_URL, snapshot_saved: !snapErr, at: new Date().toISOString() });
 });
 
-async function sendSlack(text: string): Promise<boolean> {
+async function sendSlack(fallback: string, blocks: unknown[]): Promise<boolean> {
   if (!SLACK_WEBHOOK_URL) {
-    log('[daily-summary] SLACK_WEBHOOK_URL 미설정, 로그만:\n' + text);
+    log('[daily-summary] SLACK_WEBHOOK_URL 미설정, 로그만:\n' + fallback);
     return false;
   }
   const res = await fetch(SLACK_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text: fallback, blocks }),
   });
   if (!res.ok) {
     log('[daily-summary] slack post fail:', res.status, await res.text().catch(() => ''));
