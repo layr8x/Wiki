@@ -61,35 +61,44 @@ State=Idle (COMPONENT, 24×24 — 아이콘 자체가 버튼, 별도 히트패�
 
 ---
 
-## 4. 모션 스펙 — "숨쉬는 컴패니언 + 클릭 리플" (3차, 현재 프로덕션)
+## 4. 모션 스펙 — "숨쉬는 컴패니언 + 클릭 리플" (4차, 현재 프로덕션)
 
-### 4-0. 현재 모션 (코드 정본, `public/myclass-chatbot.html:66-90` 부근)
+### 4-0. 현재 모션 (코드 정본, `public/myclass-chatbot.html:66-92` 부근)
 
 역할을 셋으로 분리했다 — **앰비언트(계속 순환)** / **인터랙션(호버·프레스 반응)** / **피드백(클릭 1회성)**.
 
+> **4차 개정(2026-07-02) 변경 사유** — 사용자 피드백: "이 블러 효과가 좋다고 생각하는거야? 시퍼래서 아이콘이 잘 보이지도 않는데? 그라데이션은 왜이렇게 촌스러운거야" + "명색이 챗봇 아이콘인데 입체적인 모션 효과를 줄 수 없어? 3차원으로". 3차의 글로우(`radial-gradient(circle,var(--interactive) 0%,transparent 72%)`, hover 시 opacity `.55`)가 (a) 0% 지점이 단색으로 시작해 가장자리만 blur로 문질러 **"평평한 원반"처럼 보이고**, (b) 불투명도가 높아 **아이콘 선이 파란 배경에 묻혀 가독성이 떨어짐** — 두 가지를 지적받아 아래처럼 교체:
+> - **글로우 = 그라데이션 대신 "단색 원 + blur"**: `background`를 `var(--interactive)` 단색으로 채우고 `filter:blur()`만으로 가장자리를 부드럽게 만듦(그라데이션의 하드 0%-스탑 제거). 최대 불투명도도 `.55→.16`(idle 피크) / `.55→.26`(hover)로 대폭 낮춤 — 아이콘(`--icon-primary:#161616`, 진한 회흑색)이 어떤 상태에서도 또렷이 보이도록.
+> - **입체(3D) 모션 신규 추가**: `#openBtn`에 `perspective:300px`, 아이콘(`svg`)에 `transform-style:preserve-3d`로 진짜 원근 왜곡이 생기게 함. 대기 중엔 `rotateX`/`rotateY`를 미세하게(±2~4deg) 오가며 스케일 호흡과 합성 → 살아있는 듯한 미묘한 흔들림. 호버는 "보는 사람 쪽으로 살짝 기울이는" 인사 제스처(`rotateX(-10deg) rotateY(10deg) scale(1.08)`), 프레스는 "화면 안으로 눌려 들어가는" 느낌(`rotateX(8deg) rotateY(-6deg) scale(.88)`)으로 방향을 반대로 줘 대비. `filter:drop-shadow()`로 대기 시 은은한 그림자, 호버 시 파란빛이 도는 살짝 더 짙은 그림자를 추가해 "떠 있는" 입체감을 보강.
+
 | 레이어 | 대상 | 애니메이션 | 주기·duration | easing |
 |---|---|---:|---:|---|
-| 아이콘 호흡 | `svg` (아이콘 전체) | `obreathe`: `scale(1)↔scale(1.035)` | 3.6s 무한 | ease-in-out |
-| 글로우(바깥) | `::before` | `oglow`: opacity `.12↔.32`, scale `.9↔1.1`, blur 3px | 3.6s 무한 | ease-in-out |
-| 글로우(안쪽) | `::after` | `oglow`(0.3s 지연), blur 1.5px, opacity .7 배수 | 3.6s 무한 | ease-in-out |
+| 아이콘 호흡(입체) | `svg` (아이콘 전체) | `obreathe`: `rotateX(0↔±2deg) rotateY(0↔±4deg) scale(1↔1.035)` 합성 | 3.6s 무한 | ease-in-out |
+| 아이콘 그림자 | `svg` | `filter:drop-shadow(0 1px 1.5px rgba(22,22,22,.14))` (정적) | — | — |
+| 글로우(바깥) | `::before` | `oglow`: 단색 원 + `blur(6px)`, opacity `.07↔.16`, scale `.92↔1.06` | 3.6s 무한 | ease-in-out |
+| 글로우(안쪽) | `::after` | `oglow`(0.3s 지연), 단색 원 + `blur(2.5px)` | 3.6s 무한 | ease-in-out |
 | 눈 깜빡임 | `.eye`×2 | `oblink` (§4-2, 변경 없음) | 3.4s 무한 | ease-in-out |
-| **호버 진입** | `svg` | `animation-play-state:paused`(호흡 정지) | — | — |
-| 호버 진입 | `::before`,`::after` | `oglowHover`: opacity `.55`, scale `1.22`로 스냅 | .28s 1회 | ease-out |
+| **호버 진입** | `svg` | `animation-play-state:paused`(호흡 정지) + `rotateX(-10deg) rotateY(10deg) scale(1.08)`로 기울임 | .32s | `var(--ease)` |
+| 호버 진입 | `svg` (그림자) | `drop-shadow(0 4px 6px rgba(0,67,206,.22))`로 전환 | .32s | `var(--ease)` |
+| 호버 진입 | `::before`,`::after` | `oglowHover`: opacity `.26`, scale `1.15`로 스냅 (3차 `.55`→대폭 하향) | .28s 1회 | ease-out |
 | 호버 진입 | `.bub` | `translateY(-1.5px)` | .32s | `var(--ease)` |
 | 호버 진입 | `.face` | `translateY(-2px)` | .32s | `var(--ease)` |
 | 호버 진입 | `.smile` | `opacity:0→1`, `scaleY(.45→1)` | .32s | `var(--ease)` |
 | **클릭** | `.ripple`(실제 DOM 요소) | `oripple`: `scale(.6→1.6)`, `opacity(.6→0)` | .5s **1회** (JS가 클래스 토글로 재생) | ease-out |
 | 프레스 | 컨테이너 | `scale(.8333)` | .1s | ease-out |
+| 프레스 | `svg` | `rotateX(8deg) rotateY(-6deg) scale(.88)`로 반대방향 눌림 | .1s | ease-out |
 
 **클릭 리플 구현 메모**: `.ripple`은 `::before`/`::after`(글로우가 이미 점유)와 별개인 **실제 `<span>` 요소**. JS `onclick`에서 `classList.remove('go')` → `void offsetWidth`(강제 리플로우) → `classList.add('go')` 순서로 **매번 재생 가능**하게 처리(연속 클릭에도 애니메이션이 재시작됨).
 
-**색**: 글로우·리플 전부 `var(--interactive)`(`#0043ce`, Figma `border/focus`와 동일). **아이콘 도형(bub·eye·smile)과 그 좌표는 2차 개정과 동일 — 이번엔 손대지 않음.**
+**색**: 글로우·리플 전부 `var(--interactive)`(`#0043ce`, Figma `border/focus`와 동일). **아이콘 도형(bub·eye·smile)과 그 좌표는 그대로 — 선/면 형태는 이번에도 손대지 않고 모션(transform·filter)만 조정.**
 
-**변경 이유**: 기존엔 딱딱한 링(`obeacon`)이 대기 중에도 계속 순환해 "펄스가 단순하다"는 피드백을 받았다. 앰비언트는 부드러운 글로우 호흡으로, 명확한 피드백이 필요한 순간(클릭)엔 리플을 **그때만** 터뜨리는 것으로 역할을 분리해 더 정제된 느낌을 의도.
+**검증**: Playwright(`deviceScaleFactor:6`, 요소 바운딩박스에 16px 여유를 준 `clip` 캡처 — 기본 요소 스크린샷은 `overflow:visible`로 튀어나온 글로우가 잘려 보이지 않으므로 반드시 패딩 필요)로 idle 3구간·hover·press 5프레임을 확대 비교. 모든 프레임에서 아이콘 선이 배경 글로우와 명확히 대비되어 또렷이 보임을 육안 확인, hover·press 프레임에서 말풍선 윤곽이 좌우 비대칭으로 찌그러져(원근 왜곡) 실제 3D 회전이 적용됨을 확인. `prefers-reduced-motion:reduce`에서는 호흡·글로우 애니메이션은 물론 호버/프레스의 3D 기울임·그림자도 전부 무효화(`transform:none;filter:none`)해 정적 아이콘으로 폴백.
+
+**변경 이유(3차, 유지)**: 기존엔 딱딱한 링(`obeacon`)이 대기 중에도 계속 순환해 "펄스가 단순하다"는 피드백을 받았다. 앰비언트는 부드러운 글로우 호흡으로, 명확한 피드백이 필요한 순간(클릭)엔 리플을 **그때만** 터뜨리는 것으로 역할을 분리해 더 정제된 느낌을 의도.
 
 ### 4-1 ~ 4-3. 이전(1~2차) 앰비언트 모션 — Figma 빌드에 남아있는 스펙 (참고용, 코드와 다름)
 
-> ⚠️ **아래는 3차 개정 이전(=Figma 키프레임 타임라인에 아직 남아있는) 스펙이다.** 코드는 이미 위 §4-0으로 교체됐고, **Figma 쪽 모션은 아직 3차로 동기화되지 않았다**(§7 참고). 아이콘 바운스(`Icon` 프레임의 점프+갸웃)와 비콘 링(하드엣지 핑)은 **더 이상 프로덕션에 없다** — 역사적 기록 + Figma 재동기화 시 참고용으로만 남긴다.
+> ⚠️ **아래는 3차 개정 이전(=Figma 키프레임 타임라인에 아직 남아있는) 스펙이다.** 코드는 이미 위 §4-0(4차)으로 교체됐고, **Figma 쪽 모션은 아직 3차/4차로 동기화되지 않았다**(§7 참고). 아이콘 바운스(`Icon` 프레임의 점프+갸웃)와 비콘 링(하드엣지 핑)은 **더 이상 프로덕션에 없다** — 역사적 기록 + Figma 재동기화 시 참고용으로만 남긴다.
 
 ### 4-1. (구) 아이콘 바운스 (`oidle`, 6s, ease-in-out) — 대상: `Icon` 프레임
 

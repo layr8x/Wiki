@@ -63,12 +63,13 @@
   .headicons .ms{font-size:24px;color:#161616;cursor:pointer}
   .bell{position:relative}
   .bell::after{content:"";position:absolute;top:1px;right:2px;width:6px;height:6px;border-radius:50%;background:#161616}
-  /* 진입 아이콘 — 2026-07-02 3차 개정: '숨쉬는 컴패니언 + 클릭 리플'. 앰비언트(부드러운 이중 글로우 호흡)와
-     피드백(클릭 시 1회성 링 리플)의 역할을 분리 — 이전엔 딱딱한 링 펄스가 계속 순환해 밋밋했던 것을 개선. */
-  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:transparent;cursor:pointer}
-  #openBtn svg{position:relative;z-index:1;overflow:visible;animation:obreathe 3.6s ease-in-out infinite}
-  #openBtn:hover svg{animation-play-state:paused}
+  /* 진입 아이콘 — 2026-07-02 4차 개정: 글로우를 그라데이션 원반 대신 '흐림(blur) 기반' 저채도 헤일로로 교체(아이콘
+     가독성 우선, 최대 불투명도 대폭 하향)하고, 아이콘 자체에 perspective/rotateX·Y로 진짜 입체 모션을 부여. */
+  #openBtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:transparent;cursor:pointer;perspective:300px}
+  #openBtn svg{position:relative;z-index:1;overflow:visible;transform-style:preserve-3d;transform-origin:center;filter:drop-shadow(0 1px 1.5px rgba(22,22,22,.14));animation:obreathe 3.6s ease-in-out infinite}
+  #openBtn:hover svg{animation-play-state:paused;transform:rotateX(-10deg) rotateY(10deg) scale(1.08);filter:drop-shadow(0 4px 6px rgba(0,67,206,.22));transition:transform .32s var(--ease),filter .32s var(--ease)}
   #openBtn:active{transform:scale(.8333);transition:transform .1s ease-out}
+  #openBtn:active svg{transform:rotateX(8deg) rotateY(-6deg) scale(.88);transition:transform .1s ease-out}
   #openBtn .bub{fill:none;stroke:var(--icon-primary);stroke-width:1.5;stroke-linejoin:miter;transform-box:fill-box;transform-origin:center;transition:transform .32s var(--ease)}
   #openBtn:hover .bub{transform:translateY(-1.5px)}
   #openBtn .face{transform-box:fill-box;transform-origin:center;transition:transform .32s var(--ease)}
@@ -76,20 +77,21 @@
   #openBtn .eye{fill:var(--icon-primary);transform-box:fill-box;transform-origin:center;animation:oblink 3.4s ease-in-out infinite}
   #openBtn .smile{fill:none;stroke:var(--icon-primary);stroke-width:1.5;stroke-linecap:round;transform-box:fill-box;transform-origin:center bottom;opacity:0;transform:scaleY(.45);transition:opacity .32s var(--ease),transform .32s var(--ease)}
   #openBtn:hover .smile{opacity:1;transform:scaleY(1)}
-  /* 앰비언트 글로우 — 이중 레이어(바깥 넓고 흐림 + 안쪽 좁고 또렷)를 살짝 다른 위상으로 겹쳐 숨쉬는 깊이감 */
-  #openBtn::before,#openBtn::after{content:"";position:absolute;z-index:0;border-radius:50%;background:radial-gradient(circle,var(--interactive) 0%,transparent 72%);pointer-events:none;animation:oglow 3.6s ease-in-out infinite}
-  #openBtn::before{inset:-9px;filter:blur(3px)}
-  #openBtn::after{inset:-5px;filter:blur(1.5px);opacity:.7;animation-delay:.3s}
+  /* 앰비언트 글로우 — 그라데이션 원반(하드 엣지) 대신 단색 원 + 흐림으로 부드러운 헤일로만 만듦. 불투명도는
+     아이콘 선(--icon-primary, 진한 회흑색)이 항상 또렷이 보이도록 낮게 유지 */
+  #openBtn::before,#openBtn::after{content:"";position:absolute;z-index:0;border-radius:50%;background:var(--interactive);pointer-events:none;animation:oglow 3.6s ease-in-out infinite}
+  #openBtn::before{inset:-10px;filter:blur(6px)}
+  #openBtn::after{inset:-4px;filter:blur(2.5px);animation-delay:.3s}
   #openBtn:hover::before,#openBtn:hover::after{animation:oglowHover .28s ease-out forwards}
   /* 클릭 리플 — 앰비언트와 분리된 1회성 피드백(실제 DOM 요소, JS가 클릭마다 재생) */
   #openBtn .ripple{position:absolute;z-index:1;inset:-8px;border-radius:50%;border:1.5px solid var(--interactive);opacity:0;pointer-events:none;transform:scale(.6)}
   #openBtn .ripple.go{animation:oripple .5s ease-out}
-  @keyframes obreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
-  @keyframes oglow{0%,100%{opacity:.12;transform:scale(.9)}50%{opacity:.32;transform:scale(1.1)}}
-  @keyframes oglowHover{to{opacity:.55;transform:scale(1.22)}}
+  @keyframes obreathe{0%,100%{transform:rotateX(0deg) rotateY(0deg) scale(1)}25%{transform:rotateX(2deg) rotateY(3deg) scale(1.015)}50%{transform:rotateX(0deg) rotateY(0deg) scale(1.035)}75%{transform:rotateX(-2deg) rotateY(-4deg) scale(1.015)}}
+  @keyframes oglow{0%,100%{opacity:.07;transform:scale(.92)}50%{opacity:.16;transform:scale(1.06)}}
+  @keyframes oglowHover{to{opacity:.26;transform:scale(1.15)}}
   @keyframes oripple{0%{opacity:.6;transform:scale(.6)}100%{opacity:0;transform:scale(1.6)}}
   @keyframes oblink{0%,30%,100%{transform:scaleY(1)}34%{transform:scaleY(.08)}38%{transform:scaleY(1)}78%{transform:scaleY(1)}81%{transform:scaleY(.08)}84%{transform:scaleY(1)}87%{transform:scaleY(.08)}90%{transform:scaleY(1)}}
-  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::before,#openBtn::after{animation:none}#openBtn .face,#openBtn .smile{transition:none}#openBtn .ripple.go{animation:none;transition:opacity .2s}}
+  @media (prefers-reduced-motion:reduce){#openBtn svg,#openBtn .eye,#openBtn::before,#openBtn::after{animation:none}#openBtn svg{transition:none;filter:none}#openBtn:hover svg,#openBtn:active svg{transform:none;filter:none;transition:none}#openBtn .face,#openBtn .smile{transition:none}#openBtn .ripple.go{animation:none;transition:opacity .2s}}
   .userrow{grid-area:user;display:flex;align-items:center;gap:8px;white-space:nowrap}
   .userrow .loc{display:flex;align-items:center;gap:4px}
   .userrow .branch{font-weight:700;font-size:16px}
