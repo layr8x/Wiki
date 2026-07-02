@@ -54,6 +54,7 @@ analysis/myclass-chatbot/
 
   ── 디자인·검증·연동 ──
   DESIGN_TOKENS.md        ← LUMEN 디자인 시스템 토큰(실측)
+  ENTRY_LAUNCHER_MOTION_GUIDE.md ← 진입 버튼(호스트 앱 헤더 런처) Figma 빌드·모션 키프레임 스펙
   QA_PLAN.md              ← 품질 기준 · 테스트 플랜
   BACKEND_INTEGRATION.md  ← 목업 카드 → 실 API 매핑·연동 패턴
   MEASUREMENT_SPEC.md     ← 측정 설계(자가해결율 North Star · GA4 이벤트)
