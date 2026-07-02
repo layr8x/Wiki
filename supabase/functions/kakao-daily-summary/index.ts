@@ -34,7 +34,13 @@ const json = (o: unknown, status = 200) =>
 
 const HEALTH_EMOJI: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
 
-function formatDailySummary(summary: any, categoryTop: any[], sentimentToday: any[]): string {
+function fmtDelta(n: number): string {
+  if (n > 0) return `+${n.toLocaleString()}`;
+  if (n < 0) return `${n.toLocaleString()}`;
+  return '변화 없음';
+}
+
+function formatDailySummary(summary: any, categoryTop: any[], sentimentToday: any[], yesterday: any | null): string {
   const channels = (summary?.channels ?? []) as any[];
   const channelLines = channels
     .map((c) => `${HEALTH_EMOJI[c.health] ?? '⚪'} ${c.channel} — heartbeat ${c.hb_age_min}분 전 · 마지막 메시지 ${c.hrs_since_msg ?? '?'}시간 전`)
@@ -61,6 +67,23 @@ function formatDailySummary(summary: any, categoryTop: any[], sentimentToday: an
   );
   const sentimentLine = `긍정 ${sentSum.pos} · 중립 ${sentSum.neu} · 부정 ${sentSum.neg}`;
 
+  // 어제 대비 변화 — kakao_partner_daily_snapshot 에 어제 기록이 있을 때만 표시.
+  let deltaLines: string[] = [];
+  if (yesterday) {
+    const yCls = yesterday.classify ?? {};
+    const ySen = yesterday.sentiment ?? {};
+    const reviewDelta = (Number(cls.review_queue ?? 0)) - (Number(yCls.review_queue ?? 0));
+    const sentDoneDelta = sentDone - Number(ySen.done ?? 0);
+    deltaLines = [
+      ``,
+      `*📈 어제 대비*`,
+      `재검토 큐: ${fmtDelta(reviewDelta)}건 (어제 ${yCls.review_queue ?? '?'}건 → 오늘 ${cls.review_queue ?? '?'}건)`,
+      `감정분석 처리: ${fmtDelta(sentDoneDelta)}건`,
+    ];
+  } else {
+    deltaLines = [``, `*📈 어제 대비*`, `(어제 기록 없음 — 내일부터 비교 표시됩니다)`];
+  }
+
   return [
     `📅 *카카오 상담 파이프라인 일일 요약* — ${today}`,
     ``,
@@ -77,6 +100,7 @@ function formatDailySummary(summary: any, categoryTop: any[], sentimentToday: an
     `*📊 오늘의 상담 분석 (최근 24시간)*`,
     `가장 많은 문의: ${topCategoryLine}`,
     `오늘 감정: ${sentimentLine}`,
+    ...deltaLines,
     ``,
     alertLine,
   ].join('\n');
@@ -124,11 +148,21 @@ Deno.serve(async (req: Request) => {
   const categoryTop = (categoryDist as any[]) || [];
   const sentimentToday = (sentimentTrend as any[]) || [];
 
-  const text = formatDailySummary(summary, categoryTop, sentimentToday);
+  // 어제 스냅샷 조회(있으면 "어제 대비" 비교 표시).
+  const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); // YYYY-MM-DD
+  const yesterdayDate = new Date(new Date(snapshotDate + 'T00:00:00Z').getTime() - 86400000)
+    .toISOString()
+    .slice(0, 10);
+  const { data: yesterdaySnap } = await supabase
+    .from('kakao_partner_daily_snapshot')
+    .select('summary')
+    .eq('snapshot_date', yesterdayDate)
+    .maybeSingle();
+
+  const text = formatDailySummary(summary, categoryTop, sentimentToday, (yesterdaySnap as any)?.summary ?? null);
   const sent = await sendSlack(text);
 
   // 이력 저장 — 슬랙 메시지 자체는 안 쌓이므로, 실제 조회 가능한 이력은 이 테이블에 남긴다.
-  const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); // YYYY-MM-DD
   const { error: snapErr } = await supabase.from('kakao_partner_daily_snapshot').upsert(
     { snapshot_date: snapshotDate, summary: { ...summary, category_top: categoryTop, sentiment_today: sentimentToday } },
     { onConflict: 'snapshot_date' },

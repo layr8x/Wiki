@@ -37,6 +37,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const SLACK_WEBHOOK_URL = Deno.env.get('SLACK_WEBHOOK_URL') ?? '';
 const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? '';
 const LLM_ENABLED = ANTHROPIC_KEY.length > 0;
 const MODEL = 'claude-haiku-4-5'; // scripts/classify-kakao-stream.mjs 와 동일 모델(기존 검증된 선택)
@@ -50,6 +51,73 @@ const log = (...a: unknown[]) => console.log(`[${new Date().toISOString()}]`, ..
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// ───────────────────── 재분류 완료 마일스톤 알림 ─────────────────────
+// 레거시 '기타' 재검토 큐(§②)가 0건이 되면(=한 번 수렴하면) 05번 문서(analysis/outputs/
+// 05_상담분류_고도화.md)가 예측했던 개선폭이 실제로 얼마나 됐는지 최종 결과를 1회만 Slack
+// 으로 알린다. kakao_partner_alert_state 를 재사용해 중복 발송을 막는다(kakao-alert 와
+// 같은 테이블·컨벤션 — 이 함수는 그 테이블에 새 alert_key 를 하나 더 얹을 뿐).
+async function sendSlack(text: string) {
+  if (!SLACK_WEBHOOK_URL) {
+    log('[milestone] SLACK_WEBHOOK_URL 미설정 — 로그만 남김:\n' + text);
+    return;
+  }
+  try {
+    const res = await fetch(SLACK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) log('[milestone] slack post fail:', res.status, await res.text().catch(() => ''));
+  } catch (e) {
+    log('[milestone] slack post error:', (e as Error).message);
+  }
+}
+
+async function checkReclassifyMilestone() {
+  const { count: remaining } = await supabase
+    .from('kakao_partner_chats')
+    .select('*', { count: 'exact', head: true })
+    .eq('category_confidence', 0.3)
+    .eq('category_model', 'rule');
+  if ((remaining ?? 0) > 0) return; // 아직 큐가 안 비었음 — 평소처럼 조용히 넘어감
+
+  const MILESTONE_KEY = 'milestone:reclassify_complete';
+  const { data: state } = await supabase
+    .from('kakao_partner_alert_state')
+    .select('status')
+    .eq('alert_key', MILESTONE_KEY)
+    .maybeSingle();
+  if (state?.status === 'ok') return; // 이미 알렸음 — 재발송 안 함(수렴 후 무한 반복 방지)
+
+  const { count: totalClassified } = await supabase
+    .from('kakao_partner_chats')
+    .select('*', { count: 'exact', head: true })
+    .not('category', 'is', null);
+  const { count: etcCount } = await supabase
+    .from('kakao_partner_chats')
+    .select('*', { count: 'exact', head: true })
+    .eq('category', '기타');
+  const etcPct = totalClassified ? ((100 * (etcCount ?? 0)) / totalClassified).toFixed(1) : '?';
+
+  await sendSlack(
+    `🎉 레거시 '기타' 재분류 큐 완료!\n` +
+      `최종 '기타' 비중: *${etcPct}%* (전체 ${totalClassified ?? '?'}건 중 ${etcCount ?? '?'}건)\n` +
+      `(재분류 전 실측 28.3% — analysis/outputs/05_상담분류_고도화.md §1)\n` +
+      `분류 방식: ${LLM_ENABLED ? 'LLM(Claude)' : '재구성 키워드 규칙'}`,
+  );
+  await supabase.from('kakao_partner_alert_state').upsert(
+    {
+      alert_key: MILESTONE_KEY,
+      status: 'ok',
+      last_payload: { etc_pct: etcPct, total_classified: totalClassified, etc_count: etcCount },
+      last_notified_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'alert_key' },
+  );
+  log('[milestone] reclassify complete notified, etc_pct=', etcPct);
+}
 
 // 1회 호출당 처리 상한(Edge Function 시간제한 방어). LLM 모드는 네트워크 호출이 섞여 더 보수적으로.
 const LIMITS = LLM_ENABLED
@@ -314,6 +382,8 @@ Deno.serve(async (req: Request) => {
     .limit(LIMITS.sentiments);
   if (msgErr) log('select msgs fail:', msgErr.message);
   summary.sentiments = await classifySentimentBatch((msgs as any[]) || []);
+
+  await checkReclassifyMilestone();
 
   log('done', JSON.stringify(summary));
   return json(summary);
