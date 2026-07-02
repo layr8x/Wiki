@@ -7,9 +7,12 @@
 //   그래서 "물어보면 답한다" 대신 "매일 정해진 시각에 알아서 올라온다" 방식으로 같은 정보를
 //   제공한다 — 관리자 승인 불필요, 지금 바로 동작.
 //
-// 동작: pg_cron 이 매일 1회(기본 09:00 KST = 00:00 UTC) 호출 → kakao_status_summary() RPC
-//   조회 → SLACK_WEBHOOK_URL 로 직접 POST. SLACK_WEBHOOK_URL 미설정 시 로그만 남기고 스킵
-//   (kakao-collect 의 "시크릿 없으면 skip" 관례와 동일).
+// 동작: pg_cron 이 매일 1회(기본 09:00 KST = 00:00 UTC) 호출 → kakao_status_summary()(운영
+//   상태) + get_chat_category_distribution/get_sentiment_trend(오늘의 상담 내용 분석, 기존
+//   대시보드용 RPC 재사용) 조회 → SLACK_WEBHOOK_URL 로 직접 POST. 이어서 그 결과를
+//   kakao_partner_daily_snapshot 테이블에 날짜별로 남겨, "며칠 전엔 어땠는지" 나중에
+//   다시 꺼내볼 수 있게 한다(슬랙 메시지 자체는 안 쌓이므로 이 테이블이 실제 이력 저장소).
+//   SLACK_WEBHOOK_URL 미설정 시 로그만 남기고 스킵(kakao-collect 의 "시크릿 없으면 skip" 관례).
 //
 // 인증: kakao-collect 와 동일 패턴 — kakao_partner_secrets.key='kakao_daily_summary_token' 비교.
 // 배포: supabase functions deploy kakao-daily-summary --no-verify-jwt
@@ -31,7 +34,7 @@ const json = (o: unknown, status = 200) =>
 
 const HEALTH_EMOJI: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
 
-function formatDailySummary(summary: any): string {
+function formatDailySummary(summary: any, categoryTop: any[], sentimentToday: any[]): string {
   const channels = (summary?.channels ?? []) as any[];
   const channelLines = channels
     .map((c) => `${HEALTH_EMOJI[c.health] ?? '⚪'} ${c.channel} — heartbeat ${c.hb_age_min}분 전 · 마지막 메시지 ${c.hrs_since_msg ?? '?'}시간 전`)
@@ -48,6 +51,16 @@ function formatDailySummary(summary: any): string {
 
   const today = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric' });
 
+  const topCategoryLine = categoryTop.length
+    ? categoryTop.slice(0, 5).map((r) => `${r.category} ${r.cnt}건(${r.pct}%)`).join(' · ')
+    : '(최근 24시간 분류된 대화 없음)';
+
+  const sentSum = sentimentToday.reduce(
+    (acc, r) => ({ pos: acc.pos + Number(r.positive || 0), neu: acc.neu + Number(r.neutral || 0), neg: acc.neg + Number(r.negative || 0) }),
+    { pos: 0, neu: 0, neg: 0 },
+  );
+  const sentimentLine = `긍정 ${sentSum.pos} · 중립 ${sentSum.neu} · 부정 ${sentSum.neg}`;
+
   return [
     `📅 *카카오 상담 파이프라인 일일 요약* — ${today}`,
     ``,
@@ -58,8 +71,12 @@ function formatDailySummary(summary: any): string {
     `미분류 대기: ${cls.unclassified ?? '?'}건`,
     `레거시 '기타' 재검토 큐: ${cls.review_queue ?? '?'}건 남음`,
     ``,
-    `*감정분석*`,
+    `*감정분석 진행률*`,
     `${sentDone.toLocaleString()} / ${sentTotal.toLocaleString()}건 처리 (${sentPct}%)`,
+    ``,
+    `*📊 오늘의 상담 분석 (최근 24시간)*`,
+    `가장 많은 문의: ${topCategoryLine}`,
+    `오늘 감정: ${sentimentLine}`,
     ``,
     alertLine,
   ].join('\n');
@@ -98,8 +115,26 @@ Deno.serve(async (req: Request) => {
     return json({ error: error.message }, 500);
   }
 
-  const text = formatDailySummary(summary);
+  // 오늘의 상담 내용 분석 — 대시보드가 이미 쓰는 RPC 재사용(20260527_kakao_category_sentiment.sql).
+  const { data: categoryDist, error: catErr } = await supabase.rpc('get_chat_category_distribution', { window_days: 1 });
+  if (catErr) log('category rpc fail:', catErr.message);
+  const { data: sentimentTrend, error: senErr } = await supabase.rpc('get_sentiment_trend', { window_days: 1 });
+  if (senErr) log('sentiment trend rpc fail:', senErr.message);
+
+  const categoryTop = (categoryDist as any[]) || [];
+  const sentimentToday = (sentimentTrend as any[]) || [];
+
+  const text = formatDailySummary(summary, categoryTop, sentimentToday);
   const sent = await sendSlack(text);
-  log('daily summary done', JSON.stringify({ sent, slack_configured: !!SLACK_WEBHOOK_URL }));
-  return json({ sent, slack_configured: !!SLACK_WEBHOOK_URL, at: new Date().toISOString() });
+
+  // 이력 저장 — 슬랙 메시지 자체는 안 쌓이므로, 실제 조회 가능한 이력은 이 테이블에 남긴다.
+  const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' }); // YYYY-MM-DD
+  const { error: snapErr } = await supabase.from('kakao_partner_daily_snapshot').upsert(
+    { snapshot_date: snapshotDate, summary: { ...summary, category_top: categoryTop, sentiment_today: sentimentToday } },
+    { onConflict: 'snapshot_date' },
+  );
+  if (snapErr) log('snapshot save fail:', snapErr.message);
+
+  log('daily summary done', JSON.stringify({ sent, slack_configured: !!SLACK_WEBHOOK_URL, snapshot_saved: !snapErr }));
+  return json({ sent, slack_configured: !!SLACK_WEBHOOK_URL, snapshot_saved: !snapErr, at: new Date().toISOString() });
 });
