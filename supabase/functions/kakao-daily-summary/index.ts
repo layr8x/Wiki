@@ -45,6 +45,10 @@ const CATEGORY_HINT: Record<string, string> = {
 
 const HEMOJI: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
 
+// 채널 표시 우선순위(사용자 설정). 모든 화면이 이 순서를 따른다. 여기만 바꾸면 전 화면 반영.
+const CHANNEL_PRIORITY = ['마이클래스', '라이브', '시대인재C'];
+const byPriority = (a: any, b: any) => CHANNEL_PRIORITY.indexOf(a.channel) - CHANNEL_PRIORITY.indexOf(b.channel);
+
 // "오늘 볼 것": 조치가 필요한 항목만 모음
 function buildActions(channels: any[], sla: any[], spikes: any[], sentTrend: any[]): { lines: string[]; hasRed: boolean } {
   const lines: string[] = [];
@@ -132,6 +136,7 @@ function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], t
   const cls = summary?.classify ?? {};
   const sen = summary?.sentiment ?? {};
 
+  sla = [...sla].sort(byPriority); // 채널 우선순위 순으로 (오늘 볼 것·대기 등 전부 이 순서)
   const { lines: actions, hasRed } = buildActions(channels, sla, spikes, sentTrend);
   const worseningN = sentTrend.filter((c) => c.worsening).length;
 
@@ -143,8 +148,7 @@ function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], t
 
   const actionText = actions.length ? actions.map((a) => `• ${a}`).join('\n') : '🟢 특이사항 없음 (급증·감정 악화·장기 지연 없음)';
 
-  const order = [...analysis].sort((a, b) => num(b.chats) - num(a.chats)).map((c) => c.channel);
-  for (const c of ['시대인재C', '마이클래스', '라이브']) if (!order.includes(c)) order.push(c);
+  const order = CHANNEL_PRIORITY; // 채널 카드도 우선순위 순
   const find = (arr: any[], k: string) => arr.find((x) => x.channel === k);
   const channelBlocks = order.map((lb) => channelBlock(lb, find(channels, lb), find(analysis, lb), find(sla, lb), find(trend, lb)));
 

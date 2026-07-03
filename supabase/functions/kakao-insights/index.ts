@@ -16,6 +16,10 @@ const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 const num = (v: unknown) => Number(v ?? 0);
 
+// 채널 표시 우선순위(사용자 설정): 마이클래스 > 라이브 > 시대인재C.
+const CHANNEL_PRIORITY = ['마이클래스', '라이브', '시대인재C'];
+const byPriority = (a: any, b: any) => CHANNEL_PRIORITY.indexOf(a.channel) - CHANNEL_PRIORITY.indexOf(b.channel);
+
 function sec(text: string) { return { type: 'section', text: { type: 'mrkdwn', text } }; }
 function ctx(text: string) { return { type: 'context', elements: [{ type: 'mrkdwn', text }] }; }
 const divider = { type: 'divider' };
@@ -98,7 +102,7 @@ function buildBlocks(d: any): { blocks: any[]; fallback: string } {
 
   // 근거(요약): 숫자는 조치의 뒷받침으로만 간결히.
   const tops = ((d.top_categories as any[]) || []).slice(0, 3).map((t) => `${t.category} ${num(t.cnt)}건`).join(' · ');
-  const sla = (d.sla as any[]) || [];
+  const sla = ((d.sla as any[]) || []).slice().sort(byPriority);
   const w30 = sla.filter((s) => num(s.answered) >= 5).map((s) => `${s.channel} ${num(s.within_30)}%`).join(' · ');
   const evidence =
     `*📊 근거 (요약)*\n` +
