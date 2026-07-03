@@ -654,10 +654,14 @@ const NODES={
   home(){log.innerHTML='';setBanner();crumb('문제를 바로 해결하도록 도와드려요.');heroGreet();menuGrid();},
 
   /* ① 출결·보강 (v6: 오늘 출석 · 강좌 선택 · 입반 강좌 확인) */
-  m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'person_check',go:'at_today'},{t:'보강 확인',ic:'add_notes',go:'at_course'},{t:'입반 강좌 확인',ic:'check_circle',go:'en_check'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
+  m_attend(){crumb('출결·보강');botSay('출결·보강, 무엇을 확인할까요?');quick([{t:'오늘 출석 확인',ic:'person_check',go:'at_today'},{t:'보강 확인',ic:'add_notes',go:'at_course'},{t:'입반 강좌 확인',ic:'check_circle',go:'en_check'},{t:'재수강 확인',ic:'history',go:'en_recheck'},{t:'대기 번호 확인',ic:'pending_actions',go:'at_waitlist'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   at_today(){crumb('출결·보강','오늘 출석 확인');const today=[{c:COURSES[0],time:'13:30-17:05',st:'attend',at:'13:58'},{c:COURSES[2],time:'18:25-22:00',st:'soon'}];if(!today.length){botSay('오늘(6/24)은 수업이 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>오늘(6/24) 출석 현황</b>이에요.</div>`+today.map(t=>`<div class="atblk"><div class="atc">${t.c}</div><div class="krow"><span class="k">수업시간</span><span class="v">${t.time}</span></div><div class="krow"><span class="k">출결상태</span>${t.st==='attend'?`<span class="attag ok">${ms('check_circle','fill')}${t.at}</span>`:`<span class="attag soon">${ms('do_not_disturb_on','fill')}출석예정</span>`}</div></div>`).join(''));navEnd('m_attend',true);},
   at_course(){crumb('출결·보강','보강 확인');if(!COURSES.length){botSay('현재 입반 중인 강좌가 없어요.');navEnd('m_attend',false);return;}botSay('어떤 강좌를 확인할까요?<br><span class="ftn">* 입반 완료된 강좌만 노출됩니다. (입반 예정 강좌 제외)</span>');courseChips(atAfter,'m_attend');},
   en_check(){crumb('출결·보강','입반 강좌 확인');if(!COURSES.length){botSay('현재 입반된 강좌가 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>입반된 강좌 현황</b>이에요.</div><div class="clist">`+COURSES.map(c=>`<div class="crow"><span class="subjtag">${subjectOf(c)}</span><div class="cv">${c}</div></div>`).join('')+`</div>`);navEnd('m_attend',true);},
+  /* M1 보강 — 재수강 확인 ((재)수강 확인 360건): 입반 강좌의 신규/재수강 구분 조회 */
+  en_recheck(){crumb('출결·보강','재수강 확인');if(!COURSES.length){botSay('현재 입반된 강좌가 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>재수강 여부</b>예요.</div><div class="clist">`+COURSES.map((c,i)=>`<div class="crow"><span class="subjtag">${RECHECK[i]?'재수강':'신규'}</span><div class="cv">${c}</div></div>`).join('')+`</div>`);navEnd('m_attend',true);},
+  /* M1 보강 — 대기 번호 확인 (대기자 관리 1,335건): 대기 강좌·내 대기번호·예상 충원 조회 */
+  at_waitlist(){crumb('출결·보강','대기 번호 확인');if(!WAITLIST.length){botSay('현재 대기 중인 강좌가 없어요.');navEnd('m_attend',false);return;}card(`<div class="paytitle"><b>대기 현황</b>이에요.</div>`+WAITLIST.map(w=>`<div class="atblk"><div class="atc">${w[0]}</div><div class="krow"><span class="k">대기번호</span><span class="v">${w[1]}번</span></div><div class="krow"><span class="k">예상 충원</span><span class="v">${w[2]}</span></div></div>`).join(''));navEnd('m_attend',true);},
 
   /* ② 납부·결제 */
   m_pay(){crumb('납부·결제');botSay('납부·결제, 무엇을 확인할까요?');quick([{t:'납부현황',ic:'account_balance_wallet',go:'pay_wait'},{t:'결제내역',ic:'receipt_long',go:'pay_history'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
@@ -666,10 +670,14 @@ const NODES={
   pay_history(){crumb('납부·결제','결제내역');if(!PAY_HISTORY.length){botSay('결제 내역이 없어요.');navEnd('m_pay',false);return;}cardLoad(`<div class="paytitle">최근 3개월 <b>결제 내역</b>이에요.</div><div class="phlist">${PAY_HISTORY.map((r,i)=>payHistHtml(r,i===PAY_HISTORY.length-1)).join('')}</div>`,6);moreBtn();navEnd('m_pay',true);},
 
   /* ③ 수업·시간표 */
-  m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
+  m_time(){crumb('수업·시간표');botSay('수업·시간표, 무엇을 확인할까요?');quick([{t:'내 시간표',ic:'calendar_today',go:'time_table'},{t:'강좌별 전체 회차 일정',ic:'calendar_view_month',go:'time_rounds'},{t:'종강일 확인',ic:'fact_check',go:'time_end'},{t:'강의실 안내',ic:'meeting_room',go:'time_room'},{t:'설명회·컨설팅 일정',ic:'event',go:'time_event'}]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
   time_table(){drawWeek('this');},
   time_end(){crumb('수업·시간표','종강일 확인');if(!ENDDATES.length){botSay('종강일 정보를 불러올 수 없어요.\n상담실로 문의해 주세요.');consultEnd('m_time');return;}card(`<div class="paytitle">강좌별 <b>종강일</b>이에요.</div><div class="endlist">`+ENDDATES.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">종강일</span><span class="endv">${fmtYMD(e[1])}</span></div></div>`).join('')+`<div class="endnote">* 휴강·일정 변경은 상담실로 문의해 주세요.</div></div>`);consultEnd('m_time');satis('m_time');},
   time_rounds(){crumb('수업·시간표','강좌별 전체 회차 일정');botSay('수강 중인 강좌를 선택해 주세요.');courseChips(roundsResult,'m_time');},
+  /* M1 보강 — 강의실 안내 (강의실 문의 171건): 강좌별 강의실 위치 조회 */
+  time_room(){crumb('수업·시간표','강의실 안내');if(!ROOMS.length){botSay('강의실 정보를 불러올 수 없어요.');navEnd('m_time',false);return;}card(`<div class="paytitle">강좌별 <b>강의실</b>이에요.</div><div class="endlist">`+ROOMS.map(r=>`<div class="endblk"><div class="endname">${nameOf(r[0])}</div><div class="endrow"><span class="endk">강의실</span><span class="endv">${r[1]}</span></div></div>`).join('')+`</div>`);navEnd('m_time',true);},
+  /* M1 보강 — 설명회·컨설팅 일정 (287건): 일정 조회(1차), 예약·변경은 상담 연결(2차) */
+  time_event(){crumb('수업·시간표','설명회·컨설팅 일정');if(!EVENTS.length){botSay('예정된 설명회·컨설팅 일정이 없어요.');navEnd('m_time',false);return;}card(`<div class="paytitle">다가오는 <b>설명회·컨설팅 일정</b>이에요.</div><div class="endlist">`+EVENTS.map(e=>`<div class="endblk"><div class="endname">${e[0]}</div><div class="endrow"><span class="endk">일시</span><span class="endv">${e[1]}</span></div><div class="endrow"><span class="endk">장소</span><span class="endv">${e[2]}</span></div></div>`).join('')+`<div class="endnote">* 예약·변경은 상담을 통해 진행해 주세요.</div></div>`);consultEnd('m_time');satis('m_time');},
 
   /* ④ 전반 — 전반 가능한 강좌 확인하기 */
   m_overall(){crumb('전반');botSay('전반 가능한 강좌를 확인해 드릴게요.\n어떤 강좌를 확인할까요?');quick([...OVERALL.map(o=>({t:o.c,label:nameOf(o.c)+'\n'+schedOf(o.c),plain:true,act:()=>altResult(o.c)}))]);quick([back('home'),{t:'처음으로',ic:'home',go:'home'}]);},
@@ -728,6 +736,11 @@ const ROUNDS={[COURSES[0]]:{total:6,cur:4,list:[['1회차','06/03 (월) / 13:30-
 const ENDDATES=[[COURSES[0],'2026-08-30'],[COURSES[1],'2026-07-31'],[COURSES[2],'2026-08-26'],[COURSES[3],'2026-06-30']];
 const ALT_SAME={[COURSES[0]]:[['대치단과','강은양T 국어 목 09:00~12:35'],['목동단과','강은양T 국어 금 09:00~12:35']]};
 const OVERALL=[{c:COURSES[0]},{c:COURSES[1]}];
+/* M1 보강 조회화면 데이터 — 정본 데모(실데이터는 API 바인딩). 강의실은 시간표(TT)와 동일 정합 */
+const WAITLIST=[['현정훈T 물리1 서바이벌 토 18:30-22:00 7/19','3','7월 2주 예상']];
+const RECHECK=[true,true,false,false];
+const ROOMS=[[COURSES[0],'본관 204호'],[COURSES[1],'별관 301호'],[COURSES[2],'별관 305호'],[COURSES[3],'본관 105호']];
+const EVENTS=[['고3 수시 지원 전략 설명회','7/5 (토) 14:00','본관 대강당'],['7월 진학 컨설팅','7/12 (토) 10:00','상담동 3층']];
 const TT={
   this:{range:'6/16~6/22',rows:[
     ['화','18:00-21:00','김경욱T 진선1 영어 기말 6+1회 화 18:00-21:00 5/12','본관 105호'],

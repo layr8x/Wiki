@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>마이클래스 챗봇 6월 분석 — 핵심 대시보드</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root{
+  --bg:#fafafa;--card:#fff;--fg:#09090b;--muted:#71717a;--border:#e4e4e7;
+  --primary:#18181b;--red:#ef4444;--green:#16a34a;--amber:#f59e0b;--zinc:#a1a1aa;--blue:#2563eb;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard Variable',Pretendard,-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--fg);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:32px 20px 56px}
+.wrap{max-width:1120px;margin:0 auto}
+.hd{margin-bottom:8px;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+h1{font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin-bottom:10px}
+.lede{font-size:16px;color:#3f3f46;max-width:880px;line-height:1.65}
+.lede b{color:var(--fg)}
+.gatebox{margin:18px 0 28px;padding:16px 18px;background:#f4f4f5;border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:8px;font-size:15px}
+.gatebox .y{color:var(--green);font-weight:700}.gatebox .n{color:var(--red);font-weight:700}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(5,1fr);margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.kpi .n{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.kpi .l{font-size:12px;color:var(--muted);margin-top:6px;font-weight:600}
+.kpi .s{font-size:11px;color:#a1a1aa;margin-top:2px}
+.cols{grid-template-columns:1fr 1fr}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.card .cap{font-size:12px;color:var(--muted);margin-bottom:16px}
+.full{grid-column:1/-1}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:9999px;background:#f4f4f5;color:#3f3f46;border:1px solid var(--border)}
+.badge.g{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+.badge.r{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+/* 바차트 */
+.bar{display:flex;align-items:center;gap:10px;margin:9px 0}
+.bar .lab{width:128px;font-size:12.5px;color:#3f3f46;text-align:right;flex:none}
+.bar .track{flex:1;background:#f4f4f5;border-radius:6px;height:22px;position:relative;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:7px;font-size:11px;font-weight:700;color:#fff}
+.bar .val{width:62px;font-size:12.5px;font-weight:700;flex:none}
+/* 성공률 분모별 */
+.sr .track{height:26px}
+.sr .cur{background:var(--primary);position:absolute;left:0;top:0;height:100%;border-radius:6px 0 0 6px;z-index:2}
+.sr .fut{background:#d4d4d8;position:absolute;left:0;top:0;height:100%;border-radius:6px;z-index:1}
+.gateline{position:absolute;top:-6px;bottom:-6px;left:80%;width:2px;background:var(--red);z-index:5}
+.gateline span{position:absolute;top:-18px;left:-14px;font-size:10px;font-weight:800;color:var(--red);white-space:nowrap}
+.lgnd{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-top:6px}
+.lgnd i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* 의도 stacked */
+.stack{display:flex;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.stack div{display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700}
+.stkleg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 18px;margin-top:14px;font-size:12.5px}
+.stkleg div{display:flex;align-items:center;gap:7px}.stkleg b{margin-left:auto}
+.dot{width:10px;height:10px;border-radius:3px;flex:none}
+/* MoM */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--border)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:none}
+.up{color:var(--green);font-weight:700}.down{color:var(--red);font-weight:700}
+/* 요일 column */
+.wk{display:flex;align-items:flex-end;gap:10px;height:130px;padding-top:8px}
+.wk .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+.wk .cb{width:100%;background:var(--primary);border-radius:5px 5px 0 0;min-height:3px}
+.wk .col.wknd .cb{background:var(--blue)}
+.wk .cl{font-size:11.5px;color:var(--muted)}
+.foot{margin-top:24px;font-size:11.5px;color:#a1a1aa;line-height:1.6}
+.foot b{color:#52525b}
+.tag{font-size:10.5px;font-weight:700;color:#3f3f46;background:#f4f4f5;border:1px solid var(--border);border-radius:5px;padding:1px 6px;margin-right:4px}
+@media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}.bar .lab{width:96px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hd">마이클래스 챗봇 · 2026년 6월 상담 빅데이터 분석 · 대치단과 전수</div>
+  <h1>챗봇이 상담을 얼마나 대체할 수 있는가</h1>
+  <p class="lede">6월 상담 <b>81,863건</b>(전화) + 카카오 162대화를 전수 분석. 챗봇은 상담실장의 <b>컨설팅(37.5%)을 대체할 수 없어</b> 전화 대체 상한은 <b>약 42~46%</b>(2차 완성 시). <b>진짜 대체 타깃은 컨설팅이 적은 카카오 기술지원 채널</b> — 챗봇+계정 수정으로 <b>약 88%</b>까지 대체 가능. 오픈 게이트의 <b>"80%"는 전체 상담이 아니라 "조회형 문의"를 분모</b>로 정의해야 도달 가능. <b>QA 블로커 0</b>으로 거의 완성 단계.</p>
+
+  <div class="gatebox">
+    <b>오픈 게이트 판정</b> — 전체 콜의 80%: <span class="n">불가</span>(컨설팅 37.5%가 구조적 한계) · 조회형 컨테인먼트 80%: <span class="y">도달 가능</span>(보강+파일럿 실측). <span class="badge">측정값은 2중 검증, 성공률은 3중분류+적대검증 추정(범위)</span>
+  </div>
+
+  <div class="grid kpis">
+    <div class="kpi"><div class="n">81,863</div><div class="l">6월 전화상담 (건)</div><div class="s">전월比 +18.7%</div></div>
+    <div class="kpi"><div class="n">31.6%</div><div class="l">1위 문의 = 입반</div><div class="s">입반 시즌 (+54%)</div></div>
+    <div class="kpi"><div class="n" style="color:var(--red)">37.5%</div><div class="l">컨설팅 (사람 필수)</div><div class="s">대체 불가 상한</div></div>
+    <div class="kpi"><div class="n">~45%</div><div class="l">챗봇 대체 상한</div><div class="s">2차 완성 시</div></div>
+    <div class="kpi"><div class="n" style="color:var(--green)">0</div><div class="l">QA 론칭 블로커</div><div class="s">경미 5건만</div></div>
+  </div>
+
+  <div class="grid cols">
+
+    <div class="card">
+      <h2>분모별 챗봇 성공률 <span class="badge">추정</span></h2>
+      <div class="cap">무엇을 분모로 두느냐가 80% 게이트 판정의 전부 · 검정=현재, 회색=2차후</div>
+      <div class="sr">
+        <div class="bar"><div class="lab">전체 상담</div><div class="track"><div class="fut" style="width:44%"></div><div class="cur" style="width:19%"></div><div class="gateline"><span>80% 게이트</span></div></div><div class="val">17~21%</div></div>
+        <div class="bar"><div class="lab">비컨설팅</div><div class="track"><div class="fut" style="width:61%"></div><div class="cur" style="width:28%"></div><div class="gateline"></div></div><div class="val">26~30%</div></div>
+        <div class="bar"><div class="lab">조회 전용</div><div class="track"><div class="fut" style="width:83%"></div><div class="cur" style="width:71%"></div><div class="gateline"></div></div><div class="val" style="color:var(--green)">69~73%</div></div>
+      </div>
+      <div class="lgnd"><span><i style="background:var(--primary)"></i>현재(조회 전용 구현)</span><span><i style="background:#d4d4d8"></i>2차(처리)까지 구현 시</span><span><i style="background:var(--red)"></i>80% 게이트</span></div>
+    </div>
+
+    <div class="card">
+      <h2>상담의 성격 — 의도 구성 <span class="badge">측정·분류</span></h2>
+      <div class="cap">컨설팅 37.5%가 챗봇 성공률의 구조적 한계</div>
+      <div class="stack">
+        <div style="width:20.1%;background:var(--green)">20.1%</div>
+        <div style="width:31.6%;background:var(--amber)">31.6%</div>
+        <div style="width:37.5%;background:var(--red)">37.5%</div>
+        <div style="width:10.8%;background:var(--zinc)">10.8%</div>
+      </div>
+      <div class="stkleg">
+        <div><span class="dot" style="background:var(--green)"></span>조회 <span style="color:var(--muted)">정보만 보면 끝</span><b>16,429</b></div>
+        <div><span class="dot" style="background:var(--amber)"></span>처리 <span style="color:var(--muted)">신청·결제·취소</span><b>25,828</b></div>
+        <div><span class="dot" style="background:var(--red)"></span>컨설팅 <span style="color:var(--muted)">사람 판단</span><b>30,733</b></div>
+        <div><span class="dot" style="background:var(--zinc)"></span>혼합 <span style="color:var(--muted)">조회+처리</span><b>8,873</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>대분류 Top 6 <span class="badge">측정</span></h2>
+      <div class="cap">입반+대기 = 35,525건(43.4%), 6월 최대</div>
+      <div class="bar"><div class="lab">입반 상담</div><div class="track"><div class="fill" style="width:100%;background:var(--primary)">25,867</div></div><div class="val">31.6%</div></div>
+      <div class="bar"><div class="lab">출결 관리</div><div class="track"><div class="fill" style="width:84.5%;background:var(--primary)">21,852</div></div><div class="val">26.7%</div></div>
+      <div class="bar"><div class="lab">대기자 관리</div><div class="track"><div class="fill" style="width:37.3%;background:#52525b">9,658</div></div><div class="val">11.8%</div></div>
+      <div class="bar"><div class="lab">LIVE</div><div class="track"><div class="fill" style="width:28.2%;background:#52525b">7,289</div></div><div class="val">8.9%</div></div>
+      <div class="bar"><div class="lab">정산·수납</div><div class="track"><div class="fill" style="width:26.9%;background:#52525b">6,962</div></div><div class="val">8.5%</div></div>
+      <div class="bar"><div class="lab">퇴원 상담</div><div class="track"><div class="fill" style="width:16.1%;background:#a1a1aa">4,175</div></div><div class="val">5.1%</div></div>
+    </div>
+
+    <div class="card">
+      <h2>전월 대비 (MoM) <span class="badge">측정</span></h2>
+      <div class="cap">입반·대기 폭증 = 여름 정규 시즌 등록기</div>
+      <table>
+        <thead><tr><th>대분류</th><th>5월</th><th>6월</th><th>증감</th></tr></thead>
+        <tbody>
+          <tr><td>전체</td><td>68,939</td><td>81,863</td><td class="up">+18.7%</td></tr>
+          <tr><td>입반 상담</td><td>16,834</td><td>25,867</td><td class="up">+54%</td></tr>
+          <tr><td>대기자 관리</td><td>3,116</td><td>9,658</td><td class="up">+210%</td></tr>
+          <tr><td>출결 관리</td><td>21,804</td><td>21,852</td><td>+0.2%</td></tr>
+          <tr><td>LIVE</td><td>9,206</td><td>7,289</td><td class="down">−21%</td></tr>
+          <tr><td>퇴원 상담</td><td>6,402</td><td>4,175</td><td class="down">−35%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>요일 패턴 <span class="badge">측정</span></h2>
+      <div class="cap">주말 평균이 평일의 약 1.4배 → 챗봇 24시간 운영 가치</div>
+      <div class="wk">
+        <div class="col"><div class="cb" style="height:83%"></div><div class="cl">월</div></div>
+        <div class="col"><div class="cb" style="height:78%"></div><div class="cl">화</div></div>
+        <div class="col"><div class="cb" style="height:66%"></div><div class="cl">수</div></div>
+        <div class="col"><div class="cb" style="height:63%"></div><div class="cl">목</div></div>
+        <div class="col"><div class="cb" style="height:68%"></div><div class="cl">금</div></div>
+        <div class="col wknd"><div class="cb" style="height:100%"></div><div class="cl">토</div></div>
+        <div class="col wknd"><div class="cb" style="height:95%"></div><div class="cl">일</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>카카오 기술 채널 (별도) <span class="badge">전수분류·n=162</span></h2>
+      <div class="cap">162대화 전건 정독 분류 — 단계별 누적 대체율</div>
+      <div class="bar"><div class="lab">1차 조회</div><div class="track"><div class="fill" style="width:11.7%;background:#52525b">12%</div></div><div class="val">현재 챗봇</div></div>
+      <div class="bar"><div class="lab">1차 +계정</div><div class="track"><div class="fill" style="width:50.6%;background:var(--green)">50%</div></div><div class="val">조회+계정수정</div></div>
+      <div class="bar"><div class="lab">2차 +처리</div><div class="track"><div class="fill" style="width:79.6%;background:var(--amber)">80%</div></div><div class="val">신청·결제</div></div>
+      <div style="font-size:12.5px;color:#3f3f46;margin-top:12px;line-height:1.6"><b>현재 챗봇(조회)만으론 12%</b> — 1위 문제는 계정·번호 꼬임 39%. 계정 매칭 수정을 1차에 같이 해야 50%, 처리 기능까지 가는 2차에 80%.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6">계정·번호 꼬임 39%는 로그인 전·접수 단계에서 발생 → 인앱 조회 챗봇이 닿지 않음. 가입·접수 프로세스 수정이 대체 주체.</div>
+    </div>
+
+  </div>
+
+  <div class="card full" style="margin-top:16px">
+    <h2>대체 범위 & 결정</h2>
+    <div class="cap">완전 대체가 아니라 "반복 조회·처리의 업무 이전" — 158명 실장이 컨설팅(고부가)에 집중</div>
+    <div class="stack" style="height:34px">
+      <div style="width:20.1%;background:var(--green)">현재 대체 20%</div>
+      <div style="width:31.6%;background:var(--amber)">2차로 대체 32%</div>
+      <div style="width:37.5%;background:var(--red)">사람 영구 37.5%</div>
+      <div style="width:10.8%;background:var(--zinc)">혼합</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      <span class="badge g">✓ 게이트 = 조회형 컨테인먼트 80%</span>
+      <span class="badge g">✓ M1 착수 (Before 고정·조회화면 4종 정본)</span>
+      <span class="badge">⏳ 계측 이벤트·QA 5건 (개발)</span>
+      <span class="badge">⏳ 파일럿 진행 여부 (미정)</span>
+    </div>
+    <div style="font-size:13px;color:#3f3f46;margin-top:14px;line-height:1.7">
+      <b>다음:</b> ① 미구현 조회화면 4종 보강(대기번호·재수강·강의실·설명회/컨설팅 일정) → 조회 컨테인먼트 80%선 ② 컨테인먼트 계측 이벤트 + QA 경미 5건 ③ 소규모 파일럿 → 실제 컨테인먼트 실측 → 80% 확인 시 오픈 ④ 2차(입반·대기 신청) = 흡수율 17→42% 진짜 레버.
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>데이터</b> AMS 상담 6월 전체 81,863건(암호화 원본 복호화·번호 중복제거, openpyxl·pandas 2중 검증) + 카카오 162대화. 대치단과 단일 지점. 원본 PII 미반입(집계·분류만).
+    <b>방법</b> 성공률 = 95개 중분류 3중 독립분류 + 적대적 검증(보수~낙관 범위). 챗봇 미배포라 성공률은 추정 — 진짜 값은 파일럿 컨테인먼트 실측으로 확정.
+    <b>·</b> 2026-06-30 · 연계: 심층분석 총괄본 / 측정설계 / M1 실행명세.
+  </div>
+
+</div>
+</body>
+</html>
