@@ -16,8 +16,8 @@ const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 const num = (v: unknown) => Number(v ?? 0);
 
-// 채널 표시 우선순위(사용자 설정): 마이클래스 > 라이브 > 시대인재C.
-const CHANNEL_PRIORITY = ['마이클래스', '라이브', '시대인재C'];
+// 채널 표시 우선순위(사용자 설정, 5채널): 마이클래스 > LIVE > LIVE 기술지원 > 콘텐츠 > 통합로그인.
+const CHANNEL_PRIORITY = ['마이클래스', 'LIVE', 'LIVE 기술지원', '콘텐츠', '통합로그인'];
 const byPriority = (a: any, b: any) => CHANNEL_PRIORITY.indexOf(a.channel) - CHANNEL_PRIORITY.indexOf(b.channel);
 
 function sec(text: string) { return { type: 'section', text: { type: 'mrkdwn', text } }; }
@@ -78,10 +78,10 @@ function recommendations(d: any): Rec[] {
 
   const sla = (d.sla as any[]) || [];
   const okSpeed = sla.length > 0 && sla.every((s) => num(s.answered) < 5 || num(s.within_30) >= 60);
-  if (okSpeed) recs.push({ i: '✅', o: '운영시간 기준 첫 응답은 세 채널 모두 빠릅니다 (30분 내 대부분 처리).',
+  if (okSpeed) recs.push({ i: '✅', o: '운영시간 기준 첫 응답은 모든 채널이 빠릅니다 (30분 내 대부분 처리).',
     a: '속도는 문제 아니에요. 인력을 늘리기보다, 위의 FAQ·선제 공지로 문의량 자체를 줄이는 데 집중하세요.' });
 
-  recs.push({ i: '🕐', o: '문의 몰리는 시간이 채널마다 달라요 (시대인재C 낮 10~11·14~15시 / 마이클래스 저녁 16~19시).',
+  recs.push({ i: '🕐', o: '문의가 몰리는 시간대는 채널마다 다릅니다.',
     a: '채널별 피크 시간에 담당자를 배치하면 지금의 빠른 응답을 유지할 수 있어요.' });
 
   return recs;
@@ -95,7 +95,7 @@ function buildBlocks(d: any): { blocks: any[]; fallback: string } {
   const topName = ((d.top_categories as any[]) || [])[0]?.category || '주요 문의';
   const synthesis =
     `*🎯 오늘의 진단*\n` +
-    `응답 속도는 운영시간 기준 세 채널 모두 양호합니다. 지금 가장 효과 큰 일은 인력을 늘리는 게 아니라, ` +
+    `응답 속도는 운영시간 기준 모든 채널이 양호합니다. 지금 가장 효과 큰 일은 인력을 늘리는 게 아니라, ` +
     `최다·급증 문의(${topName} 등)를 FAQ·선제 공지로 줄여 문의량 자체를 낮추는 것입니다.`;
 
   const recText = recs.map((r) => `${r.i} ${r.o}\n　↳ *${r.a}*`).join('\n\n');
