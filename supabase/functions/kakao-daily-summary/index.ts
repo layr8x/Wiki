@@ -115,7 +115,18 @@ function channelBlock(label: string, coll: any, ana: any, s: any, tr: any): any 
   return { type: 'section', text: { type: 'mrkdwn', text: [line1, line2, line3, line4].filter(Boolean).join('\n') } };
 }
 
-function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], trend: any[], sentTrend: any[], yesterday: any | null): { blocks: any[]; fallback: string } {
+// 지금 답 기다리는 대화(담당자가 바로 찾아 응대하도록). 종료·감사 인사는 제외된 진짜 미응답만.
+function actionChatsBlock(chats: any[]): any | null {
+  if (!chats || !chats.length) return null;
+  const lines = chats.map((c) => {
+    const wh = num(c.waited_h);
+    const age = wh >= 1 ? `영업 ${wh}시간 대기` : '방금';
+    return `• *${c.channel}* · ${c.nickname || '(이름없음)'} · ${age}\n　"${c.preview}"`;
+  });
+  return { type: 'section', text: { type: 'mrkdwn', text: `*🙋 지금 답 기다리는 대화*\n${lines.join('\n')}` } };
+}
+
+function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], trend: any[], sentTrend: any[], actionChats: any[], yesterday: any | null): { blocks: any[]; fallback: string } {
   const dateShort = new Date().toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' });
   const channels = (summary?.channels ?? []) as any[];
   const cls = summary?.classify ?? {};
@@ -148,11 +159,13 @@ function buildBlocks(summary: any, analysis: any[], spikes: any[], sla: any[], t
   const alertStr = alerts.length ? `   ·   ⚠️ ${alerts.map(friendlyAlert).join(', ')}` : '';
   const metaText = `미분류 ${cls.unclassified ?? '?'} · 재검토큐 ${cls.review_queue ?? '?'} · 감정분석 ${pct(sentDone, sentTotal)}% (${sentDone.toLocaleString()}/${sentTotal.toLocaleString()})${yestStr}${alertStr}`;
 
+  const acBlock = actionChatsBlock(actionChats);
   const blocks = [
     { type: 'header', text: { type: 'plain_text', text: `📅 카카오 상담 요약 · ${dateShort}`, emoji: true } },
     { type: 'section', text: { type: 'mrkdwn', text: statusText } },
     { type: 'divider' },
     { type: 'section', text: { type: 'mrkdwn', text: `*⚡ 오늘 볼 것*\n${actionText}` } },
+    ...(acBlock ? [acBlock] : []),
     { type: 'divider' },
     { type: 'section', text: { type: 'mrkdwn', text: '*📊 채널별 현황 (최근 7일)*' } },
     ...channelBlocks,
@@ -189,12 +202,15 @@ Deno.serve(async (req: Request) => {
   if (tErr) log('weekly trend rpc fail:', tErr.message);
   const { data: sentTrendRaw, error: stErr } = await supabase.rpc('kakao_sentiment_trend', { min_samples: 30 });
   if (stErr) log('sentiment trend rpc fail:', stErr.message);
+  const { data: actionRaw, error: acErr } = await supabase.rpc('kakao_action_chats', { limit_n: 6 });
+  if (acErr) log('action chats rpc fail:', acErr.message);
 
   const analysis = (analysisRaw as any[]) || [];
   const spikes = (spikeRaw as any[]) || [];
   const sla = (slaRaw as any[]) || [];
   const trend = (trendRaw as any[]) || [];
   const sentTrend = (sentTrendRaw as any[]) || [];
+  const actionChats = (actionRaw as any[]) || [];
 
   const snapshotDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
   const yesterdayDate = new Date(new Date(snapshotDate + 'T00:00:00Z').getTime() - 86400000).toISOString().slice(0, 10);
@@ -204,7 +220,7 @@ Deno.serve(async (req: Request) => {
     .eq('snapshot_date', yesterdayDate)
     .maybeSingle();
 
-  const { blocks, fallback } = buildBlocks(summary, analysis, spikes, sla, trend, sentTrend, (ySnap as any)?.summary ?? null);
+  const { blocks, fallback } = buildBlocks(summary, analysis, spikes, sla, trend, sentTrend, actionChats, (ySnap as any)?.summary ?? null);
   const sent = await sendSlack(fallback, blocks);
 
   const { error: snapErr } = await supabase.from('kakao_partner_daily_snapshot').upsert(
