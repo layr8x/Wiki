@@ -22,7 +22,10 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
-const PROFILE_IDS = ['_xfxilXn', '_TkpPG', '_VGAQn']; // 실측 채널(kakao_partner_chats 기준)
+// 시대인재 운영 채널 5개(사용자 확정 정리본 2026-07-03):
+//   _VGAQn=마이클래스 / _rcpPG=LIVE(메인) / _TkpPG=LIVE(기술지원) / _xfxilXn=콘텐츠 / _rkbcn=통합로그인 안내
+//   기존엔 3개(_xfxilXn·_TkpPG·_VGAQn)만 수집 → _rcpPG(메인 LIVE)·_rkbcn 누락분 추가.
+const PROFILE_IDS = ['_VGAQn', '_rcpPG', '_TkpPG', '_xfxilXn', '_rkbcn'];
 const PAGE_SIZE = 100;       // chats/search (카카오 API cap=100)
 const LOGS_SIZE = 200;       // chatlogs 페이지 크기
 const MAX_CHANGED = 80;      // 1회 호출당 채널별 재수집 상한(시간제한 방어)
