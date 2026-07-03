@@ -154,39 +154,50 @@ async function runChats(cookie: string, pid: string, maxPages: number, sinceStar
 }
 
 // ───────── mode=messages : 채팅별 chatlogs 과거까지 ─────────
-async function backfillChatMessages(cookie: string, pid: string, chatId: string, maxLogPages: number) {
+async function backfillChatMessages(cookie: string, pid: string, chatId: string, maxLogPages: number): Promise<{ total: number; failed: boolean }> {
   let oldest: string | null = null;
   let total = 0;
+  let failed = false;
   for (let pg = 0; pg < maxLogPages; pg++) {
     const qs = pg === 0 ? 'size=500' : 'since=' + oldest + '&direct=prev&size=500';
     let res: any;
     try {
       res = await kfetch(cookie, pid, '/api/profiles/' + pid + '/chats/' + chatId + '/chatlogs?' + qs);
-    } catch (e: any) { log('[' + pid + '] chatlogs ' + chatId + ' fail:', e.message); break; }
+    } catch (e: any) { log('[' + pid + '] chatlogs ' + chatId + ' fail:', e.message); failed = true; break; }
     const items = res?.items || [];
     if (!items.length) break;
     const rows = items.map((it: any) => sanitizeMessageRow(logToRow(it, chatId, pid)));
     const { error } = await supabase.from('kakao_partner_messages').upsert(rows, { onConflict: 'log_id' });
-    if (error) { log('[' + pid + '] msg upsert ' + chatId + ' fail:', error.message); break; }
+    if (error) { log('[' + pid + '] msg upsert ' + chatId + ' fail:', error.message); failed = true; break; }
     total += rows.length;
     oldest = rows[0].log_id;
     if (!res.has_prev) break;
     await sleep(120);
   }
-  return total;
+  return { total, failed };
 }
 async function runMessages(cookie: string, pid: string, _after: string | null, maxChats: number, maxLogPages: number) {
   // 메시지가 아직 없는 대화만 골라 처리(발굴과 동시 실행해도 누락 없음, 자기종료).
+  // 카카오가 로그 0건을 반환한 대화(보존기간 경과 등)는 kakao_backfill_empty 에 기록해
+  // 큐에서 제외(같은 대화 무한 재시도로 큐가 막히는 것 방지). 일시 오류(failed)는 기록하지
+  // 않아 다음 회차에 자동 재시도(손실 방지).
   const { data, error } = await supabase.rpc('kakao_chats_missing_messages', { p_pid: pid, p_lim: maxChats });
   if (error) return { mode: 'messages', pid, error: error.message };
   const chats = ((data as any[]) || []).map((r: any) => (typeof r === 'string' ? r : r.chat_id)).filter(Boolean);
-  let processed = 0, upserted = 0, lastChatId: string | null = null;
+  let processed = 0, upserted = 0, emptied = 0, failures = 0;
+  let lastChatId: string | null = null;
   for (const cid of chats) {
-    const n = await backfillChatMessages(cookie, pid, String(cid), maxLogPages);
-    upserted += n; processed++; lastChatId = String(cid);
+    const { total, failed } = await backfillChatMessages(cookie, pid, String(cid), maxLogPages);
+    upserted += total; processed++; lastChatId = String(cid);
+    if (failed) failures++;
+    if (total === 0 && !failed) {
+      const { error: eErr } = await supabase.from('kakao_backfill_empty')
+        .upsert({ chat_id: String(cid), profile_id: pid }, { onConflict: 'chat_id' });
+      if (eErr) log('[' + pid + '] empty mark ' + cid + ' fail:', eErr.message); else emptied++;
+    }
     await sleep(60);
   }
-  return { mode: 'messages', pid, processed, upserted, last_chat_id: lastChatId, remaining_more: chats.length === maxChats };
+  return { mode: 'messages', pid, processed, upserted, emptied, failures, last_chat_id: lastChatId, remaining_more: chats.length === maxChats };
 }
 
 // ───────── HTTP ─────────
