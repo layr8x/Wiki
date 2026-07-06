@@ -85,35 +85,84 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 
 ---
 
-## 4. 수집기 가동
+## 4. 수집기 가동 (자동화)
 
-### 방법 A — Supabase Edge Function (권장, 항상 켜짐)
+전체 자동화 그림 — 카카오와 동일하게 **상시 수집은 pg_cron→Edge Function** 이 담당하고,
+짧은 토큰 수명을 메우는 **토큰 갱신 배달** 과 최초 1회 **전체 백필** 이 붙는다.
+
+```
+[토큰 갱신] jandi:refresh-token ──▶ jandi_secrets.jandi_access_token (수명 ~12h, 6~8h마다 갱신)
+                                          │
+[상시 수집] pg_cron(5분) ──▶ jandi-collect Edge Function ──▶ jandi_messages (증분)
+[최초 1회] jandi:backfill ──────────────────────────────▶ jandi_messages (과거 전량)
+```
+
+### 4-A. 상시 수집 — Edge Function + pg_cron (권장, 항상 켜짐)
+
+1) 함수 배포:
 
 ```bash
 supabase functions deploy jandi-collect --no-verify-jwt
 ```
 
-그리고 pg_cron 으로 5분마다 호출(카카오 `kakao-collect-dispatch` 와 동일 패턴). 예:
+2) 5분 디스패치 cron 등록 — 마이그레이션 적용(카카오 `kakao-collect-dispatch` 와 동일 패턴):
 
-```sql
-select cron.schedule('jandi-collect-dispatch', '*/5 * * * *', $$
-  select net.http_post(
-    url    := 'https://<project>.supabase.co/functions/v1/jandi-collect?token=' ||
-              (select value from jandi_secrets where key='jandi_collect_token'),
-    headers:= '{"Content-Type":"application/json"}'::jsonb
-  );
-$$);
+```
+supabase/migrations/20260706_jandi_collect_dispatch.sql
 ```
 
-### 방법 B — 로컬/수동 (폴백)
+(이 파일이 `jandi-collect-dispatch` 잡을 `*/5 * * * *` 로 등록해 함수를 자동 호출한다.
+프로젝트 URL 은 `https://bnszzjaupayakkahmwsu.supabase.co` 로 박혀 있다.)
+
+점검:
+
+```sql
+select jobname, schedule, active from cron.job where jobname='jandi-collect-dispatch';
+select id, status_code, left(content,200) from net._http_response order by created desc limit 5;
+```
+
+### 4-B. 상시 수집 폴백 — 로컬/수동
 
 ```bash
 # .env.local 에 JANDI_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 설정 후
-node --env-file=.env.local scripts/jandi-collect-once.mjs
+npm run jandi:collect-once
 ```
 
-또는 GitHub Actions 탭 → "잔디 대화 수집" → Run workflow(Secrets: `JANDI_ACCESS_TOKEN`,
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
+또는 GitHub Actions 탭 → "잔디 대화 수집 (수동 폴백)" → Run workflow(Secrets:
+`JANDI_ACCESS_TOKEN`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`).
+
+### 4-C. 토큰 갱신 배달 (무인 운영의 핵심)
+
+잔디 토큰은 수명이 ~12h 로 짧아, 만료되면 4-A 수집이 401 로 멈춘다. 새 토큰을 주기적으로
+`jandi_secrets.jandi_access_token` 에 배달해야 한다(카카오 "쿠키 배달부"의 잔디판).
+
+```bash
+# .env.local 에 JANDI_EMAIL, JANDI_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 설정 후
+npm run jandi:refresh-token
+```
+
+`scripts/jandi-refresh-token.mjs` 가 헤드리스로 잔디에 로그인 → 앱이 `i1.jandi.com` 을
+호출할 때 요청 헤더의 `Bearer` 토큰을 가로채 배달한다(토큰 저장 위치에 의존 안 함).
+
+- **권장(카카오 모델과 동일):** 사내 신뢰 PC 의 cron 에 `npm run jandi:refresh-token` 을
+  6~8시간마다 걸어 둔다. 예(crontab): `0 */6 * * * cd /path/to/Wiki && npm run jandi:refresh-token`.
+- **CI 자동 갱신(선택):** `.github/workflows/jandi-refresh-token.yml` 의 `schedule` 주석을
+  해제하고 Secrets(`JANDI_EMAIL`,`JANDI_PASSWORD`)를 등록. ⚠️ 회사 계정을 클라우드에서
+  로그인하면 보안 경고가 뜨거나 **SSO/2단계 인증(MFA)에 막힐 수 있다**. 막히면 이 잡은 실패로
+  끝나며, 2번의 수동 토큰 추출로 갱신한다.
+
+### 4-D. 전체 백필 — 이전 모든 대화 (최초 1회)
+
+각 방을 최신부터 과거 끝까지 훑어 과거 대화를 전량 적재한다(상시 증분 수집과 별개인 1회성).
+
+```bash
+npm run jandi:backfill              # 활성 3개 방 전체
+npm run jandi:backfill 31495011     # 특정 방만
+```
+
+또는 GitHub Actions 탭 → "잔디 대화 전체 백필" → Run workflow(입력 `room_id` 비우면 3개 방
+전체). `scripts/jandi-backfill.mjs` 는 방당 `JANDI_BACKFILL_MAX_PAGES`(기본 무제한)까지
+`type=old` 로 페이지백하며 500건씩 멱등 upsert 하고, 커서가 정체되면(끝 도달) 자동 중단한다.
 
 ---
 
@@ -139,11 +188,16 @@ select * from jandi_stream_state;
 
 ## 6. 한계 / 확인 필요 (정직 기록)
 
-- **토큰 수명 ~12시간(짧음).** 카카오 쿠키(1~4주)보다 훨씬 짧다. 무인 운영하려면 잔디
-  세션에서 토큰을 주기적으로(수명 내) 다시 꺼내 `jandi_secrets.jandi_access_token` 에
-  배달하는 잡이 필요하다(카카오 "쿠키 배달부"의 잔디판). 갱신용 refresh 엔드포인트는 이번
-  네트워크 캡처에 포함되지 않아 자동 refresh 는 미구현 — 만료 시 2번 과정으로 토큰을
-  갱신한다. (자동화하려면 로그인/refresh 요청까지 포함한 캡처가 추가로 필요.)
+- **토큰 수명 ~12시간(짧음).** 카카오 쿠키(1~4주)보다 훨씬 짧다. 무인 운영하려면 새 토큰을
+  주기적으로 `jandi_secrets.jandi_access_token` 에 배달해야 한다(§4-C, 카카오 "쿠키 배달부"의
+  잔디판). 잔디는 공개된 refresh 엔드포인트가 없어(HAR 미포함), `jandi:refresh-token` 이
+  **헤드리스 로그인으로 새 토큰을 가로채 배달**한다 — 저장 위치에 의존하지 않아 견고하다.
+  ⚠️ 단, 회사가 **SSO/2단계 인증(MFA)** 을 쓰면 헤드리스 로그인이 막힐 수 있고, 클라우드
+  CI 로그인은 보안 경고를 유발할 수 있어 **사내 신뢰 PC 의 cron 실행을 권장**한다. 막히면
+  2번의 수동 추출로 갱신한다.
+- **첫 수집 범위 / 전체 백필.** 상시 수집(§4-A)은 커서(`last_link_id`)가 없을 때 각 방의
+  **최신 페이지(50건)만** 잡고 이후 증분한다. "이전 모든 대화"가 필요하면 `jandi:backfill`
+  (§4-D)을 1회 돌려 과거를 전량 채운다 — 이후는 상시 수집이 이어받는다.
 - **응답 필드 매핑은 first-collection 에서 검증.** 캡처(HAR)에 응답 본문이 빠져 있어 메시지
   객체의 정확한 키 이름을 확정하지 못했다. 그래서 수집기는 **원본 레코드를 `raw` 컬럼에
   통째로 저장**하고 본문·작성자·시각을 방어적으로 추출한다 → 표시용 필드가 어긋나도
@@ -152,8 +206,5 @@ select * from jandi_stream_state;
   함수 공통) 를 확정할 것.
 - **작성자 이름.** 메시지에는 `writer_id`(멤버 ID)만 담긴다. 이름 매핑은 멤버 목록 API 확정
   후 후속(현재 화면은 `writer_name` 이 있으면 이름, 없으면 "멤버 …ID" 로 표시).
-- **첫 수집 범위.** 커서(`last_link_id`)가 없을 때는 각 방의 **최신 페이지(50건)만** 잡고
-  이후 증분 수집한다. 과거 전체 백필이 필요하면 `JANDI_MAX_PAGES` 를 크게 주고 1회 수동
-  실행(방별 page 백필)한다.
 - **보안.** access token = 로그인 권한. `jandi_secrets` 는 RLS 로 service_role 외 접근 차단.
   본문은 카드/주민/전화/이메일만 라이트 마스킹하고, 내부 구성원 이름은 유지한다.
