@@ -151,7 +151,7 @@ async function collectRoom(client: JandiClient, ch: any) {
       pages++;
     }
   }
-  const rows = collected.map((r) => messageToRow(r, roomId, teamId)).filter((r) => r.link_id);
+  const rows = collected.map((r) => messageToRow(r, roomId, teamId)).filter((r) => r && r.link_id);
   if (rows.length) {
     const { error } = await supabase.from('jandi_messages').upsert(rows, { onConflict: 'room_id,link_id' });
     if (error) { await persistHeartbeat(roomId, ch.last_link_id, 'upsert: ' + error.message); return { room_id: roomId, error: error.message }; }

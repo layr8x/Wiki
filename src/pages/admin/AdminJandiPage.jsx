@@ -48,6 +48,29 @@ const fmtKstFull = (iso) => {
 }
 const writerLabel = (m) => m.writer_name || (m.writer_id ? '멤버 ' + String(m.writer_id).slice(-6) : '알 수 없음')
 
+// 최신순 정렬 + 댓글(스레드 답글)을 원글 아래로 묶기.
+// reply_to_message_id 가 현재 로딩된 목록 안의 원글을 가리키면 그 아래 자식으로,
+// 원글이 목록 밖(오래돼서 안 불러와짐)이면 독립 항목(orphan 표시)으로 취급.
+function groupThreads(rows) {
+  const sorted = [...rows].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+  const byMessageId = new Map(rows.map((r) => [r.message_id, r]))
+  const childrenOf = new Map()
+  const roots = []
+  for (const r of sorted) {
+    const parent = r.reply_to_message_id
+    if (parent && parent !== r.message_id && byMessageId.has(parent)) {
+      if (!childrenOf.has(parent)) childrenOf.set(parent, [])
+      childrenOf.get(parent).push(r)
+    } else {
+      roots.push(r)
+    }
+  }
+  for (const arr of childrenOf.values()) {
+    arr.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '')) // 스레드 내부는 오래된 순
+  }
+  return roots.map((root) => ({ root, children: childrenOf.get(root.message_id) || [] }))
+}
+
 function periodRange(year, month) {
   if (year === 'all') return null
   const y = Number(year)
@@ -91,7 +114,7 @@ function useMessages(roomId, query, year, month, limit) {
     queryFn: async () => {
       let q = supabase
         .from('jandi_messages')
-        .select('link_id, message_id, writer_id, writer_name, content_type, message, created_at')
+        .select('link_id, message_id, writer_id, writer_name, content_type, message, created_at, reply_to_message_id')
         .eq('room_id', roomId)
         .order('created_at', { ascending: false })
         .limit(limit)
@@ -103,6 +126,24 @@ function useMessages(roomId, query, year, month, limit) {
       return data ?? []
     },
   })
+}
+
+function MessageRow({ m, isReply = false }) {
+  return (
+    <div className={'flex items-start gap-3 py-2' + (isReply ? ' pl-1' : '')}>
+      <span className="w-20 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">{fmtKST(m.created_at)}</span>
+      <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[140px] shrink-0 truncate">
+        <User className="mr-1 size-3 shrink-0" />{writerLabel(m)}
+      </Badge>
+      {isReply && <span className="mt-0.5 shrink-0 text-xs text-muted-foreground">↳ 댓글</span>}
+      {!isReply && m.reply_to_message_id && (
+        <span className="mt-0.5 shrink-0 text-xs text-muted-foreground" title="원글이 현재 목록 범위 밖입니다">💬 답글</span>
+      )}
+      <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-foreground">
+        {maskBody(m.message) || <span className="text-muted-foreground">({m.content_type || '본문 없음'})</span>}
+      </p>
+    </div>
+  )
 }
 
 function ChannelKpi({ ch }) {
@@ -189,8 +230,8 @@ export default function AdminJandiPage() {
   const onChannel = (id) => { setChannel(id); reset() }
   const onSearch = (e) => { e.preventDefault(); setQuery(input); reset() }
 
-  // 표시용: 시간 오름차순(대화 흐름) 정렬.
-  const ordered = [...rows].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))
+  // 표시용: 최신순 정렬 + 댓글(스레드 답글)은 원글 아래로 그룹핑.
+  const threads = groupThreads(rows)
   const channelLabel = CHANNELS.find((c) => c.id === channel)?.label || channel
 
   const onRefresh = () => {
@@ -263,8 +304,8 @@ export default function AdminJandiPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base">
             {channelLabel}{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
-            {ordered.length > 0 && (
-              <span className="ml-2 text-xs font-normal text-muted-foreground">{ordered.length}개 메시지</span>
+            {rows.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">{rows.length}개 메시지</span>
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -283,19 +324,18 @@ export default function AdminJandiPage() {
             <p className="py-10 text-center text-sm text-destructive">불러오기 실패: {error?.message || '오류'}</p>
           ) : isLoading ? (
             <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          ) : ordered.length === 0 ? (
+          ) : threads.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">조건에 맞는 메시지가 없습니다.</p>
           ) : (
             <ul className="divide-y divide-border/40">
-              {ordered.map((m) => (
-                <li key={m.link_id} className="flex items-start gap-3 py-2">
-                  <span className="w-20 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">{fmtKST(m.created_at)}</span>
-                  <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[140px] shrink-0 truncate">
-                    <User className="mr-1 size-3 shrink-0" />{writerLabel(m)}
-                  </Badge>
-                  <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-foreground">
-                    {maskBody(m.message) || <span className="text-muted-foreground">({m.content_type || '본문 없음'})</span>}
-                  </p>
+              {threads.map(({ root, children }) => (
+                <li key={root.link_id}>
+                  <MessageRow m={root} />
+                  {children.length > 0 && (
+                    <ul className="ml-8 border-l border-border/40 pl-3">
+                      {children.map((c) => <MessageRow key={c.link_id} m={c} isReply />)}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>
