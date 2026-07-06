@@ -1,6 +1,7 @@
 // src/pages/admin/AdminConsultsPage.jsx — /admin/consults
-// 카카오 파트너센터 3채널 상담 로그 뷰어 (kakao_partner_messages, RLS authenticated read).
+// 카카오 파트너센터 5채널 상담 로그 뷰어 (kakao_partner_messages, RLS authenticated read).
 // 기능: 채팅별 스레드 그룹 + 새로고침 + 현재필터 전체 CSV 다운로드.
+// 채널 정본: CLAUDE.md §16 (kakao_channel 테이블과 동일 목록 — 변경 시 함께 갱신).
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
@@ -21,8 +22,10 @@ import {
 
 const CHANNELS = [
   { id: '_VGAQn', label: '마이클래스' },
-  { id: '_TkpPG', label: 'LIVE' },
-  { id: '_xfxilXn', label: 'C' },
+  { id: '_rcpPG', label: 'LIVE' },
+  { id: '_TkpPG', label: 'LIVE 기술지원' },
+  { id: '_xfxilXn', label: '콘텐츠' },
+  { id: '_rkbcn', label: '통합로그인' },
 ]
 const PAGE_SIZE = 50
 const NOW_Y = new Date().getFullYear()
@@ -290,7 +293,7 @@ export default function AdminConsultsPage() {
     <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-8">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">카카오 상담 로그</h1>
-        <p className="mt-1 text-sm text-muted-foreground">파트너센터 3채널 실시간 수집 데이터 · 채팅별 스레드 그룹</p>
+        <p className="mt-1 text-sm text-muted-foreground">파트너센터 5채널 실시간 수집 데이터 · 채팅별 스레드 그룹</p>
       </header>
 
       {!isSupabaseEnabled && (
@@ -299,7 +302,7 @@ export default function AdminConsultsPage() {
         </CardContent></Card>
       )}
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
       </section>
 
