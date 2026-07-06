@@ -54,9 +54,13 @@ class JandiClient {
   async _fetch(path: string) {
     await this._jitter();
     const headers: Record<string, string> = {
-      'user-agent': DEFAULT_UA, 'accept': 'application/json, text/plain, */*',
+      'user-agent': DEFAULT_UA,
+      // ⚠️ 잔디 API 는 버전드 Accept 필수. 일반 application/json 이면 406
+      // {code:40600, msg:"version:accept"} 로 거절됨(2026-07 실측). message-api = v2.
+      'accept': 'application/vnd.tosslab.jandi-v2+json',
       'accept-language': 'ko-KR,ko;q=0.9,en;q=0.8',
       'authorization': `Bearer ${this.accessToken}`, 'x-team-id': this.teamId,
+      'x-user-agent': 'Jandi/26.12 (web; Mac OS; 10.15; Browser; Chrome;)',
       'referer': 'https://flytofreedom.jandi.com/',
     };
     if (this.memberId) headers['x-member-id'] = this.memberId;
