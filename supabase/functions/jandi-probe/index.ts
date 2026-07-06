@@ -1,6 +1,5 @@
 // supabase/functions/jandi-probe/index.ts
-// 잔디 API 응답 구조 진단용 — 임시 디버그 함수. 본문 없는(빈) 레코드의 원본 구조 확인 +
-// 멤버 이름 API 후보 탐색(mode=members). 인증: jandi-collect 와 동일(jandi_collect_token).
+// 잔디 API 응답 구조 진단용 — 임시 디버그 함수. 인증: jandi-collect 와 동일(jandi_collect_token).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -25,6 +24,7 @@ Deno.serve(async (req: Request) => {
   const accessToken = await getSecret('jandi_access_token');
   const teamId = (await getSecret('jandi_team_id')) || '29522216';
   const memberId = await getSecret('jandi_member_id');
+  const accountId = await getSecret('jandi_account_id');
   const headers: Record<string, string> = {
     'user-agent': 'Mozilla/5.0',
     'accept': 'application/vnd.tosslab.jandi-v2+json',
@@ -34,24 +34,18 @@ Deno.serve(async (req: Request) => {
     'referer': 'https://flytofreedom.jandi.com/',
   };
   if (memberId) headers['x-member-id'] = memberId;
+  if (accountId) headers['x-account-id'] = accountId;
 
   if (mode === 'members') {
-    // team-api/account-api/presence-api 는 message-api 와 다른 vnd 버전(v1)을 요구한다
-    // (v2 로 보내면 406 version:mismatch — 2026-07 실측).
+    // member-api 는 이전 시도(x-account-id 없이)에서 전 경로 503 — 실제 웹앱이 보내는
+    // x-account-id 헤더를 빠뜨렸을 가능성 재검증(위에서 이미 추가함).
     const v1Headers = { ...headers, accept: 'application/vnd.tosslab.jandi-v1+json' };
     const candidates = [
-      { u: `https://i1.jandi.com/team-api/v1/teams/${teamId}/users`, h: v1Headers },
-      { u: `https://i1.jandi.com/team-api/v1/teams/${teamId}/entities`, h: v1Headers },
-      { u: `https://i1.jandi.com/account-api/v1/teams/${teamId}/users`, h: v1Headers },
-      { u: `https://i1.jandi.com/account-api/v1/teams/${teamId}/entities`, h: v1Headers },
-      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}`, h: v1Headers },
       { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}/members`, h: v1Headers },
-      { u: `https://i1.jandi.com/message-api/v1/teams/${teamId}/members`, h: v1Headers },
-      { u: `https://i1.jandi.com/message-api/v2/teams/${teamId}/members`, h: headers },
+      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}`, h: v1Headers },
       { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}/members/list`, h: v1Headers },
-      { u: `https://i1.jandi.com/member-api/v2/teams/${teamId}`, h: v1Headers },
-      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}`, h: headers },
       { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}/members`, h: headers },
+      { u: `https://i1.jandi.com/member-api/v2/teams/${teamId}/members`, h: v1Headers },
     ];
     const results: any[] = [];
     for (const { u, h } of candidates) {
@@ -66,7 +60,7 @@ Deno.serve(async (req: Request) => {
       }
       await new Promise((res2) => setTimeout(res2, 150));
     }
-    return json({ mode: 'members', results });
+    return json({ mode: 'members', hasAccountId: !!accountId, results });
   }
 
   const room = url.searchParams.get('room');

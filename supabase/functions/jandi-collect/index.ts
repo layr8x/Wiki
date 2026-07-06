@@ -94,6 +94,16 @@ function extractRecords(res: any): any[] {
 function isEventRecord(rec: any): boolean {
   return !rec || rec.status === 'event' || rec.message == null || typeof rec.message !== 'object';
 }
+// 스티커/파일/이미지 등 본문(body/text)이 없는 첨부형 콘텐츠용 안내 문구.
+// ⚠️ content 객체를 그대로 JSON.stringify 하면 "{"richText":[],"stickerId":"11",...}" 같은
+// 원본 덤프가 그대로 노출된다(실측 2026-07) — 사람이 읽는 라벨로 대체한다.
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  sticker: '스티커', file: '파일', image: '이미지', video: '동영상',
+  poll: '투표', todo: '할일', album: '앨범', link: '링크', card: '카드',
+};
+function contentPlaceholder(contentType: string | null): string {
+  return `[${(contentType && CONTENT_TYPE_LABELS[contentType]) || contentType || '첨부'}]`;
+}
 function messageToRow(rec: any, roomId: string, teamId: string): any {
   if (isEventRecord(rec)) return null;
   const msg = rec.message;
@@ -102,7 +112,9 @@ function messageToRow(rec: any, roomId: string, teamId: string): any {
   const writerId = msg?.writerId ?? rec?.writerId ?? msg?.fromEntity ?? rec?.fromEntity ?? null;
   const writerName = msg?.writerName ?? msg?.writer?.name ?? rec?.writer?.name ?? rec?.info?.name ?? null;
   const contentType = msg?.contentType ?? msg?.type ?? rec?.contentType ?? null;
-  const body = (msg?.content && (msg.content.body ?? msg.content.text ?? msg.content)) ?? msg?.text ?? msg?.body ?? rec?.text ?? null;
+  const body = msg?.content && typeof msg.content === 'object'
+    ? (msg.content.body ?? msg.content.text ?? contentPlaceholder(contentType))
+    : (msg?.text ?? msg?.body ?? rec?.text ?? null);
   const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? rec?.time ?? null;
   let createdAt: string | null = null;
   if (createdRaw != null) { const d = new Date(createdRaw); createdAt = isNaN(d.getTime()) ? null : d.toISOString(); }

@@ -109,6 +109,17 @@ export function recLinkId(rec) {
   return v != null ? String(v) : null;
 }
 
+// 스티커/파일/이미지 등 본문(body/text)이 없는 첨부형 콘텐츠용 안내 문구.
+// ⚠️ content 객체를 그대로 JSON.stringify 하면 "{"richText":[],"stickerId":"11",...}" 같은
+// 원본 덤프가 그대로 노출된다(실측 2026-07) — 사람이 읽는 라벨로 대체한다.
+const CONTENT_TYPE_LABELS = {
+  sticker: '스티커', file: '파일', image: '이미지', video: '동영상',
+  poll: '투표', todo: '할일', album: '앨범', link: '링크', card: '카드',
+};
+export function contentPlaceholder(contentType) {
+  return `[${CONTENT_TYPE_LABELS[contentType] || contentType || '첨부'}]`;
+}
+
 // ─── 레코드 1건 → jandi_messages row (방어적 매핑) ───────────────────────────
 // 정확한 키 이름이 캡처에 없어(응답 본문 미포함), 흔한 후보를 순서대로 시도하고
 // 원본(raw)을 통째 저장한다 → 표시 매핑이 어긋나도 데이터 손실 없음(재수집 불필요).
@@ -121,9 +132,11 @@ export function messageToRow(rec, roomId, teamId) {
   const writerId = msg?.writerId ?? rec?.writerId ?? msg?.fromEntity ?? rec?.fromEntity ?? null;
   const writerName = msg?.writerName ?? msg?.writer?.name ?? rec?.writer?.name ?? rec?.info?.name ?? null;
   const contentType = msg?.contentType ?? msg?.type ?? rec?.contentType ?? null;
-  const body =
-    (msg?.content && (msg.content.body ?? msg.content.text ?? msg.content))
-    ?? msg?.text ?? msg?.body ?? rec?.text ?? null;
+  // content.body/text 가 없는 첨부형(스티커/파일 등)은 원본 JSON 을 그대로 덤프하지 않고
+  // 사람이 읽는 안내 문구로 대체한다.
+  const body = msg?.content && typeof msg.content === 'object'
+    ? (msg.content.body ?? msg.content.text ?? contentPlaceholder(contentType))
+    : (msg?.text ?? msg?.body ?? rec?.text ?? null);
   // msg.createdAt(ISO) 우선, 없으면 레코드 최상위 time(밀리초 epoch)로 폴백.
   const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? rec?.time ?? null;
   let createdAt = null;
