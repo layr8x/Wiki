@@ -5,6 +5,7 @@ import { NavLink, Link, useLocation } from "react-router-dom"
 import {
   ChartBar as BarChart3,
   ChatText as MessageSquare,
+  ChatsCircle as Chats,
   FileText,
   House as Home,
   PencilSimple as PencilLine,
@@ -34,6 +35,7 @@ const ADMIN_NAV = [
   { title: "새 가이드 작성", to: "/editor", icon: PencilLine, perm: 'edit' },
   { title: "피드백 수신함", to: "/admin/feedback", icon: MessageSquare, perm: 'edit' },
   { title: "카카오 상담", to: "/admin/consults", icon: MessageSquare, perm: 'edit' },
+  { title: "잔디 대화", to: "/admin/jandi", icon: Chats, perm: 'edit' },
   { title: "외부 연동", to: "/admin/integration", icon: PlugsConnected, perm: 'manage_users' },
   { title: "사용자 관리", to: "/admin/users", icon: Users, perm: 'manage_users' },
 ]

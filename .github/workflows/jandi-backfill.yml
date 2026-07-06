@@ -1,0 +1,56 @@
+name: 잔디 대화 전체 백필 (1회성 — 방별 과거 전량 수집)
+
+# 각 방(3개)의 대화를 최신부터 과거 끝까지 훑어 전량 적재하는 1회성 대량 수집.
+# 평소 상시 수집은 Supabase Edge Function(jandi-collect)이 담당하고, 이 워크플로는
+# "이전 모든 대화"를 처음 채워 넣을 때만 수동 실행한다.
+#   - 스크립트: scripts/jandi-backfill.mjs
+#   - 상세: docs/JANDI_SETUP.md §4-D
+#
+# 수동 실행: Actions 탭 → 이 워크플로 → Run workflow (room_id 비우면 3개 방 전체).
+# 필요한 Secrets: JANDI_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+#   선택 Variables: JANDI_TEAM_ID(기본 29522216), JANDI_MEMBER_ID.
+on:
+  workflow_dispatch:
+    inputs:
+      room_id:
+        description: '특정 방만 백필(비우면 활성 3개 방 전체)'
+        required: false
+        default: ''
+      max_pages:
+        description: '방당 페이지 상한(기본 100000=사실상 무제한)'
+        required: false
+        default: ''
+
+concurrency:
+  group: jandi-backfill
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies (prod only)
+        run: npm ci --omit=dev --no-audit --prefer-offline
+
+      - name: Backfill jandi conversations
+        env:
+          JANDI_ACCESS_TOKEN: ${{ secrets.JANDI_ACCESS_TOKEN }}
+          JANDI_TEAM_ID: ${{ vars.JANDI_TEAM_ID || '29522216' }}
+          JANDI_MEMBER_ID: ${{ vars.JANDI_MEMBER_ID }}
+          JANDI_BACKFILL_MAX_PAGES: ${{ github.event.inputs.max_pages }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/jandi-backfill.mjs ${{ github.event.inputs.room_id }}

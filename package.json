@@ -37,6 +37,9 @@
     "kakao:export": "node --env-file=.env.local scripts/kakao-partner-export-csv.mjs",
     "kakao:dashboard": "node --env-file=.env.local scripts/kakao-partner-dashboard.mjs",
     "kakao:sheets-sync": "node --env-file=.env.local scripts/kakao-partner-sheets-sync.mjs",
+    "jandi:collect-once": "node --env-file=.env.local scripts/jandi-collect-once.mjs",
+    "jandi:backfill": "node --env-file=.env.local scripts/jandi-backfill.mjs",
+    "jandi:refresh-token": "node --env-file=.env.local scripts/jandi-refresh-token.mjs",
     "extract:qa-dataset": "node --env-file=.env.local scripts/extract-qa-dataset.mjs"
   },
   "dependencies": {

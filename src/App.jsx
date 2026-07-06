@@ -54,6 +54,7 @@ const AdminGuidesPage      = lazy(() => import('./pages/admin/AdminGuidesPage'))
 const AdminFeedbackPage    = lazy(() => import('./pages/admin/AdminFeedbackPage'))
 const AdminIntegrationPage = lazy(() => import('./pages/admin/AdminIntegrationPage'))
 const AdminConsultsPage    = lazy(() => import('./pages/admin/AdminConsultsPage'))
+const AdminJandiPage       = lazy(() => import('./pages/admin/AdminJandiPage'))
 const ChatbotPopupPage     = lazy(() => import('./components/chatbot').then(m => ({ default: m.ChatbotPopupPage })))
 
 // React Query 클라이언트
@@ -118,6 +119,9 @@ export default function App() {
                         } />
                         <Route path="consults" element={
                           <RouteBoundary><AdminConsultsPage /></RouteBoundary>
+                        } />
+                        <Route path="jandi" element={
+                          <RouteBoundary><AdminJandiPage /></RouteBoundary>
                         } />
                       </Route>
                     </Route>

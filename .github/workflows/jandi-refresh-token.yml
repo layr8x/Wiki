@@ -1,0 +1,53 @@
+name: 잔디 토큰 갱신 (선택 — 헤드리스 로그인으로 access token 재발급)
+
+# 잔디 access token 은 수명이 ~12h 로 짧아 무인 상시 수집을 하려면 주기적으로 새 토큰을
+# jandi_secrets.jandi_access_token 에 배달해야 한다. 이 워크플로는 헤드리스 로그인으로
+# 새 토큰을 꺼내 배달한다(scripts/jandi-refresh-token.mjs).
+#
+# ⚠️ 기본은 '수동(opt-in)'이다. 회사 계정을 클라우드(CI)에서 로그인하면 보안 경고가 뜨거나
+#    SSO/2단계 인증(MFA)에 막힐 수 있다. 가능하면 사내 신뢰 PC 의 cron 에서 `npm run
+#    jandi:refresh-token` 을 6~8시간마다 돌리는 편을 권장한다(카카오 쿠키 배달과 동일 모델).
+#    CI 자동 갱신을 켜려면 아래 schedule 주석을 해제하고 Secrets(JANDI_EMAIL/JANDI_PASSWORD)를
+#    등록한다. 상세: docs/JANDI_SETUP.md §4-C.
+#
+# 필요한 Secrets: JANDI_EMAIL, JANDI_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+on:
+  workflow_dispatch: {}
+  # schedule:                 # 자동 갱신을 켤 때만 주석 해제(위 경고 확인 후).
+  #   - cron: '0 */6 * * *'   # 6시간마다(토큰 수명 ~12h 내 여유 갱신).
+
+concurrency:
+  group: jandi-refresh-token
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --prefer-offline
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Refresh jandi access token
+        env:
+          JANDI_EMAIL: ${{ secrets.JANDI_EMAIL }}
+          JANDI_PASSWORD: ${{ secrets.JANDI_PASSWORD }}
+          JANDI_HEADLESS: 'true'
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/jandi-refresh-token.mjs
