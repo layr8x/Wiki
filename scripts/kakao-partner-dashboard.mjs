@@ -10,8 +10,10 @@ const sb = getAdminClient();
 const PORT = Number(process.env.KAKAO_DASHBOARD_PORT || 8787);
 const CHANNELS = [
   { id: '_VGAQn', label: '마이클래스' },
-  { id: '_TkpPG', label: 'LIVE' },
-  { id: '_xfxilXn', label: 'C' },
+  { id: '_rcpPG', label: 'LIVE' },
+  { id: '_TkpPG', label: 'LIVE 기술지원' },
+  { id: '_xfxilXn', label: '콘텐츠' },
+  { id: '_rkbcn', label: '통합로그인' },
 ];
 const labelOf = (id) => (CHANNELS.find((c) => c.id === id) || {}).label || id;
 

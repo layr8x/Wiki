@@ -22,8 +22,10 @@ const CRED_PATH = process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(proces
 const STATE_PATH = path.join(process.cwd(), '.sheets-sync-state.json');
 const CHANNELS = [
   { id: '_VGAQn', tab: '마이클래스' },
-  { id: '_TkpPG', tab: 'LIVE' },
-  { id: '_xfxilXn', tab: 'C' },
+  { id: '_rcpPG', tab: 'LIVE' },
+  { id: '_TkpPG', tab: 'LIVE 기술지원' },
+  { id: '_xfxilXn', tab: '콘텐츠' },
+  { id: '_rkbcn', tab: '통합로그인' },
 ];
 const HEADER = ['보낸시각(KST)', '보낸이', '채팅ID', '메시지유형', '메시지'];
 const SHEETS = 'https://sheets.googleapis.com/v4/spreadsheets';

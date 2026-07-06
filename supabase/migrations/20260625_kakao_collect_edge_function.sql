@@ -14,7 +14,7 @@
 --     insert into kakao_partner_secrets(key,value,updated_at)
 --     values('kakao_collect_token', encode(gen_random_bytes(24),'hex'), now())
 --     on conflict (key) do update set value=excluded.value, updated_at=now();
--- 쿠키: kakao_partner_secrets.key='kakao_partner_cookie' (맥북 Chrome 6h 자동 배달, 함수가 읽음).
+-- 쿠키: kakao_partner_secrets.key='kakao_partner_cookie' (회사 자산 맥 스튜디오 Chrome 6h 자동 배달, 함수가 읽음).
 -- 함수 배포는 SQL 마이그레이션 밖(별도): `supabase functions deploy kakao-collect --no-verify-jwt`
 --   또는 MCP deploy_edge_function. (이 파일은 cron 트리거만 전환.)
 

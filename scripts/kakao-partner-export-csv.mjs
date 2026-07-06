@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // scripts/kakao-partner-export-csv.mjs
 // 카카오 파트너 3채널 상담 메시지를 채널별 "정제 CSV"로 추출.
-// - 채널: 마이클래스(_VGAQn) / LIVE(_TkpPG) / C(_xfxilXn) 각각 파일 분리
+// - 채널: 마이클래스(_VGAQn) / LIVE(_rcpPG) / LIVE 기술지원(_TkpPG) / 콘텐츠(_xfxilXn) / 통합로그인(_rkbcn) 각각 파일 분리
 // - Excel 한글 호환: UTF-8 BOM + CRLF
 // - 보낸이: 상담원(차*희) / 고객(송유림) / 시스템
 // 실행: npm run kakao:export   (출력 폴더 기본 ./exports, KAKAO_EXPORT_DIR 로 변경)
@@ -13,8 +13,10 @@ import path from 'node:path';
 const sb = getAdminClient();
 const CHANNELS = [
   { id: '_VGAQn', label: '마이클래스' },
-  { id: '_TkpPG', label: 'LIVE' },
-  { id: '_xfxilXn', label: 'C' },
+  { id: '_rcpPG', label: 'LIVE' },
+  { id: '_TkpPG', label: 'LIVE 기술지원' },
+  { id: '_xfxilXn', label: '콘텐츠' },
+  { id: '_rkbcn', label: '통합로그인' },
 ];
 const OUT = process.env.KAKAO_EXPORT_DIR || path.join(process.cwd(), 'exports');
 fs.mkdirSync(OUT, { recursive: true });

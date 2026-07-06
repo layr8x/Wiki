@@ -45,7 +45,7 @@ jobs:
       - name: Collect kakao partner chats
         env:
           KAKAO_PARTNER_COOKIE: ${{ secrets.KAKAO_PARTNER_COOKIE }}
-          KAKAO_PARTNER_PROFILE_IDS: ${{ vars.KAKAO_PARTNER_PROFILE_IDS || '_VGAQn,_TkpPG,_xfxilXn' }}
+          KAKAO_PARTNER_PROFILE_IDS: ${{ vars.KAKAO_PARTNER_PROFILE_IDS || '_VGAQn,_rcpPG,_TkpPG,_xfxilXn,_rkbcn' }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/kakao-partner-collect-once.mjs

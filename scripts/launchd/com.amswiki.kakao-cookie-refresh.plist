@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  카카오 파트너센터 쿠키 선제 갱신 (6시간마다). Chrome 로컬 쿠키 → .env.local.
-  쿠키 만료로 수집 데몬이 멈추는 것을 예방. 값이 바뀐 경우에만 .env.local 을 갱신하며,
-  KAKAO_SKIP_DAEMON_RESTART=1 이라 수집 데몬을 끊지 않는다(데몬은 다음 401 때 .env.local 재읽음).
-  전제: Chrome 으로 business.kakao.com 에 로그인 유지 + 최초 1회 "Chrome Safe Storage" 키체인 허용.
+  카카오 파트너센터 쿠키 선제 갱신 (6시간마다). Chrome 로컬 쿠키 → .env.local + Supabase(kakao_partner_secrets).
+  Supabase 의 kakao-collect Edge Function(pg_cron, 5분마다)이 이 쿠키를 읽어 실제 상시 수집을 수행하므로,
+  이 launchd 는 그 쿠키를 최신으로 유지하는 역할만 한다(이 기기 상태와 무관하게 도는 건 Edge Function 쪽).
+  전제: Chrome 으로 business.kakao.com 에 로그인 유지(가급적 탭을 열어두기) + 최초 1회 "Chrome Safe Storage" 키체인 허용.
   설치:
     1) WorkingDirectory / node 경로 / 로그 경로를 본인 머신에 맞게 수정
     2) cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
@@ -43,8 +43,6 @@
   <dict>
     <key>NODE_ENV</key>
     <string>production</string>
-    <key>KAKAO_SKIP_DAEMON_RESTART</key>
-    <string>1</string>
   </dict>
 </dict>
 </plist>

@@ -9,7 +9,7 @@ import { writeFileSync } from 'node:fs'
 const URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const OUT = 'public/cs-stats.json'
-const CH = { _xfxilXn: '시대인재C', _TkpPG: '라이브', _VGAQn: '마이클래스' }
+const CH = { _VGAQn: '마이클래스', _rcpPG: 'LIVE', _TkpPG: 'LIVE 기술지원', _xfxilXn: '콘텐츠', _rkbcn: '통합로그인' }
 
 function skip(msg) { console.warn('[build-cs-stats] 건너뜀:', msg, '— 대시보드는 스냅샷 폴백 사용'); process.exit(0) }
 

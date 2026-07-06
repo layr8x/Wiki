@@ -26,7 +26,8 @@ function fmtDelta(n: number): string {
   return '0';
 }
 
-const CHANNEL_BY_PID: Record<string, string> = { _xfxilXn: '시대인재C', _TkpPG: '라이브', _VGAQn: '마이클래스' };
+// 채널 코드->정식명 (5채널, 2026-07-03 확정).
+const CHANNEL_BY_PID: Record<string, string> = { _VGAQn: '마이클래스', _rcpPG: 'LIVE', _TkpPG: 'LIVE 기술지원', _xfxilXn: '콘텐츠', _rkbcn: '통합로그인' };
 function friendlyAlert(key: string): string {
   if (key.startsWith('health:')) return `${CHANNEL_BY_PID[key.slice('health:'.length)] || key.slice(7)} 수집`;
   if (key.startsWith('spike:')) return `${key.slice('spike:'.length)} 급증`;
@@ -46,7 +47,7 @@ const CATEGORY_HINT: Record<string, string> = {
 const HEMOJI: Record<string, string> = { ok: '🟢', warning: '🟠', critical: '🔴' };
 
 // 채널 표시 우선순위(사용자 설정). 모든 화면이 이 순서를 따른다. 여기만 바꾸면 전 화면 반영.
-const CHANNEL_PRIORITY = ['마이클래스', '라이브', '시대인재C'];
+const CHANNEL_PRIORITY = ['마이클래스', 'LIVE', 'LIVE 기술지원', '콘텐츠', '통합로그인'];
 const byPriority = (a: any, b: any) => CHANNEL_PRIORITY.indexOf(a.channel) - CHANNEL_PRIORITY.indexOf(b.channel);
 
 // "오늘 볼 것": 조치가 필요한 항목만 모음
