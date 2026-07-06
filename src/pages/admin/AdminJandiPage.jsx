@@ -289,7 +289,7 @@ export default function AdminJandiPage() {
           {CHANNELS.map((ch) => (
             <button
               key={ch.id} onClick={() => onChannel(ch.id)} aria-pressed={channel === ch.id}
-              className={'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors '
+              className={'inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors '
                 + (channel === ch.id ? 'border-foreground bg-foreground text-background'
                   : 'border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground')}
             >{ch.label}</button>
