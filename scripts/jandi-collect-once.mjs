@@ -14,7 +14,7 @@
 //   env: JANDI_ACCESS_TOKEN(폴백), JANDI_TEAM_ID, JANDI_MEMBER_ID(선택),
 //        SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-import { JandiClient, extractRecords, messageToRow, linkIdNum } from './lib/jandi-client.mjs';
+import { JandiClient, extractRecords, messageToRow, linkIdNum, maskCustomerInfo } from './lib/jandi-client.mjs';
 import { getAdminClient } from './lib/supabase-admin.mjs';
 import { maskBody, stripLoneSurrogates } from './lib/kakao-sanitize.mjs';
 
@@ -59,7 +59,7 @@ async function loadChannels() {
 
 function sanitizeRow(row) {
   const out = { ...row };
-  if (out.message != null) out.message = stripLoneSurrogates(maskBody(out.message));
+  if (out.message != null) out.message = maskCustomerInfo(stripLoneSurrogates(maskBody(out.message)));
   return out;
 }
 
@@ -108,8 +108,8 @@ async function collectRoom(client, ch) {
     }
   }
 
-  // 매핑 + 마스킹 + upsert
-  const rows = collected.map((r) => sanitizeRow(messageToRow(r, roomId, teamId)));
+  // 매핑 + 마스킹 + upsert (시스템 이벤트 레코드는 messageToRow 가 null 반환 → 제외)
+  const rows = collected.map((r) => messageToRow(r, roomId, teamId)).filter(Boolean).map(sanitizeRow);
   const n = await upsertRows(rows);
   if (n < 0) { await persistHeartbeat(roomId, ch.last_link_id, 'upsert failed'); return { roomId, error: 'upsert' }; }
 

@@ -164,6 +164,26 @@ npm run jandi:backfill 31495011     # 특정 방만
 전체). `scripts/jandi-backfill.mjs` 는 방당 `JANDI_BACKFILL_MAX_PAGES`(기본 무제한)까지
 `type=old` 로 페이지백하며 500건씩 멱등 upsert 하고, 커서가 정체되면(끝 도달) 자동 중단한다.
 
+### 4-D'. 전체 백필 — 서버측(Edge Function) 대안 (로컬 시크릿 불필요)
+
+`jandi_secrets.jandi_access_token` 이 이미 등록돼 있다면, 로컬에 아무 시크릿도 두지 않고
+서버(Supabase)에서만 실행되는 방식도 가능하다 — `supabase/functions/jandi-backfill`.
+
+```sql
+select net.http_post(
+  url := (select 'https://bnszzjaupayakkahmwsu.supabase.co/functions/v1/jandi-backfill?token=' || value
+          from jandi_secrets where key = 'jandi_collect_token'),
+  headers := '{"Content-Type":"application/json"}'::jsonb,
+  timeout_milliseconds := 150000
+);
+```
+
+- 방마다 실행시간 예산(페이지 300장)을 넘기면 진행률(`jandi_channels.backfill_cursor`)을
+  저장해두고 멈춘다 — **위 호출을 몇 번 더 반복**하면 이어서 진행된다. 전부 끝나면
+  `jandi_channels.backfill_done` 이 3개 방 모두 `true` 가 된다.
+- 배포: `supabase functions deploy jandi-backfill --no-verify-jwt`.
+- 진행 확인: `select room_id, backfill_cursor, backfill_done from jandi_channels;`
+
 ---
 
 ## 5. 동작 확인

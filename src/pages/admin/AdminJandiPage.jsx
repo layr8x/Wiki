@@ -48,6 +48,43 @@ const fmtKstFull = (iso) => {
 }
 const writerLabel = (m) => m.writer_name || (m.writer_id ? '멤버 ' + String(m.writer_id).slice(-6) : '알 수 없음')
 
+// 최신순 정렬 + 댓글(스레드 답글)을 원글 아래로 묶기.
+// reply_to_message_id 가 현재 로딩된 목록 안의 원글을 가리키면 그 아래 자식으로,
+// 원글이 목록 밖(오래돼서 안 불러와짐)이면 독립 항목(orphan 표시)으로 취급.
+// ⚠️ 그룹 정렬은 "원글 시각"이 아니라 "그룹 내 가장 최근 활동 시각" 기준 — 이 방은
+// 댓글(답글)이 전체 메시지의 70%를 차지해, 원글 시각으로만 정렬하면 방금 달린 새 댓글이
+// 훨씬 오래된 원글 위치에 묻혀 "최신순이 이상해 보이는" 문제가 생긴다(실사용 데이터로 확인).
+function groupThreads(rows) {
+  const byMessageId = new Map(rows.map((r) => [r.message_id, r]))
+  const childrenOf = new Map()
+  const roots = []
+  for (const r of rows) {
+    const parent = r.reply_to_message_id
+    if (parent && parent !== r.message_id && byMessageId.has(parent)) {
+      if (!childrenOf.has(parent)) childrenOf.set(parent, [])
+      childrenOf.get(parent).push(r)
+    } else {
+      roots.push(r)
+    }
+  }
+  const groups = roots.map((root) => {
+    const children = (childrenOf.get(root.message_id) || [])
+      .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '')) // 스레드 내부는 오래된 순
+    const messages = [root, ...children]                                      // 카드 본문(시간 오름차순)
+    const latest = children.length ? children[children.length - 1].created_at : root.created_at
+    return { root, children, messages, count: messages.length, latest: latest || root.created_at || '' }
+  })
+  groups.sort((a, b) => (b.latest || '').localeCompare(a.latest || '')) // 그룹은 최근 활동순
+  return groups
+}
+
+// 스레드 카드 제목(원글 요약) — 본문 첫 줄을 잘라 씀. 없으면 유형 라벨.
+function threadTitle(root) {
+  const s = (root.message || '').replace(/\s+/g, ' ').trim()
+  if (s) return s.length > 60 ? s.slice(0, 60) + '…' : s
+  return '(' + (root.content_type || '내용 없음') + ')'
+}
+
 function periodRange(year, month) {
   if (year === 'all') return null
   const y = Number(year)
@@ -91,7 +128,7 @@ function useMessages(roomId, query, year, month, limit) {
     queryFn: async () => {
       let q = supabase
         .from('jandi_messages')
-        .select('link_id, message_id, writer_id, writer_name, content_type, message, created_at')
+        .select('link_id, message_id, writer_id, writer_name, content_type, message, created_at, reply_to_message_id')
         .eq('room_id', roomId)
         .order('created_at', { ascending: false })
         .limit(limit)
@@ -103,6 +140,24 @@ function useMessages(roomId, query, year, month, limit) {
       return data ?? []
     },
   })
+}
+
+function MessageRow({ m, isReply = false }) {
+  return (
+    <li className={'flex items-start gap-3 py-2' + (isReply ? ' pl-3' : '')}>
+      <span className="w-20 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">{fmtKST(m.created_at)}</span>
+      <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[140px] shrink-0 truncate">
+        <User className="mr-1 size-3 shrink-0" />{writerLabel(m)}
+      </Badge>
+      {isReply && <span className="mt-0.5 shrink-0 text-xs text-muted-foreground">↳ 댓글</span>}
+      {!isReply && m.reply_to_message_id && (
+        <span className="mt-0.5 shrink-0 text-xs text-muted-foreground" title="원글이 현재 목록 범위 밖입니다">💬 답글</span>
+      )}
+      <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-foreground">
+        {maskBody(m.message) || <span className="text-muted-foreground">({m.content_type || '본문 없음'})</span>}
+      </p>
+    </li>
+  )
 }
 
 function ChannelKpi({ ch }) {
@@ -189,8 +244,8 @@ export default function AdminJandiPage() {
   const onChannel = (id) => { setChannel(id); reset() }
   const onSearch = (e) => { e.preventDefault(); setQuery(input); reset() }
 
-  // 표시용: 시간 오름차순(대화 흐름) 정렬.
-  const ordered = [...rows].sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))
+  // 표시용: 최신순 정렬 + 댓글(스레드 답글)은 원글 아래로 그룹핑.
+  const threads = groupThreads(rows)
   const channelLabel = CHANNELS.find((c) => c.id === channel)?.label || channel
 
   const onRefresh = () => {
@@ -234,7 +289,7 @@ export default function AdminJandiPage() {
           {CHANNELS.map((ch) => (
             <button
               key={ch.id} onClick={() => onChannel(ch.id)} aria-pressed={channel === ch.id}
-              className={'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors '
+              className={'inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors '
                 + (channel === ch.id ? 'border-foreground bg-foreground text-background'
                   : 'border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground')}
             >{ch.label}</button>
@@ -263,8 +318,10 @@ export default function AdminJandiPage() {
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base">
             {channelLabel}{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
-            {ordered.length > 0 && (
-              <span className="ml-2 text-xs font-normal text-muted-foreground">{ordered.length}개 메시지</span>
+            {threads.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {threads.length}개 대화 · {rows.length}개 메시지
+              </span>
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -282,23 +339,35 @@ export default function AdminJandiPage() {
           {isError ? (
             <p className="py-10 text-center text-sm text-destructive">불러오기 실패: {error?.message || '오류'}</p>
           ) : isLoading ? (
-            <div className="space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          ) : ordered.length === 0 ? (
+            <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
+          ) : threads.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">조건에 맞는 메시지가 없습니다.</p>
           ) : (
-            <ul className="divide-y divide-border/40">
-              {ordered.map((m) => (
-                <li key={m.link_id} className="flex items-start gap-3 py-2">
-                  <span className="w-20 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">{fmtKST(m.created_at)}</span>
-                  <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[140px] shrink-0 truncate">
-                    <User className="mr-1 size-3 shrink-0" />{writerLabel(m)}
-                  </Badge>
-                  <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-foreground">
-                    {maskBody(m.message) || <span className="text-muted-foreground">({m.content_type || '본문 없음'})</span>}
-                  </p>
-                </li>
+            <div className="space-y-4">
+              {threads.map((t) => (
+                <Card key={t.root.link_id} className="overflow-hidden border-border/60 py-0">
+                  <CardHeader className="flex flex-row items-start justify-between gap-2 bg-muted/40 py-3">
+                    <div className="flex min-w-0 items-start gap-2">
+                      <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[150px] shrink-0 truncate">
+                        <User className="mr-1 size-3 shrink-0" />{writerLabel(t.root)}
+                      </Badge>
+                      <span className="min-w-0 truncate text-sm font-medium">{threadTitle(t.root)}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
+                      <span className="tabular-nums">{t.count}건</span>
+                      <span className="tabular-nums">최근 {fmtKST(t.latest)}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="py-2">
+                    <ul className="divide-y divide-border/40">
+                      {t.messages.map((m, i) => (
+                        <MessageRow key={m.link_id} m={m} isReply={i > 0} />
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
               ))}
-            </ul>
+            </div>
           )}
           {!isLoading && !isError && rows.length >= limit && (
             <div className="mt-4 flex justify-center">

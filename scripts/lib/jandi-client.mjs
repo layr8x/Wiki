@@ -94,20 +94,51 @@ export function extractRecords(res) {
   return [];
 }
 
+// 방 "멤버 초대/입장/퇴장" 등 시스템 이벤트 레코드(status='event', 실제 대화 아님) 판별.
+// 실측(2026-07): { status:'event', messageId:-1, info:{eventType:'member_invited',...}, ... }
+// 형태로 message 필드 자체가 없다 — 대화 목록에 섞이면 "본문 없음" 빈 줄로 보여 혼동을 준다.
+export function isEventRecord(rec) {
+  return !rec || rec.status === 'event' || rec.message == null || typeof rec.message !== 'object';
+}
+
+// 레코드의 linkId(커서용)만 추출 — 이벤트 레코드도 포함해 페이지네이션 판단에 쓴다
+// (messageToRow 는 이벤트를 null 로 걸러내므로, 커서 전진은 이 함수로 별도 계산해야
+//  "이벤트만 있는 페이지"에서 백필이 조기 종료되지 않는다).
+export function recLinkId(rec) {
+  const v = rec?.linkId ?? rec?.link_id ?? rec?.id ?? null;
+  return v != null ? String(v) : null;
+}
+
+// 스티커/파일/이미지 등 본문(body/text)이 없는 첨부형 콘텐츠용 안내 문구.
+// ⚠️ content 객체를 그대로 JSON.stringify 하면 "{"richText":[],"stickerId":"11",...}" 같은
+// 원본 덤프가 그대로 노출된다(실측 2026-07) — 사람이 읽는 라벨로 대체한다.
+const CONTENT_TYPE_LABELS = {
+  sticker: '스티커', file: '파일', image: '이미지', video: '동영상',
+  poll: '투표', todo: '할일', album: '앨범', link: '링크', card: '카드',
+};
+export function contentPlaceholder(contentType) {
+  return `[${CONTENT_TYPE_LABELS[contentType] || contentType || '첨부'}]`;
+}
+
 // ─── 레코드 1건 → jandi_messages row (방어적 매핑) ───────────────────────────
 // 정확한 키 이름이 캡처에 없어(응답 본문 미포함), 흔한 후보를 순서대로 시도하고
 // 원본(raw)을 통째 저장한다 → 표시 매핑이 어긋나도 데이터 손실 없음(재수집 불필요).
+// 시스템 이벤트 레코드는 null 반환(호출부에서 filter(Boolean)) — 실제 대화가 아님.
 export function messageToRow(rec, roomId, teamId) {
-  const msg = rec && typeof rec.message === 'object' ? rec.message : rec || {};
+  if (isEventRecord(rec)) return null;
+  const msg = rec.message;
   const linkId = rec?.linkId ?? rec?.link_id ?? rec?.id ?? msg?.linkId ?? null;
   const messageId = msg?.id ?? rec?.messageId ?? rec?.message_id ?? null;
   const writerId = msg?.writerId ?? rec?.writerId ?? msg?.fromEntity ?? rec?.fromEntity ?? null;
   const writerName = msg?.writerName ?? msg?.writer?.name ?? rec?.writer?.name ?? rec?.info?.name ?? null;
   const contentType = msg?.contentType ?? msg?.type ?? rec?.contentType ?? null;
-  const body =
-    (msg?.content && (msg.content.body ?? msg.content.text ?? msg.content))
-    ?? msg?.text ?? msg?.body ?? rec?.text ?? null;
-  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? null;
+  // content.body/text 가 없는 첨부형(스티커/파일 등)은 원본 JSON 을 그대로 덤프하지 않고
+  // 사람이 읽는 안내 문구로 대체한다.
+  const body = msg?.content && typeof msg.content === 'object'
+    ? (msg.content.body ?? msg.content.text ?? contentPlaceholder(contentType))
+    : (msg?.text ?? msg?.body ?? rec?.text ?? null);
+  // msg.createdAt(ISO) 우선, 없으면 레코드 최상위 time(밀리초 epoch)로 폴백.
+  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? rec?.time ?? null;
   let createdAt = null;
   if (createdRaw != null) {
     const d = new Date(createdRaw);
@@ -119,6 +150,8 @@ export function messageToRow(rec, roomId, teamId) {
   if (c && typeof c === 'object' && (c.fileUrl || c.type === 'file' || c.stickerId || c.image)) {
     attachments = c;
   }
+  // 댓글(스레드 답글)이면 msg.feedbackId 가 부모 메시지의 message_id 를 가리킨다(-1 이면 없음).
+  const replyTo = msg?.feedbackId != null && msg.feedbackId !== -1 ? String(msg.feedbackId) : null;
   return {
     room_id: String(roomId),
     link_id: linkId != null ? String(linkId) : null,
@@ -132,6 +165,7 @@ export function messageToRow(rec, roomId, teamId) {
     created_at: createdAt,
     raw: rec ?? null,
     source: 'rest',
+    reply_to_message_id: replyTo,
   };
 }
 
@@ -140,4 +174,22 @@ export function linkIdNum(v) {
   if (v == null) return 0;
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
+}
+
+// ─── 고객(학생·학부모) 개인정보 마스킹 — 잔디 전용(카카오 kakao-sanitize.mjs 의
+// maskBody 와 별개) ────────────────────────────────────────────────────────
+// 잔디는 직원끼리 학생 사례를 상의하는 내부방이라, 카드/주민/전화/이메일 외에
+// 학번·학생 이름도 가려야 한다(직원 이름은 유지 — CLAUDE.md 방침).
+// ⚠️ 사용자 승인된 "광범위" 범위 — 한글 이름은 컴퓨터가 직원/학생을 구분 못해
+// "OO 학생" 같은 문맥 패턴에 걸리는 직원 이름도 함께 가려질 수 있음(트레이드오프 인지).
+//   1) 이름+학번이 붙어 쓰인 패턴(예 "조은호3491") → 통째로 [학생정보]
+//   2) "학생/학부모/자녀/보호자 OOO" 문맥의 이름만 가림
+const STUDENT_ID_ATTACHED_RE = /[가-힣]{2,4}\d{3,6}(?![가-힣\d])/g;
+const STUDENT_CTX_NAME_RE = /(학생|학부모|자녀|보호자)\s*([가-힣]{2,4})(?=님|이|가|은|는|을|를|,|\.|\s|$)/g;
+export function maskCustomerInfo(text) {
+  if (text == null) return text;
+  let s = String(text);
+  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]');
+  s = s.replace(STUDENT_CTX_NAME_RE, '$1 ***');
+  return s;
 }
