@@ -1,0 +1,46 @@
+name: 잔디 대화 수집 (수동 폴백 — 주 수집은 Supabase Edge Function)
+
+# 주 수집은 Supabase Edge Function(jandi-collect)이 pg_cron 으로 담당한다(Actions 사용시간 0).
+# 이 워크플로는 Edge Function 장애 시 쓰는 '수동 폴백'으로만 남긴다.
+#   - 함수: supabase/functions/jandi-collect/index.ts
+#   - 수집 로직 동일: scripts/jandi-collect-once.mjs
+#   - 상세: docs/JANDI_SETUP.md
+#
+# 수동 실행: Actions 탭 → 이 워크플로 → Run workflow.
+# 필요한 Secrets: JANDI_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+#   선택 Variables: JANDI_TEAM_ID(기본 29522216), JANDI_MEMBER_ID.
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: jandi-collect
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies (prod only)
+        run: npm ci --omit=dev --no-audit --prefer-offline
+
+      - name: Collect jandi conversations
+        env:
+          JANDI_ACCESS_TOKEN: ${{ secrets.JANDI_ACCESS_TOKEN }}
+          JANDI_TEAM_ID: ${{ vars.JANDI_TEAM_ID || '29522216' }}
+          JANDI_MEMBER_ID: ${{ vars.JANDI_MEMBER_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/jandi-collect-once.mjs
