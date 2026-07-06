@@ -122,10 +122,11 @@ select count(*), max(last_log_send_at) from kakao_partner_chats;
 
 > ⚠️ 이 섹션이 설명하던 `scripts/kakao-partner-stream.mjs`(단일 채널) /
 > `kakao-partner-multi-stream.mjs`(멀티채널 supervisor) / `com.amswiki.kakao-stream.plist`
-> launchd 데몬은 **삭제됨**. 맥북이 켜져 있을 때만 도는 구조라 노트북을 닫거나
-> 잠자기/종료하면 수집이 멈추는 근본 한계가 있었고, 지금은 **Supabase Edge Function
-> `kakao-collect`가 pg_cron으로 5분마다 자동 실행**되며 이 역할을 대체한다(맥북 상태와
-> 완전히 무관, CLAUDE.md §16 참고). 남겨야 할 것은 **§7의 쿠키 자동 갱신(6시간마다)
+> launchd 데몬은 **삭제됨**. 회사 자산 맥 스튜디오(데스크탑)가 켜져 있을 때만 도는
+> 구조라 절전 모드가 되거나 종료되면 수집이 멈추는 근본 한계가 있었고, 지금은
+> **Supabase Edge Function `kakao-collect`가 pg_cron으로 5분마다 자동 실행**되며
+> 이 역할을 대체한다(맥 스튜디오 상태와 완전히 무관, CLAUDE.md §16 참고). 남겨야
+> 할 것은 **§7의 쿠키 자동 갱신(6시간마다)
 > 뿐**이다 — `kakao-collect`가 Supabase에 저장된 쿠키를 읽어 쓰므로, 그 쿠키를
 > 최신으로 유지하는 이 갱신 작업은 계속 필요하다.
 
@@ -200,12 +201,17 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 
 ---
 
-## 10. ✅ GitHub Actions 상시 수집 (노트북 없이 — 권장)
+## 10. GitHub Actions 상시 수집 (과거 방식 — 지금은 §5 참고)
 
-launchd 데몬은 맥북이 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
+> ⚠️ 이 섹션은 §5의 launchd 데몬을 대체하려던 과거 시도의 기록이다. **지금은 §5에
+> 적었듯 Supabase Edge Function `kakao-collect`(pg_cron, 5분마다)가 상시 수집을
+> 전담**하므로, 아래 GitHub Actions 경로는 실제로는 안 쓰인다. 쿠키 출처·배달
+> 메커니즘(§10-3, §11) 설명은 지금도 유효해 남겨둔다.
+
+launchd 데몬은 맥 스튜디오가 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
 **100% REST 증분 폴링** 으로만 이뤄지므로(WS push 적재 0건), 그 폴링 1사이클을 떼어낸
 `scripts/kakao-partner-collect-once.mjs` 를 **항상 켜진 GitHub Actions 가 5분마다 호출**하면
-노트북 상태와 무관하게 끊김 없이 수집된다. (public 저장소라 Actions 무료·무제한)
+맥 스튜디오 상태와 무관하게 끊김 없이 수집된다. (public 저장소라 Actions 무료·무제한)
 
 워크플로: `.github/workflows/kakao-collect.yml`
 
@@ -230,13 +236,12 @@ GitHub → 저장소 → **Settings → Secrets and variables → Actions → Ne
 
 ### 10-3. 쿠키 출처 & 만료 대응
 
-수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 맥북 Chrome 이 자동
-배달 — **§11**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
+수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 맥 스튜디오 Chrome 이
+자동 배달 — **§11**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
 
-- **§11 자동 배달을 켜두면** 맥북이 가끔만 켜져 있어도 보관함 쿠키가 항상 최신이라
-  **수동 갱신이 사실상 사라진다.**
+- **§11 자동 배달을 켜두면** 보관함 쿠키가 항상 최신이라 **수동 갱신이 사실상 사라진다.**
 - 둘 다 만료된 경우에만 수집기가 `me()` 에서 401/403 → **워크플로 "실패" → 알림 메일**.
-  그때 Chrome 으로 재로그인하면(맥북) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
+  그때 Chrome 으로 재로그인하면(맥 스튜디오) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
   **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 를 수동 갱신한다.
 
 ### 10-4. launchd 데몬 정리
@@ -264,12 +269,12 @@ launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
 ## 11. ✅ 쿠키 자동 배달 (만료 수동 갱신 제거)
 
 **문제**: GitHub Secret 의 쿠키는 1~4주면 만료 → 수동 교체가 번거롭다.
-**해결**: 맥북 Chrome 은 로그인이 살아있는 한 항상 유효한 쿠키를 갖는다. 이를 6시간마다
+**해결**: 맥 스튜디오 Chrome 은 로그인이 살아있는 한 항상 유효한 쿠키를 갖는다. 이를 6시간마다
 꺼내 **Supabase 보관함(`kakao_partner_secrets`)에 자동 배달**하고, GitHub 수집기가 매 실행 시
 거기서 최신 쿠키를 읽는다. → 쿠키 복사 작업이 사라진다.
 
 ```
-맥북 Chrome(로그인 유지) ──6h──▶ kakao-partner-refresh-cookie.mjs
+맥 스튜디오 Chrome(로그인 유지) ──6h──▶ kakao-partner-refresh-cookie.mjs
                                   ├─ .env.local 갱신 (로컬 데몬용)
                                   └─ Supabase kakao_partner_secrets 로 upsert   ← 자동 배달
                                                    │
@@ -280,7 +285,7 @@ GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신
 
 1. **마이그레이션 적용**(1회): `supabase/migrations/20260617_kakao_partner_secrets.sql`
    (Supabase Dashboard → SQL Editor 붙여넣고 RUN). RLS 활성 + 정책 0 → **service_role 전용**(외부 접근 차단).
-2. **맥북에 6시간 쿠키 잡 설치/유지**:
+2. **맥 스튜디오에 6시간 쿠키 잡 설치/유지**:
    ```bash
    cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
    launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
@@ -292,9 +297,10 @@ GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신
 
 ### 동작 보장
 
-- 맥북이 **24시간 켜질 필요 없음** — 쿠키 수명(1~4주) 안에 한 번이라도 켜져 6시간 잡이 돌면
-  보관함 쿠키가 갱신된다. 수집 자체는 노트북과 무관하게 GitHub 에서 계속된다.
-- 맥북이 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
+- 맥 스튜디오는 회사 자산 데스크탑으로 상시 켜두는 게 원칙이지만, 재부팅 등으로
+  잠깐 꺼졌다 켜져도 쿠키 수명(1~4주) 안에 6시간 잡이 한 번만 돌면 보관함 쿠키가
+  갱신된다. 수집 자체는 그 상태와 무관하게 GitHub 에서 계속된다.
+- 맥 스튜디오가 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
 - 배달되는 쿠키는 계정 로그인 권한과 동등 → 테이블은 RLS 로 service_role 외 접근 차단(위 1번).
 
 ---

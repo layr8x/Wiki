@@ -3,10 +3,10 @@
 // 1회성 카카오 파트너센터 증분 수집 — 상시 스케줄러(GitHub Actions cron)용.
 //
 // 배경:
-//   기존 상시 데몬(kakao-partner-stream.mjs)은 사용자 맥북의 launchd 에서만 돌아,
-//   노트북이 잠자기/종료되면 수집이 멈춰 매일 데이터 갭이 발생했다(통째로 빈 날 다수).
+//   기존 상시 데몬(kakao-partner-stream.mjs)은 회사 자산 맥 스튜디오의 launchd 에서만
+//   돌아, 그 기기가 절전/종료되면 수집이 멈춰 매일 데이터 갭이 발생했다(통째로 빈 날 다수).
 //   실측상 실제 수집은 100% "REST 증분 폴링" 경로로만 이뤄진다(WS push 적재=0).
-//   → 그 폴링 1사이클을 떼어내 항상 켜진 클라우드에서 5분마다 호출하면, 노트북 상태와
+//   → 그 폴링 1사이클을 떼어내 항상 켜진 클라우드에서 5분마다 호출하면, 그 기기 상태와
 //     무관하게 끊김 없이 수집이 이어진다.
 //
 // 동작(채널마다):
@@ -58,8 +58,8 @@ if (IDS.length === 0) {
 
 const supabase = getAdminClient();
 
-// 쿠키 출처: ① Supabase 보관함(맥북 Chrome 이 6시간마다 자동 배달) 우선 → ② GitHub Secret 폴백.
-// 맥북이 가끔만 켜져 있어도 보관함 쿠키가 항상 최신이라 만료 수동 갱신이 사라진다.
+// 쿠키 출처: ① Supabase 보관함(맥 스튜디오 Chrome 이 6시간마다 자동 배달) 우선 → ② GitHub Secret 폴백.
+// 보관함 쿠키가 항상 최신이라 만료 수동 갱신이 사라진다.
 async function resolveCookie() {
   try {
     const { data, error } = await supabase
@@ -208,7 +208,7 @@ for (const pid of IDS) {
 }
 
 if (authExpired) {
-  console.error('❌ 카카오 쿠키 만료 — 맥북 Chrome 재로그인(자동 배달, 다음 6h 주기 픽업) 또는 GitHub Secrets 의 KAKAO_PARTNER_COOKIE 수동 갱신 필요.');
+  console.error('❌ 카카오 쿠키 만료 — 맥 스튜디오 Chrome 재로그인(자동 배달, 다음 6h 주기 픽업) 또는 GitHub Secrets 의 KAKAO_PARTNER_COOKIE 수동 갱신 필요.');
   process.exit(1);
 }
 process.exit(0);

@@ -3,7 +3,7 @@
 <!--
   카카오 파트너센터 쿠키 선제 갱신 (6시간마다). Chrome 로컬 쿠키 → .env.local + Supabase(kakao_partner_secrets).
   Supabase 의 kakao-collect Edge Function(pg_cron, 5분마다)이 이 쿠키를 읽어 실제 상시 수집을 수행하므로,
-  이 launchd 는 그 쿠키를 최신으로 유지하는 역할만 한다(맥북 상태와 무관하게 도는 건 Edge Function 쪽).
+  이 launchd 는 그 쿠키를 최신으로 유지하는 역할만 한다(이 기기 상태와 무관하게 도는 건 Edge Function 쪽).
   전제: Chrome 으로 business.kakao.com 에 로그인 유지(가급적 탭을 열어두기) + 최초 1회 "Chrome Safe Storage" 키체인 허용.
   설치:
     1) WorkingDirectory / node 경로 / 로그 경로를 본인 머신에 맞게 수정
