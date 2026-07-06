@@ -37,15 +37,17 @@ Deno.serve(async (req: Request) => {
   if (accountId) headers['x-account-id'] = accountId;
 
   if (mode === 'members') {
-    // member-api 는 이전 시도(x-account-id 없이)에서 전 경로 503 — 실제 웹앱이 보내는
-    // x-account-id 헤더를 빠뜨렸을 가능성 재검증(위에서 이미 추가함).
+    const room = url.searchParams.get('room') || '31495011';
     const v1Headers = { ...headers, accept: 'application/vnd.tosslab.jandi-v1+json' };
+    // room-api 는 HAR 실측에서 /visit 이 살아있던 서비스 — 방 멤버 목록이 딸려있을 가능성.
+    const oneId = url.searchParams.get('mid') || '30543471';
     const candidates = [
-      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}/members`, h: v1Headers },
-      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}`, h: v1Headers },
-      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}/members/list`, h: v1Headers },
-      { u: `https://i1.jandi.com/member-api/v1/teams/${teamId}/members`, h: headers },
-      { u: `https://i1.jandi.com/member-api/v2/teams/${teamId}/members`, h: v1Headers },
+      { u: `https://i1.jandi.com/account-api/v2/teams/${teamId}/members`, h: headers },
+      { u: `https://i1.jandi.com/account-api/v2/teams/${teamId}/members/${oneId}`, h: headers },
+      { u: `https://i1.jandi.com/team-api/v2/teams/${teamId}/members`, h: headers },
+      { u: `https://i1.jandi.com/team-api/v2/teams/${teamId}/members/${oneId}`, h: headers },
+      { u: `https://i1.jandi.com/room-api/v2/teams/${teamId}/members/${oneId}`, h: headers },
+      { u: `https://i1.jandi.com/room-api/v2/teams/${teamId}/rooms/${room}/members`, h: headers },
     ];
     const results: any[] = [];
     for (const { u, h } of candidates) {
@@ -53,7 +55,7 @@ Deno.serve(async (req: Request) => {
         const r = await fetch(u, { headers: h });
         const ct = r.headers.get('content-type') || '';
         const b = ct.includes('json') ? await r.json().catch(() => null) : await r.text().catch(() => null);
-        const preview = typeof b === 'string' ? b.slice(0, 200) : JSON.stringify(b).slice(0, 1200);
+        const preview = typeof b === 'string' ? b.slice(0, 200) : JSON.stringify(b).slice(0, 1500);
         results.push({ url: u, accept: h.accept, status: r.status, preview });
       } catch (e: any) {
         results.push({ url: u, error: e.message });

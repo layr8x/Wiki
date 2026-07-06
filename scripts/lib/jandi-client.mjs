@@ -175,3 +175,21 @@ export function linkIdNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 }
+
+// ─── 고객(학생·학부모) 개인정보 마스킹 — 잔디 전용(카카오 kakao-sanitize.mjs 의
+// maskBody 와 별개) ────────────────────────────────────────────────────────
+// 잔디는 직원끼리 학생 사례를 상의하는 내부방이라, 카드/주민/전화/이메일 외에
+// 학번·학생 이름도 가려야 한다(직원 이름은 유지 — CLAUDE.md 방침).
+// ⚠️ 사용자 승인된 "광범위" 범위 — 한글 이름은 컴퓨터가 직원/학생을 구분 못해
+// "OO 학생" 같은 문맥 패턴에 걸리는 직원 이름도 함께 가려질 수 있음(트레이드오프 인지).
+//   1) 이름+학번이 붙어 쓰인 패턴(예 "조은호3491") → 통째로 [학생정보]
+//   2) "학생/학부모/자녀/보호자 OOO" 문맥의 이름만 가림
+const STUDENT_ID_ATTACHED_RE = /[가-힣]{2,4}\d{3,6}(?![가-힣\d])/g;
+const STUDENT_CTX_NAME_RE = /(학생|학부모|자녀|보호자)\s*([가-힣]{2,4})(?=님|이|가|은|는|을|를|,|\.|\s|$)/g;
+export function maskCustomerInfo(text) {
+  if (text == null) return text;
+  let s = String(text);
+  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]');
+  s = s.replace(STUDENT_CTX_NAME_RE, '$1 ***');
+  return s;
+}

@@ -14,7 +14,7 @@
 //   env: JANDI_ACCESS_TOKEN(폴백), JANDI_TEAM_ID, JANDI_MEMBER_ID(선택),
 //        SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 
-import { JandiClient, extractRecords, messageToRow, linkIdNum } from './lib/jandi-client.mjs';
+import { JandiClient, extractRecords, messageToRow, linkIdNum, maskCustomerInfo } from './lib/jandi-client.mjs';
 import { getAdminClient } from './lib/supabase-admin.mjs';
 import { maskBody, stripLoneSurrogates } from './lib/kakao-sanitize.mjs';
 
@@ -59,7 +59,7 @@ async function loadChannels() {
 
 function sanitizeRow(row) {
   const out = { ...row };
-  if (out.message != null) out.message = stripLoneSurrogates(maskBody(out.message));
+  if (out.message != null) out.message = maskCustomerInfo(stripLoneSurrogates(maskBody(out.message)));
   return out;
 }
 

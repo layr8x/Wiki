@@ -27,11 +27,16 @@ const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 const linkIdNum = (v: any) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
-// ── PII 라이트 마스킹(카드/주민/전화/이메일 — 이름은 내부 구성원이라 유지) ──
+// ── PII 라이트 마스킹(카드/주민/전화/이메일 — 직원 이름은 유지) ──
 const CARD_RE = /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g;
 const RRN_RE = /\b\d{6}[-\s]?[1-4]\d{6}\b/g;
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
 const MOBILE_RE = /(01[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g;
+// ── 고객(학생·학부모) 개인정보 마스킹 — 사용자 승인된 "광범위" 범위.
+// 이름+학번 붙여쓴 패턴(예 "조은호3491") 및 "학생/학부모/자녀/보호자 OOO" 문맥의 이름.
+// ⚠️ 한글 이름은 직원/학생 구분이 안 돼 문맥 일치 시 직원 이름도 가려질 수 있음(트레이드오프 인지).
+const STUDENT_ID_ATTACHED_RE = /[가-힣]{2,4}\d{3,6}(?![가-힣\d])/g;
+const STUDENT_CTX_NAME_RE = /(학생|학부모|자녀|보호자)\s*([가-힣]{2,4})(?=님|이|가|은|는|을|를|,|\.|\s|$)/g;
 function stripLoneSurrogates(s: any) {
   if (s == null) return s;
   return String(s).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
@@ -41,6 +46,7 @@ function maskBody(text: any) {
   let s = String(text);
   s = s.replace(CARD_RE, '[카드번호]').replace(RRN_RE, '[주민번호]')
        .replace(EMAIL_RE, '***@$1').replace(MOBILE_RE, '$1-****-$3');
+  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]').replace(STUDENT_CTX_NAME_RE, '$1 ***');
   return s;
 }
 

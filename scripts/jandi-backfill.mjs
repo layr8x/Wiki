@@ -9,7 +9,7 @@
 //   env: JANDI_ACCESS_TOKEN(폴백), JANDI_TEAM_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   옵션 env: JANDI_BACKFILL_MAX_PAGES(방당 상한, 기본 100000=사실상 무제한)
 
-import { JandiClient, extractRecords, messageToRow, linkIdNum, recLinkId } from './lib/jandi-client.mjs';
+import { JandiClient, extractRecords, messageToRow, linkIdNum, recLinkId, maskCustomerInfo } from './lib/jandi-client.mjs';
 import { getAdminClient } from './lib/supabase-admin.mjs';
 import { maskBody, stripLoneSurrogates } from './lib/kakao-sanitize.mjs';
 
@@ -41,7 +41,7 @@ async function resolveToken() {
 
 function sanitizeRow(row) {
   const out = { ...row };
-  if (out.message != null) out.message = stripLoneSurrogates(maskBody(out.message));
+  if (out.message != null) out.message = maskCustomerInfo(stripLoneSurrogates(maskBody(out.message)));
   return out;
 }
 

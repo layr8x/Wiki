@@ -51,12 +51,14 @@ const writerLabel = (m) => m.writer_name || (m.writer_id ? '멤버 ' + String(m.
 // 최신순 정렬 + 댓글(스레드 답글)을 원글 아래로 묶기.
 // reply_to_message_id 가 현재 로딩된 목록 안의 원글을 가리키면 그 아래 자식으로,
 // 원글이 목록 밖(오래돼서 안 불러와짐)이면 독립 항목(orphan 표시)으로 취급.
+// ⚠️ 그룹 정렬은 "원글 시각"이 아니라 "그룹 내 가장 최근 활동 시각" 기준 — 이 방은
+// 댓글(답글)이 전체 메시지의 70%를 차지해, 원글 시각으로만 정렬하면 방금 달린 새 댓글이
+// 훨씬 오래된 원글 위치에 묻혀 "최신순이 이상해 보이는" 문제가 생긴다(실사용 데이터로 확인).
 function groupThreads(rows) {
-  const sorted = [...rows].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
   const byMessageId = new Map(rows.map((r) => [r.message_id, r]))
   const childrenOf = new Map()
   const roots = []
-  for (const r of sorted) {
+  for (const r of rows) {
     const parent = r.reply_to_message_id
     if (parent && parent !== r.message_id && byMessageId.has(parent)) {
       if (!childrenOf.has(parent)) childrenOf.set(parent, [])
@@ -65,10 +67,14 @@ function groupThreads(rows) {
       roots.push(r)
     }
   }
-  for (const arr of childrenOf.values()) {
-    arr.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '')) // 스레드 내부는 오래된 순
-  }
-  return roots.map((root) => ({ root, children: childrenOf.get(root.message_id) || [] }))
+  const groups = roots.map((root) => {
+    const children = (childrenOf.get(root.message_id) || [])
+      .sort((a, b) => (a.created_at || '').localeCompare(b.created_at || '')) // 스레드 내부는 오래된 순
+    const latest = children.length ? children[children.length - 1].created_at : root.created_at
+    return { root, children, latest: latest || root.created_at || '' }
+  })
+  groups.sort((a, b) => (b.latest || '').localeCompare(a.latest || '')) // 그룹은 최근 활동순
+  return groups
 }
 
 function periodRange(year, month) {
