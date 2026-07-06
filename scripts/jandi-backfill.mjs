@@ -9,7 +9,7 @@
 //   env: JANDI_ACCESS_TOKEN(폴백), JANDI_TEAM_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //   옵션 env: JANDI_BACKFILL_MAX_PAGES(방당 상한, 기본 100000=사실상 무제한)
 
-import { JandiClient, extractRecords, messageToRow, linkIdNum } from './lib/jandi-client.mjs';
+import { JandiClient, extractRecords, messageToRow, linkIdNum, recLinkId } from './lib/jandi-client.mjs';
 import { getAdminClient } from './lib/supabase-admin.mjs';
 import { maskBody, stripLoneSurrogates } from './lib/kakao-sanitize.mjs';
 
@@ -77,23 +77,26 @@ async function backfillRoom(client, room) {
     const recs = extractRecords(res);
     if (!recs.length) break;
 
-    const rows = recs.map((r) => sanitizeRow(messageToRow(r, roomId, teamId))).filter((r) => r.link_id);
-    if (!rows.length) break;
-
-    // 최신 linkId(첫 페이지 기준) 기록
-    for (const r of rows) {
-      const n = linkIdNum(r.link_id);
-      if (newestLink == null || n > linkIdNum(newestLink)) newestLink = r.link_id;
+    // 실제 대화 행(시스템 이벤트 제외) — 페이지 전체가 이벤트뿐이어도(rows 0건)
+    // 아래 커서 전진은 raw recs 기준이라 조기 종료되지 않는다.
+    const rows = recs.map((r) => messageToRow(r, roomId, teamId)).filter(Boolean).map(sanitizeRow);
+    if (rows.length) {
+      for (const r of rows) {
+        const n = linkIdNum(r.link_id);
+        if (newestLink == null || n > linkIdNum(newestLink)) newestLink = r.link_id;
+      }
+      const n = await upsert(rows);
+      if (n < 0) { log(`[${roomId}] upsert 실패 — 중단`); break; }
+      grand += rows.length;
     }
-
-    const n = await upsert(rows);
-    if (n < 0) { log(`[${roomId}] upsert 실패 — 중단`); break; }
-    grand += rows.length;
     pages++;
 
-    // 다음 커서 = 이번 페이지의 가장 오래된 linkId
-    const oldest = rows.reduce((a, r) => (linkIdNum(r.link_id) < linkIdNum(a) ? r.link_id : a), rows[0].link_id);
-    if (seen.has(oldest)) { log(`[${roomId}] 커서 정체(${oldest}) — 끝으로 판단, 중단`); break; }
+    // 다음 커서 = 이번 페이지의 가장 오래된 linkId(raw 레코드 기준, 이벤트 포함)
+    const oldest = recs.reduce((a, r) => {
+      const id = recLinkId(r);
+      return id != null && linkIdNum(id) < linkIdNum(a) ? id : a;
+    }, recLinkId(recs[0]));
+    if (oldest == null || seen.has(oldest)) { log(`[${roomId}] 커서 정체(${oldest}) — 끝으로 판단, 중단`); break; }
     seen.add(oldest);
     cursor = oldest;
 

@@ -88,21 +88,29 @@ function extractRecords(res: any): any[] {
   if (Array.isArray(res.data)) return res.data;
   return [];
 }
-function messageToRow(rec: any, roomId: string, teamId: string) {
-  const msg = rec && typeof rec.message === 'object' ? rec.message : rec || {};
+// 방 "멤버 초대/입장/퇴장" 등 시스템 이벤트 레코드(status='event', 실제 대화 아님) 판별.
+// 실측(2026-07): { status:'event', messageId:-1, info:{eventType:'member_invited',...}, ... }
+// 형태로 message 필드 자체가 없다 — 대화 목록에 섞이면 "본문 없음" 빈 줄로 보여 혼동을 준다.
+function isEventRecord(rec: any): boolean {
+  return !rec || rec.status === 'event' || rec.message == null || typeof rec.message !== 'object';
+}
+function messageToRow(rec: any, roomId: string, teamId: string): any {
+  if (isEventRecord(rec)) return null;
+  const msg = rec.message;
   const linkId = rec?.linkId ?? rec?.link_id ?? rec?.id ?? msg?.linkId ?? null;
   const messageId = msg?.id ?? rec?.messageId ?? rec?.message_id ?? null;
   const writerId = msg?.writerId ?? rec?.writerId ?? msg?.fromEntity ?? rec?.fromEntity ?? null;
   const writerName = msg?.writerName ?? msg?.writer?.name ?? rec?.writer?.name ?? rec?.info?.name ?? null;
   const contentType = msg?.contentType ?? msg?.type ?? rec?.contentType ?? null;
   const body = (msg?.content && (msg.content.body ?? msg.content.text ?? msg.content)) ?? msg?.text ?? msg?.body ?? rec?.text ?? null;
-  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? null;
+  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? rec?.time ?? null;
   let createdAt: string | null = null;
   if (createdRaw != null) { const d = new Date(createdRaw); createdAt = isNaN(d.getTime()) ? null : d.toISOString(); }
   let attachments: any = null;
   const c = msg?.content;
   if (c && typeof c === 'object' && (c.fileUrl || c.type === 'file' || c.stickerId || c.image)) attachments = c;
   const bodyStr = typeof body === 'string' ? body : (body != null ? JSON.stringify(body) : null);
+  const replyTo = msg?.feedbackId != null && msg.feedbackId !== -1 ? String(msg.feedbackId) : null;
   return {
     room_id: String(roomId), link_id: linkId != null ? String(linkId) : null,
     message_id: messageId != null ? String(messageId) : null, team_id: String(teamId),
@@ -110,6 +118,7 @@ function messageToRow(rec: any, roomId: string, teamId: string) {
     content_type: contentType || null,
     message: bodyStr != null ? stripLoneSurrogates(maskBody(bodyStr)) : null,
     attachments, created_at: createdAt, raw: rec ?? null, source: 'rest',
+    reply_to_message_id: replyTo,
   };
 }
 

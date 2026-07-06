@@ -94,11 +94,28 @@ export function extractRecords(res) {
   return [];
 }
 
+// 방 "멤버 초대/입장/퇴장" 등 시스템 이벤트 레코드(status='event', 실제 대화 아님) 판별.
+// 실측(2026-07): { status:'event', messageId:-1, info:{eventType:'member_invited',...}, ... }
+// 형태로 message 필드 자체가 없다 — 대화 목록에 섞이면 "본문 없음" 빈 줄로 보여 혼동을 준다.
+export function isEventRecord(rec) {
+  return !rec || rec.status === 'event' || rec.message == null || typeof rec.message !== 'object';
+}
+
+// 레코드의 linkId(커서용)만 추출 — 이벤트 레코드도 포함해 페이지네이션 판단에 쓴다
+// (messageToRow 는 이벤트를 null 로 걸러내므로, 커서 전진은 이 함수로 별도 계산해야
+//  "이벤트만 있는 페이지"에서 백필이 조기 종료되지 않는다).
+export function recLinkId(rec) {
+  const v = rec?.linkId ?? rec?.link_id ?? rec?.id ?? null;
+  return v != null ? String(v) : null;
+}
+
 // ─── 레코드 1건 → jandi_messages row (방어적 매핑) ───────────────────────────
 // 정확한 키 이름이 캡처에 없어(응답 본문 미포함), 흔한 후보를 순서대로 시도하고
 // 원본(raw)을 통째 저장한다 → 표시 매핑이 어긋나도 데이터 손실 없음(재수집 불필요).
+// 시스템 이벤트 레코드는 null 반환(호출부에서 filter(Boolean)) — 실제 대화가 아님.
 export function messageToRow(rec, roomId, teamId) {
-  const msg = rec && typeof rec.message === 'object' ? rec.message : rec || {};
+  if (isEventRecord(rec)) return null;
+  const msg = rec.message;
   const linkId = rec?.linkId ?? rec?.link_id ?? rec?.id ?? msg?.linkId ?? null;
   const messageId = msg?.id ?? rec?.messageId ?? rec?.message_id ?? null;
   const writerId = msg?.writerId ?? rec?.writerId ?? msg?.fromEntity ?? rec?.fromEntity ?? null;
@@ -107,7 +124,8 @@ export function messageToRow(rec, roomId, teamId) {
   const body =
     (msg?.content && (msg.content.body ?? msg.content.text ?? msg.content))
     ?? msg?.text ?? msg?.body ?? rec?.text ?? null;
-  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? null;
+  // msg.createdAt(ISO) 우선, 없으면 레코드 최상위 time(밀리초 epoch)로 폴백.
+  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? rec?.time ?? null;
   let createdAt = null;
   if (createdRaw != null) {
     const d = new Date(createdRaw);
@@ -119,6 +137,8 @@ export function messageToRow(rec, roomId, teamId) {
   if (c && typeof c === 'object' && (c.fileUrl || c.type === 'file' || c.stickerId || c.image)) {
     attachments = c;
   }
+  // 댓글(스레드 답글)이면 msg.feedbackId 가 부모 메시지의 message_id 를 가리킨다(-1 이면 없음).
+  const replyTo = msg?.feedbackId != null && msg.feedbackId !== -1 ? String(msg.feedbackId) : null;
   return {
     room_id: String(roomId),
     link_id: linkId != null ? String(linkId) : null,
@@ -132,6 +152,7 @@ export function messageToRow(rec, roomId, teamId) {
     created_at: createdAt,
     raw: rec ?? null,
     source: 'rest',
+    reply_to_message_id: replyTo,
   };
 }
 

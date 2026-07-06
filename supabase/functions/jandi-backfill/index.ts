@@ -82,21 +82,33 @@ function extractRecords(res: any): any[] {
   if (Array.isArray(res.data)) return res.data;
   return [];
 }
-function messageToRow(rec: any, roomId: string, teamId: string) {
-  const msg = rec && typeof rec.message === 'object' ? rec.message : rec || {};
+// 방 "멤버 초대/입장/퇴장" 등 시스템 이벤트 레코드(status='event', 실제 대화 아님) 판별.
+function isEventRecord(rec: any): boolean {
+  return !rec || rec.status === 'event' || rec.message == null || typeof rec.message !== 'object';
+}
+// 레코드의 linkId(커서용)만 추출 — 이벤트 레코드도 포함해 페이지네이션 판단에 쓴다.
+function recLinkId(rec: any): string | null {
+  const v = rec?.linkId ?? rec?.link_id ?? rec?.id ?? null;
+  return v != null ? String(v) : null;
+}
+function messageToRow(rec: any, roomId: string, teamId: string): any {
+  if (isEventRecord(rec)) return null;
+  const msg = rec.message;
   const linkId = rec?.linkId ?? rec?.link_id ?? rec?.id ?? msg?.linkId ?? null;
   const messageId = msg?.id ?? rec?.messageId ?? rec?.message_id ?? null;
   const writerId = msg?.writerId ?? rec?.writerId ?? msg?.fromEntity ?? rec?.fromEntity ?? null;
   const writerName = msg?.writerName ?? msg?.writer?.name ?? rec?.writer?.name ?? rec?.info?.name ?? null;
   const contentType = msg?.contentType ?? msg?.type ?? rec?.contentType ?? null;
   const body = (msg?.content && (msg.content.body ?? msg.content.text ?? msg.content)) ?? msg?.text ?? msg?.body ?? rec?.text ?? null;
-  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? null;
+  const createdRaw = msg?.createdAt ?? msg?.created_at ?? rec?.createdAt ?? rec?.created_at ?? rec?.time ?? null;
   let createdAt: string | null = null;
   if (createdRaw != null) { const d = new Date(createdRaw); createdAt = isNaN(d.getTime()) ? null : d.toISOString(); }
   let attachments: any = null;
   const c = msg?.content;
   if (c && typeof c === 'object' && (c.fileUrl || c.type === 'file' || c.stickerId || c.image)) attachments = c;
   const bodyStr = typeof body === 'string' ? body : (body != null ? JSON.stringify(body) : null);
+  // 댓글(스레드 답글)이면 msg.feedbackId 가 부모 메시지의 message_id 를 가리킨다(-1 이면 없음).
+  const replyTo = msg?.feedbackId != null && msg.feedbackId !== -1 ? String(msg.feedbackId) : null;
   return {
     room_id: String(roomId), link_id: linkId != null ? String(linkId) : null,
     message_id: messageId != null ? String(messageId) : null, team_id: String(teamId),
@@ -104,6 +116,7 @@ function messageToRow(rec: any, roomId: string, teamId: string) {
     content_type: contentType || null,
     message: bodyStr != null ? stripLoneSurrogates(maskBody(bodyStr)) : null,
     attachments, created_at: createdAt, raw: null, source: 'rest-backfill',
+    reply_to_message_id: replyTo,
   };
 }
 
@@ -148,7 +161,9 @@ Deno.serve(async (req: Request) => {
         if (firstLinkId == null && res?.firstLinkId != null) firstLinkId = linkIdNum(res.firstLinkId);
         const recs = extractRecords(res);
         if (!recs.length) { doneRoom = true; break; }
-        const rows = recs.map((r) => messageToRow(r, roomId, roomTeam)).filter((r) => r.link_id);
+        // 실제 대화 행(시스템 이벤트 제외) — 페이지 전체가 이벤트뿐이어도(rows 0건)
+        // 아래 커서 전진은 raw recs 기준이라 조기 종료되지 않는다.
+        const rows = recs.map((r) => messageToRow(r, roomId, roomTeam)).filter(Boolean);
         if (rows.length) {
           const { error: upErr } = await supabase.from('jandi_messages').upsert(rows, { onConflict: 'room_id,link_id' });
           if (upErr) { results.push({ room_id: roomId, error: 'upsert: ' + upErr.message }); break; }
@@ -156,9 +171,13 @@ Deno.serve(async (req: Request) => {
         }
         fetched += rows.length;
         pages++; pagesUsed++;
-        const oldest = rows.reduce((a, r) => (linkIdNum(r.link_id) < linkIdNum(a) ? r.link_id : a), rows[0]?.link_id ?? String(cursor ?? ''));
-        const oldestNum = linkIdNum(oldest);
-        if (cursor != null && oldestNum >= cursor) { doneRoom = true; break; }   // 커서 정체 = 끝
+        // 다음 커서 = 이번 페이지의 가장 오래된 linkId(raw 레코드 기준, 이벤트 포함)
+        const oldestId = recs.reduce((a: string | null, r: any) => {
+          const id = recLinkId(r);
+          return id != null && (a == null || linkIdNum(id) < linkIdNum(a)) ? id : a;
+        }, null as string | null);
+        const oldestNum = linkIdNum(oldestId);
+        if (oldestId == null || (cursor != null && oldestNum >= cursor)) { doneRoom = true; break; }   // 커서 정체 = 끝
         cursor = oldestNum;
         if (recs.length < PAGE || (firstLinkId != null && oldestNum <= firstLinkId)) { doneRoom = true; break; }
       }
