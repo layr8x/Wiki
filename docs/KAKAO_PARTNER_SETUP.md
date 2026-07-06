@@ -118,46 +118,16 @@ select count(*), max(last_log_send_at) from kakao_partner_chats;
 
 ---
 
-## 5. 실시간 스트림 (상시)
+## 5. 실시간 스트림 (폐기됨, 2026-07-06)
 
-> 💡 이 launchd 데몬은 **켜져 있는 맥북에서만** 돈다. 노트북을 닫거나 잠자기/종료하면
-> 수집이 멈춰 매일 갭이 생긴다. **노트북과 무관하게 24시간 끊김 없이** 수집하려면
-> 아래 **§10 GitHub Actions 상시 수집(권장)** 을 사용한다.
-
-### 5-1. 포그라운드로 먼저 검증
-
-```bash
-npm run kakao:stream
-```
-
-새 메시지가 들어오면 첫 번째 frame 의 raw payload 가
-`./kakao-partner-raw.log` 와 콘솔에 동시에 출력됨.
-
-→ **payload 구조 확인 후 `_handlePayload()` 의 휴리스틱(log_id/chat_id/text 추출)
-정확도 점검**. 실제 키 이름이 다르면 PR 로 매핑 보강.
-
-확인되면 raw 덤프 끄기:
-```bash
-KAKAO_PARTNER_DUMP_RAW=false npm run kakao:stream
-```
-
-### 5-2. macOS launchd 로 상시 실행
-
-```bash
-mkdir -p ~/Library/Logs/ams-wiki
-# 1) plist 의 WorkingDirectory / NODE_BIN / 로그 경로를 본인 환경에 맞게 수정
-vim scripts/launchd/com.amswiki.kakao-stream.plist
-# 2) 설치
-cp scripts/launchd/com.amswiki.kakao-stream.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
-# 3) 로그 확인
-tail -f ~/Library/Logs/ams-wiki/kakao-stream.log
-```
-
-중지:
-```bash
-launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
-```
+> ⚠️ 이 섹션이 설명하던 `scripts/kakao-partner-stream.mjs`(단일 채널) /
+> `kakao-partner-multi-stream.mjs`(멀티채널 supervisor) / `com.amswiki.kakao-stream.plist`
+> launchd 데몬은 **삭제됨**. 맥북이 켜져 있을 때만 도는 구조라 노트북을 닫거나
+> 잠자기/종료하면 수집이 멈추는 근본 한계가 있었고, 지금은 **Supabase Edge Function
+> `kakao-collect`가 pg_cron으로 5분마다 자동 실행**되며 이 역할을 대체한다(맥북 상태와
+> 완전히 무관, CLAUDE.md §16 참고). 남겨야 할 것은 **§7의 쿠키 자동 갱신(6시간마다)
+> 뿐**이다 — `kakao-collect`가 Supabase에 저장된 쿠키를 읽어 쓰므로, 그 쿠키를
+> 최신으로 유지하는 이 갱신 작업은 계속 필요하다.
 
 ---
 
@@ -188,13 +158,7 @@ order by last_log_send_at desc;
 `process.exit(1)` 으로 죽고, supervisor 가 5초마다 무한 재시작(폭주)하거나, 폴링이
 조용히 멈춰 **수집이 영구 정지**했다. 이제 다음과 같이 스스로 복구한다.
 
-**반응형 (데몬 자체)** — 401/403 을 만나면:
-1. `.env.local` 의 `KAKAO_PARTNER_COOKIE` 를 다시 읽어 외부에서 갱신된 쿠키를 즉시 픽업
-2. (macOS) `KAKAO_PARTNER_AUTO_REFRESH=1` 이면 Chrome 로컬 쿠키에서 자동 재추출 후 재시도
-3. 실패해도 죽지 않고 백오프(최대 5분) 후 재시도하며, 원인을
-   `kakao_partner_stream_state.last_error` 에 기록 → `npm run kakao:status` 로 확인
-
-**선제형 (스케줄)** — 6시간마다 쿠키를 미리 갱신해 만료 자체를 예방:
+6시간마다 쿠키를 미리 갱신해 만료 자체를 예방(launchd 스케줄):
 ```bash
 cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
@@ -211,10 +175,8 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `⚠️STALE` + `last_error: auth 401` | 쿠키 만료 + 자동 갱신 실패 | Chrome 으로 카카오 재로그인 (자가복구가 다음 주기에 픽업) |
+| `⚠️STALE` + `last_error: auth 401` | 쿠키 만료 | Chrome 으로 카카오 재로그인 (다음 6시간 주기 또는 수동 `npm run kakao:refresh-cookie` 로 픽업) |
 | `HTTP 403 /chats/search` | 권한 부족 | 매니저 권한 가진 계정으로 재로그인 |
-| `ws/info HTTP 503` | 카카오 서버 점검 또는 IP 차단 | 30분 대기. 반복되면 jitter 늘리기 |
-| `payload (unmatched)` 만 나옴 | push payload 키가 휴리스틱과 다름 | 덤프 파일 보고 `_handlePayload()` 수정 |
 | `cookie refresh unavailable` | macOS 아님 / Chrome 로그아웃 | Chrome 재로그인 또는 수동 `npm run kakao:refresh-cookie` |
 
 ---
@@ -222,8 +184,8 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 ## 8. 보안 / ToS 주의
 
 - 카카오 비즈니스 약관에 자동화 도구 명시 금지가 있는지 사용 전 확인 권장.
-- 본 데몬은 **본인 계정의 본인 데이터** 수집용. 타인 채널/계정 데이터 수집 금지.
-- 트래픽 패턴: REST 폴백 60초 간격 + jitter 0~400ms. 더 공격적으로 설정 시
+- **본인 계정의 본인 데이터** 수집용. 타인 채널/계정 데이터 수집 금지.
+- 트래픽 패턴: 5분 간격 REST 증분 폴링 + jitter. 더 공격적으로 설정 시
   카카오 측 어뷰즈 탐지에 걸릴 수 있음.
 - 쿠키 노출 시 **계정 탈취** 가능. `.env.local` 는 절대 commit 금지 (이미 무시됨).
 

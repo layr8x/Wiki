@@ -6,11 +6,11 @@
 // 전제: Chrome 으로 business.kakao.com 에 로그인되어 있어야 함.
 // 실행: npm run kakao:refresh-cookie
 //   (최초 실행 시 "Chrome Safe Storage" 키체인 접근 허용 팝업 → 항상 허용)
-// 갱신 후 데몬 재시작까지 자동 시도.
+// Supabase 에 올린 쿠키는 pg_cron 이 5분마다 호출하는 kakao-collect Edge Function 이 읽어간다.
 
 import { DatabaseSync } from 'node:sqlite';
 import crypto from 'node:crypto';
-import { execFileSync, execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -131,18 +131,3 @@ env = /^KAKAO_PARTNER_COOKIE=.*$/m.test(env)
   : env + '\n' + line + '\n';
 fs.writeFileSync(envPath, env);
 console.log('[refresh] .env.local 갱신 (backup: .env.local.bak)');
-
-// 데몬이 직접 호출한 자가복구/cron 경로에서는 재시작 생략 (자기 자신 kill 방지).
-// 실행 중 데몬은 .env.local 을 재읽어 새 쿠키를 픽업한다.
-if (process.env.KAKAO_SKIP_DAEMON_RESTART === '1') {
-  console.log('[refresh] KAKAO_SKIP_DAEMON_RESTART=1 → 데몬 재시작 생략 (실행 중 데몬이 .env.local 재읽음)');
-} else {
-  // 데몬 재시작(있으면)
-  try {
-    const uid = process.getuid();
-    execSync(`launchctl kickstart -k gui/${uid}/com.amswiki.kakao-stream`, { stdio: 'ignore' });
-    console.log('[refresh] launchd 데몬 재시작 완료 (com.amswiki.kakao-stream)');
-  } catch {
-    console.log('[refresh] 데몬 미등록/재시작 생략 — 수동 실행 시 npm run kakao:stream:all');
-  }
-}

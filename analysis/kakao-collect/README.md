@@ -24,8 +24,6 @@
 | 파일 | 역할 |
 |---|---|
 | `scripts/kakao-partner-collect-once.mjs` | **현재 정본 수집 1사이클** (증분 폴링, pg_cron·Edge Function이 호출) |
-| `scripts/kakao-partner-multi-stream.mjs` | 3채널 동시 수집(supervisor) — 상시 데몬형 |
-| `scripts/kakao-partner-stream.mjs` | 단일 채널 실시간/폴링 데몬 |
 | `scripts/kakao-partner-bootstrap.mjs` | 최초 1회 채팅 메타 백필 |
 | `scripts/kakao-partner-backfill.mjs` · `-backfill-missing.mjs` | 과거 메시지·누락분 회수 |
 | `scripts/kakao-partner-refresh-cookie.mjs` | 로그인 쿠키 자동 갱신·배달 |
@@ -34,7 +32,6 @@
 | `scripts/classify-kakao-stream.mjs` · `classify-kakao-csv.mjs` | Claude 기반 카테고리·감정 자동 분류(수동 실행용 — 상시 자동화는 §3 의 `kakao-classify` 참고) |
 | `scripts/lib/kakao-partner-client.mjs` | 파트너센터 REST 클라이언트(쿠키 인증) |
 | `scripts/lib/kakao-sanitize.mjs` | **PII(개인정보) 마스킹 공통 모듈** (저장 전 마스킹) |
-| `scripts/lib/kakao-cookie.mjs` | 쿠키 추출·관리 |
 | `scripts/lib/__tests__/kakao-sanitize.test.js` | 마스킹 규칙 검증 테스트 |
 
 ---
