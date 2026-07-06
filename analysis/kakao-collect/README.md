@@ -53,7 +53,7 @@
 | `supabase/migrations/20260702_kakao_classify_pipeline.sql` | ★분류 자동화 — category_model 컬럼 + 재분류 큐 인덱스 + pg_cron 15분 |
 | `supabase/migrations/20260702_kakao_alert_pipeline.sql` | ★이상탐지 자동화 — alert_state 테이블 + 헬스/급증 RPC + pg_cron 10분 |
 | `.github/workflows/kakao-collect.yml` | 수동 폴백용 GitHub Actions 경로 |
-| `scripts/launchd/com.amswiki.kakao-*.plist` | (구) 맥북 상시 실행·쿠키 갱신 — 인프라 이전 전 방식 |
+| `scripts/launchd/com.amswiki.kakao-cookie-refresh.plist` | 회사 자산 맥 스튜디오에서 6시간마다 카카오 로그인 쿠키를 Supabase 로 자동 배달(현재도 사용 중). 예전 상시수집 데몬(`kakao-stream.plist` 등)은 인프라 이전 후 삭제됨 |
 
 ---
 

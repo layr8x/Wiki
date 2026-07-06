@@ -41,7 +41,7 @@
 - 중간단계: 먼저 "30분 간격으로 조정"(`supabase/migrations/20260625_kakao_collect_30min.sql`) → 사용자가 "GitHub 말고 Supabase 안에서 직접" 결정 → Edge Function 전환.
 - `supabase/migrations/20260625_kakao_collect_edge_function.sql` — pg_cron `kakao-collect-dispatch`를 edge function 호출로 재지정(5분). 적용됨.
 - `.github/workflows/kakao-collect.yml` — `schedule` 제거, `workflow_dispatch`만(수동 폴백).
-- **장애 복구**: 쿠키 만료(401) → 사용자가 맥북에서 `npm run kakao:refresh-cookie` → 수집 재개(6/18→6/25 점프, 629메시지 백필, recent_error=null 확인).
+- **장애 복구**: 쿠키 만료(401) → 사용자가 회사 자산 맥 스튜디오에서 `npm run kakao:refresh-cookie` → 수집 재개(6/18→6/25 점프, 629메시지 백필, recent_error=null 확인).
 
 ## 워크스트림 6 — AMS LNB + 헤더 리디자인 (PR #224, 라이브) ★ 이어서 할 메인
 김명준 다른세션 결과물(딥네이비 #0D1424 + Indigo #6366F1)을 사용자가 "영 마음에 안 든다" → 원인=**Figma Make 커뮤니티 템플릿 감성, LUMEN 디자인시스템 아님**. → LUMEN 토큰으로 새로 만듦.
