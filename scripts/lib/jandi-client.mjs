@@ -41,10 +41,14 @@ export class JandiClient {
     const url = path.startsWith('http') ? path : BASE + path;
     const headers = {
       'user-agent': this.userAgent,
-      'accept': 'application/json, text/plain, */*',
+      // ⚠️ 잔디 API 는 버전드 Accept 를 요구한다. 일반 application/json 이면 406
+      // {code:40600, msg:"version:accept"} 로 거절됨(2026-07 실측). message-api 는 v2.
+      'accept': 'application/vnd.tosslab.jandi-v2+json',
       'accept-language': 'ko-KR,ko;q=0.9,en;q=0.8',
       'authorization': `Bearer ${this.accessToken}`,
       'x-team-id': this.teamId,
+      // 실제 잔디 웹 클라이언트가 보내는 커스텀 UA(필수는 아니나 정합성 위해 동봉).
+      'x-user-agent': 'Jandi/26.12 (web; Mac OS; 10.15; Browser; Chrome;)',
       'referer': 'https://flytofreedom.jandi.com/',
       ...(opts.headers || {}),
     };
