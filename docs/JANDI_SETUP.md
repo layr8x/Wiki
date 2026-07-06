@@ -135,21 +135,42 @@ npm run jandi:collect-once
 
 잔디 토큰은 수명이 ~12h 로 짧아, 만료되면 4-A 수집이 401 로 멈춘다. 새 토큰을 주기적으로
 `jandi_secrets.jandi_access_token` 에 배달해야 한다(카카오 "쿠키 배달부"의 잔디판).
+`scripts/jandi-refresh-token.mjs` 가 잔디 팀 앱을 열어 앱이 `i1.jandi.com` 을 호출할 때
+요청 헤더의 `Bearer` 토큰을 가로채 배달한다(토큰 저장 위치에 의존 안 함).
+
+로그인 방식 두 가지:
+
+- **모드 A — 전용 크롬 프로필 재사용 (권장):** `JANDI_CHROME_USER_DATA_DIR` 에 전용 프로필
+  경로를 주면, 그 프로필로 브라우저를 연다. **자격증명이 필요 없고 SSO/2단계 인증에도 안 막힌다**
+  (카카오가 "이미 로그인된 크롬"을 쓰는 것과 동일 철학). 최초 1회만 로그인해두면 된다.
+- **모드 B — 이메일/비밀번호 (폴백):** `JANDI_EMAIL`/`JANDI_PASSWORD` 로 매번 새로 로그인.
+  ⚠️ 회사 SSO/MFA 면 막힐 수 있다.
+
+#### 맥 스튜디오 launchd 설정 (6시간마다 자동 — 카카오 쿠키 배달과 동일)
 
 ```bash
-# .env.local 에 JANDI_EMAIL, JANDI_PASSWORD, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 설정 후
-npm run jandi:refresh-token
+# 0) 준비(최초 1회)
+npm ci                                  # devDependencies(@playwright/test) 포함
+npx playwright install chromium         # 크롬 엔진 1회 설치
+# .env.local 에 아래 3줄 추가:
+#   SUPABASE_URL=...
+#   SUPABASE_SERVICE_ROLE_KEY=...
+#   JANDI_CHROME_USER_DATA_DIR=/Users/layr8x/.jandi-refresh-chrome
+# 전용 프로필에 최초 1회 로그인(크롬 창이 뜨면 로그인):
+JANDI_HEADLESS=false npm run jandi:refresh-token
+
+# 1) launchd 등록(6시간마다 헤드리스 자동 갱신)
+cp scripts/launchd/com.amswiki.jandi-token-refresh.plist ~/Library/LaunchAgents/
+#   (plist 안 WorkingDirectory / node 경로 / 로그 경로를 본인 머신에 맞게 수정)
+launchctl load ~/Library/LaunchAgents/com.amswiki.jandi-token-refresh.plist
+tail -f ~/Library/Logs/ams-wiki/jandi-token-refresh.log   # 동작 확인
 ```
 
-`scripts/jandi-refresh-token.mjs` 가 헤드리스로 잔디에 로그인 → 앱이 `i1.jandi.com` 을
-호출할 때 요청 헤더의 `Bearer` 토큰을 가로채 배달한다(토큰 저장 위치에 의존 안 함).
+중지: `launchctl unload ~/Library/LaunchAgents/com.amswiki.jandi-token-refresh.plist`
 
-- **권장(카카오 모델과 동일):** 사내 신뢰 PC 의 cron 에 `npm run jandi:refresh-token` 을
-  6~8시간마다 걸어 둔다. 예(crontab): `0 */6 * * * cd /path/to/Wiki && npm run jandi:refresh-token`.
-- **CI 자동 갱신(선택):** `.github/workflows/jandi-refresh-token.yml` 의 `schedule` 주석을
-  해제하고 Secrets(`JANDI_EMAIL`,`JANDI_PASSWORD`)를 등록. ⚠️ 회사 계정을 클라우드에서
-  로그인하면 보안 경고가 뜨거나 **SSO/2단계 인증(MFA)에 막힐 수 있다**. 막히면 이 잡은 실패로
-  끝나며, 2번의 수동 토큰 추출로 갱신한다.
+- **CI 자동 갱신(비권장):** `.github/workflows/jandi-refresh-token.yml` 의 `schedule` 주석을
+  풀면 되지만, 회사 계정을 클라우드에서 로그인하면 보안 경고·SSO/MFA 로 막힐 수 있다. 위
+  맥 스튜디오 방식을 권장한다.
 
 ### 4-D. 전체 백필 — 이전 모든 대화 (최초 1회)
 

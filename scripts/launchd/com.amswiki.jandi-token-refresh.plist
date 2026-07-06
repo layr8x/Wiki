@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  잔디(JANDI) access token 선제 갱신 (6시간마다). 로그인 세션 → jandi_secrets.jandi_access_token.
+  Supabase 의 jandi-collect Edge Function(pg_cron, 5분마다)이 이 토큰을 읽어 실제 상시 수집을 하므로,
+  이 launchd 는 그 토큰을 최신으로 유지하는 역할만 한다(카카오 쿠키 배달의 잔디판).
+  ⚠️ 잔디 토큰 수명이 ~12h 로 짧아 6h 간격 갱신 필수.
+
+  권장: 모드 A(전용 크롬 프로필 재사용, 자격증명 불필요). .env.local 에
+        JANDI_CHROME_USER_DATA_DIR=/Users/layr8x/.jandi-refresh-chrome 지정.
+
+  설치(맥 스튜디오):
+    0) 준비(최초 1회):
+       - npm ci                              # devDependencies(@playwright/test) 포함 설치
+       - npx playwright install chromium     # 크롬 엔진 1회 설치
+       - .env.local 에: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+                         JANDI_CHROME_USER_DATA_DIR=/Users/layr8x/.jandi-refresh-chrome
+       - 전용 프로필에 최초 1회 로그인:
+           JANDI_HEADLESS=false npm run jandi:refresh-token
+         (크롬 창이 뜨면 잔디에 로그인 → 토큰 갱신 완료 로그 확인 후 종료)
+    1) WorkingDirectory / node 경로 / 로그 경로를 본인 머신에 맞게 수정
+    2) cp scripts/launchd/com.amswiki.jandi-token-refresh.plist ~/Library/LaunchAgents/
+    3) launchctl load ~/Library/LaunchAgents/com.amswiki.jandi-token-refresh.plist
+    4) tail -f ~/Library/Logs/ams-wiki/jandi-token-refresh.log
+  중지:
+    launchctl unload ~/Library/LaunchAgents/com.amswiki.jandi-token-refresh.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.amswiki.jandi-token-refresh</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>--env-file=.env.local</string>
+    <string>scripts/jandi-refresh-token.mjs</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/🕹️ layr8x/ams-wiki</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- 6시간마다(21600초). 토큰 수명 ~12h 내 여유 갱신. -->
+  <key>StartInterval</key>
+  <integer>21600</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/layr8x/Library/Logs/ams-wiki/jandi-token-refresh.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/layr8x/Library/Logs/ams-wiki/jandi-token-refresh.err.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_ENV</key>
+    <string>production</string>
+    <!-- 헤드리스 실행(전용 프로필에 이미 로그인돼 있어야 함). -->
+    <key>JANDI_HEADLESS</key>
+    <string>true</string>
+  </dict>
+</dict>
+</plist>
