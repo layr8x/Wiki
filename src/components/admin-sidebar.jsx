@@ -4,14 +4,13 @@ import * as React from "react"
 import { NavLink, Link, useLocation } from "react-router-dom"
 import {
   ChartBar as BarChart3,
-  ChatText as MessageSquare,
+  Tray,
   ChatsCircle as Chats,
+  Headset,
   FileText,
   House as Home,
   PencilSimple as PencilLine,
-  Users,
   ArrowSquareOut as ExternalLink,
-  PlugsConnected,
 } from '@phosphor-icons/react'
 import { useAuth } from "@/store/authStore"
 import {
@@ -29,15 +28,23 @@ import {
 } from "@/components/ui/sidebar"
 import { NavUser } from "@/components/nav-user"
 
-const ADMIN_NAV = [
-  { title: "대시보드", to: "/admin", icon: BarChart3, end: true, perm: 'view' },
-  { title: "가이드 관리", to: "/admin/guides", icon: FileText, perm: 'edit' },
-  { title: "새 가이드 작성", to: "/editor", icon: PencilLine, perm: 'edit' },
-  { title: "피드백 수신함", to: "/admin/feedback", icon: MessageSquare, perm: 'edit' },
-  { title: "카카오 상담", to: "/admin/consults", icon: MessageSquare, perm: 'edit' },
-  { title: "잔디 대화", to: "/admin/jandi", icon: Chats, perm: 'edit' },
-  { title: "외부 연동", to: "/admin/integration", icon: PlugsConnected, perm: 'manage_users' },
-  { title: "사용자 관리", to: "/admin/users", icon: Users, perm: 'manage_users' },
+const ADMIN_NAV_GROUPS = [
+  {
+    label: "관리",
+    items: [
+      { title: "대시보드", to: "/admin", icon: BarChart3, end: true, perm: 'view' },
+      { title: "가이드 관리", to: "/admin/guides", icon: FileText, perm: 'edit' },
+      { title: "새 가이드 작성", to: "/editor", icon: PencilLine, perm: 'edit' },
+      { title: "피드백 수신함", to: "/admin/feedback", icon: Tray, perm: 'edit' },
+    ],
+  },
+  {
+    label: "상담·대화",
+    items: [
+      { title: "카카오 상담", to: "/admin/consults", icon: Headset, perm: 'edit' },
+      { title: "잔디 대화", to: "/admin/jandi", icon: Chats, perm: 'edit' },
+    ],
+  },
 ]
 
 export function AdminSidebar({ ...props }) {
@@ -45,7 +52,9 @@ export function AdminSidebar({ ...props }) {
   const currentPath = location.pathname
   const { user, hasPermission } = useAuth()
 
-  const visibleNav = ADMIN_NAV.filter(item => hasPermission(item.perm))
+  const visibleGroups = ADMIN_NAV_GROUPS
+    .map(group => ({ ...group, items: group.items.filter(item => hasPermission(item.perm)) }))
+    .filter(group => group.items.length > 0)
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -66,25 +75,27 @@ export function AdminSidebar({ ...props }) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>관리</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleNav.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <SidebarMenuButton asChild tooltip={item.title} isActive={
-                    item.end ? currentPath === item.to : currentPath.startsWith(item.to)
-                  }>
-                    <NavLink to={item.to} end={item.end}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <SidebarMenuButton asChild tooltip={item.title} isActive={
+                      item.end ? currentPath === item.to : currentPath.startsWith(item.to)
+                    }>
+                      <NavLink to={item.to} end={item.end}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
