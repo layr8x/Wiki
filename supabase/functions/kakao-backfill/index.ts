@@ -2,7 +2,9 @@
 // 신규 편입 채널(_rcpPG=LIVE메인, _rkbcn=통합로그인 등)의 "모든 기간" 상담 데이터 일괄 수집(1회성, 재개 가능).
 //   mode=chats    : chats/search 를 since 커서로 끝까지 페이지네이션 -> 채팅 메타 upsert(PII 마스킹).
 //   mode=messages : pid의 채팅을 chat_id 오름차순으로 훑으며 chatlogs 를 has_prev 로 과거까지 -> 메시지 upsert.
-//                   ?after=<chatId> 커서로 재개(멱등 upsert). 1회 호출당 chats 개만 처리(Edge 시간제한 방어).
+//                   진행 커서(kakao_partner_stream_state.backfill_msg_cursor)를 자동 저장·재사용해
+//                   매번 처음부터 다시 스캔하지 않는다(?after= 로 수동 override 도 가능). 1회 호출당
+//                   chats 개만 처리(Edge 시간제한 방어).
 // 인증: kakao_partner_secrets.key='kakao_collect_token'. 쿠키: key='kakao_partner_cookie'.
 // 마스킹·클라이언트·매퍼는 kakao-collect 와 동일 로직 이식.
 
@@ -176,12 +178,24 @@ async function backfillChatMessages(cookie: string, pid: string, chatId: string,
   }
   return { total, failed };
 }
-async function runMessages(cookie: string, pid: string, _after: string | null, maxChats: number, maxLogPages: number) {
+async function runMessages(cookie: string, pid: string, explicitAfter: string | null, maxChats: number, maxLogPages: number) {
   // 메시지가 아직 없는 대화만 골라 처리(발굴과 동시 실행해도 누락 없음, 자기종료).
   // 카카오가 로그 0건을 반환한 대화(보존기간 경과 등)는 kakao_backfill_empty 에 기록해
   // 큐에서 제외(같은 대화 무한 재시도로 큐가 막히는 것 방지). 일시 오류(failed)는 기록하지
   // 않아 다음 회차에 자동 재시도(손실 방지).
-  const { data, error } = await supabase.rpc('kakao_chats_missing_messages', { p_pid: pid, p_lim: maxChats });
+  //
+  // 커서(backfill_msg_cursor): profile_id 전체를 chat_id 오름차순으로 매번 처음부터 다시
+  // 스캔하면, 완료 비율이 올라갈수록(예: LIVE 채널 91.7%) 이미 끝난 앞부분을 건너뛰는 비용이
+  // 계속 커져 결국 8초 statement_timeout 을 넘긴다(2026-07-06 실측). kakao_partner_stream_state
+  // 에 "여기까지는 안전하게 넘어갔다"는 지점을 저장해두고 다음 호출은 그 뒤부터만 스캔한다.
+  // 일시 오류(failed)가 하나라도 있었던 배치는 커서를 전진시키지 않아 재시도를 보장한다.
+  let after = explicitAfter;
+  if (!after) {
+    const { data: stateRow } = await supabase
+      .from('kakao_partner_stream_state').select('backfill_msg_cursor').eq('profile_id', pid).maybeSingle();
+    after = (stateRow as any)?.backfill_msg_cursor || null;
+  }
+  const { data, error } = await supabase.rpc('kakao_chats_missing_messages', { p_pid: pid, p_lim: maxChats, p_after: after });
   if (error) return { mode: 'messages', pid, error: error.message };
   const chats = ((data as any[]) || []).map((r: any) => (typeof r === 'string' ? r : r.chat_id)).filter(Boolean);
   let processed = 0, upserted = 0, emptied = 0, failures = 0;
@@ -197,7 +211,14 @@ async function runMessages(cookie: string, pid: string, _after: string | null, m
     }
     await sleep(60);
   }
-  return { mode: 'messages', pid, processed, upserted, emptied, failures, last_chat_id: lastChatId, remaining_more: chats.length === maxChats };
+  let newCursor = after;
+  if (failures === 0 && lastChatId) {
+    newCursor = lastChatId;
+    const { error: cErr } = await supabase.from('kakao_partner_stream_state')
+      .upsert({ profile_id: pid, backfill_msg_cursor: newCursor }, { onConflict: 'profile_id' });
+    if (cErr) log('[' + pid + '] cursor persist fail:', cErr.message);
+  }
+  return { mode: 'messages', pid, processed, upserted, emptied, failures, last_chat_id: lastChatId, cursor: newCursor, remaining_more: chats.length === maxChats };
 }
 
 // ───────── HTTP ─────────

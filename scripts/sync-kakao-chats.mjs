@@ -45,6 +45,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { maskName, maskBody } from '../src/lib/maskPII.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = resolve(__dirname, '..')
@@ -112,13 +113,19 @@ function parseCookieString(raw, domain = '.kakao.com') {
   }).filter(Boolean)
 }
 
-// PII 마스킹: 휴대폰·이메일·이름(2~4자 한글, 단순 패턴)
+// PII 마스킹: 핵심 로직(src/lib/maskPII.js — kakao-sanitize.mjs 와 동일 규칙)을 그대로 재사용.
+//   ⚠️ 예전엔 이 스크립트만 자체 정규식을 썼는데, 주민번호·카드번호 패턴이 아예 없고
+//   휴대폰번호도 통짜로 지워버렸으며, 특히 이름 정규식(/[가-힣]{1}([가-힣]{1,2})/g)이
+//   라벨·줄 경계 없이 "아무 한글 2~3자 연속"에 매칭돼 일반 문장(예: "안녕하세요")까지
+//   별표로 훼손하는 버그가 있었다(마스킹 누락이 아니라 반대로 본문 오염). 핵심 로직 재사용으로 교정.
 function maskPII(text) {
   if (!text || !MASK_PII) return text
-  return text
-    .replace(/01[016789]-?\d{3,4}-?\d{4}/g, '010-****-****')
-    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '***@***')
-    .replace(/[가-힣]{1}([가-힣]{1,2})/g, (m, rest) => m[0] + '*'.repeat(rest.length))
+  return maskBody(text)
+}
+// 발신자명(sender_name)은 필드 전체가 이름이므로 라벨 매칭 없이 바로 부분마스킹 적용.
+function maskSenderName(name) {
+  if (!name || !MASK_PII) return name
+  return maskName(name)
 }
 
 function csvEscape(v) {
@@ -220,7 +227,7 @@ async function collectChats() {
           thread_title: maskPII(title.trim()),
           message_time: isoTime,
           sender_type:  detectSenderType(sender),
-          sender_name:  maskPII(sender.trim()),
+          sender_name:  maskSenderName(sender.trim()),
           message:      maskPII(body.trim()),
         })
       }

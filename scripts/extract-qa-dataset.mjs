@@ -33,11 +33,13 @@ const KEEP_NOISE = Boolean(arg('keep-noise', false)); // 노이즈 제거 끄기
 const DO_DEDUP = !arg('no-dedup', false);            // 중복 제거(기본 on)
 const PAGE = 1000;                                    // Supabase 페이지 크기
 
-// 채널 매핑 (profile_id → 채널명)  ── 스펙 2-1
+// 채널 매핑 (profile_id → 채널명)  ── 스펙 2-1 (5채널 정본, CLAUDE.md §16)
 const CHANNELS = {
-  _xfxilXn: '시대인재C',
-  _TkpPG: '라이브',
   _VGAQn: '마이클래스',
+  _rcpPG: 'LIVE',
+  _TkpPG: 'LIVE 기술지원',
+  _xfxilXn: '콘텐츠',
+  _rkbcn: '통합로그인',
 };
 const PROFILE_IDS = (process.env.KAKAO_PARTNER_PROFILE_IDS || Object.keys(CHANNELS).join(','))
   .split(',').map((s) => s.trim()).filter(Boolean);
