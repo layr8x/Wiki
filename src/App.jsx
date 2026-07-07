@@ -56,6 +56,7 @@ const AdminIntegrationPage = lazy(() => import('./pages/admin/AdminIntegrationPa
 const AdminConsultsPage    = lazy(() => import('./pages/admin/AdminConsultsPage'))
 const AdminJandiPage       = lazy(() => import('./pages/admin/AdminJandiPage'))
 const ChatbotPopupPage     = lazy(() => import('./components/chatbot').then(m => ({ default: m.ChatbotPopupPage })))
+const AstryxPocPage        = lazy(() => import('./pages/AstryxPocPage'))
 
 // React Query 클라이언트
 const queryClient = new QueryClient({
@@ -82,6 +83,11 @@ export default function App() {
                     {/* AMS 챗봇 별도 창 (/ams-chatbot) — 레이아웃 없이 창 전체. /chatbot 은 마이클래스(별개 서비스)가 사용 */}
                     <Route path="/ams-chatbot" element={
                       <Suspense fallback={<PageSkeleton />}><ChatbotPopupPage /></Suspense>
+                    } />
+
+                    {/* Astryx 마이그레이션 PoC (/astryx-poc) — 격리 검증용, 레이아웃 없음 */}
+                    <Route path="/astryx-poc" element={
+                      <Suspense fallback={<PageSkeleton />}><AstryxPocPage /></Suspense>
                     } />
 
                     {/* 새 가이드 작성 — 편집 권한 필요, 레이아웃 없이 전체 화면 */}
