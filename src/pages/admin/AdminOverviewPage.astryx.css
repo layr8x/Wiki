@@ -1,0 +1,110 @@
+/* src/pages/admin/AdminOverviewPage.astryx.css
+ * /admin 대시보드 — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/Grid/Card/Heading/Text/Badge/Button)로 표현 못하는
+ * 레이아웃(컨테이너·KPI·분포바·감정 스택차트·리스트 구분선·hover·스켈레톤)만 여기서 처리한다. */
+
+/* 콘텐츠 컨테이너 — 기존 max-w-6xl + 반응형 패딩 재현 */
+.ov-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px)  { .ov-shell { padding: 24px; } }
+@media (min-width: 1024px) { .ov-shell { padding: 32px; } }
+
+/* ─── 유틸 ───────────────────────────────────────────────────── */
+.ov-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ov-header { flex-wrap: wrap; align-items: flex-end; gap: 16px; }
+.ov-grow { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+
+/* ─── 링크 리셋 (react-router Link = <a>) ────────────────────── */
+.link { color: inherit; text-decoration: none; }
+
+/* ─── KPI 카드 ───────────────────────────────────────────────── */
+.ov-kpi-icon { display: inline-flex; color: var(--color-icon-secondary); flex: none; }
+.ov-kpi-value {
+  display: flex; align-items: baseline; gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 리스트 카드 (헤더/본문 구획) ───────────────────────────── */
+.ov-cardhead {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.ov-cardbody { padding: 16px 24px 20px; }
+
+/* ─── 분포 바 (모듈·응답시간·카테고리) ───────────────────────── */
+.ov-bar { display: flex; flex-direction: column; gap: 6px; }
+.ov-bar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ov-bar-meta { display: inline-flex; align-items: center; gap: 4px; }
+.ov-bar-track {
+  height: 8px; width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-background-muted);
+}
+.ov-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--color-text-primary);
+  transition: width .3s ease;
+}
+.ov-bar-fill[data-tone="green"]  { background: var(--color-icon-green); }
+.ov-bar-fill[data-tone="yellow"] { background: var(--color-icon-yellow); }
+.ov-bar-fill[data-tone="orange"] { background: var(--color-icon-orange); }
+.ov-bar-fill[data-tone="red"]    { background: var(--color-icon-red); }
+.ov-neg { color: var(--color-text-secondary); }
+.ov-neg-hot { color: var(--color-text-red); }
+
+/* ─── 감정 추세 스택 차트 ────────────────────────────────────── */
+.ov-sent { display: flex; align-items: flex-end; gap: 4px; height: 128px; }
+.ov-sent-col { flex: 1 1 0; min-width: 0; height: 100%; }
+.ov-sent-stack {
+  display: flex; flex-direction: column-reverse; justify-content: flex-end;
+  overflow: hidden;
+  border-radius: var(--radius-inner);
+  background: var(--color-background-muted);
+}
+.ov-sent-seg[data-tone="pos"] { background: var(--color-icon-green); }
+.ov-sent-seg[data-tone="neu"] { background: var(--color-icon-disabled); }
+.ov-sent-seg[data-tone="neg"] { background: var(--color-icon-red); }
+.ov-legend {
+  display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap;
+  gap: 16px; margin-top: 12px;
+  font-size: 12px; color: var(--color-text-secondary);
+}
+.ov-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.ov-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.ov-dot[data-tone="pos"] { background: var(--color-icon-green); }
+.ov-dot[data-tone="neu"] { background: var(--color-icon-disabled); }
+.ov-dot[data-tone="neg"] { background: var(--color-icon-red); }
+
+/* ─── 최근 업데이트 리스트 ───────────────────────────────────── */
+.ov-list { list-style: none; margin: 0; padding: 0; }
+.ov-li + .ov-li { border-top: 1px solid var(--color-border); }
+.ov-listrow {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 24px;
+  color: inherit; text-decoration: none;
+  transition: background-color .12s ease;
+}
+.ov-listrow:hover { background: color-mix(in oklab, var(--color-text-primary) 4%, transparent); }
+.ov-listrow:hover .ov-listrow-title { text-decoration: underline; }
+.ov-listrow-meta { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+
+/* ─── 빈 상태 ────────────────────────────────────────────────── */
+.ov-empty { padding: 40px 24px; text-align: center; }
+
+/* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
+.ov-skel {
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: ov-pulse 1.4s ease-in-out infinite;
+}
+.ov-skel-kpi  { height: 32px; width: 96px; }
+.ov-skel-bar  { height: 32px; width: 100%; }
+.ov-skel-row  { height: 40px; width: 100%; }
+.ov-skel-sent { height: 128px; width: 100%; }
+@keyframes ov-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

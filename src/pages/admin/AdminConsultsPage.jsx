@@ -2,14 +2,16 @@
 // 카카오 파트너센터 5채널 상담 로그 뷰어 (kakao_partner_messages, RLS authenticated read).
 // 기능: 채팅별 스레드 그룹 + 새로고침 + 현재필터 전체 CSV 다운로드.
 // 채널 정본: CLAUDE.md §16 (kakao_channel 테이블과 동일 목록 — 변경 시 함께 갱신).
+//
+// Astryx(디자인시스템) 표면으로 마이그레이션:
+//   - 데이터 훅(react-query)·Supabase 쿼리·필터(채널/기간/검색)·페이지네이션·CSV·스레드 그룹핑은 100% 유지
+//   - 시각 요소만 Astryx primitive(VStack/HStack/Grid/Card/Badge/Button/Heading/Text/Divider/TextInput)로 교체
+//   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
+//   - primitive 로 표현 못하는 레이아웃(마스터/디테일·필터바·말풍선 틴트·테이블)만 co-located CSS(토큰 only)
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { maskBody, maskName } from '@/lib/maskPII'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
 import {
   MagnifyingGlass as Search,
   ChatText as MessageSquare,
@@ -20,6 +22,18 @@ import {
   DownloadSimple as DownloadIcon,
 } from '@phosphor-icons/react'
 
+import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
+import { Grid } from '@astryxdesign/core/Grid'
+import { Card } from '@astryxdesign/core/Card'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+import { Divider } from '@astryxdesign/core/Divider'
+import { TextInput } from '@astryxdesign/core/TextInput'
+import './AdminConsultsPage.astryx.css'
+
 const CHANNELS = [
   { id: '_VGAQn', label: '마이클래스' },
   { id: '_rcpPG', label: 'LIVE' },
@@ -27,15 +41,24 @@ const CHANNELS = [
   { id: '_xfxilXn', label: '콘텐츠' },
   { id: '_rkbcn', label: '통합로그인' },
 ]
+// 채널 → Astryx Badge variant (색 계열로 5채널 구분)
+const CHANNEL_BADGE = {
+  _VGAQn: 'blue',
+  _rcpPG: 'green',
+  _TkpPG: 'teal',
+  _xfxilXn: 'purple',
+  _rkbcn: 'orange',
+}
 const PAGE_SIZE = 50
 const NOW_Y = new Date().getFullYear()
 const YEARS = [NOW_Y, NOW_Y - 1, NOW_Y - 2]
 const MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
 
+// base = 표기 라벨, variant = Astryx Badge variant(상담원/고객/시스템 구분), icon = 아이콘
 const SENDER_META = {
-  manager: { base: '상담원', variant: 'default', icon: Headset },
-  user: { base: '고객', variant: 'secondary', icon: User },
-  system: { base: '시스템', variant: 'outline', icon: Cog },
+  manager: { base: '상담원', variant: 'info', icon: Headset },
+  user: { base: '고객', variant: 'neutral', icon: User },
+  system: { base: '시스템', variant: 'warning', icon: Cog },
 }
 
 // 보낸이 표기: 상담원(차*희) / 고객(송유림) / 시스템
@@ -151,19 +174,21 @@ function useMessages(profileId, query, year, month, limit) {
 function ChannelKpi({ ch }) {
   const { data, isLoading, isError } = useChannelCount(ch.id)
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{ch.label}</CardTitle>
-        <MessageSquare className="size-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {isLoading ? <Skeleton className="h-8 w-24" /> : (
-          <div className="text-2xl font-semibold tabular-nums">
+    <Card className="ac-kpi">
+      <div className="ac-kpi-head">
+        <Badge label={ch.label} variant={CHANNEL_BADGE[ch.id]} />
+        <MessageSquare size={16} className="ac-kpi-icon" />
+      </div>
+      {isLoading ? (
+        <div className="ac-skel ac-skel-kpi" />
+      ) : (
+        <div className="ac-kpi-value">
+          <Text as="span" size="2xl" weight="semibold" hasTabularNumbers>
             {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
-            <span className="ml-1 text-sm font-normal text-muted-foreground">개</span>
-          </div>
-        )}
-      </CardContent>
+          </Text>
+          <Text as="span" type="supporting">개</Text>
+        </div>
+      )}
     </Card>
   )
 }
@@ -226,8 +251,6 @@ function downloadBlob(text, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-const selCls = 'h-9 rounded-md border border-border bg-background px-2 text-sm outline-none focus:border-foreground/40'
-
 export default function AdminConsultsPage() {
   const [channel, setChannel] = useState(CHANNELS[0].id)
   const [input, setInput] = useState('')
@@ -243,7 +266,7 @@ export default function AdminConsultsPage() {
 
   const reset = () => setLimit(PAGE_SIZE)
   const onChannel = (id) => { setChannel(id); reset() }
-  const onSearch = (e) => { e.preventDefault(); setQuery(input); reset() }
+  const onSearch = () => { setQuery(input); reset() }
 
   // 채팅별 스레드 그룹: 같은 chat_id 의 메시지를 시간 오름차순으로 묶고, 그룹은 최근 활동 기준 내림차순.
   const grouped = useMemo(() => {
@@ -289,128 +312,146 @@ export default function AdminConsultsPage() {
     }
   }
 
+  const titleSuffix = (year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : '')
+    + (query ? ' · "' + query + '"' : '')
+
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-8">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">카카오 상담 로그</h1>
-        <p className="mt-1 text-sm text-muted-foreground">파트너센터 5채널 실시간 수집 데이터 · 채팅별 스레드 그룹</p>
-      </header>
+    <div className="ac-shell">
+      <VStack gap={6} hAlign="stretch">
 
-      {!isSupabaseEnabled && (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
-          Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)가 설정되지 않았습니다.
-        </CardContent></Card>
-      )}
+        {/* ─── 헤더 ─────────────────────────────────────────────── */}
+        <VStack gap={1}>
+          <Heading level={1}>카카오 상담 로그</Heading>
+          <Text type="supporting">파트너센터 5채널 실시간 수집 데이터 · 채팅별 스레드 그룹</Text>
+        </VStack>
 
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
-      </section>
+        {!isSupabaseEnabled && (
+          <Card variant="muted">
+            <Text type="supporting">
+              Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)가 설정되지 않았습니다.
+            </Text>
+          </Card>
+        )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="채널 선택">
-          {CHANNELS.map((ch) => (
-            <button
-              key={ch.id} onClick={() => onChannel(ch.id)} aria-pressed={channel === ch.id}
-              className={'inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors '
-                + (channel === ch.id ? 'border-foreground bg-foreground text-background'
-                  : 'border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground')}
-            >{ch.label}</button>
-          ))}
-        </div>
+        {/* ─── 채널별 건수 KPI ──────────────────────────────────── */}
+        <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>
+          {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
+        </Grid>
 
-        <div className="flex items-center gap-1.5">
-          <select className={selCls} value={year} onChange={(e) => { setYear(e.target.value); reset() }} aria-label="년도">
-            <option value="all">전체기간</option>
-            {YEARS.map((y) => <option key={y} value={y}>{y}년</option>)}
-          </select>
-          <select className={selCls} value={month} onChange={(e) => { setMonth(e.target.value); reset() }} disabled={year === 'all'} aria-label="월">
-            <option value="all">전체월</option>
-            {MONTHS.map((m) => <option key={m} value={m}>{Number(m)}월</option>)}
-          </select>
-        </div>
-
-        <form onSubmit={onSearch} className="relative ml-auto w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="메시지 검색 후 Enter"
-            className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm outline-none focus:border-foreground/40" />
-        </form>
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-base">
-            상담 스레드{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
-            {grouped.length > 0 && (
-              <span className="ml-2 text-xs font-normal text-muted-foreground">
-                {grouped.length}개 채팅 · {rows.length}개 메시지
-              </span>
-            )}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {isFetching && !csvLoading && <span className="text-xs text-muted-foreground">불러오는 중…</span>}
-            {csvLoading && <span className="text-xs text-muted-foreground">CSV 준비 중…</span>}
-            <Button variant="outline" size="sm" onClick={onRefresh} disabled={isFetching}>
-              <RefreshIcon className="mr-1 size-4" /> 새로고침
-            </Button>
-            <Button variant="outline" size="sm" onClick={onDownloadCsv} disabled={csvLoading || isLoading}>
-              <DownloadIcon className="mr-1 size-4" /> CSV
-            </Button>
+        {/* ─── 툴바: 채널 + 기간 + 검색 ─────────────────────────── */}
+        <div className="ac-toolbar">
+          <div className="ac-chips" role="group" aria-label="채널 선택">
+            {CHANNELS.map((ch) => (
+              <Button
+                key={ch.id}
+                label={ch.label}
+                size="sm"
+                variant={channel === ch.id ? 'primary' : 'secondary'}
+                onClick={() => onChannel(ch.id)}
+              />
+            ))}
           </div>
-        </CardHeader>
-        <CardContent>
-          {isError ? (
-            <p className="py-10 text-center text-sm text-destructive">불러오기 실패: {error?.message || '오류'}</p>
-          ) : isLoading ? (
-            <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
-          ) : grouped.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">조건에 맞는 메시지가 없습니다.</p>
-          ) : (
-            <div className="space-y-4">
-              {grouped.map((g) => (
-                <Card key={g.chatId} className="overflow-hidden border-border/60 py-0">
-                  <CardHeader className="flex flex-row items-center justify-between gap-2 bg-muted/40 py-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Badge variant="secondary" size="sm" className="shrink-0">
-                        <User className="mr-1 size-3" />고객
-                      </Badge>
-                      <span className="truncate font-medium">{g.nickname || '(닉네임 없음)'}</span>
-                      <span className="hidden truncate text-xs text-muted-foreground sm:inline">#{g.chatId.slice(-12)}</span>
+
+          <div className="ac-selects">
+            <select className="ac-select" value={year} onChange={(e) => { setYear(e.target.value); reset() }} aria-label="년도">
+              <option value="all">전체기간</option>
+              {YEARS.map((y) => <option key={y} value={y}>{y}년</option>)}
+            </select>
+            <select className="ac-select" value={month} onChange={(e) => { setMonth(e.target.value); reset() }} disabled={year === 'all'} aria-label="월">
+              <option value="all">전체월</option>
+              {MONTHS.map((m) => <option key={m} value={m}>{Number(m)}월</option>)}
+            </select>
+          </div>
+
+          <div className="ac-search">
+            <TextInput
+              label="메시지 검색"
+              isLabelHidden
+              placeholder="메시지 검색 후 Enter"
+              value={input}
+              onChange={(v) => setInput(v)}
+              onEnter={onSearch}
+              startIcon={<Search size={16} />}
+              hasClear
+              width="100%"
+            />
+          </div>
+        </div>
+
+        {/* ─── 결과 패널 ────────────────────────────────────────── */}
+        <Card className="ac-panel" padding={0}>
+          <div className="ac-panel-head">
+            <div className="ac-panel-titlewrap">
+              <Text weight="semibold">상담 스레드{titleSuffix}</Text>
+              {grouped.length > 0 && (
+                <Text type="supporting" hasTabularNumbers>
+                  {grouped.length}개 채팅 · {rows.length}개 메시지
+                </Text>
+              )}
+            </div>
+            <div className="ac-panel-actions">
+              {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
+              {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              <Button variant="secondary" size="sm" label="새로고침" icon={<RefreshIcon size={16} />} onClick={onRefresh} isDisabled={isFetching} />
+              <Button variant="secondary" size="sm" label="CSV" icon={<DownloadIcon size={16} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
+            </div>
+          </div>
+
+          <Divider />
+
+          <div className="ac-panel-body">
+            {isError ? (
+              <Text as="p" color="accent" className="ac-state">불러오기 실패: {error?.message || '오류'}</Text>
+            ) : isLoading ? (
+              <VStack gap={2} hAlign="stretch">
+                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="ac-skel ac-skel-thread" />)}
+              </VStack>
+            ) : grouped.length === 0 ? (
+              <Text as="p" type="supporting" className="ac-state">조건에 맞는 메시지가 없습니다.</Text>
+            ) : (
+              <VStack gap={4} hAlign="stretch">
+                {grouped.map((g) => (
+                  <div key={g.chatId} className="ac-thread">
+                    <div className="ac-thread-head">
+                      <div className="ac-thread-id">
+                        <Badge label="고객" variant="neutral" icon={<User size={12} />} />
+                        <Text weight="medium" maxLines={1} className="ac-thread-nick">{g.nickname || '(닉네임 없음)'}</Text>
+                        <Text type="supporting" className="ac-thread-hash">#{g.chatId.slice(-12)}</Text>
+                      </div>
+                      <div className="ac-thread-meta">
+                        <Text type="supporting" hasTabularNumbers>{g.count}건</Text>
+                        <Text type="supporting" hasTabularNumbers>최근 {fmtKST(g.latestAt)}</Text>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                      <span className="tabular-nums">{g.count}건</span>
-                      <span className="tabular-nums">최근 {fmtKST(g.latestAt)}</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <ul className="divide-y divide-border/40">
+                    <ul className="ac-msgs">
                       {g.messages.map((m) => {
                         const meta = SENDER_META[m.sender_type] || SENDER_META.system
                         const Icon = meta.icon
                         return (
-                          <li key={m.log_id} className="flex items-start gap-3 py-2">
-                            <span className="w-20 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">{fmtKST(m.sent_at)}</span>
-                            <Badge variant={meta.variant} size="sm" className="mt-0.5 max-w-[140px] shrink-0 truncate">
-                              <Icon className="mr-1 size-3 shrink-0" />{senderText(m, nickMap)}
-                            </Badge>
-                            <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-foreground">
-                              {maskBody(m.message) || <span className="text-muted-foreground">(본문 없음)</span>}
-                            </p>
+                          <li key={m.log_id} className="ac-msg" data-dir={m.sender_type === 'user' ? 'in' : 'out'}>
+                            <span className="ac-msg-time">{fmtKST(m.sent_at)}</span>
+                            <Badge className="ac-msg-sender" variant={meta.variant} label={senderText(m, nickMap)} icon={<Icon size={12} />} />
+                            <div className="ac-msg-bubble">
+                              {maskBody(m.message) || <span className="ac-msg-empty">(본문 없음)</span>}
+                            </div>
                           </li>
                         )
                       })}
                     </ul>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          {!isLoading && !isError && rows.length >= limit && (
-            <div className="mt-4 flex justify-center">
-              <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + PAGE_SIZE)}>더 보기 (+{PAGE_SIZE})</Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </div>
+                ))}
+              </VStack>
+            )}
+
+            {!isLoading && !isError && rows.length >= limit && (
+              <HStack hAlign="center" className="ac-more">
+                <Button variant="secondary" size="sm" label={`더 보기 (+${PAGE_SIZE})`} onClick={() => setLimit((l) => l + PAGE_SIZE)} />
+              </HStack>
+            )}
+          </div>
+        </Card>
+
+      </VStack>
     </div>
   )
 }

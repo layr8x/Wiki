@@ -1,0 +1,51 @@
+/* src/components/common/AstryxAppFrame.css
+ * Astryx 앱 골격 — primitive로 표현 못하는 브랜드/검색/활성상태/콘텐츠만 토큰 기반 처리. */
+
+/* 브랜드 마크 (SideNav 헤더) */
+.astryx-brand {
+  display: inline-flex; align-items: center;
+  padding: 4px 4px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: opacity .12s ease;
+}
+.astryx-brand:hover { opacity: .8; }
+.astryx-brand-mark { display: block; height: 22px; width: auto; }
+
+/* 상단바 검색 트리거 (검색창 형태의 버튼) */
+.astryx-search {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 32px; width: 100%; max-width: 360px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-body);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.astryx-search:hover { border-color: var(--color-border-emphasized); }
+.astryx-search-text { flex: 1 1 auto; text-align: left; }
+.astryx-search-kbd { display: inline-flex; }
+.astryx-search-kbd kbd {
+  font-family: inherit; font-size: 12px;
+  padding: 1px 6px; border-radius: 4px;
+  border: 1px solid var(--color-border);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+}
+
+/* 상단바 우측 액션 묶음 */
+.astryx-topnav-actions { display: inline-flex; align-items: center; gap: 8px; }
+
+/* 활성 내비 항목 (NavLink → aria-current="page") */
+.app-sidenav a[aria-current="page"] {
+  background: var(--color-background-gray);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  border-radius: var(--radius-inner);
+}
+
+/* 콘텐츠 영역 — 페이지가 자체 패딩/최대폭을 관리 */
+.astryx-content { width: 100%; min-height: 100%; }

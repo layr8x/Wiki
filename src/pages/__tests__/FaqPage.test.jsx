@@ -37,7 +37,7 @@ describe('FaqPage', () => {
     // 첫 번째 pill 이 카테고리 필터 (두 번째부터는 FAQ 배지)
     const pill = screen.getAllByRole('button', { name: /출결.배부/ })[0]
     fireEvent.click(pill)
-    expect(pill.className).toMatch(/bg-foreground/)
+    expect(pill.getAttribute('aria-pressed')).toBe('true')
   })
 
   it('카테고리 pill 에 카운트가 포함되어 있다', () => {

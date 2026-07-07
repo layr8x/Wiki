@@ -1,0 +1,129 @@
+/* src/pages/admin/AdminConsultsPage.astryx.css
+ * 카카오 상담 로그 — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Grid/Card/Badge/Button/Heading/Text/Divider/TextInput)로
+ * 표현 못하는 레이아웃(컨테이너·KPI·필터바·기간 select·마스터/디테일 스레드·말풍선 틴트·스켈레톤)만 여기서 처리한다. */
+
+/* 콘텐츠 컨테이너 — 기존 max-w-6xl + 반응형 패딩 재현 */
+.ac-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .ac-shell { padding: 24px; } }
+@media (min-width: 1024px) { .ac-shell { padding: 32px; } }
+
+/* ─── 채널 KPI 카드 ──────────────────────────────────────────── */
+.ac-kpi {
+  display: flex; flex-direction: column; gap: 12px;
+}
+.ac-kpi-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.ac-kpi-icon { color: var(--color-icon-secondary); flex: none; }
+.ac-kpi-value { display: flex; align-items: baseline; gap: 4px; }
+
+/* ─── 툴바: 채널칩 + 기간 select + 검색 ──────────────────────── */
+.ac-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+}
+.ac-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ac-selects { display: flex; align-items: center; gap: 6px; }
+.ac-search { flex: 1 1 240px; min-width: 200px; margin-left: auto; }
+
+/* 기간 select — TextInput 이 없는 드롭다운은 토큰 기반 네이티브 select 로 유지 */
+.ac-select {
+  height: 36px;
+  border-radius: var(--radius-element);
+  border: 1px solid var(--color-border);
+  background: var(--color-background-body);
+  color: var(--color-text-primary);
+  padding: 0 8px;
+  font-size: 14px;
+  outline: none;
+}
+.ac-select:focus { border-color: var(--color-border-emphasized); }
+.ac-select:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ─── 결과 패널 (마스터: 스레드 목록) ────────────────────────── */
+.ac-panel { overflow: hidden; }
+.ac-panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+}
+.ac-panel-titlewrap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
+.ac-panel-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ac-panel-body { padding: 16px 20px; }
+
+.ac-state { text-align: center; padding: 40px 0; }
+
+/* ─── 스레드 (디테일: 채팅별 그룹) ───────────────────────────── */
+.ac-thread {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+  overflow: hidden;
+  background: var(--color-background-body);
+}
+.ac-thread-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px 16px;
+  background: var(--color-background-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+.ac-thread-id { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ac-thread-nick { min-width: 0; }
+.ac-thread-hash {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) { .ac-thread-hash { display: none; } }
+.ac-thread-meta {
+  display: flex; align-items: center; gap: 12px; flex: none;
+}
+
+/* ─── 메시지 목록 (시각 | 보낸이 배지 | 말풍선) ──────────────── */
+.ac-msgs { list-style: none; margin: 0; padding: 4px 16px; }
+.ac-msg {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 8px 0;
+}
+.ac-msg + .ac-msg { border-top: 1px solid var(--color-border); }
+.ac-msg-time {
+  width: 80px; flex: none; padding-top: 2px;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+.ac-msg-sender { flex: none; margin-top: 2px; max-width: 150px; }
+
+/* 말풍선 — 방향별 틴트(고객=inbound 파랑 / 상담원·시스템=outbound 뉴트럴) */
+.ac-msg-bubble {
+  flex: 1 1 auto; min-width: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-chat);
+  font-size: 14px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-word;
+  color: var(--color-text-primary);
+}
+.ac-msg[data-dir="in"] .ac-msg-bubble {
+  background: var(--color-background-blue);
+  border: 1px solid var(--color-border-blue);
+}
+.ac-msg[data-dir="out"] .ac-msg-bubble {
+  background: var(--color-background-muted);
+  border: 1px solid var(--color-border);
+}
+.ac-msg-empty { color: var(--color-text-secondary); }
+
+/* "더 보기" 버튼 여백 */
+.ac-more { margin-top: 16px; }
+
+/* ─── 스켈레톤 ───────────────────────────────────────────────── */
+.ac-skel {
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: ac-pulse 1.4s ease-in-out infinite;
+}
+.ac-skel-kpi { height: 32px; width: 96px; }
+.ac-skel-thread { height: 80px; width: 100%; }
+@keyframes ac-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

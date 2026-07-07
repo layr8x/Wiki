@@ -1,0 +1,36 @@
+/* src/pages/ErrorPage.astryx.css
+ * 에러/404 — Astryx 표면. 색은 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Button/Heading/Text)로 표현 못하는
+ * 전체 중앙정렬 컨테이너·거대 상태코드·배경 그리드만 여기서 처리한다. */
+
+.ep-shell {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(100dvh - 3.5rem);
+  overflow: hidden;
+  padding: 0 24px;
+  text-align: center;
+}
+
+/* 배경 그리드 (은은한 폴리시) — 토큰 border 라인 + 방사형 마스크 */
+.ep-grid {
+  position: absolute; inset: 0; z-index: -1;
+  opacity: .4;
+  background-image:
+    linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+          mask-image: radial-gradient(ellipse at center, #000 30%, transparent 70%);
+}
+
+/* 거대 상태 코드 */
+.ep-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 120px; font-weight: 700; line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--color-text-primary);
+}
+@media (min-width: 640px) { .ep-code { font-size: 180px; } }
+
+.ep-desc { max-width: 28rem; }

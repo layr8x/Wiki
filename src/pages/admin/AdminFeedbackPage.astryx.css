@@ -1,0 +1,106 @@
+/* src/pages/admin/AdminFeedbackPage.astryx.css
+ * 피드백 수신함 — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Card/Heading/Text/Badge/Button)로 표현 못하는
+ * 레이아웃(컨테이너·헤더 정렬·세그먼트·테이블·빈 상태·스켈레톤)만 여기서 처리한다. */
+
+/* 콘텐츠 컨테이너 — 기존 PageShell(max-w-5xl + 반응형 패딩) 재현 */
+.af-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 64rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .af-shell { padding: 24px; } }
+@media (min-width: 1024px) { .af-shell { padding: 32px; } }
+
+/* 헤더 정렬 (제목 좌 · 액션 우, 반응형 wrap) */
+.af-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.af-header { align-items: flex-end; flex-wrap: wrap; gap: 16px; }
+
+/* 유형 필터 세그먼트 컨테이너 */
+.af-seg {
+  display: inline-flex; flex-wrap: wrap; gap: 2px;
+  align-self: flex-start;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-body);
+}
+
+/* ─── 테이블 ─────────────────────────────────────────────────── */
+.af-table-wrap { overflow-x: auto; }
+.af-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px; color: var(--color-text-primary);
+}
+.af-tmin640 { min-width: 640px; }
+.af-table thead th {
+  text-align: left; font-weight: 600;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.af-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.af-table tbody tr:last-child td { border-bottom: 0; }
+.af-table tbody tr { transition: background-color .12s ease; }
+.af-table tbody tr:hover { background: color-mix(in oklab, var(--color-text-primary) 4%, transparent); }
+
+/* 열 폭 (원본 shadcn Table 폭 재현) */
+.af-col-type   { width: 120px; }
+.af-col-guide  { width: 15%; }
+.af-col-source { width: 100px; }
+.af-col-date   { width: 140px; }
+
+/* 내용 셀 — 검색어 + 노트 세로 스택 */
+.af-content { max-width: 28rem; }
+.af-content > * + * { margin-top: 4px; }
+
+/* 가이드 링크 */
+.af-guide-link { color: var(--color-text-blue); text-decoration: none; }
+.af-guide-link:hover { text-decoration: underline; }
+.af-dash { color: var(--color-text-secondary); }
+
+/* 일시 — 탭 넘버 정렬 */
+.af-date {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+/* 페이지네이션 영역 */
+.af-pagination { padding: 16px; border-top: 1px solid var(--color-border); }
+
+/* ─── 빈 상태 (GuideListPage .gl-empty 준용) ─────────────────── */
+.af-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  background: color-mix(in oklab, var(--color-text-primary) 2%, transparent);
+}
+.af-empty-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin-bottom: 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-gray);
+  color: var(--color-text-secondary);
+}
+
+/* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
+.af-skel-row { padding: 12px 16px; border-bottom: 1px solid var(--color-border); }
+.af-skel-row:last-child { border-bottom: 0; }
+.af-skel {
+  height: 20px;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: af-pulse 1.4s ease-in-out infinite;
+}
+@keyframes af-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

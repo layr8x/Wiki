@@ -185,6 +185,12 @@
   html {
     /* SSR hydration 시 스크롤바로 인한 레이아웃 점프 방지 */
     scrollbar-gutter: stable;
+    /* color-scheme 을 테마에 맞춤 — Astryx light-dark() 토큰이 (reset.css 없이도)
+       포털/앱셸 영역까지 올바르게 해석되게 하고, 네이티브 컨트롤·스크롤바도 테마 반영 */
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;

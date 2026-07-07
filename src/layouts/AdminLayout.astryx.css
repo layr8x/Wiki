@@ -1,0 +1,41 @@
+/* src/layouts/AdminLayout.astryx.css — 어드민 프레임 전용 (브랜드/브레드크럼/사용자사이트 링크).
+ * 색은 Astryx 토큰만. 사이드바 활성/상단 액션 스타일은 AstryxAppFrame.css 공유. */
+
+/* 어드민 브랜드 (SideNav 헤더) */
+.admin-brand {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: opacity .12s ease;
+}
+.admin-brand:hover { opacity: .8; }
+.admin-brand-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; flex: none;
+  border-radius: var(--radius-inner);
+  background: var(--color-background-inverse, var(--color-text-primary));
+  color: var(--color-background-body);
+}
+.admin-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+.admin-brand-title { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+.admin-brand-sub { font-size: 12px; color: var(--color-text-secondary); }
+
+/* 브레드크럼 (TopNav startContent) */
+.admin-crumbs { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; }
+.admin-crumb-seg { display: inline-flex; align-items: center; gap: 4px; }
+.admin-crumb-sep { color: var(--color-text-disabled); }
+.admin-crumb-link { color: var(--color-text-secondary); text-decoration: none; }
+.admin-crumb-link:hover { color: var(--color-text-primary); }
+.admin-crumb-current { color: var(--color-text-primary); font-weight: 600; }
+
+/* 사용자 사이트로 나가기 (SideNav footer) */
+.admin-exit {
+  display: inline-flex; align-items: center; gap: 12px;
+  width: 100%; padding: 8px 12px;
+  border-radius: var(--radius-inner);
+  color: var(--color-text-secondary); text-decoration: none;
+  transition: background-color .12s ease;
+}
+.admin-exit:hover { background: color-mix(in oklab, var(--color-text-primary) 4%, transparent); color: var(--color-text-primary); }
+.admin-exit-ext { margin-left: auto; opacity: .6; }

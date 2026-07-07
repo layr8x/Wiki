@@ -1,22 +1,28 @@
 // src/pages/admin/AdminFeedbackPage.jsx — /admin/feedback
 // 로컬 큐(NoResultFallback 등) + Supabase guide_feedback 머지 뷰
+//   - 데이터 훅(react-query)·라우팅(react-router)·탭 필터·로컬 큐 비우기 액션은 그대로 유지
+//   - 시각 요소는 Astryx primitive(VStack/HStack/Card/Badge/Button/Heading/Text)로 교체
+//   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/CSS 를 감싸지 않음
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { Trash } from '@phosphor-icons/react'
+
 import { fetchAdminFeedback } from '@/lib/db'
 import { usePagination } from '@/hooks/usePagination'
 import Pagination from '@/components/common/Pagination'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { Trash } from '@phosphor-icons/react'
 import { useToast } from '@/components/ui/toast'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
+
+import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
+import { Card } from '@astryxdesign/core/Card'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+
+import './AdminFeedbackPage.astryx.css'
 
 const FEEDBACK_QUEUE_KEY = STORAGE_KEYS.feedbackQueue
 
@@ -28,11 +34,24 @@ const KIND_LABEL = {
   'bug':           '오류 제보',
 }
 
-const VOTE_VARIANT = {
-  helpful:       'default',
-  'not-helpful': 'destructive',
-  'missing-guide': 'secondary',
+// 피드백 유형 → Astryx Badge variant (shadcn VOTE_VARIANT 를 색 계열 기준으로 매핑)
+//   오류 제보 → error(red) · 개선 필요 → purple · 가이드 요청 → blue(추가요청)
+//   도움됨 → success · 칭찬 → green
+const KIND_BADGE_VARIANT = {
+  'missing-guide': 'blue',
+  'helpful':       'success',
+  'not-helpful':   'purple',
+  'praise':        'green',
+  'bug':           'error',
 }
+const toKindVariant = (kind) => KIND_BADGE_VARIANT[kind] ?? 'neutral'
+
+const TABS = [
+  { value: 'all',      label: '전체' },
+  { value: 'requests', label: '가이드 요청' },
+  { value: 'issues',   label: '오류/개선' },
+  { value: 'praise',   label: '칭찬' },
+]
 
 function readLocalQueue() {
   try {
@@ -106,103 +125,128 @@ export default function AdminFeedbackPage() {
   const pagination = usePagination(filtered, 25)
   useEffect(() => { pagination.reset() }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const showSkeleton = isLoading && remote.length === 0
+
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">피드백 수신함</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            로컬 큐 {localItems.length}건 · 서버 {remote.length}건
-          </p>
+    <div className="af-shell">
+      <VStack gap={6} hAlign="stretch">
+
+        {/* ─── 헤더 ─────────────────────────────────────────────── */}
+        <div className="af-row-between af-header">
+          <VStack gap={1.5}>
+            <Heading level={1}>피드백 수신함</Heading>
+            <Text type="supporting">
+              로컬 큐 {localItems.length}건 · 서버 {remote.length}건
+            </Text>
+          </VStack>
+          {localItems.length > 0 && (
+            <Button
+              label="로컬 큐 비우기"
+              variant="secondary"
+              size="sm"
+              icon={<Trash size={14} />}
+              onClick={clearLocal}
+            />
+          )}
         </div>
-        {localItems.length > 0 && (
-          <Button variant="outline" size="sm" onClick={clearLocal}>
-            <Trash className="mr-1.5 size-3.5" />
-            로컬 큐 비우기
-          </Button>
-        )}
-      </header>
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="all">전체</TabsTrigger>
-          <TabsTrigger value="requests">가이드 요청</TabsTrigger>
-          <TabsTrigger value="issues">오류/개선</TabsTrigger>
-          <TabsTrigger value="praise">칭찬</TabsTrigger>
-        </TabsList>
-      </Tabs>
+        {/* ─── 유형 필터(세그먼트) ───────────────────────────────── */}
+        <div className="af-seg" role="group" aria-label="피드백 유형 필터">
+          {TABS.map(t => (
+            <Button
+              key={t.value}
+              label={t.label}
+              size="sm"
+              variant={tab === t.value ? 'primary' : 'ghost'}
+              onClick={() => setTab(t.value)}
+            />
+          ))}
+        </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[120px]">유형</TableHead>
-                  <TableHead>내용</TableHead>
-                  <TableHead>가이드</TableHead>
-                  <TableHead className="w-[100px]">출처</TableHead>
-                  <TableHead className="w-[140px]">일시</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading && remote.length === 0 ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={5}><Skeleton className="h-5 w-full" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
-                      접수된 피드백이 없습니다.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pagination.currentItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Badge variant={VOTE_VARIANT[item.kind] || 'outline'} className="text-xs">
-                          {KIND_LABEL[item.kind] || item.kind || '기타'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="max-w-md">
+        {/* ─── 결과 ─────────────────────────────────────────────── */}
+        {showSkeleton ? (
+          <Card padding={0}>
+            <div className="af-table-wrap">
+              <VStack gap={0} hAlign="stretch">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={`af-sk-${i}`} className="af-skel-row">
+                    <div className="af-skel" />
+                  </div>
+                ))}
+              </VStack>
+            </div>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <div className="af-empty">
+            <span className="af-empty-icon"><Trash size={18} /></span>
+            <Text weight="medium">접수된 피드백이 없습니다</Text>
+            <Text type="supporting">
+              사용자가 남긴 피드백이 접수되면 이곳에 유형별로 쌓입니다.
+            </Text>
+          </div>
+        ) : (
+          <Card padding={0}>
+            <div className="af-table-wrap">
+              <table className="af-table af-tmin640">
+                <thead>
+                  <tr>
+                    <th className="af-col-type">유형</th>
+                    <th>내용</th>
+                    <th className="af-col-guide">가이드</th>
+                    <th className="af-col-source">출처</th>
+                    <th className="af-col-date">일시</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagination.currentItems.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <Badge
+                          label={KIND_LABEL[item.kind] || item.kind || '기타'}
+                          variant={toKindVariant(item.kind)}
+                        />
+                      </td>
+                      <td className="af-content">
                         {item.query && (
-                          <p className="text-xs text-muted-foreground">검색어: &ldquo;{item.query}&rdquo;</p>
+                          <Text type="supporting">검색어: &ldquo;{item.query}&rdquo;</Text>
                         )}
-                        <p className="line-clamp-2 text-sm">{item.note || '내용 없음'}</p>
-                      </TableCell>
-                      <TableCell className="text-sm">
+                        <Text maxLines={2}>{item.note || '내용 없음'}</Text>
+                      </td>
+                      <td>
                         {item.guideId ? (
-                          <Link to={`/guides/${item.guideId}`} className="text-primary hover:underline">
+                          <Link to={`/guides/${item.guideId}`} className="af-guide-link">
                             {item.guideId}
                           </Link>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="af-dash">—</span>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">
-                          {item.source === 'local' ? '로컬' : '서버'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm tabular-nums text-muted-foreground">
+                      </td>
+                      <td>
+                        <Badge
+                          label={item.source === 'local' ? '로컬' : '서버'}
+                          variant="neutral"
+                        />
+                      </td>
+                      <td className="af-date">
                         {item.createdAt?.slice(0, 16).replace('T', ' ') || '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {filtered.length > 0 && pagination.totalPages > 1 && (
-            <div className="p-4">
-              <Pagination pagination={pagination} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {pagination.totalPages > 1 && (
+              <div className="af-pagination">
+                <HStack gap={0} hAlign="center">
+                  <Pagination pagination={pagination} />
+                </HStack>
+              </div>
+            )}
+          </Card>
+        )}
+
+      </VStack>
     </div>
   )
 }

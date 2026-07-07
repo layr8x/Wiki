@@ -1,0 +1,154 @@
+/* src/pages/FaqPage.astryx.css
+ * 운영 FAQ — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/Card/Badge/Heading/Text)로 표현 못하는
+ * 레이아웃(컨테이너 폭·pill 필터·아코디언 펼침 애니메이션·리스트 구분선·hover)만 여기서 처리.
+ * (마이그레이션 가이드: 토큰 기반 로컬 래퍼는 공존 허용) */
+
+/* 콘텐츠 컨테이너 — 기존 PageShell(max-w-3xl + 반응형 패딩) 재현 */
+.faq-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 48rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .faq-shell { padding: 24px; } }
+@media (min-width: 1024px) { .faq-shell { padding: 32px; } }
+
+/* ─── 브레드크럼 ─────────────────────────────────────────────── */
+.faq-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.faq-crumb-link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color .12s ease;
+}
+.faq-crumb-link:hover { color: var(--color-text-primary); }
+.faq-crumb-sep { color: var(--color-text-disabled); flex: none; }
+.faq-crumb-cur { color: var(--color-text-primary); }
+
+/* ─── 카테고리 pill 필터 ─────────────────────────────────────── */
+.faq-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.faq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-background-body);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: color .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.faq-pill:hover {
+  border-color: var(--color-border-emphasized);
+  color: var(--color-text-primary);
+}
+.faq-pill[data-active] {
+  border-color: var(--color-text-primary);
+  background: var(--color-text-primary);
+  color: var(--color-background-body);
+}
+.faq-pill-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-disabled);
+}
+.faq-pill[data-active] .faq-pill-count {
+  color: var(--color-background-body);
+  opacity: .7;
+}
+
+/* ─── 아코디언 ───────────────────────────────────────────────── */
+.faq-list { list-style: none; margin: 0; padding: 0 16px; }
+@media (min-width: 640px) { .faq-list { padding: 0 24px; } }
+.faq-item + .faq-item { border-top: 1px solid var(--color-border); }
+
+/* 트리거(질문 행) — 전체 폭 버튼 */
+.faq-trigger {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.faq-trigger-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Badge 상단 정렬 미세 보정 */
+.faq-trigger-main > :first-child { margin-top: 2px; flex: none; }
+.faq-question { flex: 1 1 auto; min-width: 0; }
+.faq-trigger:hover .faq-question { color: var(--color-text-secondary); }
+
+.faq-chevron {
+  flex: none;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  transition: transform .18s ease;
+}
+.faq-chevron[data-open] { transform: rotate(180deg); }
+
+/* 펼침 패널 — grid-rows 0fr↔1fr 로 높이 애니메이션(토큰 불필요, 순수 레이아웃) */
+.faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .2s ease;
+}
+.faq-panel[data-open] { grid-template-rows: 1fr; }
+.faq-panel-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+/* 질문 Badge(폭 48=아이콘칩 정렬) 아래로 답변을 들여쓰기 */
+.faq-answer {
+  white-space: pre-line;
+  padding: 0 32px 20px 72px;
+  color: var(--color-text-secondary);
+}
+@media (max-width: 480px) {
+  .faq-answer { padding-left: 0; padding-right: 0; }
+}
+
+/* 관련 가이드 링크 */
+.faq-guide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 32px 20px 72px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: opacity .12s ease;
+}
+.faq-guide-link:hover { text-decoration: underline; }
+@media (max-width: 480px) {
+  .faq-guide-link { margin-left: 0; margin-right: 0; }
+}
+
+/* ─── 빈 상태 ────────────────────────────────────────────────── */
+.faq-empty {
+  padding: 40px 24px;
+  text-align: center;
+}

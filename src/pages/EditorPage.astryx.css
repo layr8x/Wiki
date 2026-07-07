@@ -1,0 +1,230 @@
+/* src/pages/EditorPage.astryx.css
+ * 가이드 에디터(Chrome) — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * 폼 컨트롤(Input/Textarea/Select/Checkbox/Sheet/Tabs)은 shadcn 그대로이며,
+ * 이 파일은 주변 껍데기(사이드바·툴바·섹션 카드·행·스켈레톤)만 다룬다.
+ * 이 페이지는 AstryxAppFrame 밖(standalone route)이라 AstryxThemeRegion으로 자체 <Theme>를 연다. */
+
+/* ─── 전체 셸 ─────────────────────────────────────────────────── */
+.ep-shell {
+  display: flex;
+  height: 100dvh;
+  background: var(--color-background-body);
+  color: var(--color-text-primary);
+}
+
+/* ─── 좌측 사이드바 (템플릿 picker, lg+ 전용) ───────────────────── */
+.ep-sidebar {
+  display: none;
+  width: 288px;
+  flex: none;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-background-muted);
+}
+@media (min-width: 1024px) { .ep-sidebar { display: flex; } }
+
+.ep-sidebar-head {
+  display: flex;
+  align-items: center;
+  height: 56px;
+  flex: none;
+  gap: 8px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.ep-sidebar-title {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+/* display:block 필수 — Astryx Text 기본값은 display:inline이라 형제 Text와
+   줄바꿈 없이 붙어버린다(예: "가이드 타입 선택선택한 타입에..."). */
+.ep-sidebar-desc { display: block; margin-top: 4px; line-height: 1.5; }
+.ep-sidebar-list { flex: 1 1 auto; overflow-y: auto; padding: 8px; }
+
+/* 모바일 템플릿 Sheet 내부 리스트 */
+.ep-sheet-tpl-head { padding: 16px; border-bottom: 1px solid var(--color-border); }
+.ep-sheet-tpl-desc { display: block; margin-top: 4px; line-height: 1.5; }
+.ep-sheet-tpl-list { overflow-y: auto; padding: 8px; }
+
+/* 템플릿 카드(공용: 사이드바 + Sheet) */
+.ep-tpl-card { margin-bottom: 4px; }
+.ep-tpl-head { display: flex; align-items: center; gap: 8px; }
+.ep-tpl-icon { flex: none; color: var(--color-icon-secondary); }
+.ep-tpl-card.is-selected .ep-tpl-icon { color: var(--color-icon-accent); }
+.ep-tpl-desc { display: block; margin-top: 6px; line-height: 1.5; }
+
+/* ─── 우측 편집 영역 ─────────────────────────────────────────────── */
+.ep-main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+/* ─── 상단 툴바 ──────────────────────────────────────────────────── */
+.ep-toolbar {
+  display: flex;
+  height: 56px;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background-card);
+}
+@media (min-width: 640px) { .ep-toolbar { gap: 12px; padding: 0 16px; } }
+
+.ep-toolbar-left { display: flex; min-width: 0; align-items: center; gap: 6px; }
+@media (min-width: 640px) { .ep-toolbar-left { gap: 8px; } }
+.ep-toolbar-right { display: flex; flex: none; align-items: center; gap: 4px; }
+@media (min-width: 640px) { .ep-toolbar-right { gap: 6px; } }
+
+.ep-mobile-only { display: inline-flex; }
+@media (min-width: 1024px) { .ep-mobile-only { display: none; } }
+
+.ep-hash { display: none; flex: none; color: var(--color-icon-secondary); }
+@media (min-width: 640px) { .ep-hash { display: inline-flex; } }
+
+.ep-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.ep-title.is-empty { color: var(--color-text-secondary); font-style: italic; }
+
+.ep-status-badge { display: none; }
+@media (min-width: 640px) { .ep-status-badge { display: inline-flex; } }
+
+.ep-vdivider { display: none; height: 24px; }
+@media (min-width: 640px) { .ep-vdivider { display: inline-flex; } }
+
+.ep-kbd {
+  display: none;
+  margin-left: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
+  padding: 1px 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  background: var(--color-background-muted);
+}
+@media (min-width: 768px) { .ep-kbd { display: inline-flex; } }
+
+/* ─── 자동저장 배지 ──────────────────────────────────────────────── */
+.ep-autosave { display: none; }
+@media (min-width: 1024px) { .ep-autosave { display: inline-flex; } }
+
+/* ─── 임시저장본 복원 배너 ───────────────────────────────────────── */
+.ep-restore {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border-orange);
+  background: var(--color-background-orange);
+  padding: 8px 16px;
+}
+.ep-restore-text { color: var(--color-text-secondary); }
+.ep-restore-actions { margin-left: auto; display: flex; gap: 4px; }
+
+/* ─── 본문 스크롤 영역 ───────────────────────────────────────────── */
+.ep-content {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.ep-content-main { flex: 1 1 auto; overflow-y: auto; }
+.ep-content-inner {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 56rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .ep-content-inner { padding: 32px 24px; } }
+
+/* ─── 필드 그룹(제목 입력) ───────────────────────────────────────── */
+.ep-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+.ep-tab-body { margin-top: 24px; display: flex; flex-direction: column; gap: 32px; }
+.ep-meta-help { margin-top: 4px; }
+
+/* ─── 섹션 카드 ──────────────────────────────────────────────────── */
+.ep-section-card { margin-bottom: 32px; }
+.ep-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.ep-section-body { display: flex; flex-direction: column; gap: 8px; }
+
+/* ─── 리스트 행(추가/삭제 공통) ──────────────────────────────────── */
+.ep-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-inner);
+  padding: 12px;
+}
+.ep-row-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ep-row-head { display: flex; align-items: center; gap: 8px; }
+
+/* ─── 미리보기 ───────────────────────────────────────────────────── */
+.ep-preview-meta { display: flex; align-items: center; gap: 8px; margin: 8px 0 24px; color: var(--color-text-secondary); }
+.ep-preview-tldr { border-left: 4px solid var(--color-text-primary); margin-bottom: 24px; }
+.ep-preview-tldr-body { padding: 16px 20px; }
+.ep-preview-caution { border: 1px solid var(--color-border-orange); background: var(--color-background-orange); margin-bottom: 24px; }
+.ep-preview-caution-head { display: flex; align-items: center; gap: 8px; padding: 16px 20px 8px; }
+.ep-preview-caution-list { list-style: none; margin: 0; padding: 0 20px 16px; display: flex; flex-direction: column; gap: 8px; }
+.ep-preview-caution-list li { display: flex; gap: 8px; }
+.ep-preview-note { color: var(--color-text-secondary); font-style: italic; }
+
+/* ─── 버전 이력 Sheet ────────────────────────────────────────────── */
+.ep-vh-card { margin-bottom: 12px; }
+.ep-vh-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.ep-vh-note {
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-inner);
+  background: color-mix(in oklab, var(--color-text-primary) 2%, transparent);
+  padding: 24px 16px;
+  text-align: center;
+}
+.ep-vh-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+}
+
+/* ─── 로딩 스켈레톤 / 에러 상태 ──────────────────────────────────── */
+.ep-skel-shell { margin-inline: auto; width: 100%; max-width: 56rem; padding: 40px 24px; display: flex; flex-direction: column; gap: 16px; }
+.ep-skel {
+  border-radius: var(--radius-element);
+  background: var(--color-skeleton);
+  animation: ep-pulse 1.4s ease-in-out infinite;
+}
+.ep-skel-title { height: 36px; width: 240px; }
+.ep-skel-sub { height: 24px; width: 160px; }
+.ep-skel-block-sm { height: 128px; width: 100%; }
+.ep-skel-block-lg { height: 256px; width: 100%; }
+@keyframes ep-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+
+.ep-error-shell {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-inline: auto;
+  max-width: 32rem;
+  padding: 40px 24px;
+  text-align: center;
+}
+.ep-error-actions { display: flex; gap: 8px; }

@@ -1,0 +1,105 @@
+/* src/pages/GuideListPage.astryx.css
+ * 가이드 목록 — Astryx 표면. 색은 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Grid/Card/Heading/Text/Badge/Button/TextInput/Divider)로
+ * 표현 못하는 레이아웃(컨테이너·툴바·세그먼트·카드 내부 구획·hover·line-clamp)만 여기서 처리한다. */
+
+/* 콘텐츠 컨테이너 — 기존 PageShell(max-w-7xl + 반응형 패딩) 재현 */
+.gl-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 80rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .gl-shell { padding: 24px; } }
+@media (min-width: 1024px) { .gl-shell { padding: 32px; } }
+
+/* 브레드크럼 */
+.gl-crumbs {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  font-size: 12px; color: var(--color-text-secondary);
+}
+.gl-crumb { display: inline-flex; align-items: center; gap: 4px; }
+.gl-crumb-link { color: inherit; text-decoration: none; }
+.gl-crumb-link:hover { color: var(--color-text-primary); }
+.gl-crumb-current { color: var(--color-text-primary); }
+.gl-crumb-sep { color: var(--color-text-disabled); display: inline-flex; }
+
+/* 툴바: 검색 + 정렬 세그먼트 */
+.gl-toolbar-row {
+  display: flex; flex-direction: column; gap: 8px;
+}
+@media (min-width: 640px) { .gl-toolbar-row { flex-direction: row; align-items: center; } }
+.gl-search { flex: 1 1 auto; min-width: 0; }
+
+/* 정렬 세그먼트 컨테이너 */
+.gl-seg {
+  display: inline-flex; flex-wrap: wrap; gap: 2px;
+  align-self: flex-start;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-body);
+}
+@media (min-width: 640px) { .gl-seg { align-self: auto; flex-wrap: nowrap; } }
+
+/* 필터 칩 묶음 */
+.gl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* 링크 래퍼 리셋 (react-router Link = <a>) */
+.gl-link { display: block; height: 100%; color: inherit; text-decoration: none; }
+
+/* 카드 — padding 0, 내부를 head/body/foot 로 구획 */
+.gl-card {
+  height: 100%;
+  display: flex; flex-direction: column;
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+.gl-link:hover .gl-card {
+  box-shadow: var(--shadow-med);
+  transform: translateY(-1px);
+}
+.gl-card-head { padding: 20px 20px 12px; }
+.gl-card-body { flex: 1 1 auto; padding: 0 20px 16px; }
+.gl-card-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-border);
+}
+.gl-title { display: block; }
+.gl-link:hover .gl-title { text-decoration: underline; }
+
+/* 유틸 */
+.gl-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.gl-metas { display: flex; align-items: center; gap: 12px; }
+.gl-meta {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+
+/* 빈 상태 */
+.gl-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  background: color-mix(in oklab, var(--color-text-primary) 2%, transparent);
+}
+.gl-empty-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin-bottom: 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-gray);
+  color: var(--color-text-secondary);
+}
+.gl-empty-action { margin-top: 16px; }
+
+/* 로딩 스켈레톤 */
+.gl-skel {
+  height: 192px;
+  border-radius: var(--radius-container);
+  background: var(--color-background-muted);
+  animation: gl-pulse 1.4s ease-in-out infinite;
+}
+@keyframes gl-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
