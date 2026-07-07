@@ -2,6 +2,7 @@
 // 엔드유저 프레임(AstryxAppFrame)과 동일한 골격을 쓰되, 어드민 전용 내비게이션과
 // 브레드크럼 상단바를 사용한다. 전역 <Theme>로 감싸 어드민 화면도 Astryx 토큰/모드 공유.
 import { Outlet, useLocation, Link as RRLink } from 'react-router-dom'
+import { useEffect } from 'react'
 import {
   ChartBar as BarChart3, Tray, ChatsCircle as Chats, Headset, FileText,
   House as Home, PencilSimple as PencilLine, ArrowSquareOut as ExternalLink,
@@ -11,7 +12,7 @@ import {
 import { Theme } from '@astryxdesign/core/theme'
 import { neutralTheme } from '@astryxdesign/theme-neutral/built'
 import { LinkProvider } from '@astryxdesign/core/Link'
-import { AppShell } from '@astryxdesign/core/AppShell'
+import { AppShell, useAppShellMobile } from '@astryxdesign/core/AppShell'
 import { SideNav } from '@astryxdesign/core/SideNav'
 import { TopNav } from '@astryxdesign/core/TopNav'
 import { NavHeadingMenu, NavHeadingMenuItem } from '@astryxdesign/core/NavMenu'
@@ -131,6 +132,20 @@ function AdminTopNav({ crumbs }) {
   )
 }
 
+// AppShell 모바일 서랍은 라우터를 모른다 — 메뉴 항목을 눌러 이동해도 서랍이
+// 스스로 닫히지 않는다. 경로 변경 시 닫아주는 렌더 없는 컴포넌트(AppShell의
+// 자식이어야 useAppShellMobile() 컨텍스트를 읽을 수 있다).
+function CloseMobileNavOnNavigate() {
+  const { pathname } = useLocation()
+  const { closeMobileNav } = useAppShellMobile()
+  // closeMobileNav 는 isMobileNavOpen 이 바뀔 때마다 새 참조로 재생성된다 —
+  // 의존성 배열에 넣으면 "열기" 자체가 effect를 재실행시켜 곧바로 다시
+  // 닫아버리는 피드백 루프가 생긴다. pathname 변경에만 반응하도록 고정.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { closeMobileNav() }, [pathname])
+  return null
+}
+
 export default function AdminLayout() {
   const location = useLocation()
   const mode = useAstryxMode()
@@ -144,8 +159,11 @@ export default function AdminLayout() {
           contentPadding={0}
           sideNav={<AdminSideNav />}
           topNav={<AdminTopNav crumbs={crumbs} />}
-          mobileNav={{ hasToggle: true, content: <AdminSideNav /> }}
+          // mobileNav.content 를 직접 넘기면 AppShell 자체 드로어(열기/닫기 토글)가
+          // 비활성화된다 — content 없이 두면 위 sideNav 를 재사용해 자동 구성.
+          mobileNav={{ hasToggle: true }}
         >
+          <CloseMobileNavOnNavigate />
           <div className="astryx-content">
             <Outlet />
           </div>
