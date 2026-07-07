@@ -26,7 +26,6 @@ import {
   Eye,
 } from '@phosphor-icons/react'
 
-import AstryxThemeRegion from '@/components/common/AstryxThemeRegion'
 import { VStack } from '@astryxdesign/core/VStack'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Grid } from '@astryxdesign/core/Grid'
@@ -134,8 +133,7 @@ export default function HomePage() {
   ]
 
   return (
-    <AstryxThemeRegion>
-      <div className="home-shell">
+    <div className="home-shell">
         <VStack gap={8} hAlign="stretch">
 
           {/* ─── 헤더 ─────────────────────────────────────────────── */}
@@ -338,6 +336,5 @@ export default function HomePage() {
 
         </VStack>
       </div>
-    </AstryxThemeRegion>
   )
 }

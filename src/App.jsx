@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
-import Layout from './components/common/Layout'
+import Layout from './components/common/AstryxAppFrame'
 
 /**
  * Suspense fallback — lazy route 로드 중 표시될 placeholder.
