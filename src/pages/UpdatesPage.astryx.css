@@ -1,0 +1,128 @@
+/* src/pages/UpdatesPage.astryx.css
+ * 업데이트 이력 — Astryx 표면. 색은 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Card/Heading/Text/Badge)로 표현 못하는
+ * 컨테이너 폭·타임라인 세로선·아이콘 노드·필터칩·hover·링크 리셋만 여기서 처리한다. */
+
+/* 콘텐츠 컨테이너 — 기존 PageShell(max-w-3xl + 반응형 패딩) 재현 */
+.up-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 48rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .up-shell { padding: 24px; } }
+@media (min-width: 1024px) { .up-shell { padding: 32px; } }
+
+/* react-router Link = <a> 리셋 */
+.link,
+.up-crumb-link,
+.up-guide-link { color: inherit; text-decoration: none; }
+
+/* 브레드크럼 */
+.up-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+.up-crumb-link { color: var(--color-text-secondary); transition: color .12s ease; }
+.up-crumb-link:hover { color: var(--color-text-primary); }
+.up-crumb-sep { color: var(--color-text-disabled); }
+.up-crumb-current { color: var(--color-text-primary); }
+
+/* 타입 필터 칩 */
+.up-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.up-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-background-body);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .12s ease, background-color .12s ease, border-color .12s ease;
+}
+.up-filter:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-emphasized);
+}
+.up-filter[data-active="true"] {
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  color: var(--color-background-body);
+}
+.up-filter-count { font-variant-numeric: tabular-nums; opacity: .7; }
+
+/* 월 라벨 */
+.up-month {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 타임라인 — 세로선을 노드 중심에 정렬 */
+.up-timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.up-timeline::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 6px;
+  width: 1px;
+  height: calc(100% - 6px);
+  background: var(--color-border);
+}
+
+/* 타임라인 항목 */
+.up-item { position: relative; margin-bottom: 20px; }
+.up-item:last-child { margin-bottom: 0; }
+
+/* 아이콘 노드 (선 위 원형 마커) */
+.up-node {
+  position: absolute;
+  left: -28px;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-border);
+  background: var(--color-background-body);
+}
+.up-node[data-family="blue"]   { color: var(--color-icon-blue); }
+.up-node[data-family="yellow"] { color: var(--color-icon-yellow); }
+.up-node[data-family="green"]  { color: var(--color-icon-green); }
+.up-node[data-family="red"]    { color: var(--color-icon-red); }
+
+/* 카드 hover */
+.up-card { transition: background-color .12s ease, box-shadow .15s ease; }
+.up-card:hover {
+  background: var(--color-background-muted);
+  box-shadow: var(--shadow-low);
+}
+
+/* 관련 가이드 링크 */
+.up-guide-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  transition: text-decoration-color .12s ease;
+}
+.up-guide-link:hover { text-decoration: underline; }
