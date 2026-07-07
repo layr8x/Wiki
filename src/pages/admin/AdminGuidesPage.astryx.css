@@ -1,0 +1,113 @@
+/* src/pages/admin/AdminGuidesPage.astryx.css
+ * 가이드 관리(어드민) — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Card/Heading/Text/Badge/Button/TextInput)로 표현 못하는
+ * 레이아웃(컨테이너·헤더·툴바·세그먼트·테이블·hover·스켈레톤)만 여기서 처리한다.
+ * 테이블 규칙은 GuidePage.astryx.css 의 .gp-table* 관례를 그대로 옮겨온 것. */
+
+/* 콘텐츠 컨테이너 — 기존 max-w-6xl + 반응형 패딩 재현 */
+.ag-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .ag-shell { padding: 24px; } }
+@media (min-width: 1024px) { .ag-shell { padding: 32px; } }
+
+/* ─── 헤더 ───────────────────────────────────────────────────── */
+.ag-header {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 16px;
+}
+
+/* ─── 카드 (padding 0, 내부를 툴바/테이블/푸터로 구획) ─────────── */
+/* min-width:0 — VStack/Card 는 flex 컨테이너라 기본 min-width:auto(=콘텐츠 최소폭)를
+   가짐. 제목 셀의 긴 텍스트가 그 최소폭을 넓혀 테이블 전체가 페이지 밖으로
+   밀려나는(가로 오버플로) 문제를 막기 위해 체인 전체에 min-width:0 지정. */
+.ag-card { overflow: hidden; min-width: 0; }
+
+/* ─── 툴바: 상태 세그먼트 + 모듈 필터 + 검색 ─────────────────── */
+.ag-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.ag-search { flex: 1 1 224px; min-width: 200px; }
+.ag-module { flex: 0 0 auto; }
+
+/* 상태 세그먼트 컨테이너 (GuideListPage .gl-seg 관례) */
+.ag-seg {
+  display: inline-flex; flex-wrap: wrap; gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-element);
+  background: var(--color-background-body);
+}
+
+/* ─── 테이블 (GuidePage .gp-table* 관례) ─────────────────────── */
+.ag-table-wrap { overflow-x: auto; min-width: 0; }
+/* table-layout:fixed 필수 — TL;DR(Text maxLines=1)의 truncation(nowrap+ellipsis)은
+   "고정된" 컬럼 폭이 있어야 그 안에서 잘리고, auto layout에서는 truncate 스타일이
+   오히려 줄바꿈 없는 전체 텍스트 폭을 테이블의 최소 폭으로 만들어 페이지 밖으로
+   테이블 전체가 밀려난다(가로 오버플로). fixed + 아래 명시적 컬럼 폭으로 해결. */
+.ag-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 14px; color: var(--color-text-primary);
+}
+.ag-tmin { min-width: 720px; }
+.ag-table thead th {
+  text-align: left; font-weight: 600;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ag-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+  overflow: hidden;
+}
+.ag-table tbody tr:last-child td { border-bottom: 0; }
+.ag-table tbody tr:hover td { background: var(--color-background-muted); }
+
+.ag-col-title { width: 36%; }
+.ag-col-actions { width: 148px; white-space: nowrap; }
+
+/* 제목 셀 — fixed 컬럼 폭 안에서 자연스럽게 줄바꿈(word-break) */
+.ag-title {
+  display: inline; /* anchor 기본값 유지 — inline-block은 줄바꿈 없는 최대폭을 가져 오버플로 유발 */
+  font-weight: 500; color: var(--color-text-primary); text-decoration: none;
+  word-break: break-word;
+}
+.ag-title:hover { text-decoration: underline; }
+.ag-tldr { margin-top: 2px; } /* Text maxLines={1} 이 fixed 컬럼 폭 안에서 정상 truncate */
+
+/* 액션 셀 — 행 우측 아이콘 버튼 묶음 */
+.ag-actions { justify-content: flex-end; }
+
+/* 빈 상태 셀 */
+.ag-empty-cell { padding: 40px 16px !important; text-align: center; }
+
+/* 푸터 (페이지네이션) */
+.ag-foot { padding: 8px 16px 4px; }
+
+/* 스크린리더 전용 라벨 */
+.ag-sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* 로딩 스켈레톤 (GuidePage .gp-skel 관례) */
+.ag-skel-line {
+  height: 20px; width: 100%;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: ag-pulse 1.4s ease-in-out infinite;
+}
+@keyframes ag-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

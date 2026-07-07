@@ -1,36 +1,47 @@
 // src/pages/admin/AdminGuidesPage.jsx — /admin/guides
+// 가이드 관리(어드민) — Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
+//   - 데이터 훅(react-query)·라우팅·상태 탭/모듈 필터/검색/페이지네이션·행 액션(편집/발행/보관 등)은 100% 유지
+//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Divider/TextInput)로 교체
+//   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
+//   - 표현 못하는 레이아웃(툴바·세그먼트·테이블·hover·스켈레톤)은 co-located CSS(토큰 only)
+//   - 유지한 shadcn: 모듈 필터 Select(Astryx 셀렉트 미도입) · 삭제 확인 Dialog(교체 리스크 회피)
 import { useState, useMemo, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  MagnifyingGlass as Search,
+  PencilSimple as Pencil,
+  PaperPlaneTilt,
+  EyeSlash,
+  ArrowCounterClockwise,
+  Archive,
+} from '@phosphor-icons/react'
 import { fetchAdminGuides, updateGuideStatus, deleteGuide, getModuleTree } from '@/lib/db'
 import { usePagination } from '@/hooks/usePagination'
 import Pagination from '@/components/common/Pagination'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+import { GUIDE_TYPES } from '@/lib/guideTypes'
+
+import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
+import { Card } from '@astryxdesign/core/Card'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+import { TextInput } from '@astryxdesign/core/TextInput'
+
+// 유지한 shadcn: 모듈 필터 Select + 삭제 확인 Dialog
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table'
-import { DotsThreeVertical as MoreVertical, PencilSimple as Pencil } from '@phosphor-icons/react'
+
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/store/authStore'
+import './AdminGuidesPage.astryx.css'
 
 const STATUS_TABS = [
   { value: 'all',       label: '전체' },
@@ -39,10 +50,11 @@ const STATUS_TABS = [
   { value: 'archived',  label: '보관됨' },
 ]
 
-const STATUS_VARIANT = {
-  published: 'default',
-  draft:     'secondary',
-  archived:  'outline',
+// 상태 → Astryx Badge variant (발행=success, 임시저장=warning, 보관=neutral)
+const STATUS_BADGE_VARIANT = {
+  published: 'success',
+  draft:     'warning',
+  archived:  'neutral',
 }
 
 const STATUS_LABEL = {
@@ -51,8 +63,21 @@ const STATUS_LABEL = {
   archived:  '보관',
 }
 
+// 가이드 타입 → Astryx Badge variant (색 계열 기준 매핑)
+const TYPE_BADGE_VARIANT = {
+  SOP: 'blue',
+  DECISION: 'purple',
+  REFERENCE: 'neutral',
+  TROUBLE: 'red',
+  RESPONSE: 'green',
+  POLICY: 'yellow',
+}
+const toTypeVariant = (typeKey) => TYPE_BADGE_VARIANT[typeKey] ?? 'neutral'
+const typeLabel = (typeKey) => GUIDE_TYPES[typeKey]?.shortLabel ?? typeKey
+
 export default function AdminGuidesPage() {
   const qc = useQueryClient()
+  const navigate = useNavigate()
   const { toast } = useToast()
   const { hasPermission } = useAuth()
   const moduleTree = getModuleTree()
@@ -112,170 +137,185 @@ export default function AdminGuidesPage() {
   useEffect(() => { pagination.reset() }, [status, moduleF, search]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-6 py-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">가이드 관리</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {stats.all.toLocaleString('ko-KR')}개의 가이드가 관리 범위에 있습니다.
-          </p>
-        </div>
-        <Button asChild>
-          <Link to="/editor">새 가이드 작성</Link>
-        </Button>
-      </header>
+    <div className="ag-shell">
+      <VStack gap={6} hAlign="stretch">
 
-      <Card>
-        <CardContent className="space-y-4 p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Tabs value={status} onValueChange={setStatus}>
-              <TabsList>
-                {STATUS_TABS.map((t) => (
-                  <TabsTrigger key={t.value} value={t.value}>{t.label}</TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+        {/* ─── 헤더 ─────────────────────────────────────────────── */}
+        <header className="ag-header">
+          <VStack gap={1.5}>
+            <Heading level={1}>가이드 관리</Heading>
+            <Text type="supporting">
+              {stats.all.toLocaleString('ko-KR')}개의 가이드가 관리 범위에 있습니다.
+            </Text>
+          </VStack>
+          <Button label="새 가이드 작성" onClick={() => navigate('/editor')} />
+        </header>
 
-            <Select value={moduleF} onValueChange={setModuleF}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="모듈 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">전체 모듈</SelectItem>
-                {moduleTree.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* ─── 카드: 툴바 + 테이블 + 페이지네이션 ───────────────── */}
+        <Card className="ag-card" padding={0}>
+          {/* 툴바: 상태 세그먼트 + 모듈 필터 + 검색 */}
+          <div className="ag-toolbar">
+            <div className="ag-seg" role="group" aria-label="상태 필터">
+              {STATUS_TABS.map((t) => (
+                <Button
+                  key={t.value}
+                  label={t.label}
+                  size="sm"
+                  variant={status === t.value ? 'primary' : 'ghost'}
+                  onClick={() => setStatus(t.value)}
+                />
+              ))}
+            </div>
 
-            <Input
-              placeholder="제목/TL;DR 검색"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-56"
-            />
+            <div className="ag-module">
+              <Select value={moduleF} onValueChange={setModuleF}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="모듈 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 모듈</SelectItem>
+                  {moduleTree.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="ag-search">
+              <TextInput
+                label="가이드 검색"
+                isLabelHidden
+                placeholder="제목/TL;DR 검색"
+                value={search}
+                onChange={(v) => setSearch(v)}
+                startIcon={<Search size={16} />}
+                hasClear
+                width="100%"
+              />
+            </div>
           </div>
 
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[320px]">제목</TableHead>
-                  <TableHead>모듈</TableHead>
-                  <TableHead>타입</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>수정일</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+          {/* 테이블 — 좁은 화면에서 가로 스크롤 */}
+          <div className="ag-table-wrap">
+            <table className="ag-table ag-tmin">
+              <thead>
+                <tr>
+                  <th className="ag-col-title">제목</th>
+                  <th>모듈</th>
+                  <th>타입</th>
+                  <th>상태</th>
+                  <th>수정일</th>
+                  <th className="ag-col-actions"><span className="ag-sr">액션</span></th>
+                </tr>
+              </thead>
+              <tbody>
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={6}><Skeleton className="h-5 w-full" /></TableCell>
-                    </TableRow>
+                    <tr key={`ag-sk-${i}`}>
+                      <td colSpan={6}><div className="ag-skel-line" /></td>
+                    </tr>
                   ))
                 ) : guides.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
-                      조건에 해당하는 가이드가 없습니다.
-                    </TableCell>
-                  </TableRow>
+                  <tr>
+                    <td colSpan={6} className="ag-empty-cell">
+                      <Text type="supporting">조건에 해당하는 가이드가 없습니다.</Text>
+                    </td>
+                  </tr>
                 ) : (
                   pagination.currentItems.map((g) => (
-                    <TableRow key={g.id}>
-                      <TableCell>
-                        <Link to={`/guides/${g.id}`} className="font-medium hover:underline">
-                          {g.title}
-                        </Link>
-                        <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{g.tldr}</p>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {moduleLabelById.get(g.module) || g.module}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-xs">{g.type}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={STATUS_VARIANT[g.status] || 'secondary'} className="text-xs">
-                          {STATUS_LABEL[g.status] || g.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm tabular-nums text-muted-foreground">
-                        {g.updated || g.updated_at?.slice(0, 10) || '—'}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="가이드 액션">
-                              <MoreVertical className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {canEdit && (
-                              <DropdownMenuItem asChild>
-                                <Link to={`/editor?id=${g.id}`}>
-                                  <Pencil className="size-3.5" /> 편집
-                                </Link>
-                              </DropdownMenuItem>
-                            )}
-                            {canPublish && g.status !== 'published' && g.status !== 'archived' && (
-                              <DropdownMenuItem
-                                onSelect={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
-                              >
-                                발행하기
-                              </DropdownMenuItem>
-                            )}
-                            {canPublish && g.status === 'published' && (
-                              <DropdownMenuItem
-                                onSelect={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
-                              >
-                                발행 해제
-                              </DropdownMenuItem>
-                            )}
-                            {/* 보관 상태 → 복원 (임시저장으로 되돌림) */}
-                            {canEdit && g.status === 'archived' && (
-                              <DropdownMenuItem
-                                onSelect={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
-                              >
-                                복원 (임시저장으로)
-                              </DropdownMenuItem>
-                            )}
-                            {/* 보관 상태 → 바로 재발행 */}
-                            {canPublish && g.status === 'archived' && (
-                              <DropdownMenuItem
-                                onSelect={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
-                              >
-                                바로 재발행
-                              </DropdownMenuItem>
-                            )}
-                            {canDelete && g.status !== 'archived' && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onSelect={() => setDeleteTarget(g)}
-                                >
-                                  보관함으로 이동
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                    <tr key={g.id}>
+                      <td>
+                        <Link to={`/guides/${g.id}`} className="ag-title">{g.title}</Link>
+                        <Text type="supporting" maxLines={1} className="ag-tldr">{g.tldr}</Text>
+                      </td>
+                      <td>
+                        <Text>{moduleLabelById.get(g.module) || g.module}</Text>
+                      </td>
+                      <td>
+                        <Badge label={typeLabel(g.type)} variant={toTypeVariant(g.type)} />
+                      </td>
+                      <td>
+                        <Badge
+                          label={STATUS_LABEL[g.status] || g.status}
+                          variant={STATUS_BADGE_VARIANT[g.status] ?? 'neutral'}
+                        />
+                      </td>
+                      <td>
+                        <Text type="supporting" hasTabularNumbers>
+                          {g.updated || g.updated_at?.slice(0, 10) || '—'}
+                        </Text>
+                      </td>
+                      <td>
+                        <HStack gap={1} vAlign="center" className="ag-actions">
+                          {canEdit && (
+                            <Button
+                              isIconOnly size="sm" variant="ghost"
+                              label="편집"
+                              icon={<Pencil size={16} />}
+                              onClick={() => navigate(`/editor?id=${g.id}`)}
+                            />
+                          )}
+                          {canPublish && g.status !== 'published' && g.status !== 'archived' && (
+                            <Button
+                              isIconOnly size="sm" variant="ghost"
+                              label="발행하기"
+                              icon={<PaperPlaneTilt size={16} />}
+                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
+                            />
+                          )}
+                          {canPublish && g.status === 'published' && (
+                            <Button
+                              isIconOnly size="sm" variant="ghost"
+                              label="발행 해제"
+                              icon={<EyeSlash size={16} />}
+                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
+                            />
+                          )}
+                          {/* 보관 상태 → 복원 (임시저장으로 되돌림) */}
+                          {canEdit && g.status === 'archived' && (
+                            <Button
+                              isIconOnly size="sm" variant="ghost"
+                              label="복원 (임시저장으로)"
+                              icon={<ArrowCounterClockwise size={16} />}
+                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
+                            />
+                          )}
+                          {/* 보관 상태 → 바로 재발행 */}
+                          {canPublish && g.status === 'archived' && (
+                            <Button
+                              isIconOnly size="sm" variant="ghost"
+                              label="바로 재발행"
+                              icon={<PaperPlaneTilt size={16} />}
+                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
+                            />
+                          )}
+                          {canDelete && g.status !== 'archived' && (
+                            <Button
+                              isIconOnly size="sm" variant="destructive"
+                              label="보관함으로 이동"
+                              icon={<Archive size={16} />}
+                              onClick={() => setDeleteTarget(g)}
+                            />
+                          )}
+                        </HStack>
+                      </td>
+                    </tr>
                   ))
                 )}
-              </TableBody>
-            </Table>
+              </tbody>
+            </table>
           </div>
 
           {!isLoading && guides.length > 0 && pagination.totalPages > 1 && (
-            <Pagination pagination={pagination} />
+            <div className="ag-foot">
+              <Pagination pagination={pagination} />
+            </div>
           )}
-        </CardContent>
-      </Card>
+        </Card>
 
+      </VStack>
+
+      {/* 삭제(보관) 확인 — shadcn Dialog 유지 (교체 리스크 회피) */}
       <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
@@ -286,14 +326,13 @@ export default function AdminGuidesPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>취소</Button>
+            <Button label="취소" variant="secondary" onClick={() => setDeleteTarget(null)} />
             <Button
+              label={deleteMutation.isPending ? '처리 중…' : '보관'}
               variant="destructive"
-              disabled={deleteMutation.isPending}
+              isDisabled={deleteMutation.isPending}
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-            >
-              {deleteMutation.isPending ? '처리 중…' : '보관'}
-            </Button>
+            />
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,14 +1,13 @@
 // src/pages/admin/AdminJandiPage.jsx — /admin/jandi
 // 잔디(JANDI) 3채널 대화 로그 뷰어 (jandi_messages, RLS anon read).
 // 방별 단일 타임라인(카카오의 채팅별 스레드와 다름) + 검색/기간 + 현재필터 CSV.
+//   - 데이터 훅(react-query/Supabase)·필터·기간·채널선택·페이지네이션·CSV·스레드 그룹핑은 100% 유지
+//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Grid/TextInput)로 교체
+//   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
 import { useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { maskBody } from '@/lib/maskPII'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
 import {
   MagnifyingGlass as Search,
   ChatText as MessageSquare,
@@ -16,6 +15,17 @@ import {
   ArrowsClockwise as RefreshIcon,
   DownloadSimple as DownloadIcon,
 } from '@phosphor-icons/react'
+
+import { VStack } from '@astryxdesign/core/VStack'
+import { Grid } from '@astryxdesign/core/Grid'
+import { Card } from '@astryxdesign/core/Card'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+import { TextInput } from '@astryxdesign/core/TextInput'
+
+import './AdminJandiPage.astryx.css'
 
 // 시드(jandi_channels)와 동일한 3개 방.
 const CHANNELS = [
@@ -144,17 +154,15 @@ function useMessages(roomId, query, year, month, limit) {
 
 function MessageRow({ m, isReply = false }) {
   return (
-    <li className={'flex items-start gap-3 py-2' + (isReply ? ' pl-3' : '')}>
-      <span className="w-20 shrink-0 pt-0.5 text-xs tabular-nums text-muted-foreground">{fmtKST(m.created_at)}</span>
-      <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[140px] shrink-0 truncate">
-        <User className="mr-1 size-3 shrink-0" />{writerLabel(m)}
-      </Badge>
-      {isReply && <span className="mt-0.5 shrink-0 text-xs text-muted-foreground">↳ 댓글</span>}
+    <li className={'aj-msg' + (isReply ? ' aj-msg-reply' : '')}>
+      <Text as="span" type="supporting" hasTabularNumbers className="aj-msg-time">{fmtKST(m.created_at)}</Text>
+      <Badge variant="neutral" label={writerLabel(m)} icon={<User size={12} />} className="aj-msg-who" />
+      {isReply && <span className="aj-msg-tag">↳ 댓글</span>}
       {!isReply && m.reply_to_message_id && (
-        <span className="mt-0.5 shrink-0 text-xs text-muted-foreground" title="원글이 현재 목록 범위 밖입니다">💬 답글</span>
+        <span className="aj-msg-tag" title="원글이 현재 목록 범위 밖입니다">💬 답글</span>
       )}
-      <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm text-foreground">
-        {maskBody(m.message) || <span className="text-muted-foreground">({m.content_type || '본문 없음'})</span>}
+      <p className="aj-msg-body">
+        {maskBody(m.message) || <span className="aj-msg-empty">({m.content_type || '본문 없음'})</span>}
       </p>
     </li>
   )
@@ -163,19 +171,21 @@ function MessageRow({ m, isReply = false }) {
 function ChannelKpi({ ch }) {
   const { data, isLoading, isError } = useChannelCount(ch.id)
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{ch.label}</CardTitle>
-        <MessageSquare className="size-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        {isLoading ? <Skeleton className="h-8 w-24" /> : (
-          <div className="text-2xl font-semibold tabular-nums">
-            {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
-            <span className="ml-1 text-sm font-normal text-muted-foreground">개</span>
+    <Card padding={5}>
+      <VStack gap={2}>
+        <div className="aj-kpi-head">
+          <Text type="supporting" maxLines={1}>{ch.label}</Text>
+          <MessageSquare size={16} className="aj-kpi-icon" />
+        </div>
+        {isLoading ? (
+          <div className="aj-skel aj-skel-kpi" />
+        ) : (
+          <div className="aj-kpi-value">
+            <Heading level={2}>{isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}</Heading>
+            <Text type="supporting">개</Text>
           </div>
         )}
-      </CardContent>
+      </VStack>
     </Card>
   )
 }
@@ -226,8 +236,6 @@ function downloadBlob(text, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-const selCls = 'h-9 rounded-md border border-border bg-background px-2 text-sm outline-none focus:border-foreground/40'
-
 export default function AdminJandiPage() {
   const [channel, setChannel] = useState(CHANNELS[0].id)
   const [input, setInput] = useState('')
@@ -242,7 +250,7 @@ export default function AdminJandiPage() {
 
   const reset = () => setLimit(PAGE_SIZE)
   const onChannel = (id) => { setChannel(id); reset() }
-  const onSearch = (e) => { e.preventDefault(); setQuery(input); reset() }
+  const onSearch = () => { setQuery(input); reset() }
 
   // 표시용: 최신순 정렬 + 댓글(스레드 답글)은 원글 아래로 그룹핑.
   const threads = groupThreads(rows)
@@ -268,114 +276,131 @@ export default function AdminJandiPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-8">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight">잔디 대화</h1>
-        <p className="mt-1 text-sm text-muted-foreground">JANDI 3채널 실시간 수집 데이터 · 방별 타임라인</p>
-      </header>
+    <div className="aj-shell">
+      <VStack gap={8} hAlign="stretch">
 
-      {!isSupabaseEnabled && (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
-          Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)가 설정되지 않았습니다.
-        </CardContent></Card>
-      )}
+        {/* ─── 헤더 ─────────────────────────────────────────────── */}
+        <header className="aj-header">
+          <Heading level={1}>잔디 대화</Heading>
+          <Text type="supporting">JANDI 3채널 실시간 수집 데이터 · 방별 타임라인</Text>
+        </header>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
-      </section>
+        {!isSupabaseEnabled && (
+          <Card padding={0}>
+            <p className="aj-notice">
+              Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)가 설정되지 않았습니다.
+            </p>
+          </Card>
+        )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="채널 선택">
-          {CHANNELS.map((ch) => (
-            <button
-              key={ch.id} onClick={() => onChannel(ch.id)} aria-pressed={channel === ch.id}
-              className={'inline-flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition-colors '
-                + (channel === ch.id ? 'border-foreground bg-foreground text-background'
-                  : 'border-border bg-card text-muted-foreground hover:border-foreground/40 hover:text-foreground')}
-            >{ch.label}</button>
-          ))}
-        </div>
+        {/* ─── 채널별 메시지 수 (KPI) ───────────────────────────── */}
+        <Grid columns={{ minWidth: 240, max: 3 }} gap={4}>
+          {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
+        </Grid>
 
-        <div className="flex items-center gap-1.5">
-          <select className={selCls} value={year} onChange={(e) => { setYear(e.target.value); reset() }} aria-label="년도">
-            <option value="all">전체기간</option>
-            {YEARS.map((y) => <option key={y} value={y}>{y}년</option>)}
-          </select>
-          <select className={selCls} value={month} onChange={(e) => { setMonth(e.target.value); reset() }} disabled={year === 'all'} aria-label="월">
-            <option value="all">전체월</option>
-            {MONTHS.map((m) => <option key={m} value={m}>{Number(m)}월</option>)}
-          </select>
-        </div>
-
-        <form onSubmit={onSearch} className="relative ml-auto w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="메시지 검색 후 Enter"
-            className="h-9 w-full rounded-md border border-border bg-background pl-8 pr-3 text-sm outline-none focus:border-foreground/40" />
-        </form>
-      </div>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-base">
-            {channelLabel}{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
-            {threads.length > 0 && (
-              <span className="ml-2 text-xs font-normal text-muted-foreground">
-                {threads.length}개 대화 · {rows.length}개 메시지
-              </span>
-            )}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {isFetching && !csvLoading && <span className="text-xs text-muted-foreground">불러오는 중…</span>}
-            {csvLoading && <span className="text-xs text-muted-foreground">CSV 준비 중…</span>}
-            <Button variant="outline" size="sm" onClick={onRefresh} disabled={isFetching}>
-              <RefreshIcon className="mr-1 size-4" /> 새로고침
-            </Button>
-            <Button variant="outline" size="sm" onClick={onDownloadCsv} disabled={csvLoading || isLoading}>
-              <DownloadIcon className="mr-1 size-4" /> CSV
-            </Button>
+        {/* ─── 툴바: 채널 탭 + 기간 + 검색 ───────────────────────── */}
+        <div className="aj-toolbar">
+          <div className="aj-tabs" role="group" aria-label="채널 선택">
+            {CHANNELS.map((ch) => (
+              <Button
+                key={ch.id}
+                label={ch.label}
+                size="sm"
+                variant={channel === ch.id ? 'primary' : 'secondary'}
+                onClick={() => onChannel(ch.id)}
+              />
+            ))}
           </div>
-        </CardHeader>
-        <CardContent>
-          {isError ? (
-            <p className="py-10 text-center text-sm text-destructive">불러오기 실패: {error?.message || '오류'}</p>
-          ) : isLoading ? (
-            <div className="space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
-          ) : threads.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">조건에 맞는 메시지가 없습니다.</p>
-          ) : (
-            <div className="space-y-4">
-              {threads.map((t) => (
-                <Card key={t.root.link_id} className="overflow-hidden border-border/60 py-0">
-                  <CardHeader className="flex flex-row items-start justify-between gap-2 bg-muted/40 py-3">
-                    <div className="flex min-w-0 items-start gap-2">
-                      <Badge variant="secondary" size="sm" className="mt-0.5 max-w-[150px] shrink-0 truncate">
-                        <User className="mr-1 size-3 shrink-0" />{writerLabel(t.root)}
-                      </Badge>
-                      <span className="min-w-0 truncate text-sm font-medium">{threadTitle(t.root)}</span>
+
+          <div className="aj-selects">
+            <select className="aj-select" value={year} onChange={(e) => { setYear(e.target.value); reset() }} aria-label="년도">
+              <option value="all">전체기간</option>
+              {YEARS.map((y) => <option key={y} value={y}>{y}년</option>)}
+            </select>
+            <select className="aj-select" value={month} onChange={(e) => { setMonth(e.target.value); reset() }} disabled={year === 'all'} aria-label="월">
+              <option value="all">전체월</option>
+              {MONTHS.map((m) => <option key={m} value={m}>{Number(m)}월</option>)}
+            </select>
+          </div>
+
+          <div className="aj-search">
+            <TextInput
+              label="메시지 검색"
+              isLabelHidden
+              placeholder="메시지 검색 후 Enter"
+              value={input}
+              onChange={(v) => setInput(v)}
+              onEnter={onSearch}
+              startIcon={<Search size={16} />}
+              hasClear
+              width="100%"
+            />
+          </div>
+        </div>
+
+        {/* ─── 결과 카드 ─────────────────────────────────────────── */}
+        <Card padding={0} className="aj-main">
+          <div className="aj-main-head">
+            <div className="aj-main-title">
+              <Text weight="semibold">
+                {channelLabel}{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
+              </Text>
+              {threads.length > 0 && (
+                <Text type="supporting" hasTabularNumbers>
+                  {threads.length}개 대화 · {rows.length}개 메시지
+                </Text>
+              )}
+            </div>
+            <div className="aj-main-actions">
+              {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
+              {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              <Button label="새로고침" variant="secondary" size="sm" icon={<RefreshIcon size={14} />} onClick={onRefresh} isDisabled={isFetching} />
+              <Button label="CSV" variant="secondary" size="sm" icon={<DownloadIcon size={14} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
+            </div>
+          </div>
+
+          <div className="aj-main-body">
+            {isError ? (
+              <p className="aj-state aj-error">불러오기 실패: {error?.message || '오류'}</p>
+            ) : isLoading ? (
+              <div className="aj-skel-list">
+                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="aj-skel aj-skel-thread" />)}
+              </div>
+            ) : threads.length === 0 ? (
+              <p className="aj-state">조건에 맞는 메시지가 없습니다.</p>
+            ) : (
+              <VStack gap={4} hAlign="stretch">
+                {threads.map((t) => (
+                  <Card key={t.root.link_id} padding={0} className="aj-thread">
+                    <div className="aj-thread-head">
+                      <div className="aj-thread-head-l">
+                        <Badge variant="neutral" label={writerLabel(t.root)} icon={<User size={12} />} className="aj-thread-who" />
+                        <Text weight="medium" maxLines={1} className="aj-thread-title">{threadTitle(t.root)}</Text>
+                      </div>
+                      <div className="aj-thread-meta">
+                        <Text as="span" type="supporting" hasTabularNumbers>{t.count}건</Text>
+                        <Text as="span" type="supporting" hasTabularNumbers>최근 {fmtKST(t.latest)}</Text>
+                      </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3 text-xs text-muted-foreground">
-                      <span className="tabular-nums">{t.count}건</span>
-                      <span className="tabular-nums">최근 {fmtKST(t.latest)}</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="py-2">
-                    <ul className="divide-y divide-border/40">
+                    <ul className="aj-msglist">
                       {t.messages.map((m, i) => (
                         <MessageRow key={m.link_id} m={m} isReply={i > 0} />
                       ))}
                     </ul>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-          {!isLoading && !isError && rows.length >= limit && (
-            <div className="mt-4 flex justify-center">
-              <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + PAGE_SIZE)}>더 보기 (+{PAGE_SIZE})</Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </Card>
+                ))}
+              </VStack>
+            )}
+
+            {!isLoading && !isError && rows.length >= limit && (
+              <div className="aj-more">
+                <Button label={`더 보기 (+${PAGE_SIZE})`} variant="secondary" size="sm" onClick={() => setLimit((l) => l + PAGE_SIZE)} />
+              </div>
+            )}
+          </div>
+        </Card>
+
+      </VStack>
     </div>
   )
 }

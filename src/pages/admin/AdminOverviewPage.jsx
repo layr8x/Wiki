@@ -1,5 +1,9 @@
 // src/pages/admin/AdminOverviewPage.jsx — /admin 대시보드
-import { Link } from 'react-router-dom'
+// Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
+//   - 데이터 훅(react-query)·라우팅(react-router)·집계 통계는 100% 그대로 유지
+//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/Grid)로 교체
+//   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/CSS 를 감싸지 않음
+import { Link, useNavigate } from 'react-router-dom'
 import {
   useDashboardStats,
   useModuleStats,
@@ -8,10 +12,6 @@ import {
   useChatCategoryDistribution,
   useSentimentTrend,
 } from '@/hooks/useGuides'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
 import { getModuleTree } from '@/lib/db'
 import {
   FileText,
@@ -20,6 +20,16 @@ import {
   MagnifyingGlass as Search,
   PencilSimple as PencilLine,
 } from '@phosphor-icons/react'
+
+import { VStack } from '@astryxdesign/core/VStack'
+import { Grid } from '@astryxdesign/core/Grid'
+import { Card } from '@astryxdesign/core/Card'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+
+import './AdminOverviewPage.astryx.css'
 
 const KPI_ITEMS = [
   { key: 'totalGuides', label: '총 가이드', icon: FileText, suffix: '개' },
@@ -33,14 +43,14 @@ function formatNumber(n) {
   return n.toLocaleString('ko-KR')
 }
 
-// 응답시간 버킷별 색상 (빠를수록 안전, 느릴수록 위험).
+// 응답시간 버킷별 톤 (빠를수록 안전, 느릴수록 위험). Astryx 아이콘 색 토큰으로 매핑.
 const BUCKET_TONE = {
-  '0-5분':    'bg-emerald-500',
-  '5-30분':   'bg-emerald-400',
-  '30-60분':  'bg-amber-400',
-  '1-3시간':  'bg-amber-500',
-  '3-24시간': 'bg-orange-500',
-  '24시간+':  'bg-red-500',
+  '0-5분':    'green',
+  '5-30분':   'green',
+  '30-60분':  'yellow',
+  '1-3시간':  'yellow',
+  '3-24시간': 'orange',
+  '24시간+':  'red',
 }
 
 // 카테고리 id → 한글 라벨 매핑 (classify-kakao-csv.mjs 와 일치)
@@ -59,7 +69,23 @@ const CATEGORY_LABELS = {
   'misc':              '기타',
 }
 
+/* 분포 바 한 줄 — 라벨 + 우측 메타 + 토큰 트랙/필 */
+function StatBar({ label, right, pct, tone = 'primary' }) {
+  return (
+    <div className="ov-bar">
+      <div className="ov-bar-head">
+        <Text type="body" weight="medium">{label}</Text>
+        <Text type="supporting" hasTabularNumbers as="span">{right}</Text>
+      </div>
+      <div className="ov-bar-track">
+        <div className="ov-bar-fill" data-tone={tone} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
 export default function AdminOverviewPage() {
+  const navigate = useNavigate()
   const { data: stats, isLoading: statsLoading } = useDashboardStats()
   const { data: moduleStats = {}, isLoading: modsLoading } = useModuleStats()
   const { data: recents = [], isLoading: recentsLoading } = useRecentGuides(8)
@@ -68,257 +94,255 @@ export default function AdminOverviewPage() {
   const { data: sentTrend, isLoading: sentLoading } = useSentimentTrend(30)
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-6 py-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">대시보드</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            AMS Wiki 전체 현황을 한눈에 확인합니다.
-          </p>
+    <div className="ov-shell">
+      <VStack gap={8} hAlign="stretch">
+
+        {/* ─── 헤더 ─────────────────────────────────────────────── */}
+        <div className="ov-header ov-row-between">
+          <VStack gap={1.5}>
+            <Heading level={1}>대시보드</Heading>
+            <Text type="supporting">AMS Wiki 전체 현황을 한눈에 확인합니다.</Text>
+          </VStack>
+          <Button
+            label="새 가이드 작성"
+            variant="primary"
+            size="sm"
+            icon={<PencilLine size={14} />}
+            onClick={() => navigate('/editor')}
+          />
         </div>
-        <Button asChild>
-          <Link to="/editor">
-            <PencilLine className="mr-1.5 size-4" />
-            새 가이드 작성
-          </Link>
-        </Button>
-      </header>
 
-      {/* KPI 카드 */}
-      <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {KPI_ITEMS.map((item) => {
-          const Icon = item.icon
-          const value = stats?.[item.key]
-          return (
-            <Card key={item.key}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {item.label}
-                </CardTitle>
-                <Icon className="size-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                {statsLoading ? (
-                  <Skeleton className="h-8 w-24" />
+        {/* ─── KPI 카드 (4) ─────────────────────────────────────── */}
+        <Grid columns={{ minWidth: 200, max: 4 }} gap={4}>
+          {KPI_ITEMS.map((item) => {
+            const Icon = item.icon
+            const value = stats?.[item.key]
+            return (
+              <Card key={item.key} padding={5}>
+                <VStack gap={2}>
+                  <div className="ov-row-between">
+                    <Text type="supporting">{item.label}</Text>
+                    <span className="ov-kpi-icon"><Icon size={16} /></span>
+                  </div>
+                  {statsLoading ? (
+                    <div className="ov-skel ov-skel-kpi" />
+                  ) : (
+                    <div className="ov-kpi-value">
+                      <Heading level={3}>{formatNumber(value)}</Heading>
+                      <Text type="supporting" as="span">{item.suffix}</Text>
+                    </div>
+                  )}
+                </VStack>
+              </Card>
+            )
+          })}
+        </Grid>
+
+        {/* ─── 내부 위키 통계 2열 (모듈 분포 + 최근 업데이트) ───── */}
+        <Grid columns={{ minWidth: 320, max: 2 }} gap={6}>
+
+          {/* 모듈별 가이드 분포 */}
+          <Card padding={0}>
+            <div className="ov-cardhead">
+              <Heading level={4}>모듈별 가이드 분포</Heading>
+            </div>
+            <div className="ov-cardbody">
+              <VStack gap={3} hAlign="stretch">
+                {modsLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="ov-skel ov-skel-bar" />
+                  ))
                 ) : (
-                  <div className="text-2xl font-semibold tabular-nums">
-                    {formatNumber(value)}<span className="ml-1 text-sm font-normal text-muted-foreground">{item.suffix}</span>
-                  </div>
+                  getModuleTree().map((mod) => {
+                    const count = moduleStats[mod.id] || 0
+                    const max = Math.max(...Object.values(moduleStats), 1)
+                    const pct = Math.round((count / max) * 100)
+                    return (
+                      <StatBar key={mod.id} label={mod.label} right={count} pct={pct} />
+                    )
+                  })
                 )}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </section>
+              </VStack>
+            </div>
+          </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* 모듈별 가이드 분포 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">모듈별 가이드 분포</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {modsLoading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-8 w-full" />
-              ))
+          {/* 최근 업데이트 */}
+          <Card padding={0}>
+            <div className="ov-cardhead ov-row-between">
+              <Heading level={4}>최근 업데이트</Heading>
+              <Button
+                label="전체 보기"
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/admin/guides')}
+              />
+            </div>
+            {recentsLoading ? (
+              <div className="ov-cardbody">
+                <VStack gap={2} hAlign="stretch">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="ov-skel ov-skel-row" />
+                  ))}
+                </VStack>
+              </div>
+            ) : recents.length === 0 ? (
+              <div className="ov-cardbody ov-empty">
+                <Text type="supporting">최근 업데이트된 가이드가 없습니다.</Text>
+              </div>
             ) : (
-              getModuleTree().map((mod) => {
-                const count = moduleStats[mod.id] || 0
-                const max = Math.max(...Object.values(moduleStats), 1)
-                const pct = Math.round((count / max) * 100)
-                return (
-                  <div key={mod.id} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{mod.label}</span>
-                      <span className="tabular-nums text-muted-foreground">{count}</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full bg-primary transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })
+              <ul className="ov-list">
+                {recents.slice(0, 6).map((g) => (
+                  <li key={g.id} className="ov-li">
+                    <Link to={`/editor?id=${g.id}`} className="link ov-listrow">
+                      <div className="ov-grow">
+                        <Text className="ov-listrow-title" weight="medium" maxLines={1}>{g.title}</Text>
+                      </div>
+                      <div className="ov-listrow-meta">
+                        <Badge label={g.type} variant="neutral" />
+                        <Text type="supporting" hasTabularNumbers as="span">
+                          {g.updated || g.updated_at?.slice(0, 10) || '—'}
+                        </Text>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
-          </CardContent>
-        </Card>
+          </Card>
+        </Grid>
 
-        {/* 카카오 상담 응답시간 분포 (최근 90일) */}
+        {/* ─── 카카오 상담 응답시간 분포 (최근 90일) ────────────── */}
         {(rtLoading || (rtDist && rtDist.length > 0)) && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">카카오 상담 응답시간 분포 (최근 90일)</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                학부모 메시지 후 직원 첫 응답까지 걸린 시간을 6개 구간으로 집계.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {rtLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))
-              ) : (
-                rtDist.map((row) => {
-                  const maxPct = Math.max(...rtDist.map(r => r.pct), 1)
-                  const widthPct = (row.pct / maxPct) * 100
-                  const tone = BUCKET_TONE[row.bucket] || 'bg-primary'
-                  return (
-                    <div key={row.bucket} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{row.bucket}</span>
-                        <span className="tabular-nums text-muted-foreground">
-                          {formatNumber(row.cnt)}건 · {row.pct}%
-                        </span>
-                      </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full transition-all ${tone}`}
-                          style={{ width: `${widthPct}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </CardContent>
+          <Card padding={0}>
+            <div className="ov-cardhead">
+              <VStack gap={1}>
+                <Heading level={4}>카카오 상담 응답시간 분포 (최근 90일)</Heading>
+                <Text type="supporting">
+                  학부모 메시지 후 직원 첫 응답까지 걸린 시간을 6개 구간으로 집계.
+                </Text>
+              </VStack>
+            </div>
+            <div className="ov-cardbody">
+              <VStack gap={3} hAlign="stretch">
+                {rtLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="ov-skel ov-skel-bar" />
+                  ))
+                ) : (
+                  rtDist.map((row) => {
+                    const maxPct = Math.max(...rtDist.map(r => r.pct), 1)
+                    const widthPct = (row.pct / maxPct) * 100
+                    const tone = BUCKET_TONE[row.bucket] || 'primary'
+                    return (
+                      <StatBar
+                        key={row.bucket}
+                        label={row.bucket}
+                        right={`${formatNumber(row.cnt)}건 · ${row.pct}%`}
+                        pct={widthPct}
+                        tone={tone}
+                      />
+                    )
+                  })
+                )}
+              </VStack>
+            </div>
           </Card>
         )}
 
-        {/* 카카오 상담 카테고리 분포 (AI 분류) */}
+        {/* ─── 카카오 상담 카테고리 분포 (AI 분류) ──────────────── */}
         {(catLoading || (catDist && catDist.length > 0)) && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">카카오 상담 카테고리 분포 (최근 90일, AI 분류)</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                채팅방을 Claude AI 가 12개 카테고리로 자동 분류. 부정 감정 비율도 함께 표시.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {catLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-8 w-full" />
-                ))
-              ) : (
-                catDist.map((row) => {
-                  const maxPct = Math.max(...catDist.map(r => r.pct), 1)
-                  const widthPct = (row.pct / maxPct) * 100
-                  const label = CATEGORY_LABELS[row.category] || row.category
-                  const isHot = row.negativeRate >= 30
-                  return (
-                    <div key={row.category} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{label}</span>
-                        <span className="tabular-nums text-muted-foreground">
-                          {formatNumber(row.cnt)}건 · {row.pct}%
-                          {row.negativeRate > 0 && (
-                            <span className={isHot ? 'ml-2 text-red-500' : 'ml-2 text-muted-foreground'}>
-                              · 부정 {row.negativeRate}%
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className={`h-full transition-all ${isHot ? 'bg-red-500' : 'bg-primary'}`}
-                          style={{ width: `${widthPct}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </CardContent>
+          <Card padding={0}>
+            <div className="ov-cardhead">
+              <VStack gap={1}>
+                <Heading level={4}>카카오 상담 카테고리 분포 (최근 90일, AI 분류)</Heading>
+                <Text type="supporting">
+                  채팅방을 Claude AI 가 12개 카테고리로 자동 분류. 부정 감정 비율도 함께 표시.
+                </Text>
+              </VStack>
+            </div>
+            <div className="ov-cardbody">
+              <VStack gap={3} hAlign="stretch">
+                {catLoading ? (
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="ov-skel ov-skel-bar" />
+                  ))
+                ) : (
+                  catDist.map((row) => {
+                    const maxPct = Math.max(...catDist.map(r => r.pct), 1)
+                    const widthPct = (row.pct / maxPct) * 100
+                    const label = CATEGORY_LABELS[row.category] || row.category
+                    const isHot = row.negativeRate >= 30
+                    return (
+                      <StatBar
+                        key={row.category}
+                        label={label}
+                        pct={widthPct}
+                        tone={isHot ? 'red' : 'primary'}
+                        right={
+                          <>
+                            {formatNumber(row.cnt)}건 · {row.pct}%
+                            {row.negativeRate > 0 && (
+                              <span className={isHot ? 'ov-neg ov-neg-hot' : 'ov-neg'}>
+                                {' '}· 부정 {row.negativeRate}%
+                              </span>
+                            )}
+                          </>
+                        }
+                      />
+                    )
+                  })
+                )}
+              </VStack>
+            </div>
           </Card>
         )}
 
-        {/* 카카오 감정 추세 (일별) */}
+        {/* ─── 학부모 감정 추세 (일별) ──────────────────────────── */}
         {(sentLoading || (sentTrend && sentTrend.length > 0)) && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-base">학부모 감정 추세 (최근 30일)</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                일별 학부모 메시지의 긍정·중립·부정 비율. 부정이 갑자기 늘어나면 위험 신호.
-              </p>
-            </CardHeader>
-            <CardContent>
+          <Card padding={0}>
+            <div className="ov-cardhead">
+              <VStack gap={1}>
+                <Heading level={4}>학부모 감정 추세 (최근 30일)</Heading>
+                <Text type="supporting">
+                  일별 학부모 메시지의 긍정·중립·부정 비율. 부정이 갑자기 늘어나면 위험 신호.
+                </Text>
+              </VStack>
+            </div>
+            <div className="ov-cardbody">
               {sentLoading ? (
-                <Skeleton className="h-32 w-full" />
+                <div className="ov-skel ov-skel-sent" />
               ) : (
-                <div className="flex h-32 items-end gap-1">
+                <div className="ov-sent">
                   {sentTrend.map((d) => {
                     const total = d.positive + d.neutral + d.negative
-                    if (total === 0) return <div key={d.day} className="flex-1" />
+                    if (total === 0) return <div key={d.day} className="ov-sent-col" />
                     const posH = (d.positive / total) * 100
                     const neuH = (d.neutral / total) * 100
                     const negH = (d.negative / total) * 100
                     return (
                       <div
                         key={d.day}
-                        className="flex flex-1 flex-col-reverse justify-end overflow-hidden rounded-sm bg-muted"
+                        className="ov-sent-col ov-sent-stack"
                         title={`${d.day} · 긍정 ${d.positive} / 중립 ${d.neutral} / 부정 ${d.negative}`}
                       >
-                        <div className="bg-red-500" style={{ height: `${negH}%` }} />
-                        <div className="bg-muted-foreground/40" style={{ height: `${neuH}%` }} />
-                        <div className="bg-emerald-500" style={{ height: `${posH}%` }} />
+                        <div className="ov-sent-seg" data-tone="neg" style={{ height: `${negH}%` }} />
+                        <div className="ov-sent-seg" data-tone="neu" style={{ height: `${neuH}%` }} />
+                        <div className="ov-sent-seg" data-tone="pos" style={{ height: `${posH}%` }} />
                       </div>
                     )
                   })}
                 </div>
               )}
-              <div className="mt-2 flex items-center justify-end gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><span className="inline-block size-2 rounded-sm bg-emerald-500" /> 긍정</span>
-                <span className="flex items-center gap-1"><span className="inline-block size-2 rounded-sm bg-muted-foreground/40" /> 중립</span>
-                <span className="flex items-center gap-1"><span className="inline-block size-2 rounded-sm bg-red-500" /> 부정</span>
+              <div className="ov-legend">
+                <span className="ov-legend-item"><span className="ov-dot" data-tone="pos" /> 긍정</span>
+                <span className="ov-legend-item"><span className="ov-dot" data-tone="neu" /> 중립</span>
+                <span className="ov-legend-item"><span className="ov-dot" data-tone="neg" /> 부정</span>
               </div>
-            </CardContent>
+            </div>
           </Card>
         )}
 
-        {/* 최근 업데이트 */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">최근 업데이트</CardTitle>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/guides">전체 보기</Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {recentsLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : recents.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                최근 업데이트된 가이드가 없습니다.
-              </p>
-            ) : (
-              <ul className="divide-y">
-                {recents.slice(0, 6).map((g) => (
-                  <li key={g.id} className="flex items-center justify-between gap-2 py-2">
-                    <Link
-                      to={`/editor?id=${g.id}`}
-                      className="truncate text-sm font-medium hover:underline"
-                    >
-                      {g.title}
-                    </Link>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">{g.type}</Badge>
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {g.updated || g.updated_at?.slice(0, 10) || '—'}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      </VStack>
     </div>
   )
 }
