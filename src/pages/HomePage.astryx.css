@@ -1,0 +1,105 @@
+/* src/pages/HomePage.astryx.css
+ * 홈 대시보드 — Astryx 표면. 색은 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/Grid/Card/Heading/Text/Badge/Button)로 표현 못하는
+ * 레이아웃(2fr/1fr 컬럼)·틴트칩·리스트 구분선·hover 상호작용만 여기서 처리한다.
+ * (마이그레이션 가이드: 토큰 기반 로컬 래퍼는 공존 허용) */
+
+/* 콘텐츠 컨테이너 — 기존 PageShell(max-w-7xl + 반응형 패딩) 재현 */
+.home-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 80rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .home-shell { padding: 24px; } }
+@media (min-width: 1024px) { .home-shell { padding: 32px; } }
+
+/* 링크 래퍼 리셋 (react-router Link = <a>) */
+.home-link { display: block; height: 100%; color: inherit; text-decoration: none; }
+
+/* 카드 hover 상호작용 */
+.home-card { height: 100%; transition: box-shadow .15s ease, transform .15s ease; }
+.home-link:hover .home-card {
+  box-shadow: var(--shadow-med);
+  transform: translateY(-1px);
+}
+
+/* 틴트 아이콘 칩 (카테고리) */
+.home-tint {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; flex: none;
+  border-radius: var(--radius-element);
+}
+.home-tint[data-family="blue"]   { background: var(--color-background-blue);   color: var(--color-icon-blue); }
+.home-tint[data-family="green"]  { background: var(--color-background-green);  color: var(--color-icon-green); }
+.home-tint[data-family="purple"] { background: var(--color-background-purple); color: var(--color-icon-purple); }
+.home-tint[data-family="orange"] { background: var(--color-background-orange); color: var(--color-icon-orange); }
+.home-tint[data-family="pink"]   { background: var(--color-background-pink);   color: var(--color-icon-pink); }
+.home-tint[data-family="cyan"]   { background: var(--color-background-cyan);   color: var(--color-icon-cyan); }
+.home-tint[data-family="gray"]   { background: var(--color-background-gray);   color: var(--color-icon-gray); }
+
+/* 리스트 카드(최근 업데이트 / 자주 찾는 가이드) */
+.home-cardhead {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+.home-list { list-style: none; margin: 0; padding: 0; }
+.home-li + .home-li { border-top: 1px solid var(--color-border); }
+.home-listrow {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 24px;
+  color: inherit; text-decoration: none;
+  transition: background-color .12s ease;
+}
+.home-listrow.compact { padding: 10px 24px; }
+.home-listrow:hover { background: color-mix(in oklab, var(--color-text-primary) 4%, transparent); }
+
+/* 빠른 링크 아이템 */
+.home-quicklist { padding: 8px; }
+.home-quick {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-inner);
+  color: inherit; text-decoration: none;
+  transition: background-color .12s ease;
+}
+.home-quick:hover { background: color-mix(in oklab, var(--color-text-primary) 4%, transparent); }
+
+/* 빈 상태 */
+.home-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  background: color-mix(in oklab, var(--color-text-primary) 2%, transparent);
+}
+.home-empty-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin-bottom: 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-gray);
+  color: var(--color-text-secondary);
+}
+
+/* 2열 하단 */
+.home-bottom { display: grid; grid-template-columns: 1fr; gap: 24px; }
+@media (min-width: 1024px) { .home-bottom { grid-template-columns: 2fr 1fr; align-items: start; } }
+
+/* 유틸 */
+.home-muted { color: var(--color-text-secondary); display: inline-flex; align-items: center; gap: 4px; }
+.home-tabnum { font-variant-numeric: tabular-nums; }
+.home-grow { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+.home-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.home-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.home-hoverfade { opacity: 0; transition: opacity .12s ease; }
+.home-listrow:hover .home-hoverfade { opacity: 1; }
+
+/* 헤더/섹션 정렬 · 링크 크기 (인라인 style 대체) */
+.home-header { align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.home-sechead { margin-bottom: 16px; align-items: flex-end; }
+.home-link-sm { font-size: 14px; white-space: nowrap; }
+.home-link-xs { font-size: 13px; white-space: nowrap; }
+.home-cta { font-size: 13px; }
+.home-rank { width: 16px; justify-content: center; text-align: center; }
+.home-alend { align-items: flex-end; }
