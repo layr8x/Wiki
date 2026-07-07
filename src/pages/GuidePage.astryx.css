@@ -1,0 +1,243 @@
+/* src/pages/GuidePage.astryx.css
+ * 가이드 상세 — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/Grid/Card/Heading/Text/Badge/Button/Divider)로 표현 못하는
+ * 레이아웃(컨테이너·메타바·콜아웃·테이블·스텝번호·정책비교·피드백·스켈레톤)만 여기서 처리한다. */
+
+/* 콘텐츠 컨테이너 — 기존 PageShell(max-w-5xl + 반응형 패딩) 재현 */
+.gp-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 64rem;
+  padding: 24px 16px;
+}
+@media (min-width: 640px) { .gp-shell { padding: 24px; } }
+@media (min-width: 1024px) { .gp-shell { padding: 32px; } }
+
+/* 상단 블록 사이 여백 (VStack gap=0 이므로 각 섹션이 자체 하단 마진을 가짐) */
+.gp-header { margin-bottom: 24px; }
+.gp-tldr { margin-bottom: 24px; }
+.gp-caution { margin-bottom: 32px; }
+.gp-section { margin-bottom: 40px; }
+.gp-divider { margin: 40px 0; }
+
+/* ─── 브레드크럼 ─────────────────────────────────────────────── */
+.gp-crumbs {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  margin-bottom: 12px;
+  font-size: 12px; color: var(--color-text-secondary);
+}
+.gp-crumb { display: inline-flex; align-items: center; gap: 4px; }
+.gp-crumb-link { color: inherit; text-decoration: none; }
+.gp-crumb-link:hover { color: var(--color-text-primary); }
+.gp-crumb-current { color: var(--color-text-primary); }
+.gp-crumb-sep { color: var(--color-text-disabled); }
+
+/* ─── 메타바 ─────────────────────────────────────────────────── */
+.gp-meta {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 8px 16px;
+  margin-top: 16px;
+  font-size: 12px; color: var(--color-text-secondary);
+}
+.gp-meta-item { display: inline-flex; align-items: center; gap: 4px; }
+.gp-meta-link {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-weight: 500; color: var(--color-text-primary); text-decoration: none;
+}
+.gp-meta-link:hover { text-decoration: underline; }
+
+/* ─── 핵심 요약 (TL;DR) ──────────────────────────────────────── */
+.gp-tldr { border-left: 4px solid var(--color-text-primary); }
+.gp-tldr-body { padding: 20px 24px; }
+.gp-tldr-eyebrow {
+  display: block; margin-bottom: 4px;
+  text-transform: uppercase; letter-spacing: .04em;
+  color: var(--color-text-secondary);
+}
+.gp-tldr-text {
+  white-space: pre-line;
+  font-size: 16px; line-height: 1.7; color: var(--color-text-primary);
+}
+
+/* ─── 주의사항 콜아웃 ────────────────────────────────────────── */
+.gp-caution {
+  border: 1px solid var(--color-border-orange);
+  background: var(--color-background-orange);
+}
+.gp-caution-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 20px 24px 12px;
+}
+.gp-caution-icon { color: var(--color-icon-orange); flex: none; }
+.gp-caution-title { font-size: 14px; font-weight: 600; color: var(--color-text-orange); }
+.gp-caution-list {
+  list-style: none; margin: 0; padding: 0 24px 20px;
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 14px; color: var(--color-text-primary);
+}
+.gp-caution-list li { display: flex; gap: 8px; }
+.gp-caution-bullet { color: var(--color-icon-orange); flex: none; }
+
+/* ─── 섹션 제목 ──────────────────────────────────────────────── */
+.gp-sec-title {
+  margin: 0 0 16px;
+  font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+/* ─── SOP 단계 ───────────────────────────────────────────────── */
+.gp-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.gp-step-head {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 20px 24px 12px;
+}
+.gp-step-num {
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-primary); color: var(--color-background-body);
+  font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.gp-step-title { margin-top: 2px; font-size: 16px; font-weight: 600; color: var(--color-text-primary); }
+.gp-step-body { padding: 0 24px 20px; }
+
+/* 본문 프로세 축소(14px) — index.css .prose-ams 위에 얹음 */
+.gp-prose-sm { font-size: 14px; }
+
+/* ─── 스크린샷 figure ────────────────────────────────────────── */
+.gp-figure {
+  margin: 12px 0 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background-muted);
+}
+.gp-figure img { display: block; width: 100%; }
+.gp-figure figcaption {
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-background-gray);
+  font-size: 12px; color: var(--color-text-secondary);
+}
+
+/* ─── 케이스별 처리 ──────────────────────────────────────────── */
+.gp-case-body {
+  padding: 16px 24px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.gp-case-label { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+.gp-note {
+  border-radius: var(--radius-md);
+  background: var(--color-background-muted);
+  padding: 8px 12px;
+  font-size: 12px; color: var(--color-text-secondary);
+}
+.gp-note-tag { font-weight: 600; color: var(--color-text-primary); }
+
+/* ─── 응답 스크립트 ──────────────────────────────────────────── */
+.gp-resp-body {
+  padding: 16px 24px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+}
+.gp-resp-scenario { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
+.gp-resp-script {
+  align-self: stretch;
+  border-radius: var(--radius-md);
+  background: var(--color-background-muted);
+  padding: 8px 12px;
+  font-size: 14px; font-style: italic; color: var(--color-text-primary);
+}
+
+/* ─── 정책 비교 ──────────────────────────────────────────────── */
+.gp-diff-head {
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px; font-weight: 600;
+}
+.gp-diff-before { background: var(--color-background-muted); color: var(--color-text-secondary); }
+.gp-diff-after { background: var(--color-background-blue); color: var(--color-text-blue); }
+.gp-diff-after-card { border-color: var(--color-border-blue); }
+.gp-diff-body { padding: 16px 24px; font-size: 14px; color: var(--color-text-primary); }
+
+/* ─── 테이블 ─────────────────────────────────────────────────── */
+.gp-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+}
+.gp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px; color: var(--color-text-primary);
+}
+.gp-tmin480 { min-width: 480px; }
+.gp-tmin520 { min-width: 520px; }
+.gp-tmin640 { min-width: 640px; }
+.gp-tmin720 { min-width: 720px; }
+.gp-table thead th {
+  text-align: left; font-weight: 600;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+.gp-table tbody td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: top;
+}
+.gp-table tbody tr:last-child td { border-bottom: 0; }
+.gp-strong { font-weight: 500; color: var(--color-text-primary); }
+.gp-muted { color: var(--color-text-secondary); }
+.gp-xs { font-size: 12px; }
+.gp-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.gp-center { text-align: center; }
+.gp-col-20 { width: 72px; }
+.gp-col-24 { width: 88px; }
+.gp-col-25 { width: 25%; }
+.gp-col-40 { width: 160px; }
+
+/* ─── 피드백 ─────────────────────────────────────────────────── */
+.gp-feedback {
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .gp-feedback { flex-direction: row; text-align: left; }
+}
+.gp-vote { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* ─── 빈 상태(에러/미발견) ───────────────────────────────────── */
+.gp-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--color-border-emphasized);
+  border-radius: var(--radius-container);
+  background: color-mix(in oklab, var(--color-text-primary) 2%, transparent);
+}
+.gp-empty-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin-bottom: 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-background-gray);
+  color: var(--color-text-secondary);
+}
+.gp-empty-action { margin-top: 16px; }
+
+/* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
+.gp-skel {
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: gp-pulse 1.4s ease-in-out infinite;
+}
+.gp-skel-crumb { height: 16px; width: 160px; }
+.gp-skel-title { height: 40px; width: 75%; }
+.gp-skel-line  { height: 16px; width: 100%; }
+.gp-skel-block { height: 160px; width: 100%; }
+@keyframes gp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
