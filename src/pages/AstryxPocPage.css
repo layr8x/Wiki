@@ -1,0 +1,13 @@
+/* Astryx 마이그레이션 PoC 호스트 — 격리 검증용 (프로덕션 라우트와 분리).
+ * 색은 Astryx 토큰(var)만 사용, StyleX 빌드 설정 없이 동작하도록 컴포넌트 props/plain CSS로만 구성. */
+.astryx-poc-host {
+  min-height: 100dvh;
+  padding: 40px 16px;
+  background: var(--color-background-body);
+  display: flex;
+  justify-content: center;
+}
+.astryx-poc-inner {
+  width: 100%;
+  max-width: 560px;
+}
