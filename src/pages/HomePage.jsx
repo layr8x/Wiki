@@ -1,10 +1,9 @@
 // src/pages/HomePage.jsx
-// 독자 유용성 중심 대시보드.
-//   - 상단 통계 3종 (가이드 만족도는 독자에게 무의미하므로 제거)
-//   - 최근 본 가이드 (localStorage) — 재방문 중심 사용 패턴 지원
-//   - 카테고리 그리드
-//   - 하단 2열: 최근 업데이트 / 자주 찾는 가이드 Top (조회수 기반)
-import { Link } from 'react-router-dom'
+// 독자 유용성 중심 대시보드 — Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
+//   - 데이터 훅(react-query)·라우팅(react-router)·정보구조는 그대로 유지
+//   - 시각 요소는 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Grid)로 교체
+//   - AstryxThemeRegion 이 이 표면만 감싸 [data-astryx-theme] 스코프를 적용(사이드바/헤더는 shadcn 유지)
+import { Link, useNavigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchDashboardStats, getModuleTree } from '@/lib/db'
@@ -26,45 +25,78 @@ import {
   PencilSimple as PencilLine,
   Eye,
 } from '@phosphor-icons/react'
-import {
-  Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction,
-} from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  PageShell, PageHeader, SectionTitle, StatCard, EmptyState,
-} from '@/components/common/page-primitives'
+
+import AstryxThemeRegion from '@/components/common/AstryxThemeRegion'
+import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
+import { Grid } from '@astryxdesign/core/Grid'
+import { Card } from '@astryxdesign/core/Card'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
 import { getGuideType } from '@/lib/guideTypes'
-import { cn } from '@/lib/utils'
+import './HomePage.astryx.css'
 
 const ICON_MAP = { ClipboardList, BookOpen, Calendar, CreditCard, Users, MessageSquare, Settings }
 
-// 모듈별 틴트 — 과장 없이 은은하게
-const MODULE_TINT = {
-  recruit:   'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-  course:    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-  operation: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
-  billing:   'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-  customer:  'bg-pink-500/10 text-pink-600 dark:text-pink-400',
-  message:   'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
-  system:    'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+// 모듈 → Astryx 색 패밀리(틴트칩). 기존 MODULE_TINT 색 계열 유지
+const MODULE_FAMILY = {
+  recruit: 'blue',
+  course: 'green',
+  operation: 'purple',
+  billing: 'orange',
+  customer: 'pink',
+  message: 'cyan',
+  system: 'gray',
+}
+
+// shadcn 가이드유형 variant → Astryx Badge variant (없는 값은 neutral)
+const BADGE_VARIANT = {
+  default: 'neutral',
+  secondary: 'neutral',
+  outline: 'neutral',
+  new: 'info',
+  success: 'success',
+  destructive: 'error',
+  warning: 'warning',
+}
+const toBadgeVariant = (v) => BADGE_VARIANT[v] ?? 'neutral'
+
+/* 섹션 제목 — h2 + 설명 + 우측 "전체 보기" 링크 */
+function SectionHead({ title, description, link, linkLabel = '전체 보기' }) {
+  return (
+    <div className="home-row-between home-sechead">
+      <VStack gap={0.5}>
+        <Heading level={3}>{title}</Heading>
+        {description && <Text type="supporting">{description}</Text>}
+      </VStack>
+      {link && (
+        <Link to={link} className="home-muted home-link-sm">
+          {linkLabel}
+          <ArrowRight size={14} />
+        </Link>
+      )}
+    </div>
+  )
 }
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const { entries: recentlyViewed } = useRecentlyViewed()
   const moduleTree = getModuleTree()
 
   // 실제 DB 통계 — Supabase 미설정 시 mockData 기반 값이 폴백으로 반환됨 (db.js)
   const { data: stats } = useQuery({
     queryKey: ['home', 'dashboard-stats'],
-    queryFn:  fetchDashboardStats,
+    queryFn: fetchDashboardStats,
     staleTime: 5 * 60 * 1000,
   })
 
   const { data: recentGuidesData } = useRecentGuides(5)
   const { data: popularGuidesData } = usePopularGuides(5)
-  // 최근 열람 가이드 복원용 — 전체 목록을 한 번만 받아와 ID로 매칭
   const { data: allGuides } = useGuideList()
 
   const recent5 = recentGuidesData ?? []
@@ -80,246 +112,232 @@ export default function HomePage() {
       .slice(0, 4)
   }, [allGuides, recentlyViewed])
 
+  const statCards = [
+    {
+      label: '등록 가이드',
+      value: `${(stats?.totalGuides ?? totalGuides).toLocaleString('ko-KR')}개`,
+      footerTitle: '시트 Q&A + 컨플 인덱스 합산',
+      footerDesc: '실장님 SSOT 25 + FVSOL 130 + AMS 1',
+    },
+    {
+      label: '누적 조회수',
+      value: stats?.totalViews != null ? stats.totalViews.toLocaleString('ko-KR') : '집계 전',
+      footerTitle: stats?.helpfulRate != null ? `만족도 ${stats.helpfulRate}%` : 'Supabase 연결 후 실측',
+      footerDesc: 'View/Feedback 로깅 활성화 시 표시',
+    },
+    {
+      label: '최근 업데이트',
+      value: stats?.recentDate ?? '2026-05-20',
+      footerTitle: '회원상세 환불 팝업 추후 입력 기능',
+      footerDesc: 'AMS · 청구·환불 (Confluence 2076704794)',
+    },
+  ]
+
   return (
-    <PageShell>
-      <PageHeader
-        title="대시보드"
-        description="AMS 운영 가이드 통합 위키"
-        actions={
-          <>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/editor">
-                <PencilLine size={14} />
-                새 가이드 작성
-              </Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/guides">
-                전체 가이드 <ArrowRight size={14} />
-              </Link>
-            </Button>
-          </>
-        }
-      />
+    <AstryxThemeRegion>
+      <div className="home-shell">
+        <VStack gap={8} hAlign="stretch">
 
-      {/* ─── Stat Cards (3) — 실제 SSOT 기반 ─────────────────────── */}
-      <section className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard
-          label="등록 가이드"
-          value={`${(stats?.totalGuides ?? totalGuides).toLocaleString('ko-KR')}개`}
-          footerTitle="시트 Q&A + 컨플 인덱스 합산"
-          footerDesc="실장님 SSOT 25 + FVSOL 130 + AMS 1"
-        />
-        <StatCard
-          label="누적 조회수"
-          value={stats?.totalViews != null ? stats.totalViews.toLocaleString('ko-KR') : '집계 전'}
-          footerTitle={stats?.helpfulRate != null ? `만족도 ${stats.helpfulRate}%` : 'Supabase 연결 후 실측'}
-          footerDesc="View/Feedback 로깅 활성화 시 표시"
-        />
-        <StatCard
-          label="최근 업데이트"
-          value={stats?.recentDate ?? '2026-05-20'}
-          footerTitle="회원상세 환불 팝업 추후 입력 기능"
-          footerDesc="AMS · 청구·환불 (Confluence 2076704794)"
-        />
-      </section>
-
-      {/* ─── 최근 본 가이드 (localStorage) ──────────────────────── */}
-      <section className="mb-10">
-        <SectionTitle
-          title="최근 본 가이드"
-          description="이어서 보거나 관련 가이드로 빠르게 이동하세요"
-        />
-        {recentlyViewedGuides.length === 0 ? (
-          <EmptyState
-            icon={Clock}
-            title="아직 열람한 가이드가 없습니다"
-            description="아래 카테고리에서 관심 있는 가이드를 열어보세요. 여기에 최근 본 항목이 쌓입니다."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {recentlyViewedGuides.map(g => {
-              const tm = getGuideType(g.type)
-              return (
-                <Link key={g.id} to={`/guides/${g.id}`} className="group">
-                  <Card className="h-full gap-0 py-0 transition-all hover:shadow-md hover:-translate-y-px">
-                    <CardHeader className="px-4 pt-4 pb-2">
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <Badge variant={tm.variant} size="sm">{tm.shortLabel}</Badge>
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {g.module}
-                        </span>
-                      </div>
-                      <CardTitle className="line-clamp-2 text-sm leading-snug group-hover:underline">
-                        {g.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-4 pb-4 pt-1">
-                      <p className="line-clamp-2 text-xs text-muted-foreground">
-                        {g.tldr}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )
-            })}
+          {/* ─── 헤더 ─────────────────────────────────────────────── */}
+          <div className="home-row-between home-header">
+            <VStack gap={1.5}>
+              <Heading level={1}>대시보드</Heading>
+              <Text type="supporting">AMS 운영 가이드 통합 위키</Text>
+            </VStack>
+            <HStack gap={2}>
+              <Button
+                label="새 가이드 작성"
+                variant="secondary"
+                size="sm"
+                icon={<PencilLine size={14} />}
+                onClick={() => navigate('/editor')}
+              />
+              <Button
+                label="전체 가이드"
+                variant="primary"
+                size="sm"
+                endContent={<ArrowRight size={14} />}
+                onClick={() => navigate('/guides')}
+              />
+            </HStack>
           </div>
-        )}
-      </section>
 
-      {/* ─── 카테고리 ─────────────────────────────────────────────── */}
-      <section className="mb-10">
-        <SectionTitle
-          title="카테고리"
-          description="AMS 메뉴 구조 기준 모듈별 가이드"
-          link="/guides"
-        />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {moduleTree.map(mod => {
-            const Icon = ICON_MAP[mod.icon] ?? FileText
-            const tint = MODULE_TINT[mod.id] ?? 'bg-muted text-muted-foreground'
-            return (
-              <Link
-                key={mod.id}
-                to={`/modules/${mod.id}`}
-                className="group"
-              >
-                <Card className="h-full gap-0 py-5 transition-all hover:shadow-md hover:-translate-y-px">
-                  <CardHeader className="px-5">
-                    <div className="flex items-center gap-3">
-                      <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-md', tint)}>
-                        <Icon size={16} />
-                      </div>
-                      <CardTitle className="flex-1 text-sm">{mod.label}</CardTitle>
-                      <Badge variant="outline" size="sm">{mod.guides.length}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="px-5 pt-3">
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
-                      {mod.guides.slice(0, 3).map(g => g.label).join(' · ')}
-                    </p>
-                    <div className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-foreground">
-                      가이드 열기 <ChevronRight size={12} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            )
-          })}
-        </div>
-      </section>
+          {/* ─── Stat Cards (3) ───────────────────────────────────── */}
+          <Grid columns={{ minWidth: 240, max: 3 }} gap={4}>
+            {statCards.map((s) => (
+              <Card key={s.label} padding={5}>
+                <VStack gap={2}>
+                  <Text type="supporting">{s.label}</Text>
+                  <Heading level={2}>{s.value}</Heading>
+                  <VStack gap={0.5}>
+                    <Text type="label" maxLines={1}>{s.footerTitle}</Text>
+                    <Text type="supporting">{s.footerDesc}</Text>
+                  </VStack>
+                </VStack>
+              </Card>
+            ))}
+          </Grid>
 
-      {/* ─── 최근 업데이트 + 자주 찾는 가이드 2-col ─────────────── */}
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* 최근 업데이트 — 2col */}
-        <Card className="lg:col-span-2 gap-0 py-0">
-          <CardHeader className="px-6 pt-5 pb-4 border-b">
-            <div className="flex items-end justify-between gap-2">
-              <div>
-                <CardTitle>최근 업데이트</CardTitle>
-                <CardDescription className="mt-1">새로 추가되거나 수정된 가이드</CardDescription>
+          {/* ─── 최근 본 가이드 ───────────────────────────────────── */}
+          <section>
+            <SectionHead
+              title="최근 본 가이드"
+              description="이어서 보거나 관련 가이드로 빠르게 이동하세요"
+            />
+            {recentlyViewedGuides.length === 0 ? (
+              <div className="home-empty">
+                <span className="home-empty-icon"><Clock size={18} /></span>
+                <Text weight="medium">아직 열람한 가이드가 없습니다</Text>
+                <Text type="supporting">
+                  아래 카테고리에서 관심 있는 가이드를 열어보세요. 여기에 최근 본 항목이 쌓입니다.
+                </Text>
               </div>
-              <CardAction>
-                <Link
-                  to="/updates"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
-                  전체 보기 <ArrowRight size={12} />
-                </Link>
-              </CardAction>
-            </div>
-          </CardHeader>
-          <CardContent className="px-0 py-0">
-            <ul className="divide-y">
-              {recent5.map((g, idx) => {
-                const isNew = idx < 3
-                return (
-                  <li key={g.id}>
-                    <Link
-                      to={`/guides/${g.id}`}
-                      className="group flex items-center gap-3 px-6 py-3 transition-colors hover:bg-accent/50"
-                    >
-                      <Badge variant="outline" size="sm" className="shrink-0 font-normal">
-                        {g.module}
-                      </Badge>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground group-hover:underline">
-                          {g.title}
-                        </p>
-                      </div>
-                      {isNew && <Badge variant="new" size="sm">NEW</Badge>}
-                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {g.updated_at}
-                      </span>
-                      <ChevronRight size={14} className="shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+            ) : (
+              <Grid columns={{ minWidth: 220, max: 4 }} gap={3}>
+                {recentlyViewedGuides.map((g) => {
+                  const tm = getGuideType(g.type)
+                  return (
+                    <Link key={g.id} to={`/guides/${g.id}`} className="home-link">
+                      <Card className="home-card" padding={4}>
+                        <VStack gap={2}>
+                          <div className="home-row-between">
+                            <Badge label={tm.shortLabel} variant={toBadgeVariant(tm.variant)} />
+                            <Text type="supporting" hasTabularNumbers>{g.module}</Text>
+                          </div>
+                          <Text weight="semibold" maxLines={2}>{g.title}</Text>
+                          <Text type="supporting" maxLines={2}>{g.tldr}</Text>
+                        </VStack>
+                      </Card>
                     </Link>
-                  </li>
+                  )
+                })}
+              </Grid>
+            )}
+          </section>
+
+          {/* ─── 카테고리 ─────────────────────────────────────────── */}
+          <section>
+            <SectionHead
+              title="카테고리"
+              description="AMS 메뉴 구조 기준 모듈별 가이드"
+              link="/guides"
+            />
+            <Grid columns={{ minWidth: 240, max: 4 }} gap={3}>
+              {moduleTree.map((mod) => {
+                const Icon = ICON_MAP[mod.icon] ?? FileText
+                const family = MODULE_FAMILY[mod.id] ?? 'gray'
+                return (
+                  <Link key={mod.id} to={`/modules/${mod.id}`} className="home-link">
+                    <Card className="home-card" padding={5}>
+                      <VStack gap={3}>
+                        <HStack gap={3} vAlign="center">
+                          <span className="home-tint" data-family={family}><Icon size={16} /></span>
+                          <div className="home-grow">
+                            <Text weight="semibold">{mod.label}</Text>
+                          </div>
+                          <Badge label={String(mod.guides.length)} variant="neutral" />
+                        </HStack>
+                        <Text type="supporting" maxLines={2}>
+                          {mod.guides.slice(0, 3).map(g => g.label).join(' · ')}
+                        </Text>
+                        <span className="home-muted home-cta">
+                          가이드 열기 <ChevronRight size={12} />
+                        </span>
+                      </VStack>
+                    </Card>
+                  </Link>
                 )
               })}
-            </ul>
-          </CardContent>
-        </Card>
+            </Grid>
+          </section>
 
-        {/* 사이드: 자주 찾는 가이드 + 빠른 링크 */}
-        <div className="space-y-6">
-          {/* 자주 찾는 가이드 (조회수 기준 Top 5) */}
-          <Card className="gap-0 py-0">
-            <CardHeader className="px-6 pt-5 pb-4 border-b">
-              <CardTitle className="text-base">자주 찾는 가이드</CardTitle>
-              <CardDescription className="mt-1">조회수 Top 5</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 py-0">
-              <ol className="divide-y">
-                {popularGuides.map((g, idx) => (
-                  <li key={g.id}>
-                    <Link
-                      to={`/guides/${g.id}`}
-                      className="group flex items-center gap-3 px-6 py-2.5 transition-colors hover:bg-accent/50"
-                    >
-                      <span className="w-4 shrink-0 text-center text-xs font-semibold tabular-nums text-muted-foreground">
-                        {idx + 1}
-                      </span>
-                      <p className="min-w-0 flex-1 truncate text-sm text-foreground group-hover:underline">
-                        {g.title}
-                      </p>
-                      <span className="inline-flex shrink-0 items-center gap-1 text-xs tabular-nums text-muted-foreground">
-                        <Eye size={11} />{g.views ?? 0}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-
-          {/* 빠른 링크 */}
-          <Card className="gap-0 py-0">
-            <CardHeader className="px-6 pt-5 pb-4 border-b">
-              <CardTitle className="text-base">빠른 링크</CardTitle>
-            </CardHeader>
-            <CardContent className="p-2">
-              {[
-                { to: '/faq',      Icon: MessageCircle, label: 'FAQ',          desc: '반복 문의 해결' },
-                { to: '/updates',  Icon: Bell,          label: '업데이트 이력',  desc: '정책 및 기능 변경' },
-                { to: '/feedback', Icon: MessageSquare, label: '오류 제보',     desc: '개선 요청 제출' },
-              ].map(item => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-accent"
-                >
-                  <item.Icon size={16} className="shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-foreground">{item.label}</p>
-                    <p className="text-xs text-muted-foreground">{item.desc}</p>
-                  </div>
-                  <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+          {/* ─── 최근 업데이트 + 자주 찾는 가이드 2-col ──────────── */}
+          <div className="home-bottom">
+            {/* 최근 업데이트 */}
+            <Card padding={0}>
+              <div className="home-cardhead home-row-between home-alend">
+                <VStack gap={1}>
+                  <Heading level={3}>최근 업데이트</Heading>
+                  <Text type="supporting">새로 추가되거나 수정된 가이드</Text>
+                </VStack>
+                <Link to="/updates" className="home-muted home-link-xs">
+                  전체 보기 <ArrowRight size={12} />
                 </Link>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    </PageShell>
+              </div>
+              <ul className="home-list">
+                {recent5.map((g, idx) => {
+                  const isNew = idx < 3
+                  return (
+                    <li key={g.id} className="home-li">
+                      <Link to={`/guides/${g.id}`} className="home-listrow">
+                        <Badge label={g.module} variant="neutral" />
+                        <div className="home-grow">
+                          <Text weight="medium" maxLines={1}>{g.title}</Text>
+                        </div>
+                        {isNew && <Badge label="NEW" variant="info" />}
+                        <Text type="supporting" hasTabularNumbers>{g.updated_at}</Text>
+                        <ChevronRight size={14} className="home-hoverfade" />
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+
+            {/* 사이드: 자주 찾는 가이드 + 빠른 링크 */}
+            <VStack gap={6} hAlign="stretch">
+              {/* 자주 찾는 가이드 (조회수 Top 5) */}
+              <Card padding={0}>
+                <div className="home-cardhead">
+                  <VStack gap={1}>
+                    <Heading level={4}>자주 찾는 가이드</Heading>
+                    <Text type="supporting">조회수 Top 5</Text>
+                  </VStack>
+                </div>
+                <ol className="home-list">
+                  {popularGuides.map((g, idx) => (
+                    <li key={g.id} className="home-li">
+                      <Link to={`/guides/${g.id}`} className="home-listrow compact">
+                        <span className="home-muted home-rank home-tabnum">{idx + 1}</span>
+                        <div className="home-grow">
+                          <Text maxLines={1}>{g.title}</Text>
+                        </div>
+                        <span className="home-muted home-tabnum home-cta">
+                          <Eye size={11} />{g.views ?? 0}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+
+              {/* 빠른 링크 */}
+              <Card padding={0}>
+                <div className="home-cardhead">
+                  <Heading level={4}>빠른 링크</Heading>
+                </div>
+                <div className="home-quicklist">
+                  {[
+                    { to: '/faq', Icon: MessageCircle, label: 'FAQ', desc: '반복 문의 해결' },
+                    { to: '/updates', Icon: Bell, label: '업데이트 이력', desc: '정책 및 기능 변경' },
+                    { to: '/feedback', Icon: MessageSquare, label: '오류 제보', desc: '개선 요청 제출' },
+                  ].map((item) => (
+                    <Link key={item.to} to={item.to} className="home-quick">
+                      <span className="home-muted"><item.Icon size={16} /></span>
+                      <div className="home-grow">
+                        <Text weight="medium">{item.label}</Text>
+                        <Text type="supporting">{item.desc}</Text>
+                      </div>
+                      <ChevronRight size={14} className="home-muted" />
+                    </Link>
+                  ))}
+                </div>
+              </Card>
+            </VStack>
+          </div>
+
+        </VStack>
+      </div>
+    </AstryxThemeRegion>
   )
 }
