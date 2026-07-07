@@ -38,8 +38,8 @@ describe('UpdatesPage', () => {
     renderPage()
     const policyBtn = screen.getByRole('button', { name: /정책 변경/ })
     fireEvent.click(policyBtn)
-    // 활성 스타일 적용
-    expect(policyBtn.className).toMatch(/bg-foreground/)
+    // 활성 상태 (aria-pressed) — Astryx 전환 후 활성 신호는 클래스가 아닌 aria-pressed
+    expect(policyBtn.getAttribute('aria-pressed')).toBe('true')
     // policy 타입 항목만 존재 — 환불 정책 관련 글은 남고, 기능 개선 글은 숨어야 함
     expect(screen.getAllByText(/환불 정책/).length).toBeGreaterThan(0)
     expect(screen.queryByText(/AMS 운영 위키 베타 오픈/)).toBeNull()
