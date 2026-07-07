@@ -6,7 +6,7 @@
 //   - 전체를 <Theme>로 감싸 앱 전역을 Astryx 토큰/모드로 통일 (다크모드는 .dark 클래스 동기화)
 //   - 챗봇 통합은 기존과 동일하게 유지(ErrorBoundary + Suspense 격리)
 import { Outlet, useLocation, Link as RRLink } from 'react-router-dom'
-import { useMemo, lazy, Suspense, Component } from 'react'
+import { useMemo, useEffect, lazy, Suspense, Component } from 'react'
 import {
   BookOpen, Calendar, CaretRight as ChevronRight, ClipboardText as ClipboardList,
   CreditCard, FileText, House as Home, Lifebuoy as LifeBuoy, ChatText as MessageSquare,
@@ -17,7 +17,7 @@ import {
 import { Theme } from '@astryxdesign/core/theme'
 import { neutralTheme } from '@astryxdesign/theme-neutral/built'
 import { LinkProvider } from '@astryxdesign/core/Link'
-import { AppShell } from '@astryxdesign/core/AppShell'
+import { AppShell, useAppShellMobile } from '@astryxdesign/core/AppShell'
 import { SideNav } from '@astryxdesign/core/SideNav'
 import { TopNav } from '@astryxdesign/core/TopNav'
 import { NavHeadingMenu, NavHeadingMenuItem } from '@astryxdesign/core/NavMenu'
@@ -196,6 +196,21 @@ function AppTopNav() {
   )
 }
 
+// AppShell의 모바일 서랍은 라우터를 모른다 — 메뉴 항목을 눌러 페이지가 이동해도
+// 서랍이 스스로 닫히지 않는다(열린 채로 새 페이지를 가림). 경로가 바뀔 때마다
+// 닫아주는 역할만 하는 렌더 없는 컴포넌트. AppShell의 자식이어야
+// useAppShellMobile() 컨텍스트를 읽을 수 있다.
+function CloseMobileNavOnNavigate() {
+  const { pathname } = useLocation()
+  const { closeMobileNav } = useAppShellMobile()
+  // closeMobileNav 는 AppShell 안에서 isMobileNavOpen 이 바뀔 때마다 새 참조로
+  // 재생성된다 — 의존성 배열에 넣으면 "열기" 자체가 effect를 재실행시켜 곧바로
+  // 다시 닫아버리는 피드백 루프가 생긴다. pathname 변경에만 반응하도록 고정.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { closeMobileNav() }, [pathname])
+  return null
+}
+
 export default function AstryxAppFrame() {
   const { pathname } = useLocation()
   const mode = useAstryxMode()
@@ -210,8 +225,13 @@ export default function AstryxAppFrame() {
           contentPadding={0}
           sideNav={<SideNavContent />}
           topNav={<AppTopNav />}
-          mobileNav={{ hasToggle: true, content: <SideNavContent /> }}
+          // mobileNav.content 를 직접 넘기면 AppShell 자체 드로어(열기/닫기 토글 연결)가
+          // 통째로 비활성화되고 content 가 감싸지지 않은 채 그대로 렌더링만 됨(모바일에서
+          // 햄버거를 눌러도 아무 반응 없음). content 를 넘기지 않으면 AppShell 이 위의
+          // sideNav 를 재사용해 토글 가능한 드로어를 자동 구성한다.
+          mobileNav={{ hasToggle: true }}
         >
+          <CloseMobileNavOnNavigate />
           <div className="astryx-content">
             <Outlet />
           </div>
