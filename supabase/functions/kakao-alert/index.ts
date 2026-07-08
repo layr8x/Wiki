@@ -101,7 +101,11 @@ async function checkCollectionHealth(): Promise<string[]> {
   const notified: string[] = [];
   for (const row of (data as any[]) || []) {
     const key = `health:${row.profile_id}`;
-    const bad = row.health !== 'ok';
+    // ⚠️ 실제 수집 "중단"만 알린다: auth(쿠키 만료)·heartbeat(수집 정체).
+    //   'gap'(문의 뜸함)은 저트래픽 채널의 정상 상태라 알리지 않는다 — 밤새 1시간마다
+    //   반복 발송돼 순수 스팸이 됐다(2026-07-08 사용자 지적). 수집 헬스는 auth/heartbeat 로
+    //   충분히 커버되고, gap 은 대시보드용 정보로만 남긴다.
+    const bad = row.health_reason === 'auth' || row.health_reason === 'heartbeat';
     const prev = await getState(key);
     if (!shouldNotify(prev, bad)) continue;
 
