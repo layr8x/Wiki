@@ -163,10 +163,38 @@ export function messageToRow(rec, roomId, teamId) {
     message: typeof body === 'string' ? body : (body != null ? JSON.stringify(body) : null),
     attachments,
     created_at: createdAt,
-    raw: rec ?? null,
+    raw: sanitizeRaw(rec),
     source: 'rest',
     reply_to_message_id: replyTo,
   };
+}
+
+// raw(원본) 축소 저장기 — 엣지함수 jandi-collect 의 sanitizeRaw 와 동일 규칙.
+// ⚠️ rec.message.content 에는 마스킹 이전 원문 PII 가 들어 있어 통째 저장 금지.
+// 매핑·디버깅용 구조 메타만 남기고 본문(content/text)은 버린다.
+export function sanitizeRaw(rec) {
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return null;
+  const out = {
+    status: rec.status ?? null,
+    linkId: rec.linkId ?? rec.link_id ?? rec.id ?? null,
+    roomId: rec.roomId ?? null,
+    teamId: rec.teamId ?? null,
+    fromEntity: rec.fromEntity ?? null,
+    writerId: rec.writerId ?? null,
+    time: rec.time ?? rec.createdAt ?? rec.created_at ?? null,
+  };
+  const m = rec.message && typeof rec.message === 'object' ? rec.message : null;
+  if (m) {
+    out.message = {
+      id: m.id ?? null,
+      writerId: m.writerId ?? null,
+      fromEntity: m.fromEntity ?? null,
+      contentType: m.contentType ?? m.type ?? null,
+      feedbackId: m.feedbackId ?? null,
+      createdAt: m.createdAt ?? m.created_at ?? null,
+    };
+  }
+  return out;
 }
 
 // linkId 비교용 숫자화(잔디 linkId 는 큰 정수). 문자열 비교 대신 안전 비교.
