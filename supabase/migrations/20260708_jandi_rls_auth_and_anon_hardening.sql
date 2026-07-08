@@ -45,3 +45,8 @@ create policy "auth_read_state"
 
 -- ── (3) anon 역할 테이블 GRANT 회수(정책이 이미 막지만 최소권한 원칙) ──
 revoke select on jandi_channels, jandi_messages, jandi_stream_state from anon;
+
+-- ── (4) 시크릿/알림상태 테이블은 anon 스키마 노출 자체를 제거(서비스롤 전용) ──
+-- RLS-no-policy 로 이미 anon 읽기는 0건이나, GraphQL 스키마 가시성까지 없애 최소권한 강화.
+revoke select on jandi_secrets, jandi_alert_state,
+                 kakao_partner_secrets, kakao_partner_alert_state from anon;
