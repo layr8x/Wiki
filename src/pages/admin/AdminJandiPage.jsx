@@ -1,5 +1,5 @@
 // src/pages/admin/AdminJandiPage.jsx — /admin/jandi
-// 잔디(JANDI) 3채널 대화 로그 뷰어 (jandi_messages, RLS anon read).
+// 잔디(JANDI) 5채널 대화 로그 뷰어 (jandi_messages, RLS anon read).
 // 방별 단일 타임라인(카카오의 채팅별 스레드와 다름) + 검색/기간 + 현재필터 CSV.
 //   - 데이터 훅(react-query/Supabase)·필터·기간·채널선택·페이지네이션·CSV·스레드 그룹핑은 100% 유지
 //   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Grid/TextInput)로 교체
@@ -27,11 +27,13 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 
 import './AdminJandiPage.astryx.css'
 
-// 시드(jandi_channels)와 동일한 3개 방.
+// jandi_channels 와 동일한 5개 방.
 const CHANNELS = [
   { id: '31495011', label: '시대 APP 기획/문의' },
   { id: '31962045', label: '시대 APP 실험실' },
   { id: '33385655', label: '재종통합행정 + 플랫폼서비스실' },
+  { id: '31495551', label: '재종 데스크 업무' },
+  { id: '29522222', label: '전체공지' },
 ]
 const PAGE_SIZE = 50
 const NOW_Y = new Date().getFullYear()
@@ -282,7 +284,7 @@ export default function AdminJandiPage() {
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
         <header className="aj-header">
           <Heading level={1}>잔디 대화</Heading>
-          <Text type="supporting">JANDI 3채널 실시간 수집 데이터 · 방별 타임라인</Text>
+          <Text type="supporting">JANDI 5채널 실시간 수집 데이터 · 방별 타임라인</Text>
         </header>
 
         {!isSupabaseEnabled && (
@@ -294,7 +296,7 @@ export default function AdminJandiPage() {
         )}
 
         {/* ─── 채널별 메시지 수 (KPI) ───────────────────────────── */}
-        <Grid columns={{ minWidth: 240, max: 3 }} gap={4}>
+        <Grid columns={{ minWidth: 240, max: 5 }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
