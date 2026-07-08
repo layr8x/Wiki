@@ -229,15 +229,54 @@ select * from jandi_stream_state;
 
 ---
 
+## 5-A. 수집이 멈추지 않게 하는 안전장치 (2026-07-08 추가)
+
+> 배경: 전용 크롬 프로필 로그인 세션이 만료되자 갱신 스크립트가 새 토큰을 못 받고 캐시에 남은
+> 옛 토큰을 그대로 저장해, 5개 방 수집이 약 18시간 조용히 멈췄다. 재발을 막는 3중 방어를 붙였다.
+
+1. **갱신 스크립트 신선도 검증**(`scripts/jandi-refresh-token.mjs`): 이제 로드 중 나온 토큰을
+   전부 모아 **exp 가 가장 늦은(가장 신선한)** 것을 고르고, 세션이 유효하면 새로고침으로 라이브
+   토큰을 강제한다. 저장 직전 `assertFreshToken` 이 JWT 를 디코드해 **이미 만료됐거나(잔여<1h)
+   너무 오래된(발급 6h 초과) 토큰이면 저장을 거부하고 큰 소리로 실패**한다 → 죽은 토큰이 좋은
+   토큰을 덮어쓰지 않는다. 세션이 죽었으면 `JANDI_HEADLESS=false npm run jandi:refresh-token`
+   으로 전용 프로필을 한 번 재로그인하라는 메시지를 남긴다.
+
+2. **서버측 워치독**(`supabase/functions/jandi-alert`, pg_cron 10분): 카카오 `kakao-alert` 의
+   잔디판. (1)토큰 만료 임박(잔여<2h)·만료, (2)채널 heartbeat 정체(>25분), (3)채널 last_error
+   를 감시해 **죽기 전에 Slack 으로 알린다**(카카오와 같은 `SLACK_WEBHOOK_URL`). 중복억제 쿨다운
+   1시간, 회복 시 🟢 복구 알림. 배포: `supabase functions deploy jandi-alert --no-verify-jwt` +
+   `supabase/migrations/20260708_jandi_alert.sql`(상태 테이블·`jandi_alert_token`) +
+   `20260708_jandi_alert_dispatch.sql`(cron).
+
+3. **권장 갱신 주기**: 토큰 수명이 ~12h 이므로 맥 스튜디오 갱신은 **4~6시간마다**(launchd)
+   돌려 만료 전 최소 2번의 갱신 기회를 둔다. 워치독이 2h 전에 경고하므로, 경고를 보면 즉시
+   재로그인하면 끊김 없이 이어진다.
+
+점검:
+
+```sql
+-- 토큰 잔여시간 + 채널 헬스 한눈에
+select 'token' as what,
+       to_timestamp((convert_from(decode(translate(split_part(value,'.',2),'-_','+/')
+         || repeat('=', (4 - length(split_part(value,'.',2)) % 4) % 4),'base64'),'utf8')::jsonb->>'exp')::bigint) as expires_at
+from jandi_secrets where key='jandi_access_token';
+select room_id, last_heartbeat_at, last_error from jandi_stream_state order by room_id;
+-- 워치독 최근 판정
+select alert_key, status, last_notified_at, last_payload from jandi_alert_state order by updated_at desc;
+```
+
+---
+
 ## 6. 한계 / 확인 필요 (정직 기록)
 
 - **토큰 수명 ~12시간(짧음).** 카카오 쿠키(1~4주)보다 훨씬 짧다. 무인 운영하려면 새 토큰을
-  주기적으로 `jandi_secrets.jandi_access_token` 에 배달해야 한다(§4-C, 카카오 "쿠키 배달부"의
-  잔디판). 잔디는 공개된 refresh 엔드포인트가 없어(HAR 미포함), `jandi:refresh-token` 이
-  **헤드리스 로그인으로 새 토큰을 가로채 배달**한다 — 저장 위치에 의존하지 않아 견고하다.
+  주기적으로 `jandi_secrets.jandi_access_token` 에 배달해야 한다(4장-C, 카카오 "쿠키 배달부"의
+  잔디판). 잔디는 공개된 refresh 엔드포인트가 없어(HAR 미포함 + 서버측 renew 후보 12종 전부
+  404 실측 2026-07-08), `jandi:refresh-token` 이 **헤드리스 로그인으로 새 토큰을 가로채 배달**한다.
   ⚠️ 단, 회사가 **SSO/2단계 인증(MFA)** 을 쓰면 헤드리스 로그인이 막힐 수 있고, 클라우드
   CI 로그인은 보안 경고를 유발할 수 있어 **사내 신뢰 PC 의 cron 실행을 권장**한다. 막히면
-  2번의 수동 추출로 갱신한다.
+  2번의 수동 추출로 갱신한다. 세션 만료로 갱신이 헛돌면 5장-A 의 신선도 검증이 저장을 막고
+  워치독이 Slack 으로 알린다.
 - **첫 수집 범위 / 전체 백필.** 상시 수집(§4-A)은 커서(`last_link_id`)가 없을 때 각 방의
   **최신 페이지(50건)만** 잡고 이후 증분한다. "이전 모든 대화"가 필요하면 `jandi:backfill`
   (§4-D)을 1회 돌려 과거를 전량 채운다 — 이후는 상시 수집이 이어받는다.
