@@ -190,6 +190,83 @@ async function checkCategorySpike(): Promise<string[]> {
   return notified;
 }
 
+// 분석 파이프라인 신선도 감시. 수집(collect)은 살아 있어도 그 뒤 단계(감정분류·일일요약)가
+// 조용히 멈추면(예: 인덱스 부재로 8초 타임아웃을 함수가 삼키고 200 반환) 아무도 몰랐다.
+// ①감정분류: 미처리 백로그가 있는데도 최근 분류 시각이 오래되면 = 정지.
+// ②일일요약: 최신 스냅샷 날짜가 오래되면 = 정지.
+const SENTIMENT_STALE_MS = 6 * 60 * 60 * 1000;   // 분류 6시간 이상 정지
+const SNAPSHOT_STALE_MS = 40 * 60 * 60 * 1000;   // 일일요약 약 1.7일 이상 없음(하루 1회 + 여유)
+async function checkAnalysisFreshness(): Promise<string[]> {
+  const notified: string[] = [];
+
+  // ① 감정분류 신선도
+  try {
+    const { data: last } = await supabase
+      .from('kakao_partner_messages')
+      .select('sentiment_classified_at')
+      .not('sentiment_classified_at', 'is', null)
+      .order('sentiment_classified_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const { count: backlog } = await supabase
+      .from('kakao_partner_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('sender_type', 'user')
+      .is('sentiment', null)
+      .not('message', 'is', null);
+    const lastMs = (last as any)?.sentiment_classified_at ? new Date((last as any).sentiment_classified_at).getTime() : 0;
+    const bad = (backlog || 0) > 0 && Date.now() - lastMs > SENTIMENT_STALE_MS;
+    const key = 'analysis:sentiment';
+    const prev = await getState(key);
+    if (shouldNotify(prev, bad)) {
+      if (bad) {
+        const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+        await sendSlack(
+          `🟠 *감정 분석*이 밀리고 있어요\n` +
+          `상담은 정상 수집되는데, 감정 분석 단계가 한동안 멈춰 미처리가 쌓이고 있어요.\n` +
+          `👉 개발 담당에게 kakao-classify 확인을 요청해 주세요.`,
+        );
+        await upsertState(key, 'alerting', { backlog, last_at: (last as any)?.sentiment_classified_at ?? null }, firstAt);
+      } else {
+        await sendSlack(`🟢 *감정 분석*이 정상으로 돌아왔어요`);
+        await upsertState(key, 'ok', null, null);
+      }
+      notified.push(key);
+    }
+  } catch (e) { log('[alert] sentiment freshness fail:', (e as Error).message); }
+
+  // ② 일일요약 스냅샷 신선도
+  try {
+    const { data: snap } = await supabase
+      .from('kakao_partner_daily_snapshot')
+      .select('snapshot_date')
+      .order('snapshot_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const snapMs = (snap as any)?.snapshot_date ? new Date((snap as any).snapshot_date + 'T00:00:00+09:00').getTime() : 0;
+    const bad = Date.now() - snapMs > SNAPSHOT_STALE_MS;
+    const key = 'analysis:snapshot';
+    const prev = await getState(key);
+    if (shouldNotify(prev, bad)) {
+      if (bad) {
+        const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+        await sendSlack(
+          `🟠 *일일 요약*이 갱신되지 않고 있어요\n` +
+          `매일 만들어지는 상담 요약 스냅샷이 어제·오늘 만들어지지 않았어요.\n` +
+          `👉 개발 담당에게 kakao-daily-summary 확인을 요청해 주세요.`,
+        );
+        await upsertState(key, 'alerting', { last_snapshot: (snap as any)?.snapshot_date ?? null }, firstAt);
+      } else {
+        await sendSlack(`🟢 *일일 요약*이 정상으로 돌아왔어요`);
+        await upsertState(key, 'ok', null, null);
+      }
+      notified.push(key);
+    }
+  } catch (e) { log('[alert] snapshot freshness fail:', (e as Error).message); }
+
+  return notified;
+}
+
 Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
   const token = url.searchParams.get('token') || (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
@@ -202,7 +279,8 @@ Deno.serve(async (req: Request) => {
 
   const health = await checkCollectionHealth();
   const spike = await checkCategorySpike();
-  const result = { at: new Date().toISOString(), slack_configured: !!SLACK_WEBHOOK_URL, notified: [...health, ...spike] };
+  const analysis = await checkAnalysisFreshness();
+  const result = { at: new Date().toISOString(), slack_configured: !!SLACK_WEBHOOK_URL, notified: [...health, ...spike, ...analysis] };
   log('done', JSON.stringify(result));
   return json(result);
 });

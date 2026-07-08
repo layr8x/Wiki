@@ -26,6 +26,18 @@ const isAuthError = (e: any) => e && (e.status === 401 || e.status === 403);
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 const linkIdNum = (v: any) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+// 잔디 access token(JWT) 의 exp(만료, epoch ms) 디코드. 파싱 불가면 null.
+// 이미 만료된 토큰으로 요청을 쏘면 방마다 401 을 받아 시간·로그만 낭비하고,
+// 첫 방에서 break 하면 나머지 방은 heartbeat 정체로만 보여 장애 범위가 과소보고된다(관측 개선).
+function jwtExpMs(token: string | null): number | null {
+  try {
+    const p = String(token).split('.')[1];
+    if (!p) return null;
+    const b64 = p.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(p.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(b64));
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch { return null; }
+}
 
 // ── PII 라이트 마스킹(카드/주민/전화/이메일 — 직원 이름은 유지) ──
 const CARD_RE = /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g;
@@ -110,6 +122,34 @@ const CONTENT_TYPE_LABELS: Record<string, string> = {
 function contentPlaceholder(contentType: string | null): string {
   return `[${(contentType && CONTENT_TYPE_LABELS[contentType]) || contentType || '첨부'}]`;
 }
+// raw(원본 레코드) 축소 저장기. ⚠️ rec.message.content 에는 "마스킹 이전" 원문 PII 가 들어 있어
+// 통째로 저장하면(예전 raw: rec) message 컬럼의 마스킹이 무의미해진다(카카오는 sanitizeRaw 로 이미 축소).
+// 매핑·디버깅에 필요한 구조 메타데이터만 남기고 본문(content/text)은 버린다.
+function sanitizeRaw(rec: any): any {
+  if (!rec || typeof rec !== 'object' || Array.isArray(rec)) return null;
+  const out: any = {
+    status: rec.status ?? null,
+    linkId: rec.linkId ?? rec.link_id ?? rec.id ?? null,
+    roomId: rec.roomId ?? null,
+    teamId: rec.teamId ?? null,
+    fromEntity: rec.fromEntity ?? null,
+    writerId: rec.writerId ?? null,
+    time: rec.time ?? rec.createdAt ?? rec.created_at ?? null,
+  };
+  const m = rec.message && typeof rec.message === 'object' ? rec.message : null;
+  if (m) {
+    out.message = {
+      id: m.id ?? null,
+      writerId: m.writerId ?? null,
+      fromEntity: m.fromEntity ?? null,
+      contentType: m.contentType ?? m.type ?? null,
+      feedbackId: m.feedbackId ?? null,
+      createdAt: m.createdAt ?? m.created_at ?? null,
+      // content(본문)·text 는 마스킹 이전 원문이라 제외.
+    };
+  }
+  return out;
+}
 function messageToRow(rec: any, roomId: string, teamId: string): any {
   if (isEventRecord(rec)) return null;
   const msg = rec.message;
@@ -135,7 +175,7 @@ function messageToRow(rec: any, roomId: string, teamId: string): any {
     writer_id: writerId != null ? String(writerId) : null, writer_name: writerName || null,
     content_type: contentType || null,
     message: bodyStr != null ? stripLoneSurrogates(maskBody(bodyStr)) : null,
-    attachments, created_at: createdAt, raw: rec ?? null, source: 'rest',
+    attachments, created_at: createdAt, raw: sanitizeRaw(rec), source: 'rest',
     reply_to_message_id: replyTo,
   };
 }
@@ -202,17 +242,32 @@ Deno.serve(async (req: Request) => {
   if (error) return json({ status: 'error', reason: 'channels: ' + error.message }, 500);
   if (!channels || !channels.length) return json({ status: 'skip', reason: 'no active channels' });
 
+  // 토큰이 이미 만료됐으면 요청을 쏘지 않고, 활성 방 전부를 동일 사유로 표시(장애 범위 정확 보고).
+  const expMs = jwtExpMs(accessToken);
+  if (expMs != null && expMs <= Date.now()) {
+    const ageMin = Math.round((Date.now() - expMs) / 60000);
+    const reason = `token_expired (${ageMin}m ago)`;
+    for (const ch of channels) await persistHeartbeat(String(ch.room_id), ch.last_link_id, reason);
+    return json({ status: 'auth_expired', reason, at: new Date().toISOString(),
+      rooms: channels.map((c: any) => ({ room_id: c.room_id, error: 'token expired' })) });
+  }
+
   const client = new JandiClient(accessToken, teamId, memberId);
   const results: any[] = [];
   let authExpired = false;
-  for (const ch of channels) {
+  for (let i = 0; i < channels.length; i++) {
+    const ch = channels[i];
     try {
       results.push(await collectRoom(client, ch));
     } catch (e: any) {
       if (isAuthError(e)) {
         authExpired = true;
-        await persistHeartbeat(String(ch.room_id), ch.last_link_id, `auth ${e.status}`);
-        results.push({ room_id: ch.room_id, error: 'token expired' });
+        // 인증 실패 = 남은 방도 같은 토큰이라 전부 실패한다. 남은 방 전부를 동일 사유로 표시해
+        // 응답 본문과 heartbeat 가 실제 중단 범위(전 방)를 반영하게 한다(첫 방만 보고하던 문제 교정).
+        for (let j = i; j < channels.length; j++) {
+          await persistHeartbeat(String(channels[j].room_id), channels[j].last_link_id, `auth ${e.status}`);
+          results.push({ room_id: channels[j].room_id, error: 'token expired' });
+        }
         break;
       }
       log(`[${ch.room_id}] channel error:`, e.message);
