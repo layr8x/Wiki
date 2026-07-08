@@ -10,7 +10,8 @@
   max-width: 72rem;
   padding: 24px 16px;
 }
-@media (min-width: 640px) { .aj-shell { padding: 32px 24px; } }
+@media (min-width: 640px) { .aj-shell { padding: 24px; } }
+@media (min-width: 1024px) { .aj-shell { padding: 32px; } }
 
 /* ─── 헤더 ────────────────────────────────────────────────────── */
 .aj-header { display: flex; flex-direction: column; gap: 4px; }
@@ -31,29 +32,14 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ─── 툴바: 채널 탭 + 기간 셀렉트 + 검색 ─────────────────────── */
+/* ─── 툴바: 채널 탭 + 기간 Selector + 검색 (카카오 상담 페이지와 동일 스펙) ── */
 .aj-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
 }
 .aj-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .aj-selects { display: flex; align-items: center; gap: 6px; }
-
-/* 네이티브 select — 토큰으로 스타일(위험 낮아 shadcn 대신 유지) */
-.aj-select {
-  height: 32px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-element);
-  background: var(--color-background-body);
-  padding: 0 8px;
-  font-size: 14px;
-  color: var(--color-text-primary);
-  outline: none;
-}
-.aj-select:focus { border-color: var(--color-border-emphasized); }
-.aj-select:disabled { opacity: .5; cursor: not-allowed; }
-
-.aj-search { margin-left: auto; width: 100%; }
-@media (min-width: 640px) { .aj-search { width: 16rem; } }
+.aj-search { flex: 1 1 240px; min-width: 200px; margin-left: auto; }
+/* 기간 드롭다운은 Astryx Selector(디자인시스템)로 렌더 — 네이티브 select CSS 제거됨. */
 
 /* ─── 결과 카드 ───────────────────────────────────────────────── */
 .aj-main-head {

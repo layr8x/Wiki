@@ -32,6 +32,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
+import { Selector } from '@astryxdesign/core/Selector'
 import './AdminConsultsPage.astryx.css'
 
 const CHANNELS = [
@@ -53,6 +54,9 @@ const PAGE_SIZE = 50
 const NOW_Y = new Date().getFullYear()
 const YEARS = [NOW_Y, NOW_Y - 1, NOW_Y - 2]
 const MONTHS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+// Astryx Selector 옵션(기간 필터) — 네이티브 select 대신 디자인시스템 드롭다운 사용.
+const YEAR_OPTIONS = [{ value: 'all', label: '전체기간' }, ...YEARS.map((y) => ({ value: String(y), label: `${y}년` }))]
+const MONTH_OPTIONS = [{ value: 'all', label: '전체월' }, ...MONTHS.map((m) => ({ value: m, label: `${Number(m)}월` }))]
 
 // base = 표기 라벨, variant = Astryx Badge variant(상담원/고객/시스템 구분), icon = 아이콘
 const SENDER_META = {
@@ -353,14 +357,23 @@ export default function AdminConsultsPage() {
           </div>
 
           <div className="ac-selects">
-            <select className="ac-select" value={year} onChange={(e) => { setYear(e.target.value); reset() }} aria-label="년도">
-              <option value="all">전체기간</option>
-              {YEARS.map((y) => <option key={y} value={y}>{y}년</option>)}
-            </select>
-            <select className="ac-select" value={month} onChange={(e) => { setMonth(e.target.value); reset() }} disabled={year === 'all'} aria-label="월">
-              <option value="all">전체월</option>
-              {MONTHS.map((m) => <option key={m} value={m}>{Number(m)}월</option>)}
-            </select>
+            <Selector
+              label="년도"
+              isLabelHidden
+              size="sm"
+              value={year}
+              onChange={(v) => { setYear(v); reset() }}
+              options={YEAR_OPTIONS}
+            />
+            <Selector
+              label="월"
+              isLabelHidden
+              size="sm"
+              value={month}
+              onChange={(v) => { setMonth(v); reset() }}
+              options={MONTH_OPTIONS}
+              isDisabled={year === 'all'}
+            />
           </div>
 
           <div className="ac-search">
