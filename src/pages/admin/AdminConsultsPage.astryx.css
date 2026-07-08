@@ -21,29 +21,16 @@
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 .ac-kpi-icon { color: var(--color-icon-secondary); flex: none; }
-.ac-kpi-value { display: flex; align-items: baseline; gap: 4px; }
+.ac-kpi-value { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; }
 
-/* ─── 툴바: 채널칩 + 기간 select + 검색 ──────────────────────── */
+/* ─── 툴바: 채널칩 + 기간 Selector + 검색 (잔디 대화 페이지와 동일 스펙) ── */
 .ac-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
 }
 .ac-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ac-selects { display: flex; align-items: center; gap: 6px; }
 .ac-search { flex: 1 1 240px; min-width: 200px; margin-left: auto; }
-
-/* 기간 select — TextInput 이 없는 드롭다운은 토큰 기반 네이티브 select 로 유지 */
-.ac-select {
-  height: 36px;
-  border-radius: var(--radius-element);
-  border: 1px solid var(--color-border);
-  background: var(--color-background-body);
-  color: var(--color-text-primary);
-  padding: 0 8px;
-  font-size: 14px;
-  outline: none;
-}
-.ac-select:focus { border-color: var(--color-border-emphasized); }
-.ac-select:disabled { opacity: .5; cursor: not-allowed; }
+/* 기간 드롭다운은 Astryx Selector(디자인시스템)로 렌더 — 네이티브 select CSS 제거됨. */
 
 /* ─── 결과 패널 (마스터: 스레드 목록) ────────────────────────── */
 .ac-panel { overflow: hidden; }

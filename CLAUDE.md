@@ -343,3 +343,15 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
 - 카카오 파트너센터 로그인 쿠키를 6시간마다 추출해 Supabase로 배달하는 기기는 **회사 자산 맥 스튜디오(Mac Studio, 데스크탑)**다. **개인 맥북(노트북)이 아니다.**
 - 맥 스튜디오는 **뚜껑도 배터리도 없다** — "노트북 뚜껑을 닫으면 잠든다", "배터리 대신 전원 어댑터 연결 시 절전 안 함" 같은 노트북 전용 조언은 전부 무의미하다. 앞으로 이 기기 관련 조언은 데스크탑 기준(디스플레이 꺼짐 시 시스템 절전 안 함 설정 등)으로만 할 것.
 - 이 세션에서 "맥북"으로 잘못 서술했던 문서·코드 주석(`docs/KAKAO_PARTNER_SETUP.md`, `scripts/kakao-partner-collect-once.mjs`, `scripts/launchd/com.amswiki.kakao-cookie-refresh.plist`, 관련 마이그레이션 주석 등)은 전부 "맥 스튜디오"로 정정 완료. 단, `kakao-classify`의 학부모 채팅 분류 키워드(`맥북|mac os` 등)는 학부모 개인 기기를 가리키는 정상 규칙이라 그대로 둠(우리 인프라와 무관).
+
+---
+
+# 18. ★ Astryx 디자인시스템 = 프론트엔드 작업의 유일 기준 (사용자 지시, 앞으로 모든 작업)
+
+> 사용자 지시(2026-07-08): "버튼·드롭다운·인풋필드 등 인터렉션 컴포넌트는 Astryx 디자인시스템으로. astryx의 가이드·파운데이션·라이브러리 모두 참조하여 완벽히 구현할 것. 앞으로 모든 작업에서도."
+
+- **모든 UI는 `@astryxdesign/core` 컴포넌트로**: 버튼=`Button`, 드롭다운=`Selector`(단일)/`MultiSelector`(다중)/`DropdownMenu`(액션메뉴), 입력=`TextInput`, 그 외 `Card`·`Badge`·`Heading`·`Text`·`VStack`·`HStack`·`Grid`·`Divider` 등. **raw `<select>`·`<button>`·`<input>` 금지** — 네이티브 요소를 토큰으로 흉내내지 말고 디자인시스템 컴포넌트를 쓴다.
+- **작업 전 공식 문서 조회(추측 금지)**: `node node_modules/@astryxdesign/core/docs.mjs <Component>`(props·best practices·anatomy), `--list`로 전체 목록. 토큰/테마 파운데이션은 `npx astryx docs tokens`·`npx astryx docs theme`, 페이지 템플릿은 `npx astryx template --list`. Selector 등은 `renderOption`으로 커스텀 행(SelectorOption을 children으로 직접 넘기지 말 것).
+- **색·간격·라운드·쉐도우는 전부 Astryx 토큰(var)만**: raw hex/px 남발 금지. primitive로 표현 못하는 레이아웃만 co-located `*.astryx.css`에서 토큰(var)으로 처리. 전역 `<Theme>`(AdminLayout)에서 토큰/모드 상속 → 페이지에서 Theme 재래핑 금지.
+- **동종 페이지는 동일 스펙**: 예) `/admin/consults`(카카오 상담)·`/admin/jandi`(잔디 대화)는 같은 shell·헤더·KPI·툴바(칩+Selector+검색)·패널 chrome을 공유한다. 메시지 렌더링만 데이터 성격에 따라 다름(카카오=2자 말풍선 in/out 틴트, 잔디=다자 스레드+답글) — 이건 의도된 차이라 억지로 통일하지 말 것.
+- **검증**: 컴포넌트 교체 후 `npm run build` 통과 확인 + Vercel 프리뷰로 실제 렌더 확인. 빌드만으로 "완료" 단정 말고 프리뷰 대조까지.

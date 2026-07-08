@@ -39,10 +39,15 @@ const ADMIN_NAV_GROUPS = [
     ],
   },
   {
-    label: "상담·대화",
+    label: "카카오 상담",
     items: [
-      { title: "카카오 상담", to: "/admin/consults", icon: Headset, perm: 'edit' },
-      { title: "잔디 대화", to: "/admin/jandi", icon: Chats, perm: 'edit' },
+      { title: "상담 로그", to: "/admin/consults", icon: Headset, perm: 'edit' },
+    ],
+  },
+  {
+    label: "잔디 대화",
+    items: [
+      { title: "대화 로그", to: "/admin/jandi", icon: Chats, perm: 'edit' },
     ],
   },
 ]
