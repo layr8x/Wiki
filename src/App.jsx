@@ -1,9 +1,12 @@
-// src/App.jsx — shadcn/ui 표준 + React Query + Toast + 모든 Provider
+// src/App.jsx — Astryx 디자인시스템 + React Query + Toast + 모든 Provider
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { VStack } from '@astryxdesign/core/VStack'
+import { Grid } from '@astryxdesign/core/Grid'
 import Layout from './components/common/AstryxAppFrame'
+import './App.astryx.css'
 
 /**
  * Suspense fallback — lazy route 로드 중 표시될 placeholder.
@@ -11,16 +14,16 @@ import Layout from './components/common/AstryxAppFrame'
  */
 function PageSkeleton() {
   return (
-    <div className="flex flex-col gap-4 p-8 max-w-5xl mx-auto" role="status" aria-label="페이지 로딩 중">
-      <Skeleton className="h-9 w-2/3" />
-      <Skeleton className="h-5 w-full" />
-      <Skeleton className="h-5 w-5/6" />
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-      </div>
-    </div>
+    <VStack gap={4} className="page-skeleton" role="status" aria-label="페이지 로딩 중">
+      <Skeleton width="66%" height={36} />
+      <Skeleton width="100%" height={20} />
+      <Skeleton width="83%" height={20} />
+      <Grid columns={{ minWidth: 200, max: 3 }} gap={3} className="page-skeleton-grid">
+        <Skeleton width="100%" height={112} />
+        <Skeleton width="100%" height={112} />
+        <Skeleton width="100%" height={112} />
+      </Grid>
+    </VStack>
   )
 }
 // SearchOverlay: 닫힌 상태(초기값)에선 null만 렌더 — 위키 전체 가이드 데이터(GUIDES 등)를
@@ -30,8 +33,7 @@ const SearchOverlay = lazy(() => import('./components/search/SearchOverlay'))
 import { SearchProvider } from './store/searchStore'
 import { I18nProvider } from './store/i18nStore'
 import { AuthProvider } from './store/authStore'
-import { ToastProvider } from './components/ui/toast'
-import { TooltipProvider } from './components/ui/tooltip'
+import { ToastViewport } from '@astryxdesign/core/Toast'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { RouteBoundary } from './components/common/RouteBoundary'
 import { RequireRole } from './components/common/RequireRole'
@@ -73,11 +75,10 @@ export default function App() {
   return (
     <ErrorBoundary variant="global">
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider delayDuration={200}>
+        <ToastViewport position="bottomEnd" maxVisible={3}>
           <I18nProvider>
             <AuthProvider>
-              <ToastProvider>
-                <SearchProvider>
+              <SearchProvider>
                   <BrowserRouter>
                   <Routes>
                     {/* AMS 챗봇 별도 창 (/ams-chatbot) — 레이아웃 없이 창 전체. /chatbot 은 마이클래스(별개 서비스)가 사용 */}
@@ -173,11 +174,10 @@ export default function App() {
                   </BrowserRouter>
                   <Analytics />
                   <SpeedInsights />
-                </SearchProvider>
-              </ToastProvider>
+              </SearchProvider>
             </AuthProvider>
           </I18nProvider>
-        </TooltipProvider>
+        </ToastViewport>
       </QueryClientProvider>
     </ErrorBoundary>
   )
