@@ -4,16 +4,18 @@
 //
 // Astryx(Meta 디자인시스템) 마이그레이션 — 이 페이지는 App.jsx에서 AstryxAppFrame 밖의
 // standalone 라우트(/editor)로 렌더되므로 AstryxThemeRegion 으로 자체 <Theme> 영역을 연다.
-//   - 폼 컨트롤(Input/Textarea/Select/Checkbox/Sheet/Tabs)은 shadcn 그대로 유지 —
-//     value/onChange/자동저장 연동·Sheet open state·Tabs value 100% 동일.
-//   - 헤더/툴바·섹션 카드·행 추가/삭제 버튼·스켈레톤 등 크롬(시각 레이어)만 Astryx로 교체.
+//   - 폼 컨트롤(Input/Textarea/Label/Select/Checkbox/Sheet/Tabs)도 전부 Astryx로 교체 완료 —
+//     value/onChange/자동저장 연동은 100% 동일, 컴포넌트 표현 레이어만 바뀜.
+//     Sheet(사이드 드로어)는 Astryx에 1:1 대응이 없어 Dialog(표준 중앙 모달)로 대체.
+//   - 마크다운 에디터 로직(자동저장·미리보기·행 추가/삭제 등)과 헤더/툴바·섹션 카드 등
+//     이미 Astryx로 돼있던 크롬은 그대로 유지.
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAutosave } from '@/hooks/useAutosave'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchGuide, upsertGuide } from '@/lib/db'
-import { useToast } from '@/components/ui/toast'
+import { useToast } from '@astryxdesign/core/Toast'
 import { useAuth } from '@/store/authStore'
 import {
   ArrowLeft,
@@ -33,18 +35,16 @@ import {
   ChatCircle,
   Megaphone,
 } from '@phosphor-icons/react'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { cn } from '@/lib/utils'
+import { TextInput } from '@astryxdesign/core/TextInput'
+import { TextArea } from '@astryxdesign/core/TextArea'
+import { Selector } from '@astryxdesign/core/Selector'
+import { CheckboxInput } from '@astryxdesign/core/CheckboxInput'
+import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog'
+import { Layout, LayoutContent } from '@astryxdesign/core/Layout'
+import { TabList, Tab } from '@astryxdesign/core/TabList'
 
 import { VStack } from '@astryxdesign/core/VStack'
+import { Grid, GridSpan } from '@astryxdesign/core/Grid'
 import { Card } from '@astryxdesign/core/Card'
 import { ClickableCard } from '@astryxdesign/core/ClickableCard'
 import { Badge } from '@astryxdesign/core/Badge'
@@ -271,7 +271,7 @@ export default function EditorPage() {
   const [searchParams] = useSearchParams()
   const editingId = searchParams.get('id') || null
   const qc = useQueryClient()
-  const { toast } = useToast()
+  const toast = useToast()
   const { hasPermission } = useAuth()
 
   // 기존 가이드 로드 (편집 모드)
@@ -288,9 +288,8 @@ export default function EditorPage() {
   if (loadError && loadErrorShownFor !== editingId) {
     setLoadErrorShownFor(editingId)
     toast({
-      variant: 'destructive',
-      title: '가이드를 불러오지 못했습니다',
-      description: loadError?.message || '네트워크 또는 권한을 확인해 주세요.',
+      body: '가이드를 불러오지 못했습니다 - ' + (loadError?.message || '네트워크 또는 권한을 확인해 주세요.'),
+      type: 'error',
     })
   }
 
@@ -305,6 +304,11 @@ export default function EditorPage() {
   // 좁은 화면(<768)에서 툴바 버튼을 아이콘 전용으로 축소 — 라벨 텍스트가 겹치는 것을 방지
   // (shadcn 사이드바가 이미 쓰는 것과 동일한 breakpoint 훅 재사용)
   const isMobile = useIsMobile()
+  // 본문/메타 정보 탭 — Astryx TabList는 완전 제어형이라 로컬 상태로 관리
+  const [activeTab, setActiveTab] = useState('content')
+  // 모바일 "가이드 타입 선택" 드로어 / "버전 이력" 드로어 — Astryx Dialog는 완전 제어형
+  const [tplPickerOpen, setTplPickerOpen] = useState(false)
+  const [versionSheetOpen, setVersionSheetOpen] = useState(false)
 
   // 기존 가이드 로드 완료 → 에디터 상태 프리필 (1회).
   // React 권장 패턴: 외부 데이터 변화에 의한 파생 상태 초기화는 렌더 도중 동기 setState 로 처리.
@@ -345,12 +349,12 @@ export default function EditorPage() {
       qc.invalidateQueries({ queryKey: ['admin', 'guides'] })
       qc.invalidateQueries({ queryKey: ['guide', saved.id] })
       toast({
-        title: nextStatus === 'published' ? '가이드를 발행했습니다.' : '임시저장되었습니다.',
+        body: nextStatus === 'published' ? '가이드를 발행했습니다.' : '임시저장되었습니다.',
       })
       if (nextStatus === 'published') navigate(`/guides/${saved.id}`)
     },
     onError: (err) => {
-      toast({ variant: 'destructive', title: '저장 실패', description: String(err?.message || err) })
+      toast({ body: '저장 실패 - ' + String(err?.message || err), type: 'error' })
     },
   })
 
@@ -362,7 +366,7 @@ export default function EditorPage() {
   }
   const handlePublish = () => {
     const err = validateForPublish()
-    if (err) { toast({ variant: 'destructive', title: '발행 불가', description: err }); return }
+    if (err) { toast({ body: '발행 불가 - ' + err, type: 'error' }); return }
     upsertMutation.mutate({ nextStatus: 'published' })
   }
   const handleSaveToDb = () => {
@@ -428,7 +432,7 @@ export default function EditorPage() {
         onClick={() => handleSelectTemplate(t.type)}
         variant={isSelected ? 'default' : 'transparent'}
         padding={3}
-        className={cn('ep-tpl-card', isSelected && 'is-selected')}
+        className={`ep-tpl-card${isSelected ? ' is-selected' : ''}`}
       >
         <div className="ep-tpl-head">
           <Icon size={16} weight={isSelected ? 'fill' : 'regular'} className="ep-tpl-icon" />
@@ -511,34 +515,32 @@ export default function EditorPage() {
                 icon={<ArrowLeft size={14} />}
                 onClick={() => navigate('/')}
               />
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    isIconOnly
-                    className="ep-mobile-only"
-                    label="가이드 타입 선택"
-                    icon={<ListChecks size={15} />}
-                  />
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[85vw] max-w-xs p-0">
-                  <SheetHeader className="border-b p-4">
-                    <SheetTitle className="text-sm">가이드 타입 선택</SheetTitle>
-                    <Text type="supporting" className="ep-sheet-tpl-desc">
-                      선택한 타입에 맞는 섹션이 본문에 자동 구성됩니다
-                    </Text>
-                  </SheetHeader>
-                  <div className="ep-sheet-tpl-list">
-                    {templateButtons}
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <Button
+                variant="ghost"
+                size="sm"
+                isIconOnly
+                className="ep-mobile-only"
+                label="가이드 타입 선택"
+                icon={<ListChecks size={15} />}
+                onClick={() => setTplPickerOpen(true)}
+              />
+              <Dialog isOpen={tplPickerOpen} onOpenChange={setTplPickerOpen} width={340}>
+                <Layout
+                  header={
+                    <DialogHeader
+                      title="가이드 타입 선택"
+                      subtitle="선택한 타입에 맞는 섹션이 본문에 자동 구성됩니다"
+                      onOpenChange={setTplPickerOpen}
+                    />
+                  }
+                  content={<LayoutContent>{templateButtons}</LayoutContent>}
+                />
+              </Dialog>
               <Hash size={14} className="ep-hash" />
               <Text
                 weight="medium"
                 maxLines={1}
-                className={cn('ep-title', !meta.title && 'is-empty')}
+                className={`ep-title${!meta.title ? ' is-empty' : ''}`}
               >
                 {meta.title || '제목 없음'}
               </Text>
@@ -550,50 +552,51 @@ export default function EditorPage() {
               <Badge label={meta.type} variant={toTypeVariant(meta.type)} />
             </div>
             <div className="ep-toolbar-right">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    isIconOnly={isMobile}
-                    label="버전 이력"
-                    icon={<History size={14} />}
-                    tooltip={isMobile ? '버전 이력' : undefined}
-                  />
-                </SheetTrigger>
-                <SheetContent className="w-full sm:max-w-md">
-                  <SheetHeader>
-                    <SheetTitle>버전 이력</SheetTitle>
-                  </SheetHeader>
-                  <VStack gap={3} className="mt-6 px-4">
-                    {/* 현재 편집 중인 가이드의 메타 — 저장된 version 만 표시 */}
-                    {editingId && existingGuide && (
-                      <Card className="ep-vh-card" padding={4}>
-                        <div className="ep-vh-row">
-                          <Badge label={existingGuide.version || meta.version || 'v0.1'} variant="neutral" />
-                          <Text type="supporting" hasTabularNumbers>
-                            {existingGuide.updated || existingGuide.updated_at?.slice(0, 10) || '—'}
-                          </Text>
-                        </div>
-                        <Text type="body">현재 저장된 버전</Text>
-                        {existingGuide.author && (
-                          <Text type="supporting">
-                            <User size={10} className="inline" /> {existingGuide.author}
-                          </Text>
+              <Button
+                variant="ghost"
+                size="sm"
+                isIconOnly={isMobile}
+                label="버전 이력"
+                icon={<History size={14} />}
+                tooltip={isMobile ? '버전 이력' : undefined}
+                onClick={() => setVersionSheetOpen(true)}
+              />
+              <Dialog isOpen={versionSheetOpen} onOpenChange={setVersionSheetOpen} width={420}>
+                <Layout
+                  header={<DialogHeader title="버전 이력" onOpenChange={setVersionSheetOpen} />}
+                  content={
+                    <LayoutContent>
+                      <VStack gap={3}>
+                        {/* 현재 편집 중인 가이드의 메타 — 저장된 version 만 표시 */}
+                        {editingId && existingGuide && (
+                          <Card className="ep-vh-card" padding={4}>
+                            <div className="ep-vh-row">
+                              <Badge label={existingGuide.version || meta.version || 'v0.1'} variant="neutral" />
+                              <Text type="supporting" hasTabularNumbers>
+                                {existingGuide.updated || existingGuide.updated_at?.slice(0, 10) || '—'}
+                              </Text>
+                            </div>
+                            <Text type="body">현재 저장된 버전</Text>
+                            {existingGuide.author && (
+                              <Text type="supporting">
+                                <User size={10} className="inline" /> {existingGuide.author}
+                              </Text>
+                            )}
+                          </Card>
                         )}
-                      </Card>
-                    )}
-                    {VERSION_HISTORY_PLACEHOLDER && (
-                      <div className="ep-vh-note">
-                        <Text type="supporting">
-                          전체 버전 이력은 준비 중입니다.<br />
-                          추후 <span className="ep-vh-code">guide_versions</span> 테이블 연동 시 제공됩니다.
-                        </Text>
-                      </div>
-                    )}
-                  </VStack>
-                </SheetContent>
-              </Sheet>
+                        {VERSION_HISTORY_PLACEHOLDER && (
+                          <div className="ep-vh-note">
+                            <Text type="supporting">
+                              전체 버전 이력은 준비 중입니다.<br />
+                              추후 <span className="ep-vh-code">guide_versions</span> 테이블 연동 시 제공됩니다.
+                            </Text>
+                          </div>
+                        )}
+                      </VStack>
+                    </LayoutContent>
+                  }
+                />
+              </Dialog>
               <Button
                 variant="ghost"
                 size="sm"
@@ -648,35 +651,36 @@ export default function EditorPage() {
           <div className="ep-content">
             <main className="ep-content-main">
               <div className="ep-content-inner">
-                <Tabs defaultValue="content" className="w-full">
-                  <TabsList>
-                    <TabsTrigger value="content">본문</TabsTrigger>
-                    <TabsTrigger value="meta">메타 정보</TabsTrigger>
-                  </TabsList>
+                <TabList value={activeTab} onChange={setActiveTab}>
+                  <Tab value="content" label="본문" />
+                  <Tab value="meta" label="메타 정보" />
+                </TabList>
 
-                  {/* 본문 탭 */}
-                  <TabsContent value="content" className="ep-tab-body">
+                {/* 본문 탭 */}
+                {activeTab === 'content' && (
+                  <div className="ep-tab-body">
                     {preview ? (
                       <PreviewPane meta={meta} content={content} sections={sections} />
                     ) : (
                       <>
                         {/* 제목 */}
                         <div className="ep-field">
-                          <Label htmlFor="editor-title">제목</Label>
-                          <Input
-                            id="editor-title"
+                          <TextInput
+                            label="제목"
+                            size="lg"
                             value={meta.title}
-                            onChange={e => setMeta(m => ({ ...m, title: e.target.value }))}
-                            className="text-lg font-semibold h-11"
+                            onChange={v => setMeta(m => ({ ...m, title: v }))}
                           />
                         </div>
 
                         {/* 핵심 요약 (모든 type 공통) */}
                         <SectionFrame title="핵심 요약" desc="이 가이드가 어떤 문제를 해결하는지 한 문단으로 요약">
-                          <Textarea
+                          <TextArea
+                            label="핵심 요약"
+                            isLabelHidden
                             placeholder="예: 학생이 마이클래스에서 직접 수강정보 연동을 하지 못하는 경우..."
                             value={meta.tldr}
-                            onChange={e => setMeta(m => ({ ...m, tldr: e.target.value }))}
+                            onChange={v => setMeta(m => ({ ...m, tldr: v }))}
                             rows={3}
                           />
                         </SectionFrame>
@@ -701,73 +705,53 @@ export default function EditorPage() {
                         ))}
                       </>
                     )}
-                  </TabsContent>
+                  </div>
+                )}
 
-                  {/* 메타 정보 탭 */}
-                  <TabsContent value="meta" className="mt-6 space-y-6">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>모듈</Label>
-                        <Select value={meta.module} onValueChange={v => setMeta(m => ({ ...m, module: v }))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {MODULES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>유형</Label>
-                        <Select value={meta.type} onValueChange={v => setMeta(m => ({ ...m, type: v }))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {GUIDE_TYPES.map(t => (
-                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Text type="supporting" className="ep-meta-help">
-                          유형 변경 시 본문 탭에 노출되는 섹션이 자동 변경됩니다.
-                        </Text>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>상태</Label>
-                        <Select value={meta.status} onValueChange={v => setMeta(m => ({ ...m, status: v }))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {STATUS_OPTIONS.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="editor-targets">대상 (쉼표 구분)</Label>
-                        <Input
-                          id="editor-targets"
-                          placeholder="예: 운영자, 실장"
-                          value={meta.targets}
-                          onChange={e => setMeta(m => ({ ...m, targets: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="editor-version">버전</Label>
-                        <Input
-                          id="editor-version"
-                          placeholder="예: v1.0"
-                          value={meta.version}
-                          onChange={e => setMeta(m => ({ ...m, version: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="editor-confluence">Confluence Page ID</Label>
-                        <Input
-                          id="editor-confluence"
-                          placeholder="예: 1815216142"
-                          value={meta.confluenceId}
-                          onChange={e => setMeta(m => ({ ...m, confluenceId: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                {/* 메타 정보 탭 */}
+                {activeTab === 'meta' && (
+                  <div className="ep-tab-body">
+                    <Grid columns={{ minWidth: 240 }} gap={4}>
+                      <Selector
+                        label="모듈"
+                        options={MODULES}
+                        value={meta.module}
+                        onChange={v => setMeta(m => ({ ...m, module: v }))}
+                      />
+                      <Selector
+                        label="유형"
+                        options={GUIDE_TYPES}
+                        value={meta.type}
+                        onChange={v => setMeta(m => ({ ...m, type: v }))}
+                        description="유형 변경 시 본문 탭에 노출되는 섹션이 자동 변경됩니다."
+                      />
+                      <Selector
+                        label="상태"
+                        options={STATUS_OPTIONS}
+                        value={meta.status}
+                        onChange={v => setMeta(m => ({ ...m, status: v }))}
+                      />
+                      <TextInput
+                        label="대상 (쉼표 구분)"
+                        placeholder="예: 운영자, 실장"
+                        value={meta.targets}
+                        onChange={v => setMeta(m => ({ ...m, targets: v }))}
+                      />
+                      <TextInput
+                        label="버전"
+                        placeholder="예: v1.0"
+                        value={meta.version}
+                        onChange={v => setMeta(m => ({ ...m, version: v }))}
+                      />
+                      <TextInput
+                        label="Confluence Page ID"
+                        placeholder="예: 1815216142"
+                        value={meta.confluenceId}
+                        onChange={v => setMeta(m => ({ ...m, confluenceId: v }))}
+                      />
+                    </Grid>
+                  </div>
+                )}
               </div>
             </main>
           </div>
@@ -839,19 +823,21 @@ function CautionsEditor({ items, onChange }) {
   const add    = () => onChange([...items, ''])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((c, i) => (
         <ListRow key={i} onRemove={() => remove(i)}>
-          <Textarea
+          <TextArea
+            label="주의사항"
+            isLabelHidden
             value={c}
-            onChange={e => update(i, e.target.value)}
+            onChange={v => update(i, v)}
             rows={2}
             placeholder="예: 병합 작업 전 FROM/TO 회원을 반드시 재확인하세요."
           />
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="주의사항 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -861,28 +847,32 @@ function StepsEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ title: '', desc: '' })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((s, i) => (
         <ListRow key={s._id ?? i} onRemove={() => remove(i)}>
           <div className="ep-row-head">
             <Badge label={`단계 ${i + 1}`} variant="neutral" />
-            <Input
+            <TextInput
+              className="ep-row-fill"
+              label="단계 제목"
+              isLabelHidden
               value={s.title}
-              onChange={e => update(i, 'title', e.target.value)}
+              onChange={v => update(i, 'title', v)}
               placeholder="단계 제목"
-              className="font-medium"
             />
           </div>
-          <Textarea
+          <TextArea
+            label="단계 설명"
+            isLabelHidden
             value={s.desc}
-            onChange={e => update(i, 'desc', e.target.value)}
+            onChange={v => update(i, 'desc', v)}
             rows={2}
             placeholder="단계별 상세 설명"
           />
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="단계 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -892,35 +882,42 @@ function MainItemsEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ field: '', desc: '', required: false })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((it, i) => (
         <ListRow key={it._id ?? i} onRemove={() => remove(i)}>
-          <div className="grid grid-cols-12 gap-2">
-            <Input
-              className="col-span-3"
-              value={it.field}
-              onChange={e => update(i, 'field', e.target.value)}
-              placeholder="항목명"
-            />
-            <Textarea
-              className="col-span-7"
-              rows={1}
-              value={it.desc}
-              onChange={e => update(i, 'desc', e.target.value)}
-              placeholder="설명"
-            />
-            <label className="col-span-2 flex items-center gap-2 text-xs">
-              <Checkbox
-                checked={it.required}
-                onCheckedChange={v => update(i, 'required', !!v)}
+          <Grid columns={12} gap={2}>
+            <GridSpan columns={3}>
+              <TextInput
+                label="항목명"
+                isLabelHidden
+                value={it.field}
+                onChange={v => update(i, 'field', v)}
+                placeholder="항목명"
               />
-              필수
-            </label>
-          </div>
+            </GridSpan>
+            <GridSpan columns={7}>
+              <TextArea
+                label="설명"
+                isLabelHidden
+                rows={1}
+                value={it.desc}
+                onChange={v => update(i, 'desc', v)}
+                placeholder="설명"
+              />
+            </GridSpan>
+            <GridSpan columns={2}>
+              <CheckboxInput
+                label="필수"
+                size="sm"
+                value={it.required}
+                onChange={v => update(i, 'required', !!v)}
+              />
+            </GridSpan>
+          </Grid>
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="항목 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -930,34 +927,40 @@ function CasesEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ label: '', action: '', note: '' })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((c, i) => (
         <ListRow key={c._id ?? i} onRemove={() => remove(i)}>
           <div className="ep-row-head">
             <Badge label={`Case ${i + 1}`} variant="neutral" />
-            <Input
+            <TextInput
+              className="ep-row-fill"
+              label="케이스 라벨"
+              isLabelHidden
               value={c.label}
-              onChange={e => update(i, 'label', e.target.value)}
+              onChange={v => update(i, 'label', v)}
               placeholder="케이스 라벨"
-              className="font-medium"
             />
           </div>
-          <Textarea
+          <TextArea
+            label="대응 방법"
+            isLabelHidden
             value={c.action}
-            onChange={e => update(i, 'action', e.target.value)}
+            onChange={v => update(i, 'action', v)}
             rows={2}
             placeholder="대응 방법"
           />
-          <Input
+          <TextInput
+            label="비고"
+            isLabelHidden
+            isOptional
             value={c.note}
-            onChange={e => update(i, 'note', e.target.value)}
+            onChange={v => update(i, 'note', v)}
             placeholder="Note (선택)"
-            className="text-xs"
           />
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="케이스 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -967,41 +970,51 @@ function DecisionTableEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ cond: '', action: '', note: '', status: 'safe' })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((r, i) => (
         <ListRow key={r._id ?? i} onRemove={() => remove(i)}>
-          <div className="grid grid-cols-12 gap-2">
-            <Input
-              className="col-span-4"
-              value={r.cond}
-              onChange={e => update(i, 'cond', e.target.value)}
-              placeholder="조건"
-            />
-            <Input
-              className="col-span-4"
-              value={r.action}
-              onChange={e => update(i, 'action', e.target.value)}
-              placeholder="처리"
-            />
-            <Input
-              className="col-span-2"
-              value={r.note}
-              onChange={e => update(i, 'note', e.target.value)}
-              placeholder="비고"
-            />
-            <Select value={r.status} onValueChange={v => update(i, 'status', v)}>
-              <SelectTrigger className="col-span-2"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS_FOR_DECISION.map(s => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Grid columns={12} gap={2}>
+            <GridSpan columns={4}>
+              <TextInput
+                label="조건"
+                isLabelHidden
+                value={r.cond}
+                onChange={v => update(i, 'cond', v)}
+                placeholder="조건"
+              />
+            </GridSpan>
+            <GridSpan columns={4}>
+              <TextInput
+                label="처리"
+                isLabelHidden
+                value={r.action}
+                onChange={v => update(i, 'action', v)}
+                placeholder="처리"
+              />
+            </GridSpan>
+            <GridSpan columns={2}>
+              <TextInput
+                label="비고"
+                isLabelHidden
+                value={r.note}
+                onChange={v => update(i, 'note', v)}
+                placeholder="비고"
+              />
+            </GridSpan>
+            <GridSpan columns={2}>
+              <Selector
+                label="상태"
+                isLabelHidden
+                options={STATUS_OPTIONS_FOR_DECISION}
+                value={r.status}
+                onChange={v => update(i, 'status', v)}
+              />
+            </GridSpan>
+          </Grid>
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="판단 행 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -1011,41 +1024,51 @@ function TroubleTableEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ issue: '', cause: '', solution: '', severity: 'medium' })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((r, i) => (
         <ListRow key={r._id ?? i} onRemove={() => remove(i)}>
-          <div className="grid grid-cols-12 gap-2">
-            <Input
-              className="col-span-3"
-              value={r.issue}
-              onChange={e => update(i, 'issue', e.target.value)}
-              placeholder="오류"
-            />
-            <Input
-              className="col-span-3"
-              value={r.cause}
-              onChange={e => update(i, 'cause', e.target.value)}
-              placeholder="원인"
-            />
-            <Input
-              className="col-span-4"
-              value={r.solution}
-              onChange={e => update(i, 'solution', e.target.value)}
-              placeholder="해결"
-            />
-            <Select value={r.severity} onValueChange={v => update(i, 'severity', v)}>
-              <SelectTrigger className="col-span-2"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {SEVERITY_OPTIONS.map(s => (
-                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Grid columns={12} gap={2}>
+            <GridSpan columns={3}>
+              <TextInput
+                label="오류"
+                isLabelHidden
+                value={r.issue}
+                onChange={v => update(i, 'issue', v)}
+                placeholder="오류"
+              />
+            </GridSpan>
+            <GridSpan columns={3}>
+              <TextInput
+                label="원인"
+                isLabelHidden
+                value={r.cause}
+                onChange={v => update(i, 'cause', v)}
+                placeholder="원인"
+              />
+            </GridSpan>
+            <GridSpan columns={4}>
+              <TextInput
+                label="해결"
+                isLabelHidden
+                value={r.solution}
+                onChange={v => update(i, 'solution', v)}
+                placeholder="해결"
+              />
+            </GridSpan>
+            <GridSpan columns={2}>
+              <Selector
+                label="심각도"
+                isLabelHidden
+                options={SEVERITY_OPTIONS}
+                value={r.severity}
+                onChange={v => update(i, 'severity', v)}
+              />
+            </GridSpan>
+          </Grid>
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="오류 행 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -1055,28 +1078,32 @@ function ResponsesEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ scenario: '', script: '' })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((r, i) => (
         <ListRow key={r._id ?? i} onRemove={() => remove(i)}>
           <div className="ep-row-head">
             <Badge label={`시나리오 ${i + 1}`} variant="neutral" />
-            <Input
+            <TextInput
+              className="ep-row-fill"
+              label="시나리오"
+              isLabelHidden
               value={r.scenario}
-              onChange={e => update(i, 'scenario', e.target.value)}
+              onChange={v => update(i, 'scenario', v)}
               placeholder="시나리오 (예: 환불 거절 항의)"
-              className="font-medium"
             />
           </div>
-          <Textarea
+          <TextArea
+            label="응답 스크립트"
+            isLabelHidden
             value={r.script}
-            onChange={e => update(i, 'script', e.target.value)}
+            onChange={v => update(i, 'script', v)}
             rows={3}
             placeholder='응답 스크립트 (예: "학원법 제18조에 따라...")'
           />
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="시나리오 추가" />
-    </div>
+    </VStack>
   )
 }
 
@@ -1086,55 +1113,56 @@ function ReferenceDataEditor({ items, onChange }) {
   const add    = () => onChange([...items, withId({ term: '', definition: '' })])
   const remove = (i) => onChange(items.filter((_, idx) => idx !== i))
   return (
-    <div className="space-y-2">
+    <VStack gap={2}>
       {items.map((r, i) => (
         <ListRow key={r._id ?? i} onRemove={() => remove(i)}>
-          <div className="grid grid-cols-12 gap-2">
-            <Input
-              className="col-span-3 font-mono"
-              value={r.term}
-              onChange={e => update(i, 'term', e.target.value)}
-              placeholder="용어"
-            />
-            <Textarea
-              className="col-span-9"
-              rows={1}
-              value={r.definition}
-              onChange={e => update(i, 'definition', e.target.value)}
-              placeholder="정의"
-            />
-          </div>
+          <Grid columns={12} gap={2}>
+            <GridSpan columns={3}>
+              <TextInput
+                label="용어"
+                isLabelHidden
+                value={r.term}
+                onChange={v => update(i, 'term', v)}
+                placeholder="용어"
+              />
+            </GridSpan>
+            <GridSpan columns={9}>
+              <TextArea
+                label="정의"
+                isLabelHidden
+                rows={1}
+                value={r.definition}
+                onChange={v => update(i, 'definition', v)}
+                placeholder="정의"
+              />
+            </GridSpan>
+          </Grid>
         </ListRow>
       ))}
       <AddRowButton onAdd={add} label="용어 추가" />
-    </div>
+    </VStack>
   )
 }
 
 // ─── 정책 비교 (policyDiff) ────────────────────────────────
 function PolicyDiffEditor({ value, onChange }) {
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">변경 전</Label>
-        <Textarea
-          rows={4}
-          value={value.before}
-          onChange={e => onChange({ ...value, before: e.target.value })}
-          placeholder="변경 전 정책 내용"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label className="text-xs text-primary">변경 후</Label>
-        <Textarea
-          rows={4}
-          value={value.after}
-          onChange={e => onChange({ ...value, after: e.target.value })}
-          placeholder="변경 후 정책 내용"
-          className="border-primary/30"
-        />
-      </div>
-    </div>
+    <Grid columns={{ minWidth: 260 }} gap={3}>
+      <TextArea
+        label="변경 전"
+        rows={4}
+        value={value.before}
+        onChange={v => onChange({ ...value, before: v })}
+        placeholder="변경 전 정책 내용"
+      />
+      <TextArea
+        label="변경 후"
+        rows={4}
+        value={value.after}
+        onChange={v => onChange({ ...value, after: v })}
+        placeholder="변경 후 정책 내용"
+      />
+    </Grid>
   )
 }
 

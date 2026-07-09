@@ -1,10 +1,9 @@
 // src/pages/admin/AdminGuidesPage.jsx — /admin/guides
 // 가이드 관리(어드민) — Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
 //   - 데이터 훅(react-query)·라우팅·상태 탭/모듈 필터/검색/페이지네이션·행 액션(편집/발행/보관 등)은 100% 유지
-//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Divider/TextInput)로 교체
+//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Selector/AlertDialog/TextInput)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
 //   - 표현 못하는 레이아웃(툴바·세그먼트·테이블·hover·스켈레톤)은 co-located CSS(토큰 only)
-//   - 유지한 shadcn: 모듈 필터 Select(Astryx 셀렉트 미도입) · 삭제 확인 Dialog(교체 리스크 회피)
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -29,17 +28,10 @@ import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
+import { Selector } from '@astryxdesign/core/Selector'
+import { AlertDialog } from '@astryxdesign/core/AlertDialog'
+import { useToast } from '@astryxdesign/core/Toast'
 
-// 유지한 shadcn: 모듈 필터 Select + 삭제 확인 Dialog
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import {
-  Dialog, DialogContent, DialogDescription,
-  DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
-
-import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/store/authStore'
 import './AdminGuidesPage.astryx.css'
 
@@ -78,7 +70,7 @@ const typeLabel = (typeKey) => GUIDE_TYPES[typeKey]?.shortLabel ?? typeKey
 export default function AdminGuidesPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
-  const { toast } = useToast()
+  const toast = useToast()
   const { hasPermission } = useAuth()
   const moduleTree = getModuleTree()
   const moduleLabelById = useMemo(
@@ -106,9 +98,9 @@ export default function AdminGuidesPage() {
     onSuccess: (_, { nextStatus }) => {
       qc.invalidateQueries({ queryKey: ['admin', 'guides'] })
       qc.invalidateQueries({ queryKey: ['guides'] })
-      toast({ title: `가이드 상태가 "${STATUS_LABEL[nextStatus]}"(으)로 변경되었습니다.` })
+      toast({ body: `가이드 상태가 "${STATUS_LABEL[nextStatus]}"(으)로 변경되었습니다.` })
     },
-    onError: (err) => toast({ variant: 'destructive', title: '상태 변경 실패', description: String(err?.message || err) }),
+    onError: (err) => toast({ body: `상태 변경 실패 — ${String(err?.message || err)}`, type: 'error' }),
   })
 
   const deleteMutation = useMutation({
@@ -116,10 +108,10 @@ export default function AdminGuidesPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'guides'] })
       qc.invalidateQueries({ queryKey: ['guides'] })
-      toast({ title: '가이드가 보관 처리되었습니다.' })
+      toast({ body: '가이드가 보관 처리되었습니다.' })
       setDeleteTarget(null)
     },
-    onError: (err) => toast({ variant: 'destructive', title: '삭제 실패', description: String(err?.message || err) }),
+    onError: (err) => toast({ body: `삭제 실패 — ${String(err?.message || err)}`, type: 'error' }),
   })
 
   const canEdit    = hasPermission('edit')
@@ -168,17 +160,18 @@ export default function AdminGuidesPage() {
             </div>
 
             <div className="ag-module">
-              <Select value={moduleF} onValueChange={setModuleF}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="모듈 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 모듈</SelectItem>
-                  {moduleTree.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Selector
+                label="모듈 필터"
+                isLabelHidden
+                size="sm"
+                placeholder="모듈 선택"
+                value={moduleF}
+                onChange={setModuleF}
+                options={[
+                  { value: 'all', label: '전체 모듈' },
+                  ...moduleTree.map((m) => ({ value: m.id, label: m.label })),
+                ]}
+              />
             </div>
 
             <div className="ag-search">
@@ -315,27 +308,18 @@ export default function AdminGuidesPage() {
 
       </VStack>
 
-      {/* 삭제(보관) 확인 — shadcn Dialog 유지 (교체 리스크 회피) */}
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>가이드를 보관하시겠습니까?</DialogTitle>
-            <DialogDescription>
-              "{deleteTarget?.title}" 가이드는 보관함으로 이동하며, 사용자 사이트에서는 더 이상 노출되지 않습니다.
-              이 작업은 언제든 되돌릴 수 있습니다.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button label="취소" variant="secondary" onClick={() => setDeleteTarget(null)} />
-            <Button
-              label={deleteMutation.isPending ? '처리 중…' : '보관'}
-              variant="destructive"
-              isDisabled={deleteMutation.isPending}
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-            />
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* 삭제(보관) 확인 — Astryx AlertDialog(파괴적 확인 전용 컴포넌트) */}
+      <AlertDialog
+        isOpen={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title="가이드를 보관하시겠습니까?"
+        description={`"${deleteTarget?.title ?? ''}" 가이드는 보관함으로 이동하며, 사용자 사이트에서는 더 이상 노출되지 않습니다. 이 작업은 언제든 되돌릴 수 있습니다.`}
+        cancelLabel="취소"
+        actionLabel={deleteMutation.isPending ? '처리 중…' : '보관'}
+        actionVariant="destructive"
+        isActionLoading={deleteMutation.isPending}
+        onAction={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+      />
     </div>
   )
 }
