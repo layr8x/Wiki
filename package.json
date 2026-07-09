@@ -7,6 +7,9 @@
     "node": ">=22"
   },
   "packageManager": "npm@10.9.7",
+  "astryx": {
+    "theme": "neutral"
+  },
   "overrides": {
     "tsx": "^4.22.4"
   },
