@@ -44,6 +44,7 @@
 .ac-panel-body { padding: 16px 20px; }
 
 .ac-state { text-align: center; padding: 40px 0; }
+.ac-error { color: var(--color-text-red); }
 
 /* ─── 스레드 (디테일: 채팅별 그룹) ───────────────────────────── */
 .ac-thread {

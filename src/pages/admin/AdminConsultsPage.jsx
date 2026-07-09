@@ -338,7 +338,7 @@ export default function AdminConsultsPage() {
         )}
 
         {/* ─── 채널별 건수 KPI ──────────────────────────────────── */}
-        <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>
+        <Grid columns={{ minWidth: 200, max: 5 }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
@@ -414,7 +414,7 @@ export default function AdminConsultsPage() {
 
           <div className="ac-panel-body">
             {isError ? (
-              <Text as="p" color="accent" className="ac-state">불러오기 실패: {error?.message || '오류'}</Text>
+              <Text as="p" className="ac-state ac-error">불러오기 실패: {error?.message || '오류'}</Text>
             ) : isLoading ? (
               <VStack gap={2} hAlign="stretch">
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} className="ac-skel ac-skel-thread" />)}
