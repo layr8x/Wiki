@@ -15,7 +15,9 @@
 
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/store/authStore'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { VStack } from '@astryxdesign/core/VStack'
+import './RequireRole.astryx.css'
 
 export function RequireRole({ permission, role, fallback = '/' }) {
   const { isAuthenticated, isLoading, hasPermission, hasRole } = useAuth()
@@ -23,10 +25,12 @@ export function RequireRole({ permission, role, fallback = '/' }) {
 
   if (isLoading) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-6 py-10 space-y-4">
-        <Skeleton className="h-6 w-40" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
+      <div className="rr-loading-shell" role="status" aria-label="권한 확인 중">
+        <VStack gap={4}>
+          <Skeleton width={160} height={24} />
+          <Skeleton width="100%" height={16} />
+          <Skeleton width="83%" height={16} />
+        </VStack>
       </div>
     )
   }

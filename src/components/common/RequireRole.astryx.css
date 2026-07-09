@@ -1,0 +1,11 @@
+/* src/components/common/RequireRole.astryx.css
+ * RequireRole 로딩 상태 — VStack이 표현하지 못하는 바깥 배치(최대폭·mx-auto 중앙정렬)만 여기서 처리.
+ * 색·간격·라운드는 전부 Astryx 토큰(var(--*))만 사용. */
+
+.rr-loading-shell {
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: var(--spacing-6);
+  padding-block: var(--spacing-10);
+}
