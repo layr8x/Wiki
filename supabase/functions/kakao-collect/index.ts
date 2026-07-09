@@ -190,16 +190,16 @@ async function primeCursors(profileId: string) {
   }
   return cursors;
 }
-async function fetchRecent(client: KakaoPartnerClient, profileId: string, chatId: string) {
+async function fetchRecent(client: KakaoPartnerClient, profileId: string, chatId: string): Promise<{ n: number; err: string | null }> {
   try {
     const res: any = await client.chatLogs(chatId, { size: LOGS_SIZE });
     const items = res?.items || [];
-    if (!items.length) return 0;
+    if (!items.length) return { n: 0, err: null };
     const rows = items.map((it: any) => sanitizeMessageRow(logToRow(it, chatId, profileId)));
     const { error } = await supabase.from('kakao_partner_messages').upsert(rows, { onConflict: 'log_id' });
-    if (error) { log(`[${profileId}] upsert ${chatId} fail:`, error.message); return -1; }
-    return rows.length;
-  } catch (e: any) { log(`[${profileId}] chatlogs ${chatId} fail:`, e.message); return -1; }
+    if (error) { log(`[${profileId}] upsert ${chatId} fail:`, error.message); return { n: -1, err: `upsert:${error.message}` }; }
+    return { n: rows.length, err: null };
+  } catch (e: any) { log(`[${profileId}] chatlogs ${chatId} fail:`, e.message); return { n: -1, err: `chatlogs:${e.message}` }; }
 }
 async function persistHeartbeat(profileId: string, lastSeenLogId: string | null, lastError: string | null) {
   const patch: any = { profile_id: profileId, last_heartbeat_at: new Date().toISOString() };
@@ -231,26 +231,40 @@ async function collectChannel(profileId: string, cookie: string) {
   let changed = 0, upserted = 0, capped = false;
   let lastSeen: string | null = null;
   const metaRows: any[] = [];
+  // ⚠️ 진단용(2026-07-09): "changed 는 매회 감지되는데 upserted 는 계속 0" 문제(마이클래스 등)의
+  // 실패 사유가 console.log 로만 남아 응답 밖에서 안 보였다. 응답 본문에 처음 몇 건의 실패 사유를
+  // 그대로 실어 원인을 즉시 확인할 수 있게 한다.
+  const errors: string[] = [];
+  let chatsUpsertError: string | null = null;
   for (const it of items) {
     const cid = String(it.id);
     const apiLast = it.last_log_id ? String(it.last_log_id) : null;
     const isChanged = !!apiLast && cursors.get(cid) !== apiLast;
+    const chatRow = sanitizeChatRow(chatToRow(it, profileId));
     if (isChanged) {
       if (changed >= MAX_CHANGED) { capped = true; continue; }   // 상한 초과 → 커서 보존(메타 미갱신)
       changed++;
-      const n = await fetchRecent(client, profileId, cid);
-      if (n < 0) continue;                                       // 실패 → 커서 보존
+      // ⚠️ 버그 수정(2026-07-09): kakao_partner_messages.chat_id 는 kakao_partner_chats 를 참조하는
+      // 외래키(FK)다. 완전히 처음 보는 대화방은 부모 행(chats)이 아직 없어, 메시지부터 저장하면
+      // "violates foreign key constraint kakao_partner_messages_chat_id_fkey" 로 매번 실패했다
+      // (전 채널 실측 — 새 대화의 첫 메시지 묶음이 영구 유실). 메시지 저장 전에 먼저 부모 행부터
+      // upsert 해 참조 무결성을 만족시킨다(끝의 배치 upsert 는 그대로 유지 — 최신값으로 덮어써 idempotent).
+      const { error: preErr } = await supabase.from('kakao_partner_chats').upsert(chatRow, { onConflict: 'chat_id' });
+      if (preErr) { log(`[${profileId}] pre-upsert chat ${cid} fail:`, preErr.message); if (errors.length < 5) errors.push(`${cid}: pre-upsert:${preErr.message}`); continue; }
+      const { n, err } = await fetchRecent(client, profileId, cid);
+      if (n < 0) { if (err && errors.length < 5) errors.push(`${cid}: ${err}`); continue; } // 실패 → 커서 보존
       upserted += n; lastSeen = apiLast;
     }
-    metaRows.push(sanitizeChatRow(chatToRow(it, profileId)));
+    metaRows.push(chatRow);
   }
   if (metaRows.length) {
     const { error } = await supabase.from('kakao_partner_chats').upsert(metaRows, { onConflict: 'chat_id' });
-    if (error) log(`[${profileId}] chats upsert fail:`, error.message);
+    if (error) { log(`[${profileId}] chats upsert fail:`, error.message); chatsUpsertError = error.message; }
   }
   await persistHeartbeat(profileId, lastSeen, null);
   log(`[${profileId}] done: scanned=${items.length} changed=${changed} upserted=${upserted} capped=${capped}`);
-  return { profile_id: profileId, scanned: items.length, changed, upserted, capped };
+  return { profile_id: profileId, scanned: items.length, changed, upserted, capped,
+    errors: errors.length ? errors : undefined, chats_upsert_error: chatsUpsertError ?? undefined };
 }
 
 // ───────────────────── HTTP 핸들러 ─────────────────────
