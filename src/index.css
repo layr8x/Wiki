@@ -1,6 +1,9 @@
 /**
- * src/index.css — shadcn/ui 공식 패턴 (neutral + new-york)
- * 구조 원칙:
+ * src/index.css — Tailwind 베이스 레이어.
+ * shadcn 컴포넌트는 전부 Astryx로 전환됐고(components/ui 삭제), 여기 남은 Tailwind는
+ * 마이그레이션 제외 대상인 Chatbot.jsx(픽셀 정밀 위젯)가 raw utility class로 직접 의존한다
+ * (tw-animate-css의 animate-in/slide-in-from-*, 임의값 유틸 등). 삭제 금지.
+ * 구조:
  *   1. @theme inline 에는 --color-* 매핑만 (값은 var() 참조)
  *   2. :root / .dark 에 실제 oklch 값
  *   3. radius는 base(--radius) 하나에서 파생
@@ -8,7 +11,6 @@
  */
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 /* Tailwind v4: dark:* 유틸을 .dark 클래스 기반으로 (기본은 media query) */
 @custom-variant dark (&:where(.dark, .dark *));
