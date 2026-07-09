@@ -165,8 +165,58 @@ function attachCapture(page, box) {
     box.seen.add(token);
     box.tokens.push({ token, memberId: h['x-member-id'] || h['X-Member-ID'] || null });
   };
+  // ★ 서버측 무중단 갱신(브라우저 없이 서버가 스스로 토큰 갱신) 설계를 위한 조사(probe):
+  //   앱이 "만료된 access token 을 새로 발급받는" 호출(silent refresh)을 찾는다. 그 호출은
+  //   보통 응답 본문/헤더에 새 JWT 를 담아 돌려주며, 인증은 httpOnly 세션 쿠키로 한다.
+  //   그 엔드포인트 + 세션 쿠키를 확보하면 Edge Function 이 동일 호출을 재현해 서버측에서 갱신할 수 있다.
+  //   → JWT 를 "응답에 담아 돌려주는" 잔디 도메인 호출을 기록해 둔다(엔드포인트 식별용).
+  const onResponse = async (res) => {
+    try {
+      const u = res.url();
+      if (!/\.jandi\.com/.test(u) || /i1\.jandi\.com/.test(u)) return; // i1=수집 API 제외, 인증계열만
+      const ct = (res.headers()['content-type'] || '').toLowerCase();
+      if (!/json|text|jwt/.test(ct)) return;
+      const body = await res.text().catch(() => '');
+      if (!body || !/eyJ[\w-]{6,}\.[\w-]{6,}\.[\w-]{6,}/.test(body)) return; // 응답에 JWT 포함 = 발급/갱신 후보
+      const req = res.request();
+      const key = req.method() + ' ' + u.split('?')[0];
+      if (box.authSeen.has(key)) return;
+      box.authSeen.add(key);
+      box.authCalls.push({ method: req.method(), url: u.split('?')[0], status: res.status(),
+        req_content_type: (req.headers()['content-type'] || null) });
+    } catch { /* ignore */ }
+  };
   page.on('request', onRequest);
-  return () => page.off('request', onRequest);
+  page.on('response', onResponse);
+  return () => { page.off('request', onRequest); page.off('response', onResponse); };
+}
+
+// 로그인 세션의 "지속 쿠키"(서버측 갱신에 쓸 자격증명)와 조사 결과를 jandi_secrets 에 저장한다.
+// jandi_session_cookie: 서버(Edge)가 silent-refresh 호출에 실어 보낼 쿠키(.jandi.com 계열).
+// jandi_auth_probe: 새 JWT 를 돌려준 엔드포인트 목록(서버측 갱신 함수 설계용, 값 자체는 미포함).
+async function storeAuthProbe(context, box) {
+  try {
+    const all = await context.cookies();
+    const authCookies = all
+      .filter((c) => /jandi\.com$/.test(c.domain) && !/i1\.jandi\.com/.test(c.domain))
+      .map((c) => ({ name: c.name, value: c.value, domain: c.domain, path: c.path,
+        httpOnly: c.httpOnly, secure: c.secure, expires: c.expires }));
+    const sb = getAdminClient();
+    if (authCookies.length) {
+      await sb.from('jandi_secrets').upsert(
+        { key: 'jandi_session_cookie', value: JSON.stringify(authCookies), updated_at: new Date().toISOString() },
+        { onConflict: 'key' },
+      );
+      log(`jandi_session_cookie 저장(${authCookies.length}개, 서버측 갱신용).`);
+    }
+    await sb.from('jandi_secrets').upsert(
+      { key: 'jandi_auth_probe', value: JSON.stringify({ at: new Date().toISOString(),
+        cookie_names: authCookies.map((c) => `${c.domain}${c.path}:${c.name}${c.httpOnly ? '(httpOnly)' : ''}`),
+        jwt_response_calls: box.authCalls }), updated_at: new Date().toISOString() },
+      { onConflict: 'key' },
+    );
+    log(`jandi_auth_probe 저장(새 JWT 응답 호출 ${box.authCalls.length}건 — 서버측 갱신 엔드포인트 조사용).`);
+  } catch (e) { log('auth probe 저장 생략:', e.message); }
 }
 
 // 모은 토큰 중 exp(만료시각) 가 가장 늦은(=가장 신선한) 것을 고른다. 없으면 null.
@@ -190,7 +240,7 @@ async function runPersistent(chromium) {
   const context = await chromium.launchPersistentContext(USER_DATA_DIR, {
     headless: HEADLESS, userAgent: UA, locale: 'ko-KR',
   });
-  const box = { tokens: [], seen: new Set() };
+  const box = { tokens: [], seen: new Set(), authCalls: [], authSeen: new Set() };
   const page = context.pages()[0] || await context.newPage();
   const detach = attachCapture(page, box);
   try {
@@ -213,6 +263,7 @@ async function runPersistent(chromium) {
       );
     }
   } finally {
+    await storeAuthProbe(context, box); // 서버측 갱신용 세션쿠키·조사 저장(다음 로그인 1회로 확보)
     detach();
     await context.close().catch(() => {});
   }
@@ -224,7 +275,7 @@ async function runCredentials(chromium) {
   const browser = await chromium.launch({ headless: HEADLESS });
   const context = await browser.newContext({ userAgent: UA, locale: 'ko-KR' });
   const page = await context.newPage();
-  const box = { tokens: [], seen: new Set() };
+  const box = { tokens: [], seen: new Set(), authCalls: [], authSeen: new Set() };
   const detach = attachCapture(page, box);
   try {
     log(`[모드B] 로그인 페이지 이동: ${LOGIN_URL}`);
@@ -238,6 +289,7 @@ async function runCredentials(chromium) {
         '전용 프로필 모드(JANDI_CHROME_USER_DATA_DIR) 사용을 권장합니다.');
     }
   } finally {
+    await storeAuthProbe(context, box); // 서버측 갱신용 세션쿠키·조사 저장
     detach();
     await browser.close().catch(() => {});
   }
