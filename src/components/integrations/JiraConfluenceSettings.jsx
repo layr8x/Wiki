@@ -5,7 +5,7 @@
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 컴포넌트는 Theme/CSS 를 감싸지 않음
 
 import { useCallback, useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { CheckCircle } from '@phosphor-icons/react'
 
 import { Card } from '@astryxdesign/core/Card'
@@ -38,6 +38,11 @@ export function JiraConfluenceSettings() {
 
   // 현재 사용자 및 통합 로드
   const loadData = useCallback(async () => {
+    if (!isSupabaseEnabled) {
+      setError('Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)가 설정되지 않았습니다.')
+      setLoading(false)
+      return
+    }
     try {
       // loading 초기값이 true 라 mount 시점 setLoading(true) 는 불필요
       // (effect 내 동기 setState 경고 회피).
