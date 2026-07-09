@@ -235,8 +235,22 @@ export async function fetchFeedbackStats(guideId) {
 export async function incrementViews(guideId) {
   if (isSupabaseEnabled) {
     await supabase.rpc('increment_guide_views', { guide_id_param: guideId })
+    // 누적 카운터(guides.views)와 별개로 시점 기록 — 관리자 대시보드 추세(일별 조회 추이) 집계용.
+    // 실패해도 카운터 증가는 이미 끝났으니 조용히 무시.
+    supabase.from('guide_views')
+      .insert({ guide_id: guideId, session_id: getFeedbackSessionId() })
+      .then(({ error }) => { if (error && import.meta.env.DEV) console.warn('[incrementViews] guide_views insert 실패:', error.message) })
   }
   // mockData는 in-memory이므로 변경 불필요
+}
+
+// ─── 검색 로그 ───────────────────────────────────────────────────────────────
+/** 검색어·결과 건수 기록 — 관리자 대시보드 검색 추이 집계용. fire-and-forget. */
+export function logSearch(query, resultCount) {
+  if (!isSupabaseEnabled || !query?.trim()) return
+  supabase.from('search_logs')
+    .insert({ query: query.trim(), result_count: resultCount })
+    .then(({ error }) => { if (error && import.meta.env.DEV) console.warn('[logSearch] 실패:', error.message) })
 }
 
 // ─── 챗봇 FAQ 조회수 (분류별 TOP 5 정렬용 · 누적) ──────────────────────────

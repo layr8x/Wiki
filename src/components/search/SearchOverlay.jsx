@@ -23,6 +23,7 @@ import {
 import { useSearchStore } from '@/store/searchStore.jsx'
 import { GUIDES, RECENT_GUIDES, SEARCH_SYNONYMS } from '@/data/mockData'
 import { useSearchSummary } from '@/hooks/useSearchSummary'
+import { logSearch } from '@/lib/db'
 import NoResultFallback from '@/components/search/NoResultFallback'
 import { getGuideType } from '@/lib/guideTypes'
 
@@ -122,6 +123,14 @@ export default function SearchOverlay() {
       setResults(searchGuides(query)); setSelected(0); setLoading(false)
     }, 120)
     return () => { clearTimeout(loadTimer); clearTimeout(timer) }
+  }, [query])
+
+  // 검색 로그 — 120ms 표시용 디바운스와 별도로, 타이핑을 멈춘 뒤 600ms 지나야
+  // 기록(키 입력마다 잠깐씩 멈출 때마다 행이 쌓이는 것을 방지).
+  useEffect(() => {
+    if (!query.trim()) return
+    const t = setTimeout(() => { logSearch(query, searchGuides(query).length) }, 600)
+    return () => clearTimeout(t)
   }, [query])
 
   const summary = useSearchSummary(query, results)
