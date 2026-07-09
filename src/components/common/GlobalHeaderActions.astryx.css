@@ -1,0 +1,22 @@
+/* src/components/common/GlobalHeaderActions.astryx.css — 헤더 검색 트리거 + 액션 그룹 배치.
+ * (색·간격·라운드·쉐도우는 전부 Astryx 토큰/컴포넌트가 담당. 세로 구분선 높이는
+ * GlobalHeaderActions.jsx에서 HStack의 height prop으로 지정 — Divider 내부의
+ * height:100%가 실제로 채워지려면 부모가 확정 높이를 가져야 하기 때문.
+ * 이 파일은 HStack이 표현하지 못하는 두 가지만 처리한다:
+ * 1) 부모 헤더의 남는 폭을 채우는 flex-grow 동작
+ * 2) 아주 좁은 화면에서 단축키 힌트(내가 감싼 span)를 숨기는 반응형 규칙 */
+.gha-root {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+}
+
+/* 단축키 힌트(Kbd)를 감싼 래퍼 — 아주 좁은 화면에서는 숨겨 라벨이 잘리지 않게 한다. */
+.gha-kbd {
+  display: none;
+}
+@media (min-width: 640px) {
+  .gha-kbd {
+    display: inline-flex;
+  }
+}

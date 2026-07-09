@@ -3,22 +3,34 @@
 // pathname 변경 시 자동 리셋 → 에러 페이지에서 다른 메뉴로 이동 가능.
 import React, { Suspense } from 'react'
 import { useLocation } from 'react-router-dom'
+import { VStack } from '@astryxdesign/core/VStack'
+import { Grid } from '@astryxdesign/core/Grid'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { ErrorBoundary } from './ErrorBoundary'
-import { Skeleton } from '@/components/ui/skeleton'
+import './RouteBoundary.astryx.css'
 
 function DefaultSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10 space-y-4">
-      <Skeleton className="h-4 w-32" />
-      <Skeleton className="h-10 w-2/3" />
-      <Skeleton className="h-4 w-full" />
-      <Skeleton className="h-4 w-5/6" />
-      <div className="mt-8 grid grid-cols-3 gap-4">
+    <VStack
+      gap={4}
+      width="100%"
+      maxWidth={1024}
+      paddingInline={6}
+      paddingBlock={10}
+      className="route-boundary-skeleton"
+      role="status"
+      aria-label="페이지 로딩 중"
+    >
+      <Skeleton width={128} height={16} />
+      <Skeleton width="66.67%" height={40} />
+      <Skeleton width="100%" height={16} />
+      <Skeleton width="83.33%" height={16} />
+      <Grid columns={3} gap={4} className="route-boundary-skeleton-grid">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={`sk-${i}`} className="h-32 rounded-lg" />
+          <Skeleton key={`sk-${i}`} width="100%" height={128} radius={2} />
         ))}
-      </div>
-    </div>
+      </Grid>
+    </VStack>
   )
 }
 
