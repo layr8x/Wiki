@@ -5,7 +5,7 @@
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 컴포넌트는 Theme/CSS 를 감싸지 않음
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { CheckCircle, WarningCircle, Clock, ArrowsClockwise } from '@phosphor-icons/react'
 
 import { Card } from '@astryxdesign/core/Card'
@@ -87,6 +87,10 @@ export function SyncMonitor() {
   }, [])
 
   async function loadSyncLogs() {
+    if (!isSupabaseEnabled) {
+      setLoading(false)
+      return
+    }
     try {
       const { data, error } = await supabase
         .from('sync_logs')
