@@ -31,7 +31,14 @@ const MOBILE_RE = /(01[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g;
 // 이름+학번 붙여쓴 패턴(예 "조은호3491") 및 "학생/학부모/자녀/보호자 OOO" 문맥의 이름.
 // ⚠️ 한글 이름은 직원/학생 구분이 안 돼 문맥 일치 시 직원 이름도 가려질 수 있음(트레이드오프 인지).
 const STUDENT_ID_ATTACHED_RE = /[가-힣]{2,4}\d{3,6}(?![가-힣\d])/g;
-const STUDENT_CTX_NAME_RE = /(학생|학부모|자녀|보호자)\s*([가-힣]{2,4})(?=님|이|가|은|는|을|를|,|\.|\s|$)/g;
+// ⚠️ 실사용 패턴 재검토(2026-07): 기존 "학생 OOO"(라벨→이름) 규칙은 라이브 실측 결과 정밀도가
+// 사실상 0(라벨 뒤 아무 명사나 오인 — 잔디 대화 2,952건 훼손, 진짜 이름은 못 잡음)이라 제거하고,
+// 실측 근거가 있는 "OOO 학생"(이름→라벨) 방향만 남긴다.
+const GRADE_PREFIX_EXCLUDE = new Set([
+  '초등', '고등', '전체', '재원', '신규', '기존', '해당',
+  '모든', '각각', '여러', '특정', '일부', '동일', '동일한', '당해',
+]);
+const STUDENT_NAME_CTX_RE = /([가-힣]{2,4})(\([0-9]{4,12}\))?\s*(학생|학부모|자녀|보호자)(?=님|이|가|은|는|을|를|,|\.|\s|\)|$)/g;
 function stripLoneSurrogates(s: any) {
   if (s == null) return s;
   return String(s).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
@@ -41,7 +48,9 @@ function maskBody(text: any) {
   let s = String(text);
   s = s.replace(CARD_RE, '[카드번호]').replace(RRN_RE, '[주민번호]')
        .replace(EMAIL_RE, '***@$1').replace(MOBILE_RE, '$1-****-$3');
-  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]').replace(STUDENT_CTX_NAME_RE, '$1 ***');
+  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]');
+  s = s.replace(STUDENT_NAME_CTX_RE, (m: string, name: string, paren: string | undefined, label: string) =>
+    GRADE_PREFIX_EXCLUDE.has(name) ? m : `*** ${paren ? '(****) ' : ''}${label}`);
   return s;
 }
 
