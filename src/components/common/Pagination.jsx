@@ -1,9 +1,9 @@
-// src/components/common/Pagination.jsx — 페이지네이션 컴포넌트
+// src/components/common/Pagination.jsx — 페이지네이션 컴포넌트 (Astryx 디자인시스템)
 import React from 'react'
-import {
-  CaretLeft as ChevronLeft,
-  CaretRight as ChevronRight
-} from '@phosphor-icons/react'
+import { Pagination as AstryxPagination } from '@astryxdesign/core/Pagination'
+import { VStack } from '@astryxdesign/core/VStack'
+import { Text } from '@astryxdesign/core/Text'
+import './Pagination.astryx.css'
 
 export default function Pagination({ pagination }) {
   const {
@@ -13,152 +13,29 @@ export default function Pagination({ pagination }) {
     endIndex,
     totalItems,
     goToPage,
-    hasPrevPage,
-    hasNextPage,
-  } = pagination;
+  } = pagination
 
-  // 페이지 번호 배열 생성 (최대 5개 표시)
-  const getPageNumbers = () => {
-    const pages = [];
-    const range = 2; // 현재 페이지 좌우로 2개씩
-    const start = Math.max(1, currentPage - range);
-    const end = Math.min(totalPages, currentPage + range);
-
-    if (start > 1) {
-      pages.push(1);
-      if (start > 2) pages.push('...');
-    }
-
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-
-    if (end < totalPages) {
-      if (end < totalPages - 1) pages.push('...');
-      pages.push(totalPages);
-    }
-
-    return pages;
-  };
-
-  if (totalPages <= 1) return null;
+  if (totalPages <= 1) return null
 
   return (
-    <nav
-      aria-label="페이지 네비게이션"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        marginTop: '24px',
-        alignItems: 'center',
-      }}
-    >
+    <VStack gap={4} hAlign="center" className="pagination-wrap">
       {/* 정보 텍스트 — 스크린리더가 페이지 변경을 인지하도록 aria-live */}
-      <div
-        aria-live="polite"
-        style={{
-          fontSize: '14px',
-          color: 'var(--color-muted-foreground)',
-          textAlign: 'center',
-        }}
-      >
+      <Text type="supporting" aria-live="polite">
         {startIndex} ~ {endIndex} / 총 {totalItems}개
-      </div>
+      </Text>
 
-      {/* 페이지 네비게이션 */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-        }}
-      >
-        {/* 이전 버튼 */}
-        <button
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={!hasPrevPage}
-          style={{
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-border)',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            cursor: hasPrevPage ? 'pointer' : 'not-allowed',
-            opacity: hasPrevPage ? 1 : 0.5,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '14px',
-            color: 'var(--color-foreground)',
-          }}
-          title="이전 페이지"
-        >
-          <ChevronLeft size={16} />
-          <span>이전</span>
-        </button>
-
-        {/* 페이지 번호 */}
-        {getPageNumbers().map((page, idx) =>
-          page === '...' ? (
-            <span key={`ellipsis-${idx}`} aria-hidden="true" style={{ padding: '0 4px' }}>
-              ...
-            </span>
-          ) : (
-            <button
-              key={`page-${page}`}
-              onClick={() => goToPage(page)}
-              aria-label={`${page}페이지로 이동`}
-              aria-current={page === currentPage ? 'page' : undefined}
-              style={{
-                background:
-                  page === currentPage
-                    ? 'var(--color-primary)'
-                    : 'var(--color-card)',
-                border:
-                  page === currentPage
-                    ? 'none'
-                    : '1px solid var(--color-border)',
-                color:
-                  page === currentPage
-                    ? 'var(--color-primary-foreground)'
-                    : 'var(--color-foreground)',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: page === currentPage ? '600' : 'normal',
-              }}
-            >
-              {page}
-            </button>
-          )
-        )}
-
-        {/* 다음 버튼 */}
-        <button
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={!hasNextPage}
-          style={{
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-border)',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            cursor: hasNextPage ? 'pointer' : 'not-allowed',
-            opacity: hasNextPage ? 1 : 0.5,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            fontSize: '14px',
-            color: 'var(--color-foreground)',
-          }}
-          title="다음 페이지"
-        >
-          <span>다음</span>
-          <ChevronRight size={16} />
-        </button>
-      </div>
-    </nav>
-  );
+      {/* 페이지 네비게이션 — hasPrevPage/hasNextPage는 Astryx Pagination이
+          page/totalPages로 자체 계산하므로 별도 전달 불필요.
+          goToPage는 usePagination 훅에서 1~totalPages 범위로 클램프되므로
+          경계값 호출(첫/마지막 페이지에서 이전/다음)도 안전하다. */}
+      <AstryxPagination
+        page={currentPage}
+        onChange={goToPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        variant="pages"
+        label="페이지 네비게이션"
+      />
+    </VStack>
+  )
 }

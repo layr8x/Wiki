@@ -1,5 +1,8 @@
 // src/components/common/__tests__/Pagination.test.jsx
-// Pagination — 페이지 번호 생성, aria-current, 이전/다음 disabled, ellipsis 표기
+// Pagination — Astryx 디자인시스템 Pagination 래퍼: 페이지 이동, aria-current,
+// 이전/다음 disabled, ellipsis 표기, 정보 텍스트.
+// (버튼 접근성 라벨·ellipsis 마크업은 @astryxdesign/core/Pagination 내부 구현이라
+//  "Go to page N" 등 컴포넌트가 실제로 내보내는 영문 라벨 기준으로 검증한다.)
 import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
@@ -34,40 +37,49 @@ describe('Pagination', () => {
 
   it('현재 페이지 버튼에 aria-current="page" 가 붙는다', () => {
     render(<Pagination pagination={buildPagination({ currentPage: 3 })} />)
-    const current = screen.getByRole('button', { name: /3페이지로 이동/ })
+    const current = screen.getByRole('button', { name: 'Go to page 3' })
     expect(current.getAttribute('aria-current')).toBe('page')
   })
 
   it('현재가 아닌 페이지 버튼은 aria-current 가 없다', () => {
     render(<Pagination pagination={buildPagination({ currentPage: 3 })} />)
-    const other = screen.getByRole('button', { name: /2페이지로 이동/ })
+    const other = screen.getByRole('button', { name: 'Go to page 2' })
     expect(other.hasAttribute('aria-current')).toBe(false)
   })
 
   it('페이지 번호 클릭은 goToPage 를 호출한다', () => {
     const goToPage = vi.fn()
     render(<Pagination pagination={buildPagination({ goToPage })} />)
-    fireEvent.click(screen.getByRole('button', { name: /2페이지로 이동/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Go to page 2' }))
     expect(goToPage).toHaveBeenCalledWith(2)
   })
 
   it('이전 버튼 비활성 상태와 다음 버튼 활성 상태 (첫 페이지)', () => {
     render(<Pagination pagination={buildPagination()} />)
-    expect(screen.getByTitle('이전 페이지').disabled).toBe(true)
-    expect(screen.getByTitle('다음 페이지').disabled).toBe(false)
+    expect(screen.getByRole('button', { name: 'Go to previous page' }).disabled).toBe(true)
+    expect(screen.getByRole('button', { name: 'Go to next page' }).disabled).toBe(false)
   })
 
-  it('이전/다음 버튼은 goToPage(±1) 를 호출한다', () => {
+  it('이전 버튼은 goToPage(currentPage - 1) 를 호출한다', () => {
     const goToPage = vi.fn()
     render(
       <Pagination
-        pagination={buildPagination({ currentPage: 3, hasPrevPage: true, hasNextPage: true, goToPage })}
+        pagination={buildPagination({ currentPage: 3, hasPrevPage: true, goToPage })}
       />
     )
-    fireEvent.click(screen.getByTitle('이전 페이지'))
-    expect(goToPage).toHaveBeenLastCalledWith(2)
-    fireEvent.click(screen.getByTitle('다음 페이지'))
-    expect(goToPage).toHaveBeenLastCalledWith(4)
+    fireEvent.click(screen.getByRole('button', { name: 'Go to previous page' }))
+    expect(goToPage).toHaveBeenCalledWith(2)
+  })
+
+  it('다음 버튼은 goToPage(currentPage + 1) 를 호출한다', () => {
+    const goToPage = vi.fn()
+    render(
+      <Pagination
+        pagination={buildPagination({ currentPage: 3, hasNextPage: true, goToPage })}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Go to next page' }))
+    expect(goToPage).toHaveBeenCalledWith(4)
   })
 
   it('totalPages 가 많으면 ellipsis + 경계 페이지 노출', () => {
@@ -76,15 +88,15 @@ describe('Pagination', () => {
         pagination={buildPagination({ currentPage: 6, totalPages: 12 })}
       />
     )
-    // 양쪽에 ellipsis 표시 (... 기호)
-    const ellipses = screen.getAllByText('...')
+    // 양쪽에 ellipsis 표시 (Astryx Pagination 은 '…' 한 글자로 렌더)
+    const ellipses = screen.getAllByText('…')
     expect(ellipses.length).toBe(2)
     // 첫/끝 페이지 버튼 존재
-    expect(screen.getByRole('button', { name: /1페이지로 이동/ })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /12페이지로 이동/ })).toBeTruthy()
-    // 현재 페이지 좌우 2개 포함 (4,5,6,7,8)
-    for (const p of [4, 5, 6, 7, 8]) {
-      expect(screen.getByRole('button', { name: new RegExp(`${p}페이지로 이동`) })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Go to page 1' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Go to page 12' })).toBeTruthy()
+    // 현재 페이지 좌우 1개씩 포함 (siblingCount 기본값 1 → 5,6,7)
+    for (const p of [5, 6, 7]) {
+      expect(screen.getByRole('button', { name: `Go to page ${p}` })).toBeTruthy()
     }
   })
 
@@ -92,7 +104,7 @@ describe('Pagination', () => {
     render(
       <Pagination pagination={buildPagination({ currentPage: 6, totalPages: 12 })} />
     )
-    for (const el of screen.getAllByText('...')) {
+    for (const el of screen.getAllByText('…')) {
       expect(el.getAttribute('aria-hidden')).toBe('true')
     }
   })
