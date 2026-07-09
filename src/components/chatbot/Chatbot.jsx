@@ -5,15 +5,19 @@
 // 인라인 폼(텍스트+첨부) + 하단 고정 취소/보내기 바. 평소엔 하단 검색바.
 // 토큰: 배경 #F4F4F4 · 헤더 "AMS 챗봇" · 유저 말풍선 연한파랑 #EDF5FF/글씨 #0043CE
 //       · body 20/32 · 봇 말풍선/입력 4px · 칩 pill · 폼 입력 #EDF5FF 패널 · 폭 512.
+//
+// Astryx 마이그레이션: 레이아웃·트랜지션·애니메이션을 담당하던 Tailwind 유틸리티 클래스를
+// Chatbot.astryx.css의 순수 CSS로 전량 교체(값은 원본 Tailwind 계산값과 동일하게 이전).
+// 색·폰트 토큰(T/FONT, chatbotConfig.js)은 원래도 Tailwind와 무관한 인라인 style이라 그대로 유지.
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { cn } from '@/lib/utils'
 import { useManagerFaq } from '@/hooks/useManagerFaq'
 import { useChatbot, MSG_TYPES } from './useChatbot'
 import { MIcon } from './chatbotIcons'
 import {
   T, FONT, CHIP_MENU, GREETING, FORM_COPY, ATTACH_LIMIT, SEARCH_PLACEHOLDER, getCategoryLabel, guideSearchUrl,
 } from './chatbotConfig'
+import './Chatbot.astryx.css'
 
 const BTN = { fontSize: '18px', lineHeight: '32px', fontWeight: 400, ...FONT.ss } // 버튼 라벨(body 18)
 const R_BOT = '4px 24px 24px 24px' // 봇 말풍선 — 좌상단 꼬리
@@ -35,65 +39,48 @@ function useIsMobile() {
 // ─── FAB (런처 — 항상 표시 · 시선 유도 인터랙션) ─────────────────────────
 function ChatbotFAB({ onClick, pulse, open }) {
   const isMobile = useIsMobile()
-  const pos = open && isMobile ? 'top-4 right-4' : 'bottom-6 right-6'
+  const openMobile = open && isMobile
   return (
-    <>
-      <style>{`
-        @keyframes ams-fab-ping{0%{transform:scale(1);opacity:.45}70%,100%{transform:scale(2.1);opacity:0}}
-        @keyframes ams-fab-attn{0%,84%,100%{transform:translateY(0) rotate(0deg)}89%{transform:translateY(-7px) rotate(-7deg)}94%{transform:translateY(-2px) rotate(5deg)}}
-        .ams-fab-ping{animation:ams-fab-ping 2.6s cubic-bezier(0,0,.2,1) infinite}
-        .ams-fab-attn{animation:ams-fab-attn 6s ease-in-out infinite}
-        @media(prefers-reduced-motion:reduce){.ams-fab-ping,.ams-fab-attn{animation:none}}
-      `}</style>
-      <div className={cn('fixed z-[60] flex items-center gap-2 group', pos)}>
-        {/* 호버/첫 방문 시 라벨 */}
-        {!open && (
-          <span
-            className={cn(
-              'hidden sm:flex items-center h-10 px-4 rounded-full whitespace-nowrap select-none pointer-events-none',
-              'transition-all duration-300 translate-x-3 opacity-0 group-hover:translate-x-0 group-hover:opacity-100',
-              pulse && 'translate-x-0 opacity-100'
-            )}
-            style={{ backgroundColor: T.white, boxShadow: T.shadowXl, color: T.navy, ...FONT.bodyMBold }}
-          >
-            무엇이든 물어보세요 👋
-          </span>
-        )}
-        <div className={cn('relative h-14 w-14 shrink-0', !open && 'ams-fab-attn')}>
-          {!open && <span className="ams-fab-ping absolute inset-0 rounded-full" style={{ backgroundColor: T.navy }} aria-hidden />}
-          <button
-            type="button"
-            data-ams-fab
-            onClick={onClick}
-            aria-label={open ? 'AMS 챗봇 닫기 (⌘+/)' : 'AMS 챗봇 열기 (⌘+/)'}
-            aria-expanded={open}
-            className={cn(
-              'relative h-14 w-14 rounded-full flex items-center justify-center text-white',
-              'shadow-lg hover:shadow-xl transition-transform duration-200 ease-out hover:scale-110 active:scale-95',
-              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200'
-            )}
-            style={{ backgroundColor: T.navy }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = T.navyHover)}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = T.navy)}
-          >
-            <MIcon name="forum" size={28} color="#fff" />
-            {!open && pulse && <span className="absolute top-1 right-1 h-3 w-3 rounded-full ring-2 ring-white" style={{ backgroundColor: '#DA1E28' }} aria-hidden />}
-          </button>
-        </div>
+    <div className={`cb-fab${openMobile ? ' cb-fab--open-mobile' : ''}`}>
+      {/* 호버/첫 방문 시 라벨 */}
+      {!open && (
+        <span
+          className={`cb-fab-label${pulse ? ' cb-fab-label--pulse' : ''}`}
+          style={{ backgroundColor: T.white, boxShadow: T.shadowXl, color: T.navy, ...FONT.bodyMBold }}
+        >
+          무엇이든 물어보세요 👋
+        </span>
+      )}
+      <div className={`cb-fab-circle${!open ? ' ams-fab-attn' : ''}`}>
+        {!open && <span className="cb-fab-ping ams-fab-ping" style={{ backgroundColor: T.navy }} aria-hidden />}
+        <button
+          type="button"
+          data-ams-fab
+          onClick={onClick}
+          aria-label={open ? 'AMS 챗봇 닫기 (⌘+/)' : 'AMS 챗봇 열기 (⌘+/)'}
+          aria-expanded={open}
+          className="cb-fab-btn"
+          style={{ backgroundColor: T.navy }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = T.navyHover)}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = T.navy)}
+        >
+          <MIcon name="forum" size={28} color="#fff" />
+          {!open && pulse && <span className="cb-fab-badge" style={{ backgroundColor: '#DA1E28' }} aria-hidden />}
+        </button>
       </div>
-    </>
+    </div>
   )
 }
 
 // ─── 헤더 (타이틀 + BETA — 닫기 X 없음, 팝업이라 바깥 클릭/런처로 닫음) ──
 function WidgetHeader() {
   return (
-    <div className="shrink-0 flex items-center gap-[8px] p-[16px]" style={{ backgroundColor: T.navy }}>
-      <span className="whitespace-nowrap" style={{ fontSize: '20px', lineHeight: '32px', color: T.inkOnColor, ...FONT.ss }}>
+    <div className="cb-header" style={{ backgroundColor: T.navy }}>
+      <span className="cb-header-title" style={{ fontSize: '20px', lineHeight: '32px', color: T.inkOnColor, ...FONT.ss }}>
         <b style={{ fontWeight: 600 }}>AMS</b>
         <span style={{ fontWeight: 400 }}> 챗봇</span>
       </span>
-      <span className="whitespace-nowrap" style={{ ...FONT.bodyM, color: T.tealBorder }}>BETA</span>
+      <span className="cb-header-beta" style={{ ...FONT.bodyM, color: T.tealBorder }}>BETA</span>
     </div>
   )
 }
@@ -118,21 +105,21 @@ function BotBubble({ text, answer, link, onOpen }) {
   const body = answer || text
   const paras = answerBlocks(body) // 가독성: 블록(빈 줄)별 분리 + 리스트 행걸이 들여쓰기
   return (
-    <div className="flex justify-start w-full animate-in fade-in slide-in-from-bottom-3 slide-in-from-left-1 duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
-      <div className={`flex flex-col gap-[24px] px-[16px] ${link ? 'pt-[12px] pb-[16px]' : 'py-[12px]'} max-w-[400px] overflow-hidden`} style={{ backgroundColor: T.white, border: `1px solid ${T.border}`, borderRadius: R_BOT }}>
-        <div className="flex flex-col gap-[12px] w-full">
+    <div className="cb-bot-bubble">
+      <div className={`cb-bot-bubble-inner${link ? ' cb-bot-bubble-inner--link' : ''}`} style={{ backgroundColor: T.white, border: `1px solid ${T.border}`, borderRadius: R_BOT }}>
+        <div className="cb-bot-bubble-paras">
           {paras.map((blk, bi) => (
-            <div key={bi} className={`flex flex-col w-full ${blk.list ? 'gap-[4px]' : ''}`}>
+            <div key={bi} className={`cb-bot-bubble-para${blk.list ? ' cb-bot-bubble-para--list' : ''}`}>
               {blk.lines.map((line, li) => (
-                <p key={li} className="w-full break-words [overflow-wrap:anywhere] whitespace-pre-wrap" style={{ ...FONT.bodyL, color: T.ink, ...(HANG.test(line) ? { paddingInlineStart: '1.5em', textIndent: '-1.5em' } : null) }}>{line}</p>
+                <p key={li} className="cb-bot-bubble-line" style={{ ...FONT.bodyL, color: T.ink, ...(HANG.test(line) ? { paddingInlineStart: '1.5em', textIndent: '-1.5em' } : null) }}>{line}</p>
               ))}
             </div>
           ))}
         </div>
         {link && (
-          <button type="button" onClick={() => onOpen?.(link.url)} className="group w-full flex items-center gap-[8px] px-[16px] py-[12px] rounded-[16px] transition-[filter,transform] duration-150 hover:brightness-[0.97] active:scale-[0.99]" style={{ backgroundColor: T.bg }}>
-            <span className="flex-1 text-center" style={{ ...FONT.bodyLBold, color: T.ink }}>{link.label}</span>
-            <MIcon name="open_in_new" size={24} color={T.ink} className="shrink-0 transition-transform duration-150 ease-out motion-reduce:transition-none group-hover:translate-x-[2px] group-hover:-translate-y-[2px]" />
+          <button type="button" onClick={() => onOpen?.(link.url)} className="cb-bot-bubble-link" style={{ backgroundColor: T.bg }}>
+            <span className="cb-bot-bubble-link-label" style={{ ...FONT.bodyLBold, color: T.ink }}>{link.label}</span>
+            <MIcon name="open_in_new" size={24} color={T.ink} className="cb-bot-bubble-link-icon" />
           </button>
         )}
       </div>
@@ -142,9 +129,9 @@ function BotBubble({ text, answer, link, onOpen }) {
 
 function UserBubble({ text }) {
   return (
-    <div className="flex justify-end w-full animate-in fade-in slide-in-from-right-2 duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
-      <div className="px-[16px] py-[12px] max-w-[400px] overflow-hidden" style={{ backgroundColor: T.noticeBg, border: `1px solid ${T.noticeBorder}`, borderRadius: R_USER }}>
-        <p className="break-words [overflow-wrap:anywhere] whitespace-pre-wrap" style={{ ...FONT.bodyL, color: T.brandBlue }}>{text}</p>
+    <div className="cb-user-bubble">
+      <div className="cb-user-bubble-inner" style={{ backgroundColor: T.noticeBg, border: `1px solid ${T.noticeBorder}`, borderRadius: R_USER }}>
+        <p className="cb-user-bubble-text" style={{ ...FONT.bodyL, color: T.brandBlue }}>{text}</p>
       </div>
     </div>
   )
@@ -153,14 +140,10 @@ function UserBubble({ text }) {
 // ─── 타이핑 인디케이터 (봇 응답 전 대화감) ───────────────────────────────
 function TypingIndicator() {
   return (
-    <div className="flex justify-start w-full animate-in fade-in duration-200">
-      <style>{`
-        @keyframes ams-typing{0%,80%,100%{transform:translateY(0);opacity:.35}40%{transform:translateY(-4px);opacity:1}}
-        @media(prefers-reduced-motion:reduce){.ams-typing-dot{animation:none!important;opacity:.6}}
-      `}</style>
-      <div className="inline-flex items-center gap-[6px] px-[16px] py-[12px]" style={{ backgroundColor: T.white, border: `1px solid ${T.border}`, borderRadius: R_BOT }}>
+    <div className="cb-typing">
+      <div className="cb-typing-inner" style={{ backgroundColor: T.white, border: `1px solid ${T.border}`, borderRadius: R_BOT }}>
         {[0, 1, 2].map((i) => (
-          <span key={i} className="ams-typing-dot h-2 w-2 rounded-full" style={{ backgroundColor: T.helper, animation: `ams-typing 1s ${i * 0.15}s infinite ease-in-out` }} />
+          <span key={i} className="cb-typing-dot" style={{ backgroundColor: T.helper, animation: `ams-typing 1s ${i * 0.15}s infinite ease-in-out` }} />
         ))}
       </div>
     </div>
@@ -177,7 +160,7 @@ function Chip({ label, variant, index = 0, onClick }) {
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      className="px-[20px] py-[8px] rounded-[24px] transition-[transform,box-shadow,background-color] duration-150 ease-out motion-reduce:transition-none hover:-translate-y-px active:scale-95 animate-in fade-in zoom-in-95 fill-mode-both"
+      className="cb-chip"
       style={{ backgroundColor: hover ? '#FAFAFA' : T.white, border: `1px solid ${T.borderStrong}`, boxShadow: hover ? '0 6px 16px rgba(0,67,206,0.10)' : T.shadowS, animationDuration: '280ms', animationDelay: `${index * 45}ms` }}
     >
       <span style={{ ...FONT.bodyLBold, color: red ? T.error : T.ink }}>{label}</span>
@@ -187,7 +170,7 @@ function Chip({ label, variant, index = 0, onClick }) {
 
 function ChipMenu({ onPick }) {
   return (
-    <div className="flex flex-wrap gap-[8px] w-full">
+    <div className="cb-chip-menu">
       {CHIP_MENU.map((c, i) => (
         <Chip key={c.id} label={c.label} variant={c.variant} index={i} onClick={() => onPick(c)} />
       ))}
@@ -201,11 +184,11 @@ function FaqRow({ children, onClick, isLink, last }) {
     <button
       type="button"
       onClick={onClick}
-      className="group w-full flex items-center gap-[16px] p-[16px] text-left transition-[background-color,transform] duration-150 ease-out motion-reduce:transition-none hover:bg-[#F7FAFF] active:bg-[#EDF5FF] active:scale-[0.99]"
+      className="cb-faq-row"
       style={{ backgroundColor: T.white, borderBottom: last ? 'none' : `1px solid ${T.border}` }}
     >
-      <span className="flex-1 min-w-0 break-words" style={{ ...FONT.bodyLBold, color: isLink ? T.link : T.navy }}>{children}</span>
-      <MIcon name="open_in_new" size={24} color={isLink ? T.link : T.placeholder} className="shrink-0 transition-transform duration-150 ease-out motion-reduce:transition-none group-hover:translate-x-[2px] group-hover:-translate-y-[2px]" style={isLink ? { opacity: 0.4 } : undefined} />
+      <span className="cb-faq-row-label" style={{ ...FONT.bodyLBold, color: isLink ? T.link : T.navy }}>{children}</span>
+      <MIcon name="open_in_new" size={24} color={isLink ? T.link : T.placeholder} className="cb-faq-row-icon" style={isLink ? { opacity: 0.4 } : undefined} />
     </button>
   )
 }
@@ -213,7 +196,7 @@ function FaqRow({ children, onClick, isLink, last }) {
 function FaqList({ categoryId, items, onPickQa, onRequestSolution, onOpenGuide }) {
   const label = getCategoryLabel(categoryId)
   return (
-    <div className="shrink-0 rounded-[8px] overflow-hidden w-full max-w-[400px] animate-in fade-in slide-in-from-bottom-2 duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ border: `1px solid ${T.border}` }}>
+    <div className="cb-faq-list" style={{ border: `1px solid ${T.border}` }}>
       {items.map((qa) => (
         <FaqRow key={qa.id} onClick={() => onPickQa(qa)}>{qa.q.replace(/[?？]\s*$/, '')}?</FaqRow>
       ))}
@@ -227,22 +210,22 @@ function FaqList({ categoryId, items, onPickQa, onRequestSolution, onOpenGuide }
 function GuideCard({ guide, onOpen }) {
   const [hover, setHover] = useState(false)
   return (
-    <div className="flex justify-start w-full animate-in fade-in zoom-in-95 slide-in-from-bottom-1 duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
+    <div className="cb-guide-card">
       <button
         type="button"
         onClick={() => onOpen?.(guide)}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
-        className="flex flex-col gap-[16px] p-[16px] max-w-[360px] w-full text-left rounded-[4px] transition-all duration-200 active:scale-[0.99]"
-        style={{ backgroundColor: T.white, border: `1px solid ${hover ? T.noticeBorder : T.border}`, transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? '0 8px 22px rgba(0,67,206,0.10)' : 'none' }}
+        className="cb-guide-card-btn"
+        style={{ backgroundColor: T.white, borderColor: hover ? T.noticeBorder : T.border, transform: hover ? 'translateY(-2px)' : 'none', boxShadow: hover ? '0 8px 22px rgba(0,67,206,0.10)' : 'none' }}
       >
         <p style={{ ...FONT.bodyMBold, color: T.brandBlue }}>📘 {guide.categoryLabel}</p>
-        <div className="flex flex-col gap-[8px] w-full">
-          <p className="break-words" style={{ ...FONT.headlineBold, color: T.navy }}>{guide.title}</p>
-          <div className="flex flex-col gap-[12px] w-full">
-            {guide.snippet && <p className="break-words line-clamp-2" style={{ ...FONT.bodyM, color: T.helper }}>{guide.snippet}</p>}
-            <span className="flex items-center gap-[4px]">
-              <span className="underline underline-offset-[3px]" style={{ ...FONT.bodyM, color: T.link }}>전체 가이드 보기</span>
+        <div className="cb-guide-card-body">
+          <p className="cb-guide-card-title" style={{ ...FONT.headlineBold, color: T.navy }}>{guide.title}</p>
+          <div className="cb-guide-card-body2">
+            {guide.snippet && <p className="cb-guide-card-snippet" style={{ ...FONT.bodyM, color: T.helper }}>{guide.snippet}</p>}
+            <span className="cb-guide-card-link-row">
+              <span className="cb-guide-card-link-label" style={{ ...FONT.bodyM, color: T.link }}>전체 가이드 보기</span>
               <MIcon name="open_in_new" size={24} color={T.link} style={{ transition: 'transform 150ms ease-out', transform: hover ? 'translate(2px,-2px)' : 'none' }} />
             </span>
           </div>
@@ -257,16 +240,16 @@ function FileChip({ name, onRemove }) {
   if (!onRemove) {
     // 접수완료(읽기전용) — 시안 871:26396: 회색 #E8E8E8 · 흐린 글씨 · 아이콘 없음
     return (
-      <div className="w-full flex items-center px-[16px] py-[8px] rounded-[4px]" style={{ backgroundColor: T.surfaceHover }}>
-        <span className="flex-1 min-w-0 truncate" style={{ ...BTN, color: T.inkSecondary }}>{name}</span>
+      <div className="cb-file-chip-readonly" style={{ backgroundColor: T.surfaceHover }}>
+        <span className="cb-file-chip-readonly-text" style={{ ...BTN, color: T.inkSecondary }}>{name}</span>
       </div>
     )
   }
   // 편집 — 시안 871:26336: 흰 배경 · border/secondary · rounded-4 · 삭제 X(28)
   return (
-    <div className="w-full flex items-center gap-[8px] px-[16px] py-[8px] rounded-[4px]" style={{ backgroundColor: T.white, border: `1px solid ${T.borderStrong}` }}>
-      <span className="flex-1 min-w-0 truncate" style={{ ...BTN, color: T.ink }}>{name}</span>
-      <button type="button" onClick={onRemove} aria-label="첨부 삭제" className="shrink-0 transition-transform duration-150 ease-out motion-reduce:transition-none hover:scale-110 active:scale-90" style={{ color: T.placeholder }}>
+    <div className="cb-file-chip" style={{ backgroundColor: T.white, border: `1px solid ${T.borderStrong}` }}>
+      <span className="cb-file-chip-text" style={{ ...BTN, color: T.ink }}>{name}</span>
+      <button type="button" onClick={onRemove} aria-label="첨부 삭제" className="cb-file-chip-remove" style={{ color: T.placeholder }}>
         <MIcon name="delete" size={28} color={T.placeholder} />
       </button>
     </div>
@@ -285,9 +268,9 @@ function InlineForm({ m, chatbot }) {
   if (m.done) {
     // 접수완료(읽기전용) — 시안 871:26366: 회색 텍스트박스(160·흐린글씨) + 회색 첨부칩, 안내문구 없음
     return (
-      <div className="flex flex-col gap-[8px] p-[8px] rounded-[8px] ml-auto w-[400px] max-w-full" style={{ backgroundColor: T.noticeBg, border: `1px solid ${T.noticeBorder}` }}>
-        <div className="w-full rounded-[4px] p-[16px] overflow-y-auto" style={{ height: 160, backgroundColor: T.bg, border: `1px solid ${T.border}` }}>
-          <p className="whitespace-pre-wrap break-words" style={{ ...FONT.bodyL, color: T.inkSecondary }}>{m.submittedText}</p>
+      <div className="cb-inline-form" style={{ backgroundColor: T.noticeBg, border: `1px solid ${T.noticeBorder}` }}>
+        <div className="cb-inline-form-textbox" style={{ height: 160, backgroundColor: T.bg, border: `1px solid ${T.border}` }}>
+          <p className="cb-inline-form-readonly-text" style={{ ...FONT.bodyL, color: T.inkSecondary }}>{m.submittedText}</p>
         </div>
         {(m.submittedFiles || []).map((name, i) => <FileChip key={i} name={name} />)}
       </div>
@@ -296,20 +279,20 @@ function InlineForm({ m, chatbot }) {
   if (!isActive) return null
 
   return (
-    <div className="flex flex-col gap-[8px] p-[8px] rounded-[8px] ml-auto w-[400px] max-w-full" style={{ backgroundColor: T.noticeBg, border: `1px solid ${T.noticeBorder}` }}>
+    <div className="cb-inline-form" style={{ backgroundColor: T.noticeBg, border: `1px solid ${T.noticeBorder}` }}>
       <textarea
         ref={textareaRef}
         value={chatbot.formText}
         onChange={(e) => chatbot.setFormText(e.target.value)}
         placeholder={copy.placeholder}
-        className="w-full rounded-[4px] p-[16px] resize-none outline-none overflow-y-auto placeholder:text-[rgba(22,22,22,0.32)]"
+        className="cb-inline-form-textarea"
         style={{ height: 160, backgroundColor: T.white, border: `1px solid ${T.border}`, ...FONT.bodyL, color: T.ink }}
       />
       {chatbot.formFiles.map((f, i) => <FileChip key={i} name={f.name} onRemove={() => chatbot.removeFile(i)} />)}
       {chatbot.formFiles.length < ATTACH_LIMIT.maxCount && (
-        <button type="button" onClick={() => fileRef.current?.click()} className="group w-full flex items-center justify-center gap-[8px] px-[20px] py-[8px] rounded-[2px] transition-[background-color,transform] duration-150 ease-out motion-reduce:transition-none hover:bg-[#FAFAFA] active:scale-[0.99]" style={{ backgroundColor: T.white, border: `1px solid ${T.borderStrong}` }}>
+        <button type="button" onClick={() => fileRef.current?.click()} className="cb-inline-form-attach-btn" style={{ backgroundColor: T.white, border: `1px solid ${T.borderStrong}` }}>
           <span style={{ ...BTN, color: T.ink }}>이미지 첨부하기</span>
-          <MIcon name="add" size={24} color={T.ink} className="transition-transform duration-150 ease-out motion-reduce:transition-none group-hover:rotate-90" />
+          <MIcon name="add" size={24} color={T.ink} className="cb-inline-form-attach-icon" />
         </button>
       )}
       <input ref={fileRef} type="file" accept={ATTACH_LIMIT.accept} multiple hidden onChange={(e) => chatbot.addFiles(e.target.files)} />
@@ -322,13 +305,13 @@ function InlineForm({ m, chatbot }) {
 // ─── 하단 고정바: 취소 / 보내기 ──────────────────────────────────────────
 function FormActionBar({ canSubmit, onCancel, onSubmit }) {
   return (
-    <div className="shrink-0 flex items-center justify-between px-[16px] py-[12px]" style={{ backgroundColor: T.white, borderTop: `1px solid ${T.border}` }}>
-      <button type="button" onClick={onCancel} className="flex items-center justify-center px-[32px] py-[16px] rounded-[32px] transition-[background-color,transform] duration-150 ease-out motion-reduce:transition-none hover:bg-[#FAFAFA] active:scale-[0.98]" style={{ backgroundColor: T.white, border: `1px solid ${T.borderStrong}` }}>
+    <div className="cb-formbar" style={{ backgroundColor: T.white, borderTop: `1px solid ${T.border}` }}>
+      <button type="button" onClick={onCancel} className="cb-formbar-cancel" style={{ backgroundColor: T.white, border: `1px solid ${T.borderStrong}` }}>
         <span style={{ ...BTN, color: T.ink }}>취소</span>
       </button>
-      <button type="button" onClick={onSubmit} disabled={!canSubmit} className="group flex items-center justify-center gap-[4px] pl-[32px] pr-[28px] py-[16px] rounded-[32px] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed" style={{ backgroundColor: canSubmit ? T.brandBlue : T.disabled }}>
+      <button type="button" onClick={onSubmit} disabled={!canSubmit} className="cb-formbar-submit" style={{ backgroundColor: canSubmit ? T.brandBlue : T.disabled }}>
         <span style={{ ...BTN, color: canSubmit ? T.inkOnColor : T.placeholder }}>보내기</span>
-        <MIcon name="send" size={28} color={canSubmit ? T.inkOnColor : T.placeholder} className={`transition-transform duration-150 ease-out motion-reduce:transition-none ${canSubmit ? 'group-hover:translate-x-[3px]' : ''}`} />
+        <MIcon name="send" size={28} color={canSubmit ? T.inkOnColor : T.placeholder} className="cb-formbar-submit-icon" />
       </button>
     </div>
   )
@@ -378,18 +361,15 @@ function SearchBar({ suggest, popular, onPickSuggestion }) {
   const showList = list.length > 0
   return (
     <div
-      className="shrink-0 overflow-hidden"
+      className="cb-searchbar"
       style={{
         backgroundColor: T.white,
         borderTop: `1px solid ${showList ? 'rgba(22,22,22,0.12)' : T.border}`,
-        borderTopLeftRadius: 0,
-        borderTopRightRadius: 0,
-        boxShadow: 'none',
       }}
     >
       {showList && (
-        <div className="max-h-[55vh] overflow-y-auto animate-in fade-in duration-200">
-          {!trimmed && <div className="px-[16px] pt-[12px] pb-[4px]" style={{ ...FONT.bodyM, color: T.helper }}>자주 찾는 항목</div>}
+        <div className="cb-searchbar-list">
+          {!trimmed && <div className="cb-searchbar-list-header" style={{ ...FONT.bodyM, color: T.helper }}>자주 찾는 항목</div>}
           {list.map((qa, i) => (
             <button
               key={qa.id}
@@ -397,19 +377,19 @@ function SearchBar({ suggest, popular, onPickSuggestion }) {
               onMouseEnter={() => setActive(i)}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => pick(qa)}
-              className="w-full text-left p-[16px] flex items-center gap-[12px] transition-[background-color,transform] duration-150 ease-out motion-reduce:transition-none active:scale-[0.99]"
+              className="cb-searchbar-suggestion"
               style={{ borderBottom: `1px solid ${T.border}`, backgroundColor: active === i ? '#F7FAFF' : T.white, ...FONT.bodyL, color: T.navy }}
             >
-              <span className="flex-1 min-w-0 break-words">{highlightMatch(qa.ams ? qa.q : qa.q.replace(/[?？]\s*$/, '') + '?', text)}</span>
+              <span className="cb-searchbar-suggestion-text">{highlightMatch(qa.ams ? qa.q : qa.q.replace(/[?？]\s*$/, '') + '?', text)}</span>
             </button>
           ))}
         </div>
       )}
-      <div className="px-[16px] py-[12px]">
+      <div className="cb-searchbar-formrow">
         <form
           onSubmit={(e) => e.preventDefault()}
-          className="flex items-center gap-[8px] p-[8px] rounded-[32px]"
-          style={{ backgroundColor: T.white, border: `1px solid ${focused ? T.brandBlue : T.border}`, boxShadow: focused ? '0 0 0 3px rgba(0,67,206,0.12)' : 'none', backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', transition: 'border-color 150ms, box-shadow 150ms' }}
+          className="cb-searchbar-form"
+          style={{ backgroundColor: T.white, borderColor: focused ? T.brandBlue : T.border, boxShadow: focused ? '0 0 0 3px rgba(0,67,206,0.12)' : 'none', backdropFilter: 'blur(2.5px)', WebkitBackdropFilter: 'blur(2.5px)', transition: 'border-color 150ms, box-shadow 150ms' }}
         >
           <input
             ref={inputRef}
@@ -421,11 +401,11 @@ function SearchBar({ suggest, popular, onPickSuggestion }) {
             onKeyDown={onKeyDown}
             placeholder={SEARCH_PLACEHOLDER}
             aria-label="FAQ 검색"
-            className="flex-1 min-w-0 bg-transparent border-0 outline-none pl-[16px] placeholder:text-[rgba(22,22,22,0.32)]"
+            className="cb-searchbar-input"
             style={{ ...FONT.bodyL, color: T.ink }}
             autoComplete="off"
           />
-          <span aria-hidden className="shrink-0 flex items-center justify-center p-[12px]">
+          <span aria-hidden className="cb-searchbar-icon-wrap">
             <MIcon name="search" size={28} color={T.ink} />
           </span>
         </form>
@@ -488,9 +468,9 @@ function ChatbotConversation({ chatbot }) {
   return (
     <>
       <WidgetHeader />
-      <div ref={bodyRef} role="log" aria-live="polite" aria-relevant="additions" aria-label="AMS 챗봇 대화" className="flex-1 overflow-y-auto flex flex-col px-[16px] py-[24px] [&>*]:shrink-0" style={{ backgroundColor: T.bg }}>
+      <div ref={bodyRef} role="log" aria-live="polite" aria-relevant="additions" aria-label="AMS 챗봇 대화" className="cb-conversation-body" style={{ backgroundColor: T.bg }}>
         {chatbot.messages.map((m, i) => (
-          <div key={m.id} className="w-full" style={{ marginTop: gapBefore(chatbot.messages[i - 1], m) }}>
+          <div key={m.id} className="cb-thread-msg" style={{ marginTop: gapBefore(chatbot.messages[i - 1], m) }}>
             <ThreadMessage m={m} chatbot={chatbot} />
           </div>
         ))}
@@ -526,9 +506,7 @@ function ChatbotWidget({ chatbot }) {
     return () => document.removeEventListener('mousedown', onDown)
   }, [close])
 
-  const widgetClass = isMobile
-    ? 'fixed inset-0 z-40 flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300'
-    : 'fixed bottom-24 right-6 z-40 w-[512px] h-[960px] max-h-[calc(100dvh-7rem)] rounded-[16px] overflow-hidden flex flex-col origin-bottom-right animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-300'
+  const widgetClass = `cb-widget ${isMobile ? 'cb-widget--mobile' : 'cb-widget--desktop'}`
 
   return (
     <div ref={panelRef} role="dialog" aria-label="AMS 챗봇" className={widgetClass} style={{ backgroundColor: T.bg, boxShadow: isMobile ? 'none' : T.shadowXl }}>
@@ -543,7 +521,7 @@ export function ChatbotPopupPage() {
   const chatbot = useChatbot({ faqList })
   useEffect(() => { document.title = 'AMS 챗봇' }, [])
   return (
-    <div className="fixed inset-0 flex flex-col" style={{ backgroundColor: T.bg }}>
+    <div className="cb-popup-page" style={{ backgroundColor: T.bg }}>
       <ChatbotConversation chatbot={chatbot} />
     </div>
   )

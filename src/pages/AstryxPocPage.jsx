@@ -5,7 +5,7 @@
 //   토큰·컴포넌트·light/dark 전환·빌드가 실제로 동작하는지 프로덕션 라우트와 분리해 검증한다.
 //
 // 격리 원칙:
-//   - 전역 reset.css 는 기존 페이지에 영향을 주므로 import 하지 않는다.
+//   - 전역 reset.css는 src/index.css가 이미 전역 적용 중(shadcn 제거 완료로 안전) — 재import 불필요.
 //   - astryx.css 는 `.astryx-*` 클래스만, theme.css 는 [data-astryx-theme] 스코프만 건드려 안전.
 //   - 이 라우트는 lazy 로딩 → 방문 시에만 해당 CSS/컴포넌트를 로드한다.
 //   - Astryx 규칙 준수: raw div 최소화(호스트만), 인라인 style 없음, 색은 토큰(var)만.
