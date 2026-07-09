@@ -48,21 +48,4 @@ export function MIcon({ name, size = 24, color = 'currentColor', weight, classNa
   )
 }
 
-/** 봇 아바타 — Figma 의 light-blue 원형 + 화이트 스마일 일러스트 재현 */
-export function BotAvatar({ size = 32 }) {
-  return (
-    <div
-      className="shrink-0 rounded-full flex items-center justify-center overflow-hidden"
-      style={{ width: size, height: size, backgroundColor: '#78A9FF' }}
-      aria-hidden="true"
-    >
-      <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-        <circle cx="12" cy="14" r="1.7" fill="#fff" />
-        <circle cx="20" cy="14" r="1.7" fill="#fff" />
-        <path d="M11 19c1.3 1.5 3 2.2 5 2.2s3.7-.7 5-2.2" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    </div>
-  )
-}
-
 export default MIcon

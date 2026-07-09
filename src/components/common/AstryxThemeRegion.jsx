@@ -2,7 +2,8 @@
 // Astryx(Meta 디자인시스템) 테마 영역 — 마이그레이션된 표면을 감싸는 재사용 래퍼.
 //
 // 안전 원칙(라이브 사이트 보호):
-//   - 전역 reset.css 는 import 하지 않는다(기존 shadcn 페이지 전역 스타일 오염 방지).
+//   - 전역 reset.css는 src/index.css가 이미 전역 적용 중(@layer reset, shadcn 제거 완료로
+//     오염 우려 해소됨) — 여기서 다시 import할 필요 없음.
 //   - astryx.css(.astryx-*/.xds-* 클래스만) + theme.css([data-astryx-theme] @scope 한정)만 로드.
 //     이 두 파일의 prose 규칙(h1~h6 등)은 [data-astryx-theme="neutral"] 스코프에 갇혀 있어
 //     이 <Theme> 래퍼 내부에서만 적용된다 → 사이드바/헤더 등 shadcn 영역엔 영향 없음.

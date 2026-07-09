@@ -1,0 +1,224 @@
+/* src/components/chatbot/Chatbot.astryx.css
+ * AMS 챗봇 위젯 — Tailwind 유틸리티 클래스를 그대로 순수 CSS로 1:1 변환.
+ * 색·폰트는 전부 chatbotConfig.js의 T/FONT 토큰(인라인 style)이 담당 — 이 파일은
+ * Tailwind가 담당하던 레이아웃·포지셔닝·트랜지션·애니메이션만 다룬다.
+ * 값은 전부 원본 Tailwind 유틸리티의 실제 계산값(예: gap-2=8px, duration-200=200ms,
+ * ease-out=cubic-bezier(0,0,.2,1))을 그대로 사용 — 시각적으로 완전히 동일해야 한다.
+ *
+ * 버튼 리셋: 네이티브 <button> 기본 스타일 제거(Tailwind preflight가 하던 일)는
+ * src/index.css가 전역 적용하는 Astryx reset.css(@layer reset)가 담당 — 여기서
+ * 따로 재정의하지 않는다. */
+
+/* ─── 커스텀 키프레임 (기존 인라인 <style> 태그에서 이전) ──────────────────── */
+@keyframes ams-fab-ping { 0% { transform: scale(1); opacity: .45 } 70%, 100% { transform: scale(2.1); opacity: 0 } }
+@keyframes ams-fab-attn {
+  0%, 84%, 100% { transform: translateY(0) rotate(0deg) }
+  89% { transform: translateY(-7px) rotate(-7deg) }
+  94% { transform: translateY(-2px) rotate(5deg) }
+}
+@keyframes ams-typing { 0%, 80%, 100% { transform: translateY(0); opacity: .35 } 40% { transform: translateY(-4px); opacity: 1 } }
+
+/* Tailwind animate-in(fade-in, slide-in-from-X, zoom-in-N) 대응 — 각 조합별 named keyframes */
+@keyframes cb-enter-bot-bubble { from { opacity: 0; transform: translate3d(-4px, 12px, 0) } to { opacity: 1; transform: none } }
+@keyframes cb-enter-user-bubble { from { opacity: 0; transform: translate3d(8px, 0, 0) } to { opacity: 1; transform: none } }
+@keyframes cb-enter-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes cb-enter-guide-card { from { opacity: 0; transform: translate3d(0, 4px, 0) scale3d(.95, .95, .95) } to { opacity: 1; transform: none } }
+@keyframes cb-enter-faq-list { from { opacity: 0; transform: translate3d(0, 8px, 0) } to { opacity: 1; transform: none } }
+@keyframes cb-enter-chip { from { opacity: 0; transform: scale3d(.95, .95, .95) } to { opacity: 1; transform: none } }
+@keyframes cb-enter-widget-mobile { from { opacity: 0; transform: translate3d(0, 16px, 0) } to { opacity: 1; transform: none } }
+@keyframes cb-enter-widget-desktop { from { opacity: 0; transform: translate3d(0, 8px, 0) scale3d(.95, .95, .95) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ams-fab-ping, .ams-fab-attn, .cb-typing-dot,
+  .cb-bot-bubble, .cb-user-bubble, .cb-typing, .cb-guide-card, .cb-faq-list, .cb-chip,
+  .cb-widget, .cb-searchbar-list { animation: none !important; }
+}
+
+.ams-fab-ping { animation: ams-fab-ping 2.6s cubic-bezier(0,0,.2,1) infinite; }
+.ams-fab-attn { animation: ams-fab-attn 6s ease-in-out infinite; }
+
+/* ─── FAB (런처) ──────────────────────────────────────────────────────────── */
+.cb-fab { position: fixed; z-index: 60; display: flex; align-items: center; gap: 8px; bottom: 24px; right: 24px; }
+.cb-fab--open-mobile { top: 16px; right: 16px; bottom: auto; }
+
+.cb-fab-label {
+  display: none; align-items: center; height: 40px; padding: 0 16px; border-radius: 9999px;
+  white-space: nowrap; user-select: none; pointer-events: none;
+  transition: transform 300ms, opacity 300ms; transform: translateX(12px); opacity: 0;
+}
+@media (min-width: 640px) { .cb-fab-label { display: flex; } }
+.cb-fab:hover .cb-fab-label { transform: translateX(0); opacity: 1; }
+.cb-fab-label--pulse { transform: translateX(0); opacity: 1; }
+
+.cb-fab-circle { position: relative; height: 56px; width: 56px; flex-shrink: 0; }
+.cb-fab-ping { position: absolute; inset: 0; border-radius: 9999px; }
+.cb-fab-btn {
+  position: relative; height: 56px; width: 56px; border-radius: 9999px; display: flex;
+  align-items: center; justify-content: center; color: #fff;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transition: transform 200ms cubic-bezier(0,0,.2,1), box-shadow 200ms cubic-bezier(0,0,.2,1);
+}
+.cb-fab-btn:hover { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); transform: scale(1.1); }
+.cb-fab-btn:active { transform: scale(.95); }
+.cb-fab-btn:focus-visible { outline: none; box-shadow: 0 0 0 4px oklch(88.2% 0.059 254.128); }
+.cb-fab-badge { position: absolute; top: 4px; right: 4px; height: 12px; width: 12px; border-radius: 9999px; box-shadow: 0 0 0 2px #fff; }
+
+/* ─── 헤더 ───────────────────────────────────────────────────────────────── */
+.cb-header { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 16px; }
+.cb-header-title, .cb-header-beta { white-space: nowrap; }
+
+/* ─── 봇/유저 말풍선 ─────────────────────────────────────────────────────── */
+.cb-bot-bubble { display: flex; justify-content: flex-start; width: 100%; animation: cb-enter-bot-bubble 420ms cubic-bezier(0.22,1,0.36,1); }
+.cb-bot-bubble-inner { display: flex; flex-direction: column; gap: 24px; padding: 12px 16px; max-width: 400px; overflow: hidden; }
+.cb-bot-bubble-inner--link { padding: 12px 16px 16px; }
+.cb-bot-bubble-paras { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.cb-bot-bubble-para { display: flex; flex-direction: column; width: 100%; }
+.cb-bot-bubble-para--list { gap: 4px; }
+.cb-bot-bubble-line { width: 100%; overflow-wrap: anywhere; white-space: pre-wrap; }
+.cb-bot-bubble-link {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px 16px; border-radius: 16px;
+  transition: filter 150ms, transform 150ms; cursor: pointer; border: none;
+}
+.cb-bot-bubble-link:hover { filter: brightness(.97); }
+.cb-bot-bubble-link:active { transform: scale(.99); }
+.cb-bot-bubble-link-label { flex: 1 1 0%; text-align: center; }
+.cb-bot-bubble-link-icon { flex-shrink: 0; transition: transform 150ms cubic-bezier(0,0,.2,1); }
+.cb-bot-bubble-link:hover .cb-bot-bubble-link-icon { transform: translate(2px, -2px); }
+@media (prefers-reduced-motion: reduce) { .cb-bot-bubble-link-icon { transition: none; } }
+
+.cb-user-bubble { display: flex; justify-content: flex-end; width: 100%; animation: cb-enter-user-bubble 420ms cubic-bezier(0.22,1,0.36,1); }
+.cb-user-bubble-inner { padding: 12px 16px; max-width: 400px; overflow: hidden; }
+.cb-user-bubble-text { overflow-wrap: anywhere; white-space: pre-wrap; }
+
+/* ─── 타이핑 인디케이터 ──────────────────────────────────────────────────── */
+.cb-typing { display: flex; justify-content: flex-start; width: 100%; animation: cb-enter-fade 200ms; }
+.cb-typing-inner { display: inline-flex; align-items: center; gap: 6px; padding: 12px 16px; }
+.cb-typing-dot { height: 8px; width: 8px; border-radius: 9999px; }
+
+/* ─── 칩 메뉴 ────────────────────────────────────────────────────────────── */
+.cb-chip-menu { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.cb-chip {
+  padding: 8px 20px; border-radius: 24px; cursor: pointer;
+  transition: transform 150ms cubic-bezier(0,0,.2,1), box-shadow 150ms cubic-bezier(0,0,.2,1), background-color 150ms cubic-bezier(0,0,.2,1);
+  animation-name: cb-enter-chip; animation-timing-function: cubic-bezier(0,0,.2,1); animation-fill-mode: both;
+}
+.cb-chip:hover { transform: translateY(-1px); }
+.cb-chip:active { transform: scale(.95); }
+@media (prefers-reduced-motion: reduce) { .cb-chip { transition: none; } }
+
+/* ─── FAQ 목록 ───────────────────────────────────────────────────────────── */
+.cb-faq-list { flex-shrink: 0; border-radius: 8px; overflow: hidden; width: 100%; max-width: 400px; animation: cb-enter-faq-list 420ms cubic-bezier(0.22,1,0.36,1); }
+.cb-faq-row {
+  width: 100%; display: flex; align-items: center; gap: 16px; padding: 16px; text-align: left;
+  transition: background-color 150ms cubic-bezier(0,0,.2,1), transform 150ms cubic-bezier(0,0,.2,1);
+  border: none; cursor: pointer;
+}
+.cb-faq-row:hover { background-color: #F7FAFF; }
+.cb-faq-row:active { background-color: #EDF5FF; transform: scale(.99); }
+@media (prefers-reduced-motion: reduce) { .cb-faq-row { transition: none; } }
+.cb-faq-row-label { flex: 1 1 0%; min-width: 0; overflow-wrap: break-word; }
+.cb-faq-row-icon { flex-shrink: 0; transition: transform 150ms cubic-bezier(0,0,.2,1); }
+.cb-faq-row:hover .cb-faq-row-icon { transform: translate(2px, -2px); }
+@media (prefers-reduced-motion: reduce) { .cb-faq-row-icon { transition: none; } }
+
+/* ─── 가이드 카드 ────────────────────────────────────────────────────────── */
+.cb-guide-card { display: flex; justify-content: flex-start; width: 100%; animation: cb-enter-guide-card 420ms cubic-bezier(0.22,1,0.36,1); }
+.cb-guide-card-btn {
+  display: flex; flex-direction: column; gap: 16px; padding: 16px; max-width: 360px; width: 100%;
+  text-align: left; border-radius: 4px; transition: border-color 200ms, transform 200ms, box-shadow 200ms;
+  cursor: pointer; border-style: solid; border-width: 1px;
+}
+.cb-guide-card-btn:active { transform: scale(.99); }
+.cb-guide-card-body { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.cb-guide-card-title { overflow-wrap: break-word; }
+.cb-guide-card-body2 { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.cb-guide-card-snippet { overflow-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cb-guide-card-link-row { display: flex; align-items: center; gap: 4px; }
+.cb-guide-card-link-label { text-decoration-line: underline; text-underline-offset: 3px; }
+
+/* ─── 첨부 파일 칩 ───────────────────────────────────────────────────────── */
+.cb-file-chip-readonly { width: 100%; display: flex; align-items: center; padding: 8px 16px; border-radius: 4px; }
+.cb-file-chip-readonly-text { flex: 1 1 0%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-file-chip { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 4px; }
+.cb-file-chip-text { flex: 1 1 0%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-file-chip-remove {
+  flex-shrink: 0; transition: transform 150ms cubic-bezier(0,0,.2,1); background: none; border: none; cursor: pointer; padding: 0;
+}
+.cb-file-chip-remove:hover { transform: scale(1.1); }
+.cb-file-chip-remove:active { transform: scale(.9); }
+@media (prefers-reduced-motion: reduce) { .cb-file-chip-remove { transition: none; } }
+
+/* ─── 인라인 폼 ──────────────────────────────────────────────────────────── */
+.cb-inline-form { display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 8px; margin-left: auto; width: 400px; max-width: 100%; }
+.cb-inline-form-textbox { width: 100%; border-radius: 4px; padding: 16px; overflow-y: auto; }
+.cb-inline-form-readonly-text { overflow-wrap: break-word; white-space: pre-wrap; }
+.cb-inline-form-textarea {
+  width: 100%; border-radius: 4px; padding: 16px; resize: none; outline: none; overflow-y: auto; border-style: solid; border-width: 1px;
+}
+.cb-inline-form-textarea::placeholder { color: rgba(22, 22, 22, 0.32); }
+.cb-inline-form-attach-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 8px 20px; border-radius: 2px;
+  transition: background-color 150ms cubic-bezier(0,0,.2,1), transform 150ms cubic-bezier(0,0,.2,1); border-style: solid; border-width: 1px; cursor: pointer;
+}
+.cb-inline-form-attach-btn:hover { background-color: #FAFAFA; }
+.cb-inline-form-attach-btn:active { transform: scale(.99); }
+@media (prefers-reduced-motion: reduce) { .cb-inline-form-attach-btn { transition: none; } }
+.cb-inline-form-attach-icon { transition: transform 150ms cubic-bezier(0,0,.2,1); }
+.cb-inline-form-attach-btn:hover .cb-inline-form-attach-icon { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .cb-inline-form-attach-icon { transition: none; } }
+
+/* ─── 하단 고정바 (취소/보내기) ──────────────────────────────────────────── */
+.cb-formbar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; }
+.cb-formbar-cancel {
+  display: flex; align-items: center; justify-content: center; padding: 16px 32px; border-radius: 32px;
+  transition: background-color 150ms cubic-bezier(0,0,.2,1), transform 150ms cubic-bezier(0,0,.2,1); border-style: solid; border-width: 1px; cursor: pointer;
+}
+.cb-formbar-cancel:hover { background-color: #FAFAFA; }
+.cb-formbar-cancel:active { transform: scale(.98); }
+@media (prefers-reduced-motion: reduce) { .cb-formbar-cancel { transition: none; } }
+.cb-formbar-submit {
+  display: flex; align-items: center; justify-content: center; gap: 4px; padding: 16px 28px 16px 32px; border-radius: 32px;
+  transition: filter 150ms, transform 150ms, background-color 150ms; border: none; cursor: pointer;
+}
+.cb-formbar-submit:hover { filter: brightness(1.1); }
+.cb-formbar-submit:active { transform: scale(.99); }
+.cb-formbar-submit:disabled { cursor: not-allowed; }
+.cb-formbar-submit-icon { transition: transform 150ms cubic-bezier(0,0,.2,1); }
+.cb-formbar-submit:not(:disabled):hover .cb-formbar-submit-icon { transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) { .cb-formbar-submit-icon { transition: none; } }
+
+/* ─── 하단 검색바 ────────────────────────────────────────────────────────── */
+.cb-searchbar { flex-shrink: 0; overflow: hidden; border-top-left-radius: 0; border-top-right-radius: 0; box-shadow: none; }
+.cb-searchbar-list { max-height: 55vh; overflow-y: auto; animation: cb-enter-fade 200ms; }
+.cb-searchbar-list-header { padding: 12px 16px 4px; }
+.cb-searchbar-suggestion {
+  width: 100%; text-align: left; padding: 16px; display: flex; align-items: center; gap: 12px;
+  transition: background-color 150ms cubic-bezier(0,0,.2,1), transform 150ms cubic-bezier(0,0,.2,1); border: none; cursor: pointer;
+}
+.cb-searchbar-suggestion:active { transform: scale(.99); }
+@media (prefers-reduced-motion: reduce) { .cb-searchbar-suggestion { transition: none; } }
+.cb-searchbar-suggestion-text { flex: 1 1 0%; min-width: 0; overflow-wrap: break-word; }
+.cb-searchbar-formrow { padding: 12px 16px; }
+.cb-searchbar-form { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 32px; border-style: solid; border-width: 1px; }
+.cb-searchbar-input {
+  flex: 1 1 0%; min-width: 0; background-color: transparent; border: 0; outline: none; padding-left: 16px;
+}
+.cb-searchbar-input::placeholder { color: rgba(22, 22, 22, 0.32); }
+.cb-searchbar-icon-wrap { flex-shrink: 0; display: flex; align-items: center; justify-content: center; padding: 12px; }
+
+/* ─── 메시지 스레드 래퍼 ─────────────────────────────────────────────────── */
+.cb-thread-msg { width: 100%; }
+.cb-conversation-body { flex: 1 1 0%; overflow-y: auto; display: flex; flex-direction: column; padding: 24px 16px; }
+.cb-conversation-body > * { flex-shrink: 0; }
+
+/* ─── 위젯 패널 / 팝업 페이지 ────────────────────────────────────────────── */
+.cb-widget {
+  display: flex; flex-direction: column; position: fixed; z-index: 40;
+}
+.cb-widget--mobile { inset: 0; animation: cb-enter-widget-mobile 300ms; }
+.cb-widget--desktop {
+  bottom: 96px; right: 24px; width: 512px; height: 960px; max-height: calc(100dvh - 7rem);
+  border-radius: 16px; overflow: hidden; transform-origin: bottom right;
+  animation: cb-enter-widget-desktop 300ms;
+}
+.cb-popup-page { position: fixed; inset: 0; display: flex; flex-direction: column; }
