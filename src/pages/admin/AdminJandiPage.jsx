@@ -177,21 +177,21 @@ function MessageRow({ m, isReply = false }) {
 function ChannelKpi({ ch }) {
   const { data, isLoading, isError } = useChannelCount(ch.id)
   return (
-    <Card padding={5}>
-      <VStack gap={2}>
-        <div className="aj-kpi-head">
-          <Text type="supporting" maxLines={1}>{ch.label}</Text>
-          <MessageSquare size={16} className="aj-kpi-icon" />
+    <Card className="aj-kpi">
+      <div className="aj-kpi-head">
+        <Text type="supporting" maxLines={1}>{ch.label}</Text>
+        <MessageSquare size={16} className="aj-kpi-icon" />
+      </div>
+      {isLoading ? (
+        <div className="aj-skel aj-skel-kpi" />
+      ) : (
+        <div className="aj-kpi-value">
+          <Text as="span" size="2xl" weight="semibold" hasTabularNumbers>
+            {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
+          </Text>
+          <Text as="span" type="supporting">개</Text>
         </div>
-        {isLoading ? (
-          <div className="aj-skel aj-skel-kpi" />
-        ) : (
-          <div className="aj-kpi-value">
-            <Heading level={2}>{isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}</Heading>
-            <Text type="supporting">개</Text>
-          </div>
-        )}
-      </VStack>
+      )}
     </Card>
   )
 }
@@ -283,24 +283,24 @@ export default function AdminJandiPage() {
 
   return (
     <div className="aj-shell">
-      <VStack gap={8} hAlign="stretch">
+      <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
-        <header className="aj-header">
+        <VStack gap={1}>
           <Heading level={1}>잔디 대화</Heading>
           <Text type="supporting">JANDI 5채널 실시간 수집 데이터 · 방별 타임라인</Text>
-        </header>
+        </VStack>
 
         {!isSupabaseEnabled && (
-          <Card padding={0}>
-            <p className="aj-notice">
+          <Card variant="muted">
+            <Text type="supporting">
               Supabase 환경변수(VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY)가 설정되지 않았습니다.
-            </p>
+            </Text>
           </Card>
         )}
 
         {/* ─── 채널별 메시지 수 (KPI) ───────────────────────────── */}
-        <Grid columns={{ minWidth: 240, max: 5 }} gap={4}>
+        <Grid columns={{ minWidth: 200, max: 5 }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
@@ -376,17 +376,17 @@ export default function AdminJandiPage() {
 
           <div className="aj-main-body">
             {isError ? (
-              <p className="aj-state aj-error">불러오기 실패: {error?.message || '오류'}</p>
+              <Text as="p" className="aj-state aj-error">불러오기 실패: {error?.message || '오류'}</Text>
             ) : isLoading ? (
               <div className="aj-skel-list">
                 {Array.from({ length: 6 }).map((_, i) => <div key={i} className="aj-skel aj-skel-thread" />)}
               </div>
             ) : threads.length === 0 ? (
-              <p className="aj-state">조건에 맞는 메시지가 없습니다.</p>
+              <Text as="p" type="supporting" className="aj-state">조건에 맞는 메시지가 없습니다.</Text>
             ) : (
               <VStack gap={4} hAlign="stretch">
                 {threads.map((t) => (
-                  <Card key={t.root.link_id} padding={0} className="aj-thread">
+                  <div key={t.root.link_id} className="aj-thread">
                     <div className="aj-thread-head">
                       <div className="aj-thread-head-l">
                         <Badge variant="neutral" label={writerLabel(t.root)} icon={<User size={12} />} className="aj-thread-who" />
@@ -402,7 +402,7 @@ export default function AdminJandiPage() {
                         <MessageRow key={m.link_id} m={m} isReply={i > 0} />
                       ))}
                     </ul>
-                  </Card>
+                  </div>
                 ))}
               </VStack>
             )}

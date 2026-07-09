@@ -13,18 +13,12 @@
 @media (min-width: 640px) { .aj-shell { padding: 24px; } }
 @media (min-width: 1024px) { .aj-shell { padding: 32px; } }
 
-/* ─── 헤더 ────────────────────────────────────────────────────── */
-.aj-header { display: flex; flex-direction: column; gap: 4px; }
+/* Supabase 미설정 안내 — Card(variant="muted") 안쪽 Text만 감싸므로 별도 레이아웃 불필요 */
 
-/* Supabase 미설정 안내 */
-.aj-notice {
-  padding: 32px 24px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--color-text-secondary);
+/* ─── KPI 카드 (카카오 상담 페이지와 동일 스펙) ──────────────────── */
+.aj-kpi {
+  display: flex; flex-direction: column; gap: 12px;
 }
-
-/* ─── KPI 카드 ────────────────────────────────────────────────── */
 .aj-kpi-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .aj-kpi-icon { color: var(--color-icon-secondary); flex: none; }
 .aj-kpi-value {
@@ -52,17 +46,17 @@
 .aj-main-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .aj-main-body { padding: 16px 20px; }
 
-/* 상태(빈/에러) 문구 */
-.aj-state {
-  padding: 40px 16px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
+/* 상태(빈/에러) 문구 — 색·크기는 Text(type="supporting")가 담당, 여기는 레이아웃만 */
+.aj-state { padding: 40px 0; text-align: center; }
 .aj-error { color: var(--color-text-red); }
 
-/* ─── 스레드 카드 ─────────────────────────────────────────────── */
-.aj-thread { overflow: hidden; }
+/* ─── 스레드 카드 (카카오 상담 페이지와 동일 스펙 — Card 중첩 대신 일반 박스) ── */
+.aj-thread {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+  overflow: hidden;
+  background: var(--color-background-body);
+}
 .aj-thread-head {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
   padding: 12px 16px;
