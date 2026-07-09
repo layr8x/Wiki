@@ -16,7 +16,8 @@ describe('NoResultFallback', () => {
   it('질의어를 그대로 노출한다', () => {
     render(<NoResultFallback query="환불 절차" onGoTo={() => {}} onNavigateFeedback={() => {}} />)
     // 헤더에 쿼리 노출 — &ldquo;/&rdquo; 로 인해 smart quote 가 실제 텍스트. 내용 포함 여부만 체크.
-    expect(screen.getByText(/환불 절차/, { selector: 'p' })).toBeTruthy()
+    // (Astryx Text는 기본적으로 <span>으로 렌더되므로 특정 태그를 강제하지 않는다.)
+    expect(screen.getAllByText(/환불 절차/).length).toBeGreaterThan(0)
     // 헤더 + 폼 안 인용 — 최소 2회 등장
     const occurrences = screen.getAllByText((_, node) =>
       node?.textContent?.includes('환불 절차') ?? false
