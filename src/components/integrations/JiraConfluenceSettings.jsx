@@ -1,12 +1,34 @@
 // src/components/integrations/JiraConfluenceSettings.jsx
-// Jira/Confluence OAuth 통합 설정 UI
+// Jira/Confluence OAuth 통합 설정 UI — Astryx(디자인시스템) 표면.
+//   - 데이터 로직(계정 로드·OAuth 연결 시작·연결 해제)·Supabase·fetch 호출은 100% 유지
+//   - 시각 요소만 Astryx primitive(Card/VStack/HStack/Heading/Text/Badge/Button/Spinner/Banner)로 교체
+//   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 컴포넌트는 Theme/CSS 를 감싸지 않음
 
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
-import { AlertCircle, CheckCircle, Loader } from 'lucide-react'
+import { CheckCircle } from '@phosphor-icons/react'
+
+import { Card } from '@astryxdesign/core/Card'
+import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
+import { Heading } from '@astryxdesign/core/Heading'
+import { Text } from '@astryxdesign/core/Text'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Spinner } from '@astryxdesign/core/Spinner'
+import { Banner } from '@astryxdesign/core/Banner'
+
+import './JiraConfluenceSettings.astryx.css'
+
+// provider → Astryx Badge variant (Jira/Confluence 색 계열 구분)
+const PROVIDER_BADGE = {
+  jira: 'blue',
+  confluence: 'purple',
+}
+const PROVIDER_LABEL = {
+  jira: 'Jira',
+  confluence: 'Confluence',
+}
 
 export function JiraConfluenceSettings() {
   const [integrations, setIntegrations] = useState([])
@@ -113,113 +135,100 @@ export function JiraConfluenceSettings() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Jira & Confluence</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader className="animate-spin" />
-        </CardContent>
+      <Card padding={6}>
+        <VStack gap={4} hAlign="stretch">
+          <Heading level={3}>Jira & Confluence</Heading>
+          <VStack hAlign="center" className="jcs-loading">
+            <Spinner label="불러오는 중…" />
+          </VStack>
+        </VStack>
       </Card>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Jira & Confluence 연동</CardTitle>
-        <CardDescription>
-          Atlassian 계정으로 안전하게 연결합니다. API 키나 토큰 입력이 필요 없습니다.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <Card padding={6}>
+      <VStack gap={6} hAlign="stretch">
+
+        <VStack gap={1.5}>
+          <Heading level={3}>Jira & Confluence 연동</Heading>
+          <Text type="supporting">
+            Atlassian 계정으로 안전하게 연결합니다. API 키나 토큰 입력이 필요 없습니다.
+          </Text>
+        </VStack>
+
         {error && (
-          <div className="flex items-start gap-3 p-4 rounded-lg bg-red-50 border border-red-200 dark:bg-red-950 dark:border-red-800">
-            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-medium text-red-900 dark:text-red-100">오류 발생</p>
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-            </div>
-          </div>
+          <Banner status="error" title="오류 발생" description={error} />
         )}
 
         {/* 연결된 통합 목록 */}
         {Object.keys(groupedIntegrations).length > 0 && (
-          <div className="space-y-3">
-            <h3 className="font-semibold">연결된 계정</h3>
-            {Object.values(groupedIntegrations).map(integration => (
-              <div
-                key={`${integration.provider}-${integration.cloud_id}`}
-                className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <span className="font-medium capitalize">{integration.provider}</span>
-                    <Badge variant="outline" className="capitalize">
-                      {integration.provider === 'jira' ? 'Jira' : 'Confluence'}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    계정: {integration.atlassian_email}
-                  </p>
-                  {integration.site_url && (
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      사이트: {new URL(integration.site_url).hostname}
-                    </p>
-                  )}
-                  {integration.expires_at && (
-                    <p className="text-xs text-gray-500">
-                      토큰 갱신: {new Date(integration.expires_at).toLocaleDateString('ko-KR')}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => disconnect(integration.provider, integration.cloud_id)}
+          <VStack gap={3} hAlign="stretch">
+            <Text weight="semibold">연결된 계정</Text>
+            <VStack gap={3} hAlign="stretch">
+              {Object.values(groupedIntegrations).map(integration => (
+                <div
+                  key={`${integration.provider}-${integration.cloud_id}`}
+                  className="jcs-account-row"
                 >
-                  해제
-                </Button>
-              </div>
-            ))}
-          </div>
+                  <HStack gap={3} vAlign="center" hAlign="between">
+                    <VStack gap={1} hAlign="stretch">
+                      <HStack gap={2} vAlign="center">
+                        <CheckCircle size={18} weight="fill" className="jcs-check-icon" />
+                        <Text weight="medium" className="jcs-cap">{integration.provider}</Text>
+                        <Badge
+                          variant={PROVIDER_BADGE[integration.provider] || 'neutral'}
+                          label={PROVIDER_LABEL[integration.provider] || integration.provider}
+                        />
+                      </HStack>
+                      <Text type="supporting">계정: {integration.atlassian_email}</Text>
+                      {integration.site_url && (
+                        <Text type="supporting">사이트: {new URL(integration.site_url).hostname}</Text>
+                      )}
+                      {integration.expires_at && (
+                        <Text type="supporting">토큰 갱신: {new Date(integration.expires_at).toLocaleDateString('ko-KR')}</Text>
+                      )}
+                    </VStack>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      label="해제"
+                      onClick={() => disconnect(integration.provider, integration.cloud_id)}
+                    />
+                  </HStack>
+                </div>
+              ))}
+            </VStack>
+          </VStack>
         )}
 
         {/* 연결 버튼 */}
-        <div className="space-y-3">
-          <h3 className="font-semibold">새 계정 추가</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+        <VStack gap={3} hAlign="stretch">
+          <Text weight="semibold">새 계정 추가</Text>
+          <Text type="supporting">
             Atlassian 계정으로 로그인하여 Jira 및 Confluence에 접근합니다.
-          </p>
+          </Text>
           <Button
-            onClick={startConnect}
-            disabled={connecting}
-            className="w-full"
+            label="Atlassian 계정으로 연결"
+            variant="primary"
             size="lg"
-          >
-            {connecting ? (
-              <>
-                <Loader className="mr-2 h-4 w-4 animate-spin" />
-                연결 중...
-              </>
-            ) : (
-              'Atlassian 계정으로 연결'
-            )}
-          </Button>
-        </div>
+            isLoading={connecting}
+            onClick={startConnect}
+            className="jcs-connect-btn"
+          />
+        </VStack>
 
         {/* 안내 */}
-        <div className="rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4 space-y-2">
-          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">💡 안내</p>
-          <ul className="text-sm text-blue-800 dark:text-blue-200 list-disc list-inside space-y-1">
+        <Banner status="info" title="안내" defaultIsExpanded>
+          <ul className="jcs-info-list">
             <li>API 키 노출 없이 안전한 OAuth 인증</li>
             <li>Jira 이슈 검색 및 생성 가능</li>
             <li>Confluence 페이지 검색 및 편집 가능</li>
             <li>토큰은 자동으로 갱신됩니다</li>
           </ul>
-        </div>
-      </CardContent>
+        </Banner>
+
+      </VStack>
     </Card>
   )
 }

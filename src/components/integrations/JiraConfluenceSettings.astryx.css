@@ -1,0 +1,42 @@
+/* src/components/integrations/JiraConfluenceSettings.astryx.css
+ * Jira/Confluence OAuth 연동 카드 — Astryx 표면. 색·간격·라운드는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(Card/VStack/HStack/Heading/Text/Badge/Button/Spinner/Banner)로
+ * 표현 못하는 로딩 여백·계정 행(bordered row)·아이콘 색·안내 리스트만 여기서 처리한다. */
+
+/* 로딩 상태 — 기존 (flex items-center justify-center py-8) 재현 */
+.jcs-loading {
+  padding-block: var(--spacing-8);
+}
+
+/* 연결된 계정 체크 아이콘 */
+.jcs-check-icon {
+  color: var(--color-icon-green);
+  flex: none;
+}
+
+/* provider slug(jira/confluence) 표기 — 기존 capitalize 재현 */
+.jcs-cap {
+  text-transform: capitalize;
+}
+
+/* 연결된 계정 행 — 기존 (border rounded-lg p-4) 재현 */
+.jcs-account-row {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-container);
+  padding: var(--spacing-4);
+}
+
+/* 연결 버튼 — 기존 w-full 재현 */
+.jcs-connect-btn {
+  width: 100%;
+}
+
+/* 안내 배너 내부 리스트 */
+.jcs-info-list {
+  margin: 0;
+  padding-left: var(--spacing-5);
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
