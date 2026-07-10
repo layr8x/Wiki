@@ -20,6 +20,9 @@ import {
   fetchKakaoCategorySpike,
   fetchKakaoSentimentByChannel,
   fetchKakaoCollectionHealth,
+  fetchJandiTodayCount,
+  fetchJandiActiveWriters,
+  fetchJandiReplyRate,
 } from '../lib/db'
 
 // ─── 전체 가이드 목록 ─────────────────────────────────────────────────────────
@@ -182,5 +185,33 @@ export function useKakaoCollectionHealth() {
     queryFn: fetchKakaoCollectionHealth,
     staleTime: 60 * 1000,
     refetchInterval: 60 * 1000,
+  })
+}
+
+// ─── 잔디 오늘 메시지량(5개 방 합산) ────────────────────────────────────────
+export function useJandiTodayCount() {
+  return useQuery({
+    queryKey: ['jandi-live', 'today-count'],
+    queryFn: fetchJandiTodayCount,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  })
+}
+
+// ─── 잔디 최근 7일 활성 작성자 수(익명 ID) ─────────────────────────────────
+export function useJandiActiveWriters(days = 7) {
+  return useQuery({
+    queryKey: ['jandi-live', 'active-writers', days],
+    queryFn: () => fetchJandiActiveWriters(days),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── 잔디 스레드(댓글) 참여율 ───────────────────────────────────────────────
+export function useJandiReplyRate(days = 30) {
+  return useQuery({
+    queryKey: ['jandi-live', 'reply-rate', days],
+    queryFn: () => fetchJandiReplyRate(days),
+    staleTime: 5 * 60 * 1000,
   })
 }

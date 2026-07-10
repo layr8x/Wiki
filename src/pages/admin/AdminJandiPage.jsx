@@ -26,6 +26,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
+import { JandiStatus } from '@/components/analytics/JandiStatus'
 
 import './AdminJandiPage.astryx.css'
 
@@ -301,6 +302,9 @@ export default function AdminJandiPage() {
             </Text>
           </Card>
         )}
+
+        {/* ─── 실시간 현황 (North Star: 오늘 대화량) ─────────────── */}
+        <JandiStatus />
 
         {/* ─── 분석 요약 (방법론 기반 상단 통계 영역, 카카오 상담 페이지와 동일 스펙) ── */}
         <AnalyticsHeader

@@ -1,0 +1,37 @@
+/* src/components/analytics/JandiStatus.astryx.css
+ * 잔디 대화 실시간 현황 — Astryx 표면. 색·간격·라운드는 전부 Astryx 토큰(var)만 사용. */
+
+.js-card { overflow: hidden; }
+
+.js-headline { min-width: 0; }
+
+.js-divider { margin-block: 16px; }
+
+.js-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+@media (max-width: 560px) {
+  .js-grid { grid-template-columns: 1fr; }
+}
+
+.js-stat { min-width: 0; }
+
+.js-footnote {
+  display: block;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-disabled);
+  line-height: 1.5;
+}
+
+.js-skel {
+  height: 32px;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: js-pulse 1.4s ease-in-out infinite;
+}
+.js-skel-headline { height: 56px; }
+@keyframes js-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

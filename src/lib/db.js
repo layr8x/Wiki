@@ -435,6 +435,55 @@ export async function fetchKakaoCollectionHealth() {
   })
 }
 
+// ─── 잔디 KST 자정 ISO (오늘 메시지량 집계 기준) ───────────────────────────
+function jandiStartOfTodayKst() {
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const pad = (n) => String(n).padStart(2, '0')
+  const ymd = `${kst.getUTCFullYear()}-${pad(kst.getUTCMonth() + 1)}-${pad(kst.getUTCDate())}`
+  return new Date(`${ymd}T00:00:00+09:00`).toISOString()
+}
+
+// ─── 잔디: 오늘 메시지량 (5개 방 합산) ──────────────────────────────────────
+// RPC 없음(잔디는 sentiment/category 분류 파이프라인 자체가 없음 — count-only
+// 직접 조회로 계산. jandi_messages 는 2만여 건 규모라 count 쿼리로 충분히 가벼움.
+export async function fetchJandiTodayCount() {
+  if (!isSupabaseEnabled) return null
+  const { count, error } = await supabase
+    .from('jandi_messages').select('*', { count: 'exact', head: true })
+    .gte('created_at', jandiStartOfTodayKst())
+  if (error) throw error
+  return count ?? 0
+}
+
+// ─── 잔디: 최근 N일 활성 작성자 수(익명 writer_id 기준) ───────────────────
+// ⚠️ writer_name 은 100% NULL 확인됨(2026-07-10 실측) — 실명 랭킹은 만들 수
+// 없어 [미측정]. writer_id(익명 ID) 기준 distinct 카운트만 [측정] 가능.
+export async function fetchJandiActiveWriters(days = 7) {
+  if (!isSupabaseEnabled) return null
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+  const { data, error } = await supabase
+    .from('jandi_messages').select('writer_id')
+    .gte('created_at', since).not('writer_id', 'is', null)
+  if (error) throw error
+  return new Set((data || []).map((r) => r.writer_id)).size
+}
+
+// ─── 잔디: 스레드(댓글) 참여율 ──────────────────────────────────────────────
+export async function fetchJandiReplyRate(days = 30) {
+  if (!isSupabaseEnabled) return null
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+  const [totalQ, replyQ] = await Promise.all([
+    supabase.from('jandi_messages').select('*', { count: 'exact', head: true }).gte('created_at', since),
+    supabase.from('jandi_messages').select('*', { count: 'exact', head: true })
+      .gte('created_at', since).not('reply_to_message_id', 'is', null),
+  ])
+  if (totalQ.error) throw totalQ.error
+  if (replyQ.error) throw replyQ.error
+  const total = totalQ.count ?? 0
+  const replies = replyQ.count ?? 0
+  return { total, replies, rate: total > 0 ? (replies / total) * 100 : 0 }
+}
+
 // ─── 모듈 트리 (항상 mockData) ───────────────────────────────────────────────
 export function getModuleTree() { return MODULE_TREE }
 
