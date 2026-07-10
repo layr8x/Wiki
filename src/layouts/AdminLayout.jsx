@@ -13,9 +13,8 @@ import { Theme } from '@astryxdesign/core/theme'
 import { neutralTheme } from '@astryxdesign/theme-neutral/built'
 import { LinkProvider } from '@astryxdesign/core/Link'
 import { AppShell, useAppShellMobile } from '@astryxdesign/core/AppShell'
-import { SideNav } from '@astryxdesign/core/SideNav'
+import { SideNav, SideNavSection, SideNavItem } from '@astryxdesign/core/SideNav'
 import { TopNav } from '@astryxdesign/core/TopNav'
-import { NavHeadingMenu, NavHeadingMenuItem } from '@astryxdesign/core/NavMenu'
 import { Button } from '@astryxdesign/core/Button'
 
 import '@astryxdesign/core/astryx.css'
@@ -31,14 +30,20 @@ import './AdminLayout.astryx.css'
 const BREADCRUMB_LABEL = {
   admin: '관리자', guides: '가이드 관리', feedback: '피드백 수신함',
   consults: '카카오 상담', jandi: '잔디 대화',
-  users: '사용자 관리', sync: 'Confluence 동기화', audit: '감사 로그',
 }
 
+// 3개 카테고리: 개요(현황 파악) / 콘텐츠 관리(가이드 CRUD) / 상담·대화(외부 채널 로그).
+// 대시보드는 위키+카카오 지표가 섞인 전사 현황판이라 콘텐츠 관리와 분리된 별도 카테고리로 둔다.
 const ADMIN_NAV_GROUPS = [
   {
-    label: '관리',
+    label: '개요',
     items: [
       { title: '대시보드', to: '/admin', icon: BarChart3, perm: 'view' },
+    ],
+  },
+  {
+    label: '콘텐츠 관리',
+    items: [
       { title: '가이드 관리', to: '/admin/guides', icon: FileText, perm: 'edit' },
       { title: '새 가이드 작성', to: '/editor', icon: PencilLine, perm: 'edit' },
       { title: '피드백 수신함', to: '/admin/feedback', icon: Tray, perm: 'edit' },
@@ -66,6 +71,7 @@ function buildBreadcrumbs(pathname) {
 
 function AdminSideNav() {
   const { hasPermission } = useAuth()
+  const { pathname } = useLocation()
   const visibleGroups = ADMIN_NAV_GROUPS
     .map(g => ({ ...g, items: g.items.filter(i => hasPermission(i.perm)) }))
     .filter(g => g.items.length > 0)
@@ -91,11 +97,17 @@ function AdminSideNav() {
       }
     >
       {visibleGroups.map(group => (
-        <NavHeadingMenu key={group.label}>
+        <SideNavSection key={group.label} title={group.label}>
           {group.items.map(item => (
-            <NavHeadingMenuItem key={item.to} href={item.to} icon={<item.icon size={20} />} label={item.title} />
+            <SideNavItem
+              key={item.to}
+              href={item.to}
+              icon={item.icon}
+              label={item.title}
+              isSelected={pathname === item.to}
+            />
           ))}
-        </NavHeadingMenu>
+        </SideNavSection>
       ))}
     </SideNav>
   )

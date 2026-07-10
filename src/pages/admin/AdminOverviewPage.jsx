@@ -53,22 +53,6 @@ const BUCKET_TONE = {
   '24시간+':  'red',
 }
 
-// 카테고리 id → 한글 라벨 매핑 (classify-kakao-csv.mjs 와 일치)
-const CATEGORY_LABELS = {
-  'video-content':     '영상재생/콘텐츠',
-  'school-link':       '학원등록연동',
-  'qr-attendance':     'QR/출석',
-  'parent-account':    '학부모/계정통합',
-  'refund-payment':    '환불/결제',
-  'enrollment':        '수강신청/대기',
-  'app-access':        '앱 접근/실행',
-  'login-auth':        '로그인/인증',
-  'app-bug':           '앱 버그/오류',
-  'textbook-delivery': '교재/배송',
-  'class-info':        '강좌/수업 정보',
-  'misc':              '기타',
-}
-
 /* 분포 바 한 줄 — 라벨 + 우측 메타 + 토큰 트랙/필 */
 function StatBar({ label, right, pct, tone = 'primary' }) {
   return (
@@ -271,7 +255,8 @@ export default function AdminOverviewPage() {
                   catDist.map((row) => {
                     const maxPct = Math.max(...catDist.map(r => r.pct), 1)
                     const widthPct = (row.pct / maxPct) * 100
-                    const label = CATEGORY_LABELS[row.category] || row.category
+                    // category 컬럼 값이 이미 한글 라벨(카카오 AI 분류 결과)이라 별도 매핑 불필요.
+                    const label = row.category
                     const isHot = row.negativeRate >= 30
                     return (
                       <StatBar
