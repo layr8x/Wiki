@@ -184,6 +184,8 @@ function ChannelKpi({ ch }) {
         <Badge label={ch.label} variant={CHANNEL_BADGE[ch.id]} />
         <MessageSquare size={16} className="ac-kpi-icon" />
       </div>
+      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
+      <Text type="supporting" size="sm">전체 누적</Text>
       {isLoading ? (
         <div className="ac-skel ac-skel-kpi" />
       ) : (
@@ -267,7 +269,7 @@ export default function AdminConsultsPage() {
 
   const qc = useQueryClient()
   const { data: nickMap = new Map() } = useNicknames(channel)
-  const { data: rows = [], isLoading, isFetching, isError, error } = useMessages(channel, query, year, month, limit)
+  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
 
   const reset = () => setLimit(PAGE_SIZE)
   const onChannel = (id) => { setChannel(id); reset() }
@@ -415,6 +417,14 @@ export default function AdminConsultsPage() {
             <div className="ac-panel-actions">
               {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
               {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              {/* 실시간 구독 없이 수동 새로고침 방식이라, 화면이 "지금 상태"처럼 보이지 않도록
+                  마지막으로 실제 데이터를 받아온 시각을 명시(기준2: 오래된 데이터를 최신처럼
+                  보여주지 않기 — 카카오 통계 대시보드에서 발견된 것과 같은 유형의 위험 예방). */}
+              {!isFetching && dataUpdatedAt > 0 && (
+                <Text type="supporting" size="sm">
+                  마지막 갱신 {new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              )}
               <Button variant="secondary" size="sm" label="새로고침" icon={<RefreshIcon size={16} />} onClick={onRefresh} isDisabled={isFetching} />
               <Button variant="secondary" size="sm" label="CSV" icon={<DownloadIcon size={16} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
             </div>

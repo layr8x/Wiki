@@ -183,6 +183,8 @@ function ChannelKpi({ ch }) {
         <Text type="supporting" maxLines={1}>{ch.label}</Text>
         <MessageSquare size={16} className="aj-kpi-icon" />
       </div>
+      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
+      <Text type="supporting" size="sm">전체 누적</Text>
       {isLoading ? (
         <div className="aj-skel aj-skel-kpi" />
       ) : (
@@ -253,7 +255,7 @@ export default function AdminJandiPage() {
   const [csvLoading, setCsvLoading] = useState(false)
 
   const qc = useQueryClient()
-  const { data: rows = [], isLoading, isFetching, isError, error } = useMessages(channel, query, year, month, limit)
+  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
 
   const reset = () => setLimit(PAGE_SIZE)
   const onChannel = (id) => { setChannel(id); reset() }
@@ -379,6 +381,11 @@ export default function AdminJandiPage() {
             <div className="aj-main-actions">
               {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
               {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              {!isFetching && dataUpdatedAt > 0 && (
+                <Text type="supporting" size="sm">
+                  마지막 갱신 {new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              )}
               <Button label="새로고침" variant="secondary" size="sm" icon={<RefreshIcon size={14} />} onClick={onRefresh} isDisabled={isFetching} />
               <Button label="CSV" variant="secondary" size="sm" icon={<DownloadIcon size={14} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
             </div>

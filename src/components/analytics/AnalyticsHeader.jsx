@@ -92,6 +92,14 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
 
   return (
     <Card padding={5} className="anh-card">
+      {data.isTruncated && (
+        <Badge
+          variant="error"
+          icon={<WarningIcon size={12} />}
+          label={`집계 범위 내 실제 ${data.trueCount.toLocaleString('ko-KR')}건 중 ${data.fetchedCount.toLocaleString('ko-KR')}건만 반영됨 — 아래 수치는 불완전할 수 있음`}
+          className="anh-truncated-warning"
+        />
+      )}
       <div className="anh-grid">
         {/* 두괄식 헤드라인: 가장 중요한 숫자를 가장 크게, 가장 먼저 */}
         <VStack gap={1} className="anh-headline">
@@ -125,7 +133,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
 
       {/* 민감도(분모) 분석 각주: 계산 기준 명시 — 방법론 태그 [측정]/[추정]/[미측정] */}
       <Text type="supporting" size="xs" className="anh-footnote">
-        [측정] 현재 필터 기준({filterNote || '전체'}) 실측 집계 · [추정] 통계적 유의성은 정규근사 z검정 간이 판정 ·
+        [측정] 현재 필터 기준({filterNote || '전체'}) {data.isTruncated ? `실제 ${data.trueCount.toLocaleString('ko-KR')}건 중 ${data.fetchedCount.toLocaleString('ko-KR')}건만` : '실측'} 집계 · [추정] 통계적 유의성은 정규근사 z검정 간이 판정 ·
         [미측정] 대조군 인과추론(이중차분)은 대조군 부재로 이 위젯엔 미적용
       </Text>
     </Card>

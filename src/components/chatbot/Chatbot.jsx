@@ -64,8 +64,8 @@ function ChatbotFAB({ onClick, pulse, open }) {
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = T.navyHover)}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = T.navy)}
         >
-          <MIcon name="forum" size={28} color="#fff" />
-          {!open && pulse && <span className="cb-fab-badge" style={{ backgroundColor: '#DA1E28' }} aria-hidden />}
+          <MIcon name="forum" size={28} color={T.white} />
+          {!open && pulse && <span className="cb-fab-badge" style={{ backgroundColor: T.error }} aria-hidden />}
         </button>
       </div>
     </div>

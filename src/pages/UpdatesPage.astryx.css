@@ -31,32 +31,8 @@
 .up-crumb-sep { color: var(--color-text-disabled); }
 .up-crumb-current { color: var(--color-text-primary); }
 
-/* 타입 필터 칩 */
+/* 타입 필터 칩 — 칩 자체 스타일은 Astryx ToggleButton이 담당 */
 .up-filters { display: flex; flex-wrap: wrap; gap: 6px; }
-.up-filter {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  background: var(--color-background-body);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color .12s ease, background-color .12s ease, border-color .12s ease;
-}
-.up-filter:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-border-emphasized);
-}
-.up-filter[data-active="true"] {
-  background: var(--color-text-primary);
-  border-color: var(--color-text-primary);
-  color: var(--color-background-body);
-}
-.up-filter-count { font-variant-numeric: tabular-nums; opacity: .7; }
 
 /* 월 라벨 */
 .up-month {

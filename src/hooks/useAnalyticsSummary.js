@@ -7,7 +7,9 @@
 //   (두 표본 모두 같은 발생률이라는 귀무가설 하에서 SE = sqrt(n1+n2) 정규근사, |z|>=1.96 이면 유의)
 // - 통계적 공정관리(SPC, DMAIC "관리(Control)" 단계 응용): 최근 14일 평균 ± 2표준편차를
 //   관리상한/하한으로 보고, 최근 값이 이 밖이면 "이상치" 배지
-// - 민감도(분모) 분석: summary.basis 에 집계 기준(테이블·기간·필터)을 명시해 반환 → 화면에서 각주로 노출
+// - 민감도(분모) 분석: summary.basis 에 집계 기준(테이블·기간·필터)을 명시해 반환 → 화면에서 각주로 노출.
+//   count-only 쿼리로 실제 총 건수(trueCount)를 함께 확인해, limit(FETCH_CAP) 초과 시
+//   isTruncated로 알림 — 잘린 채 조용히 틀린 통계를 보여주는 것을 방지.
 // - [미측정] 이중차분(대조군 없음, 이 위젯엔 부적합) · RICE우선순위(백로그 도구, 실시간 헤더엔 부적합)
 //
 // 데이터: timestamp 컬럼만 조회(본문 미조회 — PII 노출 최소화), 최근 30일 범위로 제한.
@@ -47,12 +49,20 @@ export function useAnalyticsSummary({ key, table, dateColumn, filters = {}, enab
     retry: 0,
     queryFn: async () => {
       const since = new Date(Date.now() - (TREND_DAYS + 7) * DAY_MS).toISOString()
-      let q = supabase.from(table).select(dateColumn).gte(dateColumn, since).limit(200000)
+      const FETCH_CAP = 200000
+      let dataQ = supabase.from(table).select(dateColumn).gte(dateColumn, since).limit(FETCH_CAP)
+      // 실제 총 건수를 별도 count-only 쿼리로 확인 — limit(FETCH_CAP)를 넘는 데이터가
+      // 있어도 그동안은 아무 표시 없이 조용히 통계가 잘려나가고 있었다. 이제 초과 시
+      // isTruncated로 명시적으로 알린다(기준2: 허위/오차 없이 완벽한 결과).
+      let countQ = supabase.from(table).select('*', { count: 'exact', head: true }).gte(dateColumn, since)
       for (const [col, val] of Object.entries(filters)) {
-        if (val != null) q = q.eq(col, val)
+        if (val != null) { dataQ = dataQ.eq(col, val); countQ = countQ.eq(col, val) }
       }
-      const { data, error } = await q
+      const [{ data, error }, { count: trueCount, error: countError }] = await Promise.all([dataQ, countQ])
       if (error) throw error
+      if (countError) throw countError
+      const fetchedCount = (data || []).length
+      const isTruncated = typeof trueCount === 'number' && trueCount > fetchedCount
 
       // 일자별 버킷 (최근 TREND_DAYS+7일)
       const buckets = new Map()
@@ -94,7 +104,10 @@ export function useAnalyticsSummary({ key, table, dateColumn, filters = {}, enab
         controlBand: { mean: m, upper, lower },
         isAnomaly,
         latestDay: latest,
-        basis: { table, dateColumn, filters, windowDays: TREND_DAYS },
+        isTruncated,
+        trueCount,
+        fetchedCount,
+        basis: { table, dateColumn, filters, windowDays: TREND_DAYS, fetchCap: FETCH_CAP },
       }
     },
   })

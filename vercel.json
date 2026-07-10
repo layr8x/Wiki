@@ -38,12 +38,6 @@
       "destination": "/index.html"
     }
   ],
-  "crons": [
-    {
-      "path": "/api/sync/jira",
-      "schedule": "0 0 * * *"
-    }
-  ],
   "headers": [
     {
       "source": "/assets/(.*)",

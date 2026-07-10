@@ -2,10 +2,9 @@
 // 다각도 심층 분석 — 시계열 추이 + 매트릭스 + 매니저 specialty + 반복고객
 import { Client } from 'pg';
 import fs from 'node:fs';
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const pg = new Client({
   connectionString: process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: true },
 });
 await pg.connect();
 
@@ -222,7 +221,7 @@ const { rows: integDeep } = await pg.query(`
 `);
 
 // 결과 저장
-const OUT = '/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/🕹️ layr8x/ams-wiki/docs/cs-analysis-package';
+const OUT = '/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/ams-wiki/docs/cs-analysis-package';
 const result = {
   monthly_category: monthly,
   hour_category: hourCat,

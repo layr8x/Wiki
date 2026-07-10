@@ -6,7 +6,6 @@ import { Client as PgClient } from 'pg';
 
 const PROFILE_ID = process.env.KAKAO_PARTNER_PROFILE_ID;
 const COOKIE = process.env.KAKAO_PARTNER_COOKIE;
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const client = new KakaoPartnerClient({ cookie: COOKIE, profileId: PROFILE_ID });
 const supabase = getAdminClient();
@@ -14,7 +13,7 @@ const supabase = getAdminClient();
 // pg 로 직접 조회 (limit 우회)
 const pg = new PgClient({
   connectionString: process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: true },
 });
 await pg.connect();
 const { rows } = await pg.query(`

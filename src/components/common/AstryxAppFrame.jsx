@@ -11,7 +11,7 @@ import {
   BookOpen, Calendar, CaretRight as ChevronRight, ClipboardText as ClipboardList,
   CreditCard, FileText, House as Home, Lifebuoy as LifeBuoy, ChatText as MessageSquare,
   PaperPlaneTilt as Send, PencilSimple as PencilLine, Gear as Settings, Sparkle as Sparkles,
-  Shield, Users, MagnifyingGlass as Search, Moon, Sun,
+  Shield, Users,
 } from '@phosphor-icons/react'
 
 import { Theme } from '@astryxdesign/core/theme'
@@ -21,7 +21,6 @@ import { AppShell, useAppShellMobile } from '@astryxdesign/core/AppShell'
 import { SideNav } from '@astryxdesign/core/SideNav'
 import { TopNav } from '@astryxdesign/core/TopNav'
 import { NavHeadingMenu, NavHeadingMenuItem } from '@astryxdesign/core/NavMenu'
-import { Button } from '@astryxdesign/core/Button'
 
 import '@astryxdesign/core/astryx.css'
 import '@astryxdesign/theme-neutral/theme.css'
@@ -29,11 +28,9 @@ import '@astryxdesign/theme-neutral/theme.css'
 import { getModuleTree } from '@/lib/db'
 import { useRecentGuides } from '@/hooks/useGuides'
 import { useAuth } from '@/store/authStore'
-import { useSearchStore } from '@/store/searchStore.jsx'
-import { useDarkMode } from '@/hooks/useDarkMode'
 import { useAstryxMode } from '@/lib/astryxMode'
 import RouterLink from './RouterLink'
-import UserMenu from './UserMenu'
+import GlobalHeaderActions from './GlobalHeaderActions'
 import './AstryxAppFrame.css'
 
 // ─── 챗봇 feature flag (기존과 동일) ──────────────────────────────────
@@ -159,41 +156,12 @@ function SideNavContent() {
   )
 }
 
-/* ─── 상단바 ─────────────────────────────────────────────────────────── */
-function AstryxThemeToggle() {
-  const { isDark, toggle } = useDarkMode()
-  return (
-    <Button
-      isIconOnly
-      variant="ghost"
-      size="sm"
-      label={isDark ? '라이트 모드로' : '다크 모드로'}
-      icon={isDark ? <Sun size={18} /> : <Moon size={18} />}
-      onClick={toggle}
-    />
-  )
-}
-
+/* ─── 상단바 (검색 트리거 + 테마 토글 + 사용자 메뉴는 GlobalHeaderActions 공용 구현) ──
+ * 이전엔 여기서 raw <button>으로 검색 트리거를 직접 그렸었다 — Astryx Button/Kbd로
+ * 이미 올바르게 구현된 GlobalHeaderActions가 있었지만 실제로는 어디서도 렌더되지 않고
+ * 있었다(단축키 '/' · ⌘K 코멘트만 있고 실제 미동작). 여기서 그걸 실제로 사용한다. */
 function AppTopNav() {
-  const { open } = useSearchStore()
-  return (
-    <TopNav
-      label="상단 내비게이션"
-      startContent={
-        <button type="button" className="astryx-search" onClick={open} aria-label="가이드 검색">
-          <Search size={16} />
-          <span className="astryx-search-text">가이드 검색</span>
-          <span className="astryx-search-kbd"><kbd>⌘K</kbd></span>
-        </button>
-      }
-      endContent={
-        <div className="astryx-topnav-actions">
-          <AstryxThemeToggle />
-          <UserMenu />
-        </div>
-      }
-    />
-  )
+  return <TopNav label="상단 내비게이션" endContent={<GlobalHeaderActions />} />
 }
 
 // AppShell의 모바일 서랍은 라우터를 모른다 — 메뉴 항목을 눌러 페이지가 이동해도

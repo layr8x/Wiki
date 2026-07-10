@@ -17,6 +17,7 @@
   h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
   .sub{color:var(--sub);font-size:14px;margin-top:4px}
   .asof{font-size:12px;color:var(--sub);background:#eef1f7;padding:6px 12px;border:1px solid var(--bd);font-weight:600}
+  .asof.stale{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-ink);font-weight:800}
   .warn{display:flex;gap:10px;align-items:flex-start;background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--warn-ink);padding:12px 16px;margin:14px 0 18px;font-size:13.5px;line-height:1.5}
   .warn b{font-weight:800}
   .warn.hidden{display:none}
@@ -58,10 +59,10 @@
       <h1>카카오 3채널 상담 대시보드</h1>
       <div class="sub">학생·학부모 ↔ 학원 비즈채팅 자동 수집 · 마이클래스 · 라이브 · 시대인재C</div>
     </div>
-    <div class="asof" id="asof">2026-06-30 기준 · 라이브 DB 실측</div>
+    <div class="asof" id="asof">불러오는 중…</div>
   </div>
 
-  <div class="warn" id="warn">
+  <div class="warn hidden" id="warn">
     <span>⚠️</span>
     <div id="warntext"><b>수집 일시 중단 감지</b> — 3개 채널 모두 <b>06-26 이후 신규 수집 0건</b> (인증 쿠키 만료, <code>401 Unauthorized</code>). 인프라(heartbeat)는 정상이나 인증이 끊긴 상태입니다. <b>맥 스튜디오 쿠키 재로그인</b> 필요. <i>(이 화면이 바로 그 중단을 즉시 보여주는 사례)</i></div>
   </div>
@@ -290,10 +291,17 @@
   //    (Vercel 서버리스 함수 한도 회피: 라이브 API 대신 빌드타임 집계 JSON. prebuild가 생성)
   fetch('/cs-stats.json', {headers:{'Accept':'application/json'}, cache:'no-cache'})
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(function(d){ if(d && d.totals) render(d); })
+    .then(function(d){
+      if(!d || !d.totals) throw new Error('invalid payload');
+      render(d);
+    })
     .catch(function(e){
-      // fetch 실패 = 페이지에 이미 박힌 하드코딩 값(2026-06-30 스냅샷)을 그대로 보여줌.
-      console.warn('cs-stats.json fetch 실패 — 스냅샷 값 유지:', e && e.message);
+      // fetch 실패/무효 응답 = 아래 하드코딩 예시값이 그대로 보이므로, 실시간 데이터가 아님을 명확히 표시.
+      console.warn('cs-stats.json fetch 실패 — 예시 데이터로 표시:', e && e.message);
+      var el = document.getElementById('asof');
+      el.textContent = '⚠ 실시간 연결 실패 · 아래는 예시 데이터입니다';
+      el.classList.add('stale');
+      document.getElementById('footMode').textContent = '예시 데이터(실시간 연결 실패 · 실제 수치 아님)';
     });
 })();
 </script>

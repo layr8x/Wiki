@@ -11,7 +11,7 @@ const pg = new Client({
 });
 await pg.connect();
 
-const OUT = '/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/🕹️ layr8x/ams-wiki/docs/cs-analysis-package';
+const OUT = '/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/ams-wiki/docs/cs-analysis-package';
 fs.mkdirSync(OUT, { recursive: true });
 
 // ─── 카테고리 분류 룰 (고객용) ─────────────────────────────────────────────

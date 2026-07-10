@@ -10,10 +10,9 @@
 import fs from 'node:fs';
 import { Client } from 'pg';
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const pg = new Client({
   connectionString: process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL,
-  ssl: { rejectUnauthorized: false },
+  ssl: { rejectUnauthorized: true },
 });
 await pg.connect();
 

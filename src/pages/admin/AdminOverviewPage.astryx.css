@@ -76,7 +76,9 @@
   font-size: 12px; color: var(--color-text-secondary);
 }
 .ov-legend-item { display: inline-flex; align-items: center; gap: 6px; }
-.ov-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+/* radius 2px: 범례용 사각 스와치 — 가장 가까운 토큰(--radius-inner=4px)을 쓰면 8px 크기에서
+   원형에 가깝게 둥글어져 상태점(StatusDot)과 혼동되므로 의도적으로 raw 값 유지 */
+.ov-dot { display: inline-block; width: var(--spacing-2); height: var(--spacing-2); border-radius: 2px; }
 .ov-dot[data-tone="pos"] { background: var(--color-icon-green); }
 .ov-dot[data-tone="neu"] { background: var(--color-icon-disabled); }
 .ov-dot[data-tone="neg"] { background: var(--color-icon-red); }

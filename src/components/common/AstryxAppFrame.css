@@ -12,32 +12,7 @@
 .astryx-brand:hover { opacity: .8; }
 .astryx-brand-mark { display: block; height: 22px; width: auto; }
 
-/* 상단바 검색 트리거 (검색창 형태의 버튼) */
-.astryx-search {
-  display: inline-flex; align-items: center; gap: 8px;
-  height: 32px; width: 100%; max-width: 360px;
-  padding: 0 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-element);
-  background: var(--color-background-body);
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color .12s ease, border-color .12s ease;
-}
-.astryx-search:hover { border-color: var(--color-border-emphasized); }
-.astryx-search-text { flex: 1 1 auto; text-align: left; }
-.astryx-search-kbd { display: inline-flex; }
-.astryx-search-kbd kbd {
-  font-family: inherit; font-size: 12px;
-  padding: 1px 6px; border-radius: 4px;
-  border: 1px solid var(--color-border);
-  background: var(--color-background-muted);
-  color: var(--color-text-secondary);
-}
-
-/* 상단바 우측 액션 묶음 */
-.astryx-topnav-actions { display: inline-flex; align-items: center; gap: 8px; }
+/* 상단바 검색 트리거/액션은 GlobalHeaderActions.astryx.css가 담당 (astryx-search* 제거됨) */
 
 /* 활성 내비 항목 (NavLink → aria-current="page") */
 .app-sidenav a[aria-current="page"] {

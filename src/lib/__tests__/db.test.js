@@ -23,6 +23,14 @@ import {
 import { GUIDES, MODULE_TREE } from '@/data/mockData'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
 
+// .env.local 에 실제 Supabase 자격증명이 있어도(로컬 개발용) 이 스위트는 항상
+// mockData fallback 경로를 검증해야 하므로 명시적으로 mock 한다. env 부재에
+// 암묵적으로 기대면 안 됨 — src/hooks/__tests__/useAnalyticsSummary.test.jsx 와 동일 패턴.
+vi.mock('@/lib/supabase', () => ({
+  isSupabaseEnabled: false,
+  supabase: null,
+}))
+
 describe('db.js (mockData fallback)', () => {
   beforeEach(() => {
     localStorage.clear()

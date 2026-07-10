@@ -17,6 +17,7 @@ import { VStack } from '@astryxdesign/core/VStack'
 import { HStack } from '@astryxdesign/core/HStack'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
+import { ToggleButton } from '@astryxdesign/core/ToggleButton'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 
@@ -98,17 +99,16 @@ export default function UpdatesPage() {
               : UPDATES_DATA.filter(u => u.type === f.value).length
             const active = filter === f.value
             return (
-              <button
+              <ToggleButton
                 key={f.value}
-                type="button"
-                onClick={() => setFilter(f.value)}
-                aria-pressed={active}
-                data-active={active}
-                className="up-filter"
+                label={`${f.label} (${count}건)`}
+                isPressed={active}
+                onPressedChange={() => setFilter(f.value)}
+                size="sm"
               >
                 {f.label}
-                <span className="up-filter-count">{count}</span>
-              </button>
+                <Badge label={count} variant={active ? 'info' : 'neutral'} />
+              </ToggleButton>
             )
           })}
         </div>
