@@ -26,7 +26,6 @@ async function logSync(provider, status, message, count = 0) {
       [countField]: count,
       synced_at: new Date().toISOString(),
     })
-    .catchError(() => null)
 
   if (error && error.code !== 'PGRST116') {
     console.error('Failed to log sync:', error)
