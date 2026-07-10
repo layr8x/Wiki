@@ -38,5 +38,8 @@ out
 # Vercel must NOT see these .ts files; they target Deno runtime, not Node.
 supabase
 # Supabase (Edge Functions / migrations / Deno-only code) — 별도 배포
-# Backend scripts (Node-only — Vercel 빌드와 무관)
-scripts
+# Backend scripts (Node-only — Vercel 빌드와 무관). 단 prebuild가 실행하는
+# build-guide-index.mjs/build-cs-stats.mjs 는 제외하지 않는다 — 빌드 시 필요.
+scripts/*
+!scripts/build-guide-index.mjs
+!scripts/build-cs-stats.mjs
