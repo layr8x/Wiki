@@ -190,6 +190,57 @@ async function checkCategorySpike(): Promise<string[]> {
   return notified;
 }
 
+// 대시보드 실시간 RPC 지연/실패 감시(2026-07-10 신규).
+// 배경: kakao_sla_status·kakao_action_chats 가 last_msg 조회에 색인이 안 맞아 각각
+//   20.2초·11.2초까지 걸려 8초 role statement_timeout 을 넘기고 /admin/consults 에
+//   간헐적 500 을 냈던 사고(같은 날 수정·색인/쿼리 재작성으로 3.1초·2.0초로 개선).
+//   이 워치독은 그 재발을 자동으로 잡기 위한 것 — 8초 제한에 다가가기 "전에"(5초부터)
+//   경보하고, 실제로 타임아웃 나면 즉시 경보한다. 새 RPC를 이 위젯에 추가할 때는 여기도 같이 추가할 것.
+const RPC_WARN_MS = 5000; // 8초 제한 대비 여유 3초에서 경보
+const DASHBOARD_RPCS: { name: string; label: string; args?: Record<string, unknown> }[] = [
+  { name: 'kakao_sla_status', label: 'SLA 현황(North Star 위젯)' },
+  { name: 'kakao_action_chats', label: '지금 처리할 대화 위젯', args: { limit_n: 6 } },
+];
+
+function rpcHealthMessage(label: string, fnName: string, ms: number | null, errMsg: string | null): string {
+  if (errMsg) {
+    return (
+      `🔴 *${label}* 조회가 실패하고 있어요\n` +
+      `대시보드가 쓰는 ${fnName} 함수가 에러를 내고 있어요(${errMsg}).\n` +
+      `👉 개발 담당에게 ${fnName} 확인을 요청해 주세요.`
+    );
+  }
+  return (
+    `🟠 *${label}* 조회가 느려지고 있어요\n` +
+    `${(ms! / 1000).toFixed(1)}초 걸렸어요(8초를 넘으면 화면에 에러가 나요).\n` +
+    `👉 개발 담당에게 ${fnName} 색인·쿼리 점검을 요청해 주세요.`
+  );
+}
+
+async function checkRpcHealth(): Promise<string[]> {
+  const notified: string[] = [];
+  for (const rpc of DASHBOARD_RPCS) {
+    const key = `rpc:${rpc.name}`;
+    const t0 = Date.now();
+    const { error } = await supabase.rpc(rpc.name, rpc.args ?? {});
+    const ms = Date.now() - t0;
+    const bad = !!error || ms > RPC_WARN_MS;
+    const prev = await getState(key);
+    if (!shouldNotify(prev, bad)) continue;
+
+    if (bad) {
+      const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+      await sendSlack(rpcHealthMessage(rpc.label, rpc.name, error ? null : ms, error?.message ?? null));
+      await upsertState(key, 'alerting', { ms, error: error?.message ?? null }, firstAt);
+    } else {
+      await sendSlack(`🟢 *${rpc.label}* 조회 속도가 정상으로 돌아왔어요(${(ms / 1000).toFixed(1)}초)`);
+      await upsertState(key, 'ok', { ms }, null);
+    }
+    notified.push(key);
+  }
+  return notified;
+}
+
 // 분석 파이프라인 신선도 감시. 수집(collect)은 살아 있어도 그 뒤 단계(감정분류·일일요약)가
 // 조용히 멈추면(예: 인덱스 부재로 8초 타임아웃을 함수가 삼키고 200 반환) 아무도 몰랐다.
 // ①감정분류: 미처리 백로그가 있는데도 최근 분류 시각이 오래되면 = 정지.
@@ -280,7 +331,8 @@ Deno.serve(async (req: Request) => {
   const health = await checkCollectionHealth();
   const spike = await checkCategorySpike();
   const analysis = await checkAnalysisFreshness();
-  const result = { at: new Date().toISOString(), slack_configured: !!SLACK_WEBHOOK_URL, notified: [...health, ...spike, ...analysis] };
+  const rpcHealth = await checkRpcHealth();
+  const result = { at: new Date().toISOString(), slack_configured: !!SLACK_WEBHOOK_URL, notified: [...health, ...spike, ...analysis, ...rpcHealth] };
   log('done', JSON.stringify(result));
   return json(result);
 });

@@ -369,6 +369,19 @@ export async function fetchKakaoSlaStatus() {
   }))
 }
 
+// ─── 카카오 지금 처리할 대화 (대기 중 상위 N건, 오래 기다린 순) ────────────
+export async function fetchKakaoActionChats(limitN = 6) {
+  if (!isSupabaseEnabled) return null
+  const { data, error } = await supabase.rpc('kakao_action_chats', { limit_n: limitN })
+  if (error) throw error
+  return (data || []).map(row => ({
+    channel:  row.channel,
+    nickname: row.nickname,
+    waitedH:  Number(row.waited_h),
+    preview:  row.preview,
+  }))
+}
+
 // ─── 카카오 카테고리 이상 급증 (오늘, 최근 7일 평균 대비) ──────────────────
 export async function fetchKakaoCategorySpike(minRatio = 2.0, minCount = 5) {
   if (!isSupabaseEnabled) return null

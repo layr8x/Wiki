@@ -5,6 +5,22 @@
 
 .kcs-headline { min-width: 0; }
 
+/* ─── 반응형: 좁은 화면에서 카드 내부 여백 축소 ─────────────────────────── */
+@media (max-width: 480px) {
+  .kcs-card { padding: var(--spacing-4) !important; }
+}
+
+/* ─── 지금 처리할 대화 목록 ──────────────────────────────────────────────── */
+.kcs-action-list { margin-inline: calc(var(--spacing-2) * -1); }
+/* 채널 배지 폭이 라벨 길이(LIVE vs LIVE 기술지원)마다 달라 닉네임 시작 위치가
+   행마다 어긋나던 문제 — 배지를 고정폭 칸 안에 왼쪽정렬해 닉네임 열을 맞춘다. */
+.kcs-action-badge { display: flex; width: 92px; flex: none; }
+.kcs-action-wait { white-space: nowrap; flex: none; }
+.kcs-action-empty {
+  padding: var(--spacing-3) 0;
+}
+.kcs-action-empty-icon { color: var(--color-success); flex: none; }
+
 .kcs-spike-banner { margin-top: 16px; }
 
 .kcs-divider { margin-block: 16px; }
@@ -20,6 +36,8 @@
   line-height: 1.5;
 }
 
+.kcs-error { color: var(--color-text-red); }
+
 .kcs-skel {
   border-radius: var(--radius-element);
   background: var(--color-background-muted);
@@ -27,4 +45,5 @@
 }
 .kcs-skel-headline { height: 56px; }
 .kcs-skel-table { height: 120px; }
+.kcs-skel-list { height: 168px; }
 @keyframes kcs-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

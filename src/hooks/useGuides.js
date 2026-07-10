@@ -17,6 +17,7 @@ import {
   fetchChatCategoryDistribution,
   fetchSentimentTrend,
   fetchKakaoSlaStatus,
+  fetchKakaoActionChats,
   fetchKakaoCategorySpike,
   fetchKakaoSentimentByChannel,
   fetchKakaoCollectionHealth,
@@ -155,6 +156,16 @@ export function useKakaoSlaStatus() {
   return useQuery({
     queryKey: ['kakao-live', 'sla-status'],
     queryFn: fetchKakaoSlaStatus,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  })
+}
+
+// ─── 카카오 지금 처리할 대화(대기 중 상위 N건) ─────────────────────────────
+export function useKakaoActionChats(limitN = 6) {
+  return useQuery({
+    queryKey: ['kakao-live', 'action-chats', limitN],
+    queryFn: () => fetchKakaoActionChats(limitN),
     staleTime: 60 * 1000,
     refetchInterval: 60 * 1000,
   })
