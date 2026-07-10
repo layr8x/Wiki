@@ -1,7 +1,7 @@
 // src/pages/admin/AdminFeedbackPage.jsx — /admin/feedback
 // 로컬 큐(NoResultFallback 등) + Supabase guide_feedback 머지 뷰
 //   - 데이터 훅(react-query)·라우팅(react-router)·탭 필터·로컬 큐 비우기 액션은 그대로 유지
-//   - 시각 요소는 Astryx primitive(VStack/HStack/Card/Badge/Button/Heading/Text)로 교체
+//   - 시각 요소는 Astryx primitive(VStack/HStack/Card/Badge/Button/Heading/Text/Table)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/CSS 를 감싸지 않음
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -9,22 +9,22 @@ import { useQuery } from '@tanstack/react-query'
 import { Trash } from '@phosphor-icons/react'
 
 import { fetchAdminFeedback } from '@/lib/db'
-import { usePagination } from '@/hooks/usePagination'
-import Pagination from '@/components/common/Pagination'
 import { useToast } from '@/components/ui/toast'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
 
 import { VStack } from '@astryxdesign/core/VStack'
-import { HStack } from '@astryxdesign/core/HStack'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { Table, useTablePagination, paginateData, proportional, pixel } from '@astryxdesign/core/Table'
 
 import './AdminFeedbackPage.astryx.css'
 
 const FEEDBACK_QUEUE_KEY = STORAGE_KEYS.feedbackQueue
+const PAGE_SIZE = 25
 
 const KIND_LABEL = {
   'missing-guide': '가이드 요청',
@@ -76,6 +76,7 @@ export default function AdminFeedbackPage() {
   const { toast } = useToast()
   const [tab, setTab] = useState('all')
   const [localItems, setLocalItems] = useState(() => readLocalQueue())
+  const [page, setPage] = useState(1)
 
   const { data: remote = [], isLoading } = useQuery({
     queryKey: ['admin', 'feedback'],
@@ -122,10 +123,71 @@ export default function AdminFeedbackPage() {
       }),
   [tab, merged])
 
-  const pagination = usePagination(filtered, 25)
-  useEffect(() => { pagination.reset() }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(1) }, [tab])
+
+  const paginationPlugin = useTablePagination({
+    page,
+    onPageChange: setPage,
+    totalItems: filtered.length,
+    pageSize: PAGE_SIZE,
+  })
+  const pageItems = useMemo(() => paginateData(filtered, page, PAGE_SIZE), [filtered, page])
 
   const showSkeleton = isLoading && remote.length === 0
+
+  const columns = useMemo(() => [
+    {
+      key: 'kind',
+      header: '유형',
+      width: pixel(120),
+      renderCell: (item) => (
+        <Badge label={KIND_LABEL[item.kind] || item.kind || '기타'} variant={toKindVariant(item.kind)} />
+      ),
+    },
+    {
+      key: 'content',
+      header: '내용',
+      width: proportional(3),
+      renderCell: (item) => (
+        <VStack gap={0.5}>
+          {item.query && (
+            <Text type="supporting">검색어: &ldquo;{item.query}&rdquo;</Text>
+          )}
+          <Text maxLines={2}>{item.note || '내용 없음'}</Text>
+        </VStack>
+      ),
+    },
+    {
+      key: 'guideId',
+      header: '가이드',
+      width: pixel(120),
+      renderCell: (item) => (
+        item.guideId ? (
+          <Link to={`/guides/${item.guideId}`} className="af-guide-link">{item.guideId}</Link>
+        ) : (
+          <span className="af-dash">—</span>
+        )
+      ),
+    },
+    {
+      key: 'source',
+      header: '출처',
+      width: pixel(100),
+      renderCell: (item) => (
+        <Badge label={item.source === 'local' ? '로컬' : '서버'} variant="neutral" />
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: '일시',
+      width: pixel(150),
+      renderCell: (item) => (
+        <Text type="supporting" hasTabularNumbers>
+          {item.createdAt?.slice(0, 16).replace('T', ' ') || '—'}
+        </Text>
+      ),
+    },
+  ], [])
 
   return (
     <div className="af-shell">
@@ -166,12 +228,10 @@ export default function AdminFeedbackPage() {
         {/* ─── 결과 ─────────────────────────────────────────────── */}
         {showSkeleton ? (
           <Card padding={0}>
-            <div className="af-table-wrap">
-              <VStack gap={0} hAlign="stretch">
+            <div className="af-skel-wrap">
+              <VStack gap={3}>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={`af-sk-${i}`} className="af-skel-row">
-                    <div className="af-skel" />
-                  </div>
+                  <Skeleton key={`af-sk-${i}`} width="100%" height={20} index={i} />
                 ))}
               </VStack>
             </div>
@@ -186,63 +246,13 @@ export default function AdminFeedbackPage() {
           </div>
         ) : (
           <Card padding={0}>
-            <div className="af-table-wrap">
-              <table className="af-table af-tmin640">
-                <thead>
-                  <tr>
-                    <th className="af-col-type">유형</th>
-                    <th>내용</th>
-                    <th className="af-col-guide">가이드</th>
-                    <th className="af-col-source">출처</th>
-                    <th className="af-col-date">일시</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pagination.currentItems.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <Badge
-                          label={KIND_LABEL[item.kind] || item.kind || '기타'}
-                          variant={toKindVariant(item.kind)}
-                        />
-                      </td>
-                      <td className="af-content">
-                        {item.query && (
-                          <Text type="supporting">검색어: &ldquo;{item.query}&rdquo;</Text>
-                        )}
-                        <Text maxLines={2}>{item.note || '내용 없음'}</Text>
-                      </td>
-                      <td>
-                        {item.guideId ? (
-                          <Link to={`/guides/${item.guideId}`} className="af-guide-link">
-                            {item.guideId}
-                          </Link>
-                        ) : (
-                          <span className="af-dash">—</span>
-                        )}
-                      </td>
-                      <td>
-                        <Badge
-                          label={item.source === 'local' ? '로컬' : '서버'}
-                          variant="neutral"
-                        />
-                      </td>
-                      <td className="af-date">
-                        {item.createdAt?.slice(0, 16).replace('T', ' ') || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {pagination.totalPages > 1 && (
-              <div className="af-pagination">
-                <HStack gap={0} hAlign="center">
-                  <Pagination pagination={pagination} />
-                </HStack>
-              </div>
-            )}
+            <Table
+              data={pageItems}
+              columns={columns}
+              idKey="id"
+              hasHover
+              plugins={{ pagination: paginationPlugin }}
+            />
           </Card>
         )}
 

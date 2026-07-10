@@ -1,0 +1,17 @@
+/* src/components/common/ErrorBoundary.astryx.css — 레이아웃 전용 (색상은 Astryx 컴포넌트 자체 토큰 사용) */
+.eb-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px;
+  text-align: center;
+}
+.eb-shell-page {
+  margin: 0 auto;
+  min-height: 60dvh;
+  max-width: 512px;
+}
+.eb-shell-global {
+  min-height: 100vh;
+}

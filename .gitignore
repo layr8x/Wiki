@@ -54,3 +54,6 @@ google-service-account.json
 
 # 빌드타임 생성 (대시보드 스냅샷) — prebuild가 매 배포마다 새로 만듦
 public/cs-stats.json
+
+# 카카오 쿠키 갱신 스크립트의 실행 중 lock 파일 (이 기기 로컬 런타임 상태, 커밋 금지)
+.kakao-cookie-refresh.lock

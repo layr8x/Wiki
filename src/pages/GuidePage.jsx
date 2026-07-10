@@ -27,6 +27,7 @@ import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { Divider } from '@astryxdesign/core/Divider'
+import { Table, proportional, pixel } from '@astryxdesign/core/Table'
 
 import { useGuide, useSubmitFeedback } from '@/hooks/useGuides'
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
@@ -246,30 +247,21 @@ function GuidePageInner({ id }) {
         {guide.mainItemsTable && (
           <section className="gp-section">
             <h2 className="gp-sec-title">주요 항목</h2>
-            <div className="gp-table-wrap">
-              <table className="gp-table gp-tmin520">
-                <thead>
-                  <tr>
-                    <th className="gp-col-40">항목</th>
-                    <th>설명</th>
-                    <th className="gp-col-20 gp-center">필수</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guide.mainItemsTable.map((it, i) => (
-                    <tr key={i}>
-                      <td className="gp-strong">{it.field}</td>
-                      <td className="gp-muted">{it.desc}</td>
-                      <td className="gp-center">
-                        {it.required
-                          ? <Badge label="필수" variant="red" />
-                          : <span className="gp-muted gp-xs">선택</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Card padding={0}>
+              <Table
+                data={guide.mainItemsTable}
+                columns={[
+                  { key: 'field', header: '항목', width: proportional(1), renderCell: (it) => <Text weight="medium">{it.field}</Text> },
+                  { key: 'desc', header: '설명', width: proportional(2), renderCell: (it) => <Text type="supporting">{it.desc}</Text> },
+                  {
+                    key: 'required', header: '필수', width: pixel(88), align: 'center',
+                    renderCell: (it) => it.required
+                      ? <Badge label="필수" variant="red" />
+                      : <Text type="supporting" size="xsm">선택</Text>,
+                  },
+                ]}
+              />
+            </Card>
           </section>
         )}
 
@@ -320,36 +312,28 @@ function GuidePageInner({ id }) {
         {guide.decisionTable && (
           <section className="gp-section">
             <h2 className="gp-sec-title">판단 기준</h2>
-            <div className="gp-table-wrap">
-              <table className="gp-table gp-tmin640">
-                <thead>
-                  <tr>
-                    <th>조건</th>
-                    <th>처리</th>
-                    <th className="gp-col-40">비고</th>
-                    <th className="gp-col-20 gp-center">상태</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guide.decisionTable.map((r, i) => {
-                    const st = DECISION_STATUS[r.status]
-                    return (
-                      <tr key={i}>
-                        <td className="gp-strong">{r.cond}</td>
-                        <td>{r.action}</td>
-                        <td className="gp-muted gp-xs">{r.note}</td>
-                        <td className="gp-center">
-                          <Badge
-                            label={st?.label ?? r.status}
-                            variant={DECISION_BADGE_VARIANT[r.status] ?? 'neutral'}
-                          />
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <Card padding={0}>
+              <Table
+                data={guide.decisionTable}
+                columns={[
+                  { key: 'cond', header: '조건', width: proportional(2), renderCell: (r) => <Text weight="medium">{r.cond}</Text> },
+                  { key: 'action', header: '처리', width: proportional(2), renderCell: (r) => <Text>{r.action}</Text> },
+                  { key: 'note', header: '비고', width: proportional(1.5), renderCell: (r) => <Text type="supporting" size="xsm">{r.note}</Text> },
+                  {
+                    key: 'status', header: '상태', width: pixel(96), align: 'center',
+                    renderCell: (r) => {
+                      const st = DECISION_STATUS[r.status]
+                      return (
+                        <Badge
+                          label={st?.label ?? r.status}
+                          variant={DECISION_BADGE_VARIANT[r.status] ?? 'neutral'}
+                        />
+                      )
+                    },
+                  },
+                ]}
+              />
+            </Card>
           </section>
         )}
 
@@ -357,36 +341,28 @@ function GuidePageInner({ id }) {
         {guide.troubleTable && (
           <section className="gp-section">
             <h2 className="gp-sec-title">자주 발생하는 오류</h2>
-            <div className="gp-table-wrap">
-              <table className="gp-table gp-tmin720">
-                <thead>
-                  <tr>
-                    <th className="gp-col-25">오류</th>
-                    <th className="gp-col-25">원인</th>
-                    <th>해결</th>
-                    <th className="gp-col-24 gp-center">심각도</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guide.troubleTable.map((r, i) => {
-                    const sv = SEVERITY[r.severity]
-                    return (
-                      <tr key={i}>
-                        <td className="gp-strong">{r.issue}</td>
-                        <td className="gp-muted">{r.cause}</td>
-                        <td>{r.solution}</td>
-                        <td className="gp-center">
-                          <Badge
-                            label={sv?.label ?? r.severity}
-                            variant={SEVERITY_BADGE_VARIANT[r.severity] ?? 'neutral'}
-                          />
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <Card padding={0}>
+              <Table
+                data={guide.troubleTable}
+                columns={[
+                  { key: 'issue', header: '오류', width: proportional(1.5), renderCell: (r) => <Text weight="medium">{r.issue}</Text> },
+                  { key: 'cause', header: '원인', width: proportional(1.5), renderCell: (r) => <Text type="supporting">{r.cause}</Text> },
+                  { key: 'solution', header: '해결', width: proportional(2), renderCell: (r) => <Text>{r.solution}</Text> },
+                  {
+                    key: 'severity', header: '심각도', width: pixel(100), align: 'center',
+                    renderCell: (r) => {
+                      const sv = SEVERITY[r.severity]
+                      return (
+                        <Badge
+                          label={sv?.label ?? r.severity}
+                          variant={SEVERITY_BADGE_VARIANT[r.severity] ?? 'neutral'}
+                        />
+                      )
+                    },
+                  },
+                ]}
+              />
+            </Card>
           </section>
         )}
 
@@ -412,24 +388,18 @@ function GuidePageInner({ id }) {
         {guide.referenceData && (
           <section className="gp-section">
             <h2 className="gp-sec-title">참조 데이터</h2>
-            <div className="gp-table-wrap">
-              <table className="gp-table gp-tmin480">
-                <thead>
-                  <tr>
-                    <th className="gp-col-40">용어</th>
-                    <th>정의</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {guide.referenceData.map((r, i) => (
-                    <tr key={i}>
-                      <td className="gp-strong gp-mono">{r.term}</td>
-                      <td className="gp-muted">{r.definition}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Card padding={0}>
+              <Table
+                data={guide.referenceData}
+                columns={[
+                  {
+                    key: 'term', header: '용어', width: proportional(1),
+                    renderCell: (r) => <Text weight="medium" className="gp-mono">{r.term}</Text>,
+                  },
+                  { key: 'definition', header: '정의', width: proportional(2), renderCell: (r) => <Text type="supporting">{r.definition}</Text> },
+                ]}
+              />
+            </Card>
           </section>
         )}
 

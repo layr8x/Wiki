@@ -1,10 +1,10 @@
 // src/pages/admin/AdminGuidesPage.jsx — /admin/guides
 // 가이드 관리(어드민) — Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
 //   - 데이터 훅(react-query)·라우팅·상태 탭/모듈 필터/검색/페이지네이션·행 액션(편집/발행/보관 등)은 100% 유지
-//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Divider/TextInput)로 교체
+//   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Selector/Table)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
-//   - 표현 못하는 레이아웃(툴바·세그먼트·테이블·hover·스켈레톤)은 co-located CSS(토큰 only)
-//   - 유지한 shadcn: 모듈 필터 Select(Astryx 셀렉트 미도입) · 삭제 확인 Dialog(교체 리스크 회피)
+//   - 표현 못하는 레이아웃(툴바·세그먼트·hover·스켈레톤)은 co-located CSS(토큰 only)
+//   - 유지한 shadcn: 삭제 확인 Dialog(교체 리스크 회피)
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -17,8 +17,6 @@ import {
   Archive,
 } from '@phosphor-icons/react'
 import { fetchAdminGuides, updateGuideStatus, deleteGuide, getModuleTree } from '@/lib/db'
-import { usePagination } from '@/hooks/usePagination'
-import Pagination from '@/components/common/Pagination'
 import { GUIDE_TYPES } from '@/lib/guideTypes'
 
 import { VStack } from '@astryxdesign/core/VStack'
@@ -29,11 +27,11 @@ import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
+import { Selector } from '@astryxdesign/core/Selector'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { Table, useTablePagination, paginateData, proportional, pixel } from '@astryxdesign/core/Table'
 
-// 유지한 shadcn: 모듈 필터 Select + 삭제 확인 Dialog
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
+// 유지한 shadcn: 삭제 확인 Dialog
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
@@ -75,6 +73,8 @@ const TYPE_BADGE_VARIANT = {
 const toTypeVariant = (typeKey) => TYPE_BADGE_VARIANT[typeKey] ?? 'neutral'
 const typeLabel = (typeKey) => GUIDE_TYPES[typeKey]?.shortLabel ?? typeKey
 
+const PAGE_SIZE = 25
+
 export default function AdminGuidesPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -85,11 +85,16 @@ export default function AdminGuidesPage() {
     () => new Map(moduleTree.map(m => [m.id, m.label])),
     [moduleTree]
   )
+  const moduleOptions = useMemo(
+    () => [{ value: 'all', label: '전체 모듈' }, ...moduleTree.map(m => ({ value: m.id, label: m.label }))],
+    [moduleTree]
+  )
 
   const [status, setStatus]   = useState('all')
   const [moduleF, setModuleF] = useState('all')
   const [search, setSearch]   = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [page, setPage] = useState(1)
 
   const { data: guides = [], isLoading } = useQuery({
     queryKey: ['admin', 'guides', { status, moduleF, search }],
@@ -133,8 +138,122 @@ export default function AdminGuidesPage() {
   }, [guides])
 
   // 필터 변경 시 1페이지로 리셋 — 결과가 줄었는데 빈 페이지를 보여주는 것 방지
-  const pagination = usePagination(guides, 25)
-  useEffect(() => { pagination.reset() }, [status, moduleF, search]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setPage(1) }, [status, moduleF, search])
+
+  const paginationPlugin = useTablePagination({
+    page,
+    onPageChange: setPage,
+    totalItems: guides.length,
+    pageSize: PAGE_SIZE,
+  })
+  const pageItems = useMemo(() => paginateData(guides, page, PAGE_SIZE), [guides, page])
+
+  const columns = useMemo(() => [
+    {
+      key: 'title',
+      header: '제목',
+      width: proportional(3),
+      renderCell: (g) => (
+        <VStack gap={0.5}>
+          <Link to={`/guides/${g.id}`} className="ag-title">{g.title}</Link>
+          <Text type="supporting" maxLines={1} className="ag-tldr">{g.tldr}</Text>
+        </VStack>
+      ),
+    },
+    {
+      key: 'module',
+      header: '모듈',
+      width: proportional(1.5),
+      renderCell: (g) => <Text>{moduleLabelById.get(g.module) || g.module}</Text>,
+    },
+    {
+      key: 'type',
+      header: '타입',
+      width: proportional(1),
+      renderCell: (g) => <Badge label={typeLabel(g.type)} variant={toTypeVariant(g.type)} />,
+    },
+    {
+      key: 'status',
+      header: '상태',
+      width: proportional(1),
+      renderCell: (g) => (
+        <Badge
+          label={STATUS_LABEL[g.status] || g.status}
+          variant={STATUS_BADGE_VARIANT[g.status] ?? 'neutral'}
+        />
+      ),
+    },
+    {
+      key: 'updated',
+      header: '수정일',
+      width: pixel(110),
+      renderCell: (g) => (
+        <Text type="supporting" hasTabularNumbers>
+          {g.updated || g.updated_at?.slice(0, 10) || '—'}
+        </Text>
+      ),
+    },
+    {
+      key: 'actions',
+      header: '액션',
+      width: pixel(168),
+      align: 'end',
+      renderCell: (g) => (
+        <HStack gap={1} vAlign="center" hAlign="end">
+          {canEdit && (
+            <Button
+              isIconOnly size="sm" variant="ghost"
+              label="편집"
+              icon={<Pencil size={16} />}
+              onClick={() => navigate(`/editor?id=${g.id}`)}
+            />
+          )}
+          {canPublish && g.status !== 'published' && g.status !== 'archived' && (
+            <Button
+              isIconOnly size="sm" variant="ghost"
+              label="발행하기"
+              icon={<PaperPlaneTilt size={16} />}
+              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
+            />
+          )}
+          {canPublish && g.status === 'published' && (
+            <Button
+              isIconOnly size="sm" variant="ghost"
+              label="발행 해제"
+              icon={<EyeSlash size={16} />}
+              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
+            />
+          )}
+          {/* 보관 상태 → 복원 (임시저장으로 되돌림) */}
+          {canEdit && g.status === 'archived' && (
+            <Button
+              isIconOnly size="sm" variant="ghost"
+              label="복원 (임시저장으로)"
+              icon={<ArrowCounterClockwise size={16} />}
+              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
+            />
+          )}
+          {/* 보관 상태 → 바로 재발행 */}
+          {canPublish && g.status === 'archived' && (
+            <Button
+              isIconOnly size="sm" variant="ghost"
+              label="바로 재발행"
+              icon={<PaperPlaneTilt size={16} />}
+              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
+            />
+          )}
+          {canDelete && g.status !== 'archived' && (
+            <Button
+              isIconOnly size="sm" variant="destructive"
+              label="보관함으로 이동"
+              icon={<Archive size={16} />}
+              onClick={() => setDeleteTarget(g)}
+            />
+          )}
+        </HStack>
+      ),
+    },
+  ], [moduleLabelById, canEdit, canPublish, canDelete, navigate, statusMutation])
 
   return (
     <div className="ag-shell">
@@ -151,7 +270,7 @@ export default function AdminGuidesPage() {
           <Button label="새 가이드 작성" onClick={() => navigate('/editor')} />
         </header>
 
-        {/* ─── 카드: 툴바 + 테이블 + 페이지네이션 ───────────────── */}
+        {/* ─── 카드: 툴바 + 테이블 ───────────────────────────────── */}
         <Card className="ag-card" padding={0}>
           {/* 툴바: 상태 세그먼트 + 모듈 필터 + 검색 */}
           <div className="ag-toolbar">
@@ -168,17 +287,14 @@ export default function AdminGuidesPage() {
             </div>
 
             <div className="ag-module">
-              <Select value={moduleF} onValueChange={setModuleF}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="모듈 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체 모듈</SelectItem>
-                  {moduleTree.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Selector
+                label="모듈 필터"
+                isLabelHidden
+                options={moduleOptions}
+                value={moduleF}
+                onChange={setModuleF}
+                size="sm"
+              />
             </div>
 
             <div className="ag-search">
@@ -195,121 +311,27 @@ export default function AdminGuidesPage() {
             </div>
           </div>
 
-          {/* 테이블 — 좁은 화면에서 가로 스크롤 */}
-          <div className="ag-table-wrap">
-            <table className="ag-table ag-tmin">
-              <thead>
-                <tr>
-                  <th className="ag-col-title">제목</th>
-                  <th>모듈</th>
-                  <th>타입</th>
-                  <th>상태</th>
-                  <th>수정일</th>
-                  <th className="ag-col-actions"><span className="ag-sr">액션</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={`ag-sk-${i}`}>
-                      <td colSpan={6}><div className="ag-skel-line" /></td>
-                    </tr>
-                  ))
-                ) : guides.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="ag-empty-cell">
-                      <Text type="supporting">조건에 해당하는 가이드가 없습니다.</Text>
-                    </td>
-                  </tr>
-                ) : (
-                  pagination.currentItems.map((g) => (
-                    <tr key={g.id}>
-                      <td>
-                        <Link to={`/guides/${g.id}`} className="ag-title">{g.title}</Link>
-                        <Text type="supporting" maxLines={1} className="ag-tldr">{g.tldr}</Text>
-                      </td>
-                      <td>
-                        <Text>{moduleLabelById.get(g.module) || g.module}</Text>
-                      </td>
-                      <td>
-                        <Badge label={typeLabel(g.type)} variant={toTypeVariant(g.type)} />
-                      </td>
-                      <td>
-                        <Badge
-                          label={STATUS_LABEL[g.status] || g.status}
-                          variant={STATUS_BADGE_VARIANT[g.status] ?? 'neutral'}
-                        />
-                      </td>
-                      <td>
-                        <Text type="supporting" hasTabularNumbers>
-                          {g.updated || g.updated_at?.slice(0, 10) || '—'}
-                        </Text>
-                      </td>
-                      <td>
-                        <HStack gap={1} vAlign="center" className="ag-actions">
-                          {canEdit && (
-                            <Button
-                              isIconOnly size="sm" variant="ghost"
-                              label="편집"
-                              icon={<Pencil size={16} />}
-                              onClick={() => navigate(`/editor?id=${g.id}`)}
-                            />
-                          )}
-                          {canPublish && g.status !== 'published' && g.status !== 'archived' && (
-                            <Button
-                              isIconOnly size="sm" variant="ghost"
-                              label="발행하기"
-                              icon={<PaperPlaneTilt size={16} />}
-                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
-                            />
-                          )}
-                          {canPublish && g.status === 'published' && (
-                            <Button
-                              isIconOnly size="sm" variant="ghost"
-                              label="발행 해제"
-                              icon={<EyeSlash size={16} />}
-                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
-                            />
-                          )}
-                          {/* 보관 상태 → 복원 (임시저장으로 되돌림) */}
-                          {canEdit && g.status === 'archived' && (
-                            <Button
-                              isIconOnly size="sm" variant="ghost"
-                              label="복원 (임시저장으로)"
-                              icon={<ArrowCounterClockwise size={16} />}
-                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
-                            />
-                          )}
-                          {/* 보관 상태 → 바로 재발행 */}
-                          {canPublish && g.status === 'archived' && (
-                            <Button
-                              isIconOnly size="sm" variant="ghost"
-                              label="바로 재발행"
-                              icon={<PaperPlaneTilt size={16} />}
-                              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
-                            />
-                          )}
-                          {canDelete && g.status !== 'archived' && (
-                            <Button
-                              isIconOnly size="sm" variant="destructive"
-                              label="보관함으로 이동"
-                              icon={<Archive size={16} />}
-                              onClick={() => setDeleteTarget(g)}
-                            />
-                          )}
-                        </HStack>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {!isLoading && guides.length > 0 && pagination.totalPages > 1 && (
-            <div className="ag-foot">
-              <Pagination pagination={pagination} />
+          {/* 테이블 */}
+          {isLoading ? (
+            <div className="ag-skel-wrap">
+              <VStack gap={3}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={`ag-sk-${i}`} width="100%" height={40} index={i} />
+                ))}
+              </VStack>
             </div>
+          ) : guides.length === 0 ? (
+            <div className="ag-empty-cell">
+              <Text type="supporting">조건에 해당하는 가이드가 없습니다.</Text>
+            </div>
+          ) : (
+            <Table
+              data={pageItems}
+              columns={columns}
+              idKey="id"
+              hasHover
+              plugins={{ pagination: paginationPlugin }}
+            />
           )}
         </Card>
 

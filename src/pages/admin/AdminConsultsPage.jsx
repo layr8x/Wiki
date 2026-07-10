@@ -33,6 +33,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import './AdminConsultsPage.astryx.css'
 
 const CHANNELS = [
@@ -336,6 +337,15 @@ export default function AdminConsultsPage() {
             </Text>
           </Card>
         )}
+
+        {/* ─── 분석 요약 (방법론 기반 상단 통계 영역) ───────────── */}
+        <AnalyticsHeader
+          analyticsKey="kakao-consults"
+          table="kakao_partner_messages"
+          dateColumn="sent_at"
+          filters={{ profile_id: channel }}
+          title={channelLabel + ' 문의량'}
+        />
 
         {/* ─── 채널별 건수 KPI ──────────────────────────────────── */}
         <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>

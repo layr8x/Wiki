@@ -2,8 +2,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense } from 'react'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { VStack } from '@astryxdesign/core/VStack'
+import { Grid } from '@astryxdesign/core/Grid'
 import Layout from './components/common/AstryxAppFrame'
+import './App.astryx.css'
 
 /**
  * Suspense fallback — lazy route 로드 중 표시될 placeholder.
@@ -11,15 +14,17 @@ import Layout from './components/common/AstryxAppFrame'
  */
 function PageSkeleton() {
   return (
-    <div className="flex flex-col gap-4 p-8 max-w-5xl mx-auto" role="status" aria-label="페이지 로딩 중">
-      <Skeleton className="h-9 w-2/3" />
-      <Skeleton className="h-5 w-full" />
-      <Skeleton className="h-5 w-5/6" />
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-        <Skeleton className="h-28" />
-      </div>
+    <div className="app-page-skel" role="status" aria-live="polite" aria-label="페이지 로딩 중">
+      <VStack gap={4}>
+        <Skeleton width="66%" height={36} />
+        <Skeleton width="100%" height={20} />
+        <Skeleton width="83%" height={20} />
+        <Grid columns={{ minWidth: 200, max: 3 }} gap={3}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={`app-sk-${i}`} width="100%" height={112} radius="rounded" index={i} />
+          ))}
+        </Grid>
+      </VStack>
     </div>
   )
 }
@@ -44,7 +49,6 @@ const GuideListPage        = lazy(() => import('./pages/GuideListPage'))
 const GuidePage            = lazy(() => import('./pages/GuidePage'))
 const FaqPage              = lazy(() => import('./pages/FaqPage'))
 const UpdatesPage          = lazy(() => import('./pages/UpdatesPage'))
-const CreateGuidePage      = lazy(() => import('./pages/CreateGuidePage'))
 const EditorPage           = lazy(() => import('./pages/EditorPage'))
 const FeedbackPage         = lazy(() => import('./pages/FeedbackPage'))
 const ErrorPage            = lazy(() => import('./pages/ErrorPage'))
@@ -52,7 +56,6 @@ const AdminLayout          = lazy(() => import('./layouts/AdminLayout'))
 const AdminOverviewPage    = lazy(() => import('./pages/admin/AdminOverviewPage'))
 const AdminGuidesPage      = lazy(() => import('./pages/admin/AdminGuidesPage'))
 const AdminFeedbackPage    = lazy(() => import('./pages/admin/AdminFeedbackPage'))
-const AdminIntegrationPage = lazy(() => import('./pages/admin/AdminIntegrationPage'))
 const AdminConsultsPage    = lazy(() => import('./pages/admin/AdminConsultsPage'))
 const AdminJandiPage       = lazy(() => import('./pages/admin/AdminJandiPage'))
 const ChatbotPopupPage     = lazy(() => import('./components/chatbot').then(m => ({ default: m.ChatbotPopupPage })))
@@ -90,15 +93,6 @@ export default function App() {
                       <Suspense fallback={<PageSkeleton />}><AstryxPocPage /></Suspense>
                     } />
 
-                    {/* 새 가이드 작성 — 편집 권한 필요, 레이아웃 없이 전체 화면 */}
-                    <Route element={<RequireRole permission="edit" />}>
-                      <Route path="/create" element={
-                        <Suspense fallback={<PageSkeleton />}>
-                          <CreateGuidePage />
-                        </Suspense>
-                      } />
-                    </Route>
-
                     {/* 에디터 — 편집 권한 필요, 레이아웃 없이 전체 화면 */}
                     <Route element={<RequireRole permission="edit" />}>
                       <Route path="/editor" element={
@@ -119,9 +113,6 @@ export default function App() {
                         } />
                         <Route path="feedback" element={
                           <RouteBoundary><AdminFeedbackPage /></RouteBoundary>
-                        } />
-                        <Route path="integration" element={
-                          <Suspense fallback={<PageSkeleton />}><AdminIntegrationPage /></Suspense>
                         } />
                         <Route path="consults" element={
                           <RouteBoundary><AdminConsultsPage /></RouteBoundary>

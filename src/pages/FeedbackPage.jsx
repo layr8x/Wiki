@@ -2,8 +2,7 @@
 // 구조: 헤더 → 타입 선택 카드 4개 → 제목/내용 입력 → 제출
 // Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
 //   - 데이터 훅 없음. 폼 상태·검증·submitFeedback 제출·라우팅은 그대로 유지
-//   - 시각 chrome(헤더/카드/버튼/라벨/오류배너)만 Astryx primitive로 교체
-//   - 입력 컨트롤(Input/Textarea)은 기존 shadcn 유지 = 허용된 하이브리드
+//   - 입력 컨트롤 포함 전체가 Astryx primitive (TextInput/TextArea) — shadcn 없음
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
@@ -23,8 +22,8 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { Button } from '@astryxdesign/core/Button'
 
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { TextInput } from '@astryxdesign/core/TextInput'
+import { TextArea } from '@astryxdesign/core/TextArea'
 import { submitFeedback } from '@/lib/db'
 import './FeedbackPage.astryx.css'
 
@@ -152,33 +151,35 @@ export default function FeedbackPage() {
 
         {/* 2. 제목 */}
         <div className="fb-field">
-          <Text as="label" htmlFor="fb-title" className="fb-label">
+          <Text as="label" className="fb-label">
             2. 제목 <span className="fb-req">*</span>
           </Text>
-          <Input
-            id="fb-title"
+          <TextInput
+            label="제목"
+            isLabelHidden
             placeholder="예: 회원 병합 가이드 3단계 스크린샷이 구버전"
             value={title}
-            onChange={e => setTitle(e.target.value)}
-            maxLength={80}
+            onChange={(value) => setTitle(value.slice(0, 80))}
+            isRequired
           />
           <div className="fb-count">{title.length} / 80</div>
         </div>
 
         {/* 3. 내용 */}
         <div className="fb-field">
-          <Text as="label" htmlFor="fb-body" className="fb-label">
+          <Text as="label" className="fb-label">
             3. 상세 내용 <span className="fb-req">*</span>
           </Text>
-          <Textarea
-            id="fb-body"
+          <TextArea
+            label="상세 내용"
+            isLabelHidden
             placeholder="구체적인 상황, 현재 가이드와 실제의 차이, 개선 제안 등을 자세히 적어주세요."
             value={body}
-            onChange={e => setBody(e.target.value)}
+            onChange={(value) => setBody(value.slice(0, 1000))}
             rows={8}
             maxLength={1000}
+            isRequired
           />
-          <div className="fb-count">{body.length} / 1,000</div>
         </div>
 
         {/* 오류 배너 */}

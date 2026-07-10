@@ -1,0 +1,50 @@
+/* src/components/analytics/AnalyticsHeader.astryx.css
+ * 분석 요약 헤더 — Astryx 표면. 색·간격·라운드는 전부 Astryx 토큰(var)만 사용.
+ * primitive로 표현 못하는 것(3열 그리드, 스파크라인 SVG 스타일, 각주)만 여기서 처리한다. */
+
+.anh-card { overflow: hidden; }
+
+.anh-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1.4fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .anh-grid { grid-template-columns: 1fr; }
+}
+
+.anh-headline { min-width: 0; }
+.anh-sub {
+  min-width: 0;
+  padding-left: 24px;
+  border-left: 1px solid var(--color-border);
+}
+@media (max-width: 860px) {
+  .anh-sub { padding-left: 0; border-left: none; }
+}
+.anh-trend { min-width: 0; }
+
+.anh-footnote {
+  display: block;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-disabled);
+  line-height: 1.5;
+}
+
+.anh-skel {
+  height: 96px;
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: anh-pulse 1.4s ease-in-out infinite;
+}
+@keyframes anh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+
+/* 스파크라인 SVG — 색은 Astryx 아이콘/보더 토큰만 사용 */
+.anh-spark { display: block; }
+.anh-spark-band { fill: var(--color-background-muted); }
+.anh-spark-line { stroke: var(--color-icon-primary); stroke-width: 1.75; }
+.anh-spark-dot { fill: var(--color-icon-secondary); }
+.anh-spark-dot-last { fill: var(--color-icon-primary); }

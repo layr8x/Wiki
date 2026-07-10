@@ -154,7 +154,8 @@ export default function AdminOverviewPage() {
                   ))
                 ) : (
                   getModuleTree().map((mod) => {
-                    const count = moduleStats[mod.id] || 0
+                    // moduleStats는 Supabase guides.module 컬럼(한글 라벨) 기준으로 집계됨 — mod.id(영문 슬러그) 아님
+                    const count = moduleStats[mod.label] || 0
                     const max = Math.max(...Object.values(moduleStats), 1)
                     const pct = Math.round((count / max) * 100)
                     return (

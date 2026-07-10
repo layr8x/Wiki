@@ -44,7 +44,8 @@ describe('FaqPage', () => {
     renderPage()
     const allBtn = screen.getByRole('button', { name: /전체/ })
     // "전체" 버튼은 전체 FAQ 개수가 병기됨 (최소 10 이상)
-    const count = within(allBtn).getByText(/\d+/)
+    // Astryx ToggleButton은 너비 고정을 위해 라벨을 aria-hidden 사본으로 한 번 더 렌더하므로 그 사본은 무시
+    const count = within(allBtn).getByText(/\d+/, { ignore: '[aria-hidden="true"] *' })
     expect(Number(count.textContent)).toBeGreaterThanOrEqual(10)
   })
 

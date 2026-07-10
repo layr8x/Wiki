@@ -25,6 +25,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 
 import './AdminJandiPage.astryx.css'
 
@@ -298,6 +299,15 @@ export default function AdminJandiPage() {
             </p>
           </Card>
         )}
+
+        {/* ─── 분석 요약 (방법론 기반 상단 통계 영역, 카카오 상담 페이지와 동일 스펙) ── */}
+        <AnalyticsHeader
+          analyticsKey="jandi"
+          table="jandi_messages"
+          dateColumn="created_at"
+          filters={{ room_id: channel }}
+          title={channelLabel + ' 대화량'}
+        />
 
         {/* ─── 채널별 메시지 수 (KPI) ───────────────────────────── */}
         <Grid columns={{ minWidth: 240, max: 5 }} gap={4}>

@@ -1,0 +1,7 @@
+/* src/components/common/RouteBoundary.astryx.css — 라우트 로딩 스켈레톤 레이아웃 (색상은 Skeleton 컴포넌트 자체 토큰 사용) */
+.rb-skel-shell {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1024px;
+  padding: 40px 24px;
+}

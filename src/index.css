@@ -192,6 +192,31 @@
   html.dark {
     color-scheme: dark;
   }
+
+  /* 스크롤바 = 평소엔 완전 투명, 스크롤 중일 때만 반투명 노출(js가 html에 .is-scrolling 토글).
+     WebKit/Blink(Chrome·Edge·Safari) 계열은 썸(thumb) 배경색으로 직접 제어. */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.2s ease;
+  }
+  /* "html.is-scrolling ::-webkit-scrollbar-thumb"(자손 결합자)만으로는 html 자신의
+     루트 스크롤바에는 적용되지 않는다 — html은 자기 자신의 자손이 아니므로.
+     루트 스크롤바용으로 결합자 없는 "html.is-scrolling::-webkit-scrollbar-thumb"를 반드시 병기. */
+  html.is-scrolling ::-webkit-scrollbar-thumb,
+  html.is-scrolling::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--color-text-primary, currentColor) 35%, transparent);
+  }
+  /* Firefox: scrollbar-color 는 트랜지션을 타지 않으므로 스크롤 중에만 값 자체를 바꿔 넣는다. */
+  * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  html.is-scrolling *,
+  html.is-scrolling {
+    scrollbar-color: color-mix(in oklab, var(--color-text-primary, currentColor) 35%, transparent) transparent;
+  }
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-feature-settings: "ss01", "ss02", "cv11";

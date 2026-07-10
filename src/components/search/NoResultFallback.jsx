@@ -18,8 +18,8 @@ import {
 } from '@phosphor-icons/react'
 import { GUIDES } from '@/data/mockData'
 import { useAiSearch } from '@/hooks/useAiSearch'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
+import { TextArea } from '@astryxdesign/core/TextArea'
+import { Button } from '@astryxdesign/core/Button'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
 
 const FEEDBACK_QUEUE_KEY = STORAGE_KEYS.feedbackQueue
@@ -170,15 +170,18 @@ export default function NoResultFallback({ query, onGoTo, onGoToRoute, onNavigat
           검색한 키워드 <span className="font-medium text-foreground">&ldquo;{query}&rdquo;</span>{' '}
           관련 가이드가 필요하신가요? 어떤 내용이 필요한지 알려주시면 우선 검토합니다.
         </p>
-        <Textarea
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          disabled={submitted}
-          placeholder="예: 신규 강사 첫 출근일 OT 절차가 필요합니다"
-          rows={2}
-          maxLength={500}
-          className="mt-2 resize-none text-sm"
-        />
+        <div className="mt-2">
+          <TextArea
+            label="가이드 추가 요청 내용"
+            isLabelHidden
+            value={note}
+            onChange={(value) => setNote(value)}
+            isDisabled={submitted}
+            placeholder="예: 신규 강사 첫 출근일 OT 절차가 필요합니다"
+            rows={2}
+            maxLength={500}
+          />
+        </div>
         <div className="mt-2 flex items-center justify-between">
           <button
             type="button"
@@ -187,10 +190,13 @@ export default function NoResultFallback({ query, onGoTo, onGoToRoute, onNavigat
           >
             상세 요청 작성 →
           </button>
-          <Button type="submit" size="sm" disabled={submitting || submitted}>
-            <PaperPlaneTilt size={12} weight="fill" />
-            {submitted ? '제출됨' : submitting ? '전송 중...' : '요청 보내기'}
-          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            label={submitted ? '제출됨' : submitting ? '전송 중...' : '요청 보내기'}
+            icon={<PaperPlaneTilt size={12} weight="fill" />}
+            isDisabled={submitting || submitted}
+          />
         </div>
       </form>
     </div>

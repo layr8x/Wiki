@@ -11,13 +11,15 @@
 // 매니저 FAQ(managerFaq)를 같은 7개 분류로 합쳐, 챗봇과 위키 FAQ가 어긋나지 않게 한다.
 import React, { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { CaretRight as ChevronRight, CaretDown as ChevronDown } from '@phosphor-icons/react'
+import { CaretRight as ChevronRight } from '@phosphor-icons/react'
 
 import { VStack } from '@astryxdesign/core/VStack'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
+import { ToggleButton } from '@astryxdesign/core/ToggleButton'
+import { Collapsible, CollapsibleGroup } from '@astryxdesign/core/Collapsible'
 
 import { CHIP_MENU } from '@/components/chatbot/chatbotConfig'
 import { getQaByCategory } from '@/data/officialQa'
@@ -72,17 +74,16 @@ export default function FaqPage() {
               : FAQ_ITEMS.filter((f) => f.cat === cat).length
             const active = category === cat
             return (
-              <button
+              <ToggleButton
                 key={cat}
-                type="button"
-                onClick={() => { setCategory(cat); setOpenKey(null) }}
-                aria-pressed={active}
-                className="faq-pill"
-                data-active={active || undefined}
+                label={`${cat} (${count}건)`}
+                isPressed={active}
+                onPressedChange={() => { setCategory(cat); setOpenKey(null) }}
+                size="sm"
               >
                 {cat}
-                <span className="faq-pill-count">{count}</span>
-              </button>
+                <Badge label={count} variant={active ? 'info' : 'neutral'} />
+              </ToggleButton>
             )
           })}
         </div>
@@ -96,42 +97,40 @@ export default function FaqPage() {
               </Text>
             </div>
           ) : (
-            <ul className="faq-list">
-              {filtered.map((item, i) => {
-                const key = `${category}-${i}`
-                const open = openKey === key
-                return (
-                  <li key={key} className="faq-item">
-                    <button
-                      type="button"
-                      className="faq-trigger"
-                      aria-expanded={open}
-                      onClick={() => setOpenKey(open ? null : key)}
-                    >
-                      <span className="faq-trigger-main">
-                        <Badge label={item.cat} variant="neutral" />
-                        <Text weight="medium" className="faq-question">{item.q}</Text>
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        className="faq-chevron"
-                        data-open={open || undefined}
-                      />
-                    </button>
-                    <div className="faq-panel" data-open={open || undefined}>
-                      <div className="faq-panel-inner">
-                        <Text as="p" type="body" className="faq-answer">{item.a}</Text>
-                        {item.guideId && (
-                          <Link to={`/guides/${item.guideId}`} className="faq-guide-link">
-                            관련 가이드 보기 <ChevronRight size={12} />
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
+            <CollapsibleGroup
+              type="single"
+              value={openKey ?? ''}
+              onChange={(value) => setOpenKey(value || null)}
+            >
+              <ul className="faq-list">
+                {filtered.map((item, i) => {
+                  const key = `${category}-${i}`
+                  return (
+                    <li key={key} className="faq-item">
+                      <Collapsible
+                        value={key}
+                        defaultIsOpen={false}
+                        trigger={
+                          <span className="faq-trigger-main">
+                            <Badge label={item.cat} variant="neutral" />
+                            <Text weight="medium" className="faq-question">{item.q}</Text>
+                          </span>
+                        }
+                      >
+                        <div className="faq-panel-inner">
+                          <Text as="p" type="body" className="faq-answer">{item.a}</Text>
+                          {item.guideId && (
+                            <Link to={`/guides/${item.guideId}`} className="faq-guide-link">
+                              관련 가이드 보기 <ChevronRight size={12} />
+                            </Link>
+                          )}
+                        </div>
+                      </Collapsible>
+                    </li>
+                  )
+                })}
+              </ul>
+            </CollapsibleGroup>
           )}
         </Card>
 
