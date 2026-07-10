@@ -45,10 +45,21 @@ const RRN_RE = /\b\d{6}[-\s]?[1-4]\d{6}\b/g;
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
 const MOBILE_RE = /(01[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g;
 // ── 고객(학생·학부모) 개인정보 마스킹 — 사용자 승인된 "광범위" 범위.
-// 이름+학번 붙여쓴 패턴(예 "조은호3491") 및 "학생/학부모/자녀/보호자 OOO" 문맥의 이름.
+// 이름+학번 붙여쓴 패턴(예 "조은호3491") 및 "OOO 학생/학부모/자녀/보호자" 문맥의 이름.
 // ⚠️ 한글 이름은 직원/학생 구분이 안 돼 문맥 일치 시 직원 이름도 가려질 수 있음(트레이드오프 인지).
 const STUDENT_ID_ATTACHED_RE = /[가-힣]{2,4}\d{3,6}(?![가-힣\d])/g;
-const STUDENT_CTX_NAME_RE = /(학생|학부모|자녀|보호자)\s*([가-힣]{2,4})(?=님|이|가|은|는|을|를|,|\.|\s|$)/g;
+// ⚠️ 실사용 패턴 재검토(2026-07): 기존엔 "학생 OOO"(라벨→이름) 순서만 가렸는데, 라이브 데이터
+// 실측 결과 이 방향은 정밀도가 사실상 0에 가까웠다(라벨 뒤에 오는 아무 일반 명사나 "이름"으로
+// 오인해 "학생 대상"→"학생 ***", "학생 여러분"→"학생 ***" 처럼 애먼 단어만 지우고 실제 이름은
+// 못 잡음 — 잔디 대화 2,952건이 이미 이렇게 훼손됨). 반면 실제 화면에 노출되던 진짜 사례
+// ("신성호 학생이", "김진성(77904938) 학생")는 전부 "이름→라벨" 순서였다. 그래서 정밀도 낮은
+// 라벨→이름 규칙은 제거하고, 실측 근거가 있는 이름→라벨 방향만 남긴다.
+// "초등학생·고등학생·전체 학부모·모든 학생"처럼 이름이 아닌 흔한 낱말은 예외 처리.
+const GRADE_PREFIX_EXCLUDE = new Set([
+  '초등', '고등', '전체', '재원', '신규', '기존', '해당',
+  '모든', '각각', '여러', '특정', '일부', '동일', '동일한', '당해',
+]);
+const STUDENT_NAME_CTX_RE = /([가-힣]{2,4})(\([0-9]{4,12}\))?\s*(학생|학부모|자녀|보호자)(?=님|이|가|은|는|을|를|,|\.|\s|\)|$)/g;
 function stripLoneSurrogates(s: any) {
   if (s == null) return s;
   return String(s).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
@@ -58,7 +69,9 @@ function maskBody(text: any) {
   let s = String(text);
   s = s.replace(CARD_RE, '[카드번호]').replace(RRN_RE, '[주민번호]')
        .replace(EMAIL_RE, '***@$1').replace(MOBILE_RE, '$1-****-$3');
-  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]').replace(STUDENT_CTX_NAME_RE, '$1 ***');
+  s = s.replace(STUDENT_ID_ATTACHED_RE, '[학생정보]');
+  s = s.replace(STUDENT_NAME_CTX_RE, (m: string, name: string, paren: string | undefined, label: string) =>
+    GRADE_PREFIX_EXCLUDE.has(name) ? m : `*** ${paren ? '(****) ' : ''}${label}`);
   return s;
 }
 

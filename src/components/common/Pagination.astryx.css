@@ -1,0 +1,6 @@
+/* src/components/common/Pagination.astryx.css — 페이지네이션 래퍼 간격만 처리.
+ * (색·라운드·간격은 전부 Astryx 토큰 var(--*). 레이아웃/버튼/페이지번호 표현은
+ * VStack + @astryxdesign/core/Pagination 컴포넌트가 담당) */
+.pagination-wrap {
+  margin-top: var(--spacing-6);
+}

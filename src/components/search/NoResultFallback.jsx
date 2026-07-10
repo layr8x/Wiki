@@ -7,20 +7,34 @@
 //
 // 개선 요청: localStorage 큐(`ams-wiki:feedback:queue:v1`)에 적재.
 //  - 백엔드 연결 전 임시 저장소. 제출 형식은 서버 API 와 동일 스키마로 맞춤.
+//
+// Astryx(디자인시스템) 마이그레이션: 데이터/제출 로직은 100% 유지, 시각 요소만
+// Astryx primitive(VStack/HStack/EmptyState/Card/Item/Badge/TextArea/Button/Text)로 교체.
 
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Compass,
   PaperPlaneTilt,
   SealCheck,
   FileText,
   Sparkle,
+  ArrowRight,
 } from '@phosphor-icons/react'
 import { GUIDES } from '@/data/mockData'
 import { useAiSearch } from '@/hooks/useAiSearch'
+import { STORAGE_KEYS } from '@/lib/storageKeys'
+
+import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
+import { EmptyState } from '@astryxdesign/core/EmptyState'
+import { Card } from '@astryxdesign/core/Card'
+import { Item } from '@astryxdesign/core/Item'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Text } from '@astryxdesign/core/Text'
 import { TextArea } from '@astryxdesign/core/TextArea'
 import { Button } from '@astryxdesign/core/Button'
-import { STORAGE_KEYS } from '@/lib/storageKeys'
+import { Spinner } from '@astryxdesign/core/Spinner'
+import './NoResultFallback.astryx.css'
 
 const FEEDBACK_QUEUE_KEY = STORAGE_KEYS.feedbackQueue
 
@@ -92,113 +106,112 @@ export default function NoResultFallback({ query, onGoTo, onGoToRoute, onNavigat
   }
 
   return (
-    <div className="px-3 py-4 space-y-4">
-      <div className="flex flex-col items-center gap-1 text-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-          <Compass size={20} className="text-muted-foreground" />
-        </div>
-        <p className="text-sm font-medium">&ldquo;{query}&rdquo; 에 정확히 일치하는 가이드가 없습니다</p>
-        <p className="text-xs text-muted-foreground">유사 주제 가이드를 대신 확인하거나, 필요한 가이드를 요청해 주세요</p>
-      </div>
+    <VStack gap={4} paddingInline={3} paddingBlock={4} className="nrf-root">
+      <EmptyState
+        isCompact
+        icon={<Compass size={20} />}
+        title={`“${query}” 에 정확히 일치하는 가이드가 없습니다`}
+        description="유사 주제 가이드를 대신 확인하거나, 필요한 가이드를 요청해 주세요"
+      />
 
       {ai.status === 'loading' && (
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
-          <Sparkle size={15} weight="fill" className="animate-pulse text-primary" />
-          AI가 위키 전체에서 답을 찾는 중…
-        </div>
+        <Card variant="muted" padding={3} className="nrf-ai-loading">
+          <HStack gap={2} align="center">
+            <Spinner size="sm" aria-label="AI가 위키 전체에서 답을 찾는 중" />
+            <Text type="supporting">AI가 위키 전체에서 답을 찾는 중…</Text>
+          </HStack>
+        </Card>
       )}
 
       {ai.status === 'ready' && ai.answer && (
-        <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
-            <Sparkle size={13} weight="fill" /> AI 검색 답변
-          </div>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{ai.answer}</p>
-          {ai.sources?.length > 0 && (
-            <ul className="space-y-1 pt-0.5">
-              {ai.sources.map(s => (
-                <li key={s.id}>
-                  <button
+        <Card variant="blue" padding={3} className="nrf-ai-answer">
+          <VStack gap={2}>
+            <HStack gap={1.5} align="center">
+              <Sparkle size={13} weight="fill" className="nrf-ai-icon" />
+              <Text type="label" weight="semibold" className="nrf-ai-label">AI 검색 답변</Text>
+            </HStack>
+            <Text type="body" as="p" className="nrf-ai-text">{ai.answer}</Text>
+            {ai.sources?.length > 0 && (
+              <VStack as="ul" gap={1} className="nrf-ai-sources">
+                {ai.sources.map(s => (
+                  <Item
+                    key={s.id}
+                    as="li"
+                    density="compact"
                     onClick={() => goRoute(s.route)}
-                    className="flex w-full items-center gap-2 rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-left transition-colors hover:bg-accent"
-                  >
-                    <FileText size={12} className="shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate text-xs font-medium">{s.title}</span>
-                    <span className="shrink-0 text-[10px] text-muted-foreground/70">{s.type}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                    startContent={<FileText size={12} />}
+                    label={s.title}
+                    endContent={<Text type="supporting" className="nrf-source-type">{s.type}</Text>}
+                  />
+                ))}
+              </VStack>
+            )}
+          </VStack>
+        </Card>
       )}
 
       {related.length > 0 && (
-        <div>
-          <p className="mb-1.5 px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">이런 가이드는 어떠세요?</p>
-          <ul className="space-y-1">
+        <VStack gap={1.5}>
+          <Text type="supporting" weight="medium" as="p">이런 가이드는 어떠세요?</Text>
+          <VStack as="ul" gap={1} className="nrf-related-list">
             {related.map(({ id, guide, score }) => (
-              <li key={id}>
-                <button
-                  onClick={() => onGoTo(id)}
-                  className="flex w-full items-start gap-2 rounded-md border border-border/60 bg-background px-2.5 py-2 text-left hover:bg-accent transition-colors"
-                >
-                  <FileText size={13} className="mt-0.5 shrink-0 text-muted-foreground" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{guide.title}</p>
-                    <p className="truncate text-xs text-muted-foreground">{guide.module} · {guide.tldr?.split('\n')[0]?.slice(0, 56)}</p>
-                  </div>
-                  <span className="shrink-0 self-center text-xs text-muted-foreground/60">{Math.round(score * 100)}%</span>
-                </button>
-              </li>
+              <Item
+                key={id}
+                as="li"
+                align="start"
+                onClick={() => onGoTo(id)}
+                startContent={<FileText size={13} />}
+                label={guide.title}
+                description={`${guide.module} · ${guide.tldr?.split('\n')[0]?.slice(0, 56) ?? ''}`}
+                endContent={<Text type="supporting" className="nrf-related-score">{Math.round(score * 100)}%</Text>}
+              />
             ))}
-          </ul>
-        </div>
+          </VStack>
+        </VStack>
       )}
 
-      <form onSubmit={handleSubmit} className="rounded-lg border border-border bg-muted/30 p-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">가이드 추가 요청</p>
-          {submitted && (
-            <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-              <SealCheck size={11} weight="fill" />
-              접수 완료
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          검색한 키워드 <span className="font-medium text-foreground">&ldquo;{query}&rdquo;</span>{' '}
-          관련 가이드가 필요하신가요? 어떤 내용이 필요한지 알려주시면 우선 검토합니다.
-        </p>
-        <div className="mt-2">
-          <TextArea
-            label="가이드 추가 요청 내용"
-            isLabelHidden
-            value={note}
-            onChange={(value) => setNote(value)}
-            isDisabled={submitted}
-            placeholder="예: 신규 강사 첫 출근일 OT 절차가 필요합니다"
-            rows={2}
-            maxLength={500}
-          />
-        </div>
-        <div className="mt-2 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => onNavigateFeedback(query)}
-            className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-          >
-            상세 요청 작성 →
-          </button>
-          <Button
-            type="submit"
-            size="sm"
-            label={submitted ? '제출됨' : submitting ? '전송 중...' : '요청 보내기'}
-            icon={<PaperPlaneTilt size={12} weight="fill" />}
-            isDisabled={submitting || submitted}
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="nrf-feedback-form">
+        <Card padding={3}>
+          <VStack gap={2}>
+            <HStack justify="between" align="center">
+              <Text type="supporting" weight="medium">가이드 추가 요청</Text>
+              {submitted && (
+                <Badge variant="success" icon={<SealCheck size={11} weight="fill" />} label="접수 완료" />
+              )}
+            </HStack>
+            <Text type="supporting" as="p">
+              검색한 키워드 <Text as="span" weight="medium" color="primary">&ldquo;{query}&rdquo;</Text>{' '}
+              관련 가이드가 필요하신가요? 어떤 내용이 필요한지 알려주시면 우선 검토합니다.
+            </Text>
+            <TextArea
+              label="가이드 추가 요청 내용"
+              isLabelHidden
+              value={note}
+              onChange={setNote}
+              isDisabled={submitted}
+              placeholder="예: 신규 강사 첫 출근일 OT 절차가 필요합니다"
+              rows={2}
+              maxLength={500}
+            />
+            <HStack justify="between" align="center">
+              <Button
+                variant="ghost"
+                size="sm"
+                label="상세 요청 작성"
+                endContent={<ArrowRight size={12} />}
+                onClick={() => onNavigateFeedback(query)}
+              />
+              <Button
+                type="submit"
+                size="sm"
+                icon={<PaperPlaneTilt size={12} weight="fill" />}
+                label={submitted ? '제출됨' : submitting ? '전송 중...' : '요청 보내기'}
+                isDisabled={submitting || submitted}
+              />
+            </HStack>
+          </VStack>
+        </Card>
       </form>
-    </div>
+    </VStack>
   )
 }

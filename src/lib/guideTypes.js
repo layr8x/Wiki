@@ -12,7 +12,7 @@ import {
 
 // ─── 가이드 타입 ──────────────────────────────────────────────────────────
 // key = GUIDES[*].type 에 저장되는 문자열
-// variant = Badge variant (src/components/ui/badge.jsx 에 정의)
+// variant = Astryx Badge variant
 // icon = @phosphor-icons/react 컴포넌트 참조
 // tone = 비-뱃지 컨텍스트(검색 오버레이 아이콘 칩 등) 용 틴트 pair
 export const GUIDE_TYPES = {

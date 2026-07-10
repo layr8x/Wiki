@@ -4,9 +4,11 @@
 // variant="global": 전체 화면 (App.jsx 최상단)
 // variant="page":   페이지 영역만 차지 (라우트 단위). 다른 라우트로 이동하면 자동 복구.
 import React from 'react'
-import { Button } from '@astryxdesign/core/Button'
+import { House as Home, ArrowClockwise } from '@phosphor-icons/react'
+
 import { VStack } from '@astryxdesign/core/VStack'
 import { HStack } from '@astryxdesign/core/HStack'
+import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { CodeBlock } from '@astryxdesign/core/CodeBlock'
@@ -47,14 +49,14 @@ export class ErrorBoundary extends React.Component {
       <div
         role="alert"
         aria-live="assertive"
-        className={isPage ? 'eb-shell eb-shell-page' : 'eb-shell eb-shell-global'}
+        className={isPage ? 'eb-shell eb-shell--page' : 'eb-shell eb-shell--global'}
       >
-        <VStack gap={4} hAlign="center" width="100%">
-          <VStack gap={1} hAlign="center">
-            <Heading level={isPage ? 3 : 1}>
+        <VStack gap={6} hAlign="center">
+          <VStack gap={2} hAlign="center">
+            <Heading level={isPage ? 2 : 1}>
               {isPage ? '이 페이지를 표시할 수 없습니다' : '문제가 발생했습니다'}
             </Heading>
-            <Text type="supporting">
+            <Text type="supporting" className="eb-desc">
               {isPage
                 ? '다른 메뉴는 정상 동작합니다. 다시 시도하거나 홈으로 이동해 주세요.'
                 : '예상치 못한 오류로 화면을 표시할 수 없습니다. 잠시 후 다시 시도해 주세요.'}
@@ -71,8 +73,18 @@ export class ErrorBoundary extends React.Component {
             />
           )}
           <HStack gap={2}>
-            <Button label="홈으로" variant="secondary" onClick={() => { window.location.href = '/' }} />
-            <Button label={isPage ? '다시 시도' : '새로고침'} variant="primary" onClick={this.handleReset} />
+            <Button
+              label="홈으로"
+              variant="secondary"
+              icon={<Home size={16} />}
+              onClick={() => { window.location.href = '/' }}
+            />
+            <Button
+              label={isPage ? '다시 시도' : '새로고침'}
+              variant="primary"
+              icon={<ArrowClockwise size={16} />}
+              onClick={this.handleReset}
+            />
           </HStack>
         </VStack>
       </div>

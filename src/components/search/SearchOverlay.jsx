@@ -1,12 +1,22 @@
-// src/components/search/SearchOverlay.jsx — shadcn/ui Command 팔레트
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+// src/components/search/SearchOverlay.jsx — Astryx Dialog 기반 커맨드팔레트 검색 오버레이
+//
+// Astryx(디자인시스템) 마이그레이션 메모:
+//  - 데이터 로직(디바운스 검색·AI 요약 훅·키보드 내비게이션·localStorage 등)은 100% 그대로 유지.
+//  - 시각 요소만 Astryx primitive(Dialog/Layout/TextInput/Item/Badge/Card/Spinner/Kbd/Divider)로 교체.
+//  - 원래대로 `isOpen` 이 false 면 컴포넌트 자체를 렌더하지 않는다(early return 유지) — Dialog를
+//    상시 마운트하는 방식(예: UserMenu.jsx)이 더 "정석"이지만, 그렇게 하면 닫혀 있는 동안에도
+//    NoResultFallback 내부의 AI 검색 fetch(useAiSearch/useSearchSummary)가 언마운트되지 않아
+//    계속 실행되는 회귀가 생긴다 — 기존 동작(닫히면 전체 언마운트 → 진행 중 요청도 정리)을
+//    그대로 지키기 위한 선택.
+//  - Dialog의 position prop은 top/right/bottom/left 를 전부 지정해야 하는데, top 만 주면
+//    수평 중앙정렬이 깨진다(자세한 이유는 co-located CSS 주석 참고) — 그래서 위치는 CSS로 오버라이드.
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   MagnifyingGlass as Search,
   ArrowRight,
   Clock,
   TrendUp as TrendingUp,
-  CircleNotch as Loader2,
   Sparkle,
   File as FileText,
 } from '@phosphor-icons/react'
@@ -15,7 +25,51 @@ import { GUIDES, RECENT_GUIDES, SEARCH_SYNONYMS } from '@/data/mockData'
 import { useSearchSummary } from '@/hooks/useSearchSummary'
 import NoResultFallback from '@/components/search/NoResultFallback'
 import { getGuideType } from '@/lib/guideTypes'
-import { cn } from '@/lib/utils'
+
+import { Dialog } from '@astryxdesign/core/Dialog'
+import { Layout } from '@astryxdesign/core/Layout'
+import { LayoutHeader } from '@astryxdesign/core/Layout'
+import { LayoutContent } from '@astryxdesign/core/Layout'
+import { LayoutFooter } from '@astryxdesign/core/Layout'
+import { TextInput } from '@astryxdesign/core/TextInput'
+import { Spinner } from '@astryxdesign/core/Spinner'
+import { Item } from '@astryxdesign/core/Item'
+import { Badge } from '@astryxdesign/core/Badge'
+import { Button } from '@astryxdesign/core/Button'
+import { Card } from '@astryxdesign/core/Card'
+import { Text } from '@astryxdesign/core/Text'
+import { HStack } from '@astryxdesign/core/HStack'
+import { VStack } from '@astryxdesign/core/VStack'
+import { Divider } from '@astryxdesign/core/Divider'
+import { Kbd } from '@astryxdesign/core/Kbd'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
+import './SearchOverlay.astryx.css'
+
+// 가이드 타입(guideTypes.js) → Astryx Badge 색 variant.
+// guideTypes.js 의 `variant`/`tone` 필드는 shadcn 전용 raw tailwind 값이라 건드리지 않고,
+// 이미 마이그레이션된 다른 화면(GuidePage.jsx/GuideListPage.jsx/HomePage.jsx)과 동일하게
+// 이 화면 전용 로컬 매핑을 둔다.
+const TYPE_BADGE_VARIANT = {
+  SOP: 'blue',
+  DECISION: 'purple',
+  REFERENCE: 'neutral',
+  TROUBLE: 'red',
+  RESPONSE: 'green',
+  POLICY: 'yellow',
+}
+const toTypeVariant = (typeKey) => TYPE_BADGE_VARIANT[typeKey] ?? 'neutral'
+
+// 타입 아이콘 칩 배경 — Badge에는 'gray' variant가 없어 별도 매핑(HomePage.jsx 의 home-tint/
+// MODULE_FAMILY 패턴과 동일한 기법, --color-background-*/--color-icon-* 토큰만 사용).
+const TYPE_ICON_TONE = {
+  SOP: 'blue',
+  DECISION: 'purple',
+  REFERENCE: 'gray',
+  TROUBLE: 'red',
+  RESPONSE: 'green',
+  POLICY: 'yellow',
+}
+const toIconTone = (typeKey) => TYPE_ICON_TONE[typeKey] ?? 'gray'
 
 function searchGuides(query) {
   if (!query.trim()) return []
@@ -98,36 +152,46 @@ export default function SearchOverlay() {
   const showResults = query.trim().length > 0
 
   return (
-    <div className="fixed inset-0 z-[999]" role="dialog" aria-modal="true" aria-label="가이드 검색">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={close} />
-      <div className="relative top-[6vh] sm:top-[10vh] mx-auto w-full max-w-2xl px-3 sm:px-4">
-        <div className="flex max-h-[88vh] sm:max-h-[80vh] flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl">
-
-          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-            {loading
-              ? <Loader2 size={16} className="shrink-0 text-muted-foreground animate-spin" />
-              : <Search   size={16} className="shrink-0 text-muted-foreground" />
-            }
-            <input
-              ref={inputRef}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="가이드 검색... (예: 병합, 환불, QR 출석)"
-              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-              autoComplete="off"
-              spellCheck={false}
-              role="combobox"
-              aria-expanded={showResults && results.length > 0}
-              aria-controls="search-results-listbox"
-              aria-autocomplete="list"
-              aria-activedescendant={
-                showResults && results.length > 0 ? `search-result-${selected}` : undefined
-              }
-            />
-            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-xs font-medium text-muted-foreground sm:flex">ESC</kbd>
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={close}
+      purpose="info"
+      width={672}
+      maxHeight="80vh"
+      padding={0}
+      className="so-dialog"
+      aria-label="가이드 검색"
+    >
+      <Layout
+        header={
+          <LayoutHeader padding={0} hasDivider>
+            <div className="so-searchbar">
+              <div className="so-search-field">
+                <TextInput
+                  ref={inputRef}
+                  label="가이드 검색"
+                  isLabelHidden
+                  value={query}
+                  onChange={setQuery}
+                  placeholder="가이드 검색... (예: 병합, 환불, QR 출석)"
+                  startIcon={loading ? <Spinner size="sm" aria-label="검색 중" /> : <Search size={16} />}
+                  autoComplete="off"
+                  width="100%"
+                  role="combobox"
+                  aria-expanded={showResults && results.length > 0}
+                  aria-controls="search-results-listbox"
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    showResults && results.length > 0 ? `search-result-${selected}` : undefined
+                  }
+                />
+              </div>
+              <Kbd keys="escape" className="so-esc-hint" />
+            </div>
+          </LayoutHeader>
+        }
+        content={
+          <LayoutContent padding={0}>
             {showResults ? (
               results.length === 0 && !loading ? (
                 <NoResultFallback
@@ -137,166 +201,194 @@ export default function SearchOverlay() {
                   onNavigateFeedback={openFeedback}
                 />
               ) : results.length === 0 ? (
-                <div className="flex flex-col items-center gap-2 py-10 text-center">
-                  <Loader2 size={20} className="animate-spin text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">검색 중...</p>
+                <div className="so-loading">
+                  <Spinner size="md" label="검색 중..." />
                 </div>
               ) : (
-                <div className="p-1">
+                <div className="so-results">
                   <AiSummaryCard summary={summary} onSourceClick={goTo} />
-                  <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground" id="search-results-count">검색 결과 {results.length}건</p>
+                  <Text
+                    as="p"
+                    type="supporting"
+                    weight="medium"
+                    id="search-results-count"
+                    className="so-count"
+                  >검색 결과 {results.length}건</Text>
                   <ul
                     id="search-results-listbox"
                     role="listbox"
                     aria-labelledby="search-results-count"
-                    className="list-none p-0 m-0"
+                    className="so-listbox"
                   >
                   {results.map((g, i) => {
                     const meta = getGuideType(g.type)
-                    const Icon = meta.icon
+                    const TypeIcon = meta.icon
                     const isSelected = selected === i
                     return (
-                      <li key={g.id} role="option" id={`search-result-${i}`} aria-selected={isSelected}>
-                      <button onClick={() => goTo(g.id)} onMouseEnter={() => setSelected(i)}
-                        tabIndex={-1}
-                        className={cn('flex w-full items-start gap-3 rounded-md px-3 py-2.5 text-left transition-colors', isSelected ? 'bg-accent' : 'hover:bg-accent/50')}
-                      >
-                        <div className={cn('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md', meta.tone.bg)}>
-                          <Icon size={13} className={meta.tone.text} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground truncate">{g.title}</span>
-                            <span className={cn('shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded', meta.tone.bg, meta.tone.text)}>{meta.label}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-0.5 truncate">{g.module} · {g.tldr?.split('\n')[0]?.slice(0, 60)}</p>
-                        </div>
-                        <ArrowRight size={13} className="mt-1 shrink-0 text-muted-foreground/50" />
-                      </button>
-                      </li>
+                      <Item
+                        key={g.id}
+                        as="li"
+                        id={`search-result-${i}`}
+                        role="option"
+                        aria-selected={isSelected}
+                        isHighlighted={isSelected}
+                        align="start"
+                        onClick={() => goTo(g.id)}
+                        onMouseEnter={() => setSelected(i)}
+                        startContent={
+                          <span className="so-type-icon" data-tone={toIconTone(g.type)}>
+                            <TypeIcon size={13} />
+                          </span>
+                        }
+                        label={
+                          <span className="so-result-title">
+                            <Text as="span" weight="medium" maxLines={1} className="so-result-titletext">
+                              {g.title}
+                            </Text>
+                            <Badge label={meta.label} variant={toTypeVariant(g.type)} />
+                          </span>
+                        }
+                        description={`${g.module} · ${g.tldr?.split('\n')[0]?.slice(0, 60) ?? ''}`}
+                        endContent={<ArrowRight size={13} className="so-arrow" />}
+                      />
                     )
                   })}
                   </ul>
                 </div>
               )
             ) : (
-              <div className="p-1">
-                <div className="px-3 py-1.5 flex items-center gap-1.5">
-                  <Clock size={11} className="text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">최근 업데이트</span>
+              <div className="so-lists">
+                <div className="so-section-label">
+                  <Clock size={11} />
+                  <Text type="supporting" weight="medium">최근 업데이트</Text>
                 </div>
                 {recent.map(g => {
                   const meta = getGuideType(GUIDES[g.id]?.type)
-                  const Icon = meta.icon
+                  const TypeIcon = meta.icon
                   return (
-                    <button key={g.id} onClick={() => goTo(g.id)}
-                      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-accent/50 transition-colors"
-                    >
-                      <div className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded', meta.tone.bg)}>
-                        <Icon size={11} className={meta.tone.text} />
-                      </div>
-                      <span className="flex-1 text-sm text-foreground truncate">{g.title}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{g.module?.split('/')[0]}</span>
-                    </button>
+                    <Item
+                      key={g.id}
+                      onClick={() => goTo(g.id)}
+                      startContent={
+                        <span className="so-type-icon so-type-icon--sm" data-tone={toIconTone(GUIDES[g.id]?.type)}>
+                          <TypeIcon size={11} />
+                        </span>
+                      }
+                      label={g.title}
+                      endContent={<Text type="supporting">{g.module?.split('/')[0]}</Text>}
+                    />
                   )
                 })}
-                <div className="my-1 h-px bg-border mx-2" />
-                <div className="px-3 py-1.5 flex items-center gap-1.5">
-                  <TrendingUp size={11} className="text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">인기 가이드</span>
+                <Divider className="so-divider" />
+                <div className="so-section-label">
+                  <TrendingUp size={11} />
+                  <Text type="supporting" weight="medium">인기 가이드</Text>
                 </div>
                 {popular.map(g => (
-                  <button key={g.id} onClick={() => goTo(g.id)}
-                    className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-accent/50 transition-colors"
-                  >
-                    <span className="flex-1 text-sm text-foreground truncate">{g.title}</span>
-                    {g.views && <span className="shrink-0 text-xs text-muted-foreground">{g.views.toLocaleString()} 조회</span>}
-                  </button>
+                  <Item
+                    key={g.id}
+                    onClick={() => goTo(g.id)}
+                    label={g.title}
+                    endContent={g.views ? <Text type="supporting">{g.views.toLocaleString()} 조회</Text> : null}
+                  />
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="flex items-center justify-between border-t border-border bg-muted/30 px-3 py-2 sm:px-4">
-            <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
-              <span><kbd className="rounded border border-border bg-background px-1 font-mono">↑↓</kbd> 이동</span>
-              <span><kbd className="rounded border border-border bg-background px-1 font-mono">↵</kbd> 열기</span>
-              <span><kbd className="rounded border border-border bg-background px-1 font-mono">ESC</kbd> 닫기</span>
+          </LayoutContent>
+        }
+        footer={
+          <LayoutFooter padding={0} hasDivider>
+            <div className="so-footer">
+              <div className="so-footer-hints">
+                <span className="so-hint">
+                  <Kbd keys="up+down" />
+                  <Text as="span" type="supporting">이동</Text>
+                </span>
+                <span className="so-hint">
+                  <Kbd keys="enter" />
+                  <Text as="span" type="supporting">열기</Text>
+                </span>
+                <span className="so-hint">
+                  <Kbd keys="escape" />
+                  <Text as="span" type="supporting">닫기</Text>
+                </span>
+              </div>
+              <Text type="supporting" className="so-footer-mobile">탭하여 열기</Text>
+              <Text type="supporting">{Object.keys(GUIDES).length}개 가이드</Text>
             </div>
-            <span className="text-xs text-muted-foreground sm:hidden">탭하여 열기</span>
-            <span className="text-xs text-muted-foreground">{Object.keys(GUIDES).length}개 가이드</span>
-          </div>
-        </div>
-      </div>
-    </div>
+          </LayoutFooter>
+        }
+      />
+    </Dialog>
   )
 }
 
 function AiSummaryCard({ summary, onSourceClick }) {
   if (summary.status === 'idle' || summary.status === 'disabled') return null
-
-  const base = 'mx-2 mb-2 mt-1 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5'
+  // 결과가 있지만 요약할 만큼 충분치 않은 경우 — 조용히 생략 (기존 동작 유지)
+  if (summary.status === 'empty') return null
 
   if (summary.status === 'loading') {
     return (
-      <div className={base} aria-live="polite">
-        <div className="flex items-center gap-2 text-xs font-medium text-primary">
-          <Sparkle size={12} weight="fill" />
-          <span>AI 요약</span>
-          <Loader2 size={11} className="ml-auto animate-spin text-muted-foreground" />
-        </div>
-        <div className="mt-2 space-y-1.5">
-          <div className="h-2.5 w-[90%] rounded bg-muted animate-pulse" />
-          <div className="h-2.5 w-[72%] rounded bg-muted animate-pulse" />
-        </div>
-      </div>
+      <Card variant="blue" padding={3} className="so-ai-card" aria-live="polite">
+        <HStack gap={2} align="center" justify="between">
+          <HStack gap={1.5} align="center">
+            <Sparkle size={12} weight="fill" className="so-ai-icon" />
+            <Text type="label" weight="medium" className="so-ai-label">AI 요약</Text>
+          </HStack>
+          <Spinner size="sm" aria-label="AI 요약 불러오는 중" />
+        </HStack>
+        <VStack gap={1.5} className="so-ai-skeleton">
+          <Skeleton width="90%" height={10} index={0} />
+          <Skeleton width="72%" height={10} index={1} />
+        </VStack>
+      </Card>
     )
   }
 
-  // error/empty 상태는 과거 조용히 사라졌음 — 최소한의 피드백 노출
+  // error 상태는 과거 조용히 사라졌음 — 최소한의 피드백 노출
   if (summary.status === 'error') {
     return (
-      <div className={base} role="status">
-        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+      <Card variant="blue" padding={3} className="so-ai-card" role="status">
+        <HStack gap={2} align="center">
           <Sparkle size={12} />
-          <span>AI 요약을 불러오지 못했습니다</span>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
+          <Text type="supporting">AI 요약을 불러오지 못했습니다</Text>
+        </HStack>
+        <Text type="supporting" className="so-ai-error">
           {summary.error || '잠시 후 다시 시도해주세요. 검색 결과는 아래에 정상 표시됩니다.'}
-        </p>
-      </div>
+        </Text>
+      </Card>
     )
-  }
-  if (summary.status === 'empty') {
-    // 결과가 있지만 요약할 만큼 충분치 않은 경우 — 조용히 생략 (기존 동작 유지)
-    return null
   }
 
   if (summary.status === 'ready') {
     const sources = (summary.sources || []).map(id => ({ id, guide: GUIDES[id] })).filter(s => s.guide)
     return (
-      <div className={base} aria-live="polite">
-        <div className="flex items-center gap-2 text-xs font-medium text-primary">
-          <Sparkle size={12} weight="fill" />
-          <span>AI 요약</span>
-          <span className="ml-auto text-xs font-normal text-muted-foreground">Claude Haiku 4.5</span>
-        </div>
-        <p className="mt-1.5 text-sm leading-relaxed text-foreground">{summary.summary}</p>
+      <Card variant="blue" padding={3} className="so-ai-card" aria-live="polite">
+        <HStack gap={2} align="center" justify="between">
+          <HStack gap={1.5} align="center">
+            <Sparkle size={12} weight="fill" className="so-ai-icon" />
+            <Text type="label" weight="medium" className="so-ai-label">AI 요약</Text>
+          </HStack>
+          <Text type="supporting">Claude Haiku 4.5</Text>
+        </HStack>
+        <Text type="body" className="so-ai-summary">{summary.summary}</Text>
         {sources.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <HStack gap={1.5} wrap="wrap" className="so-ai-sources">
             {sources.map(({ id, guide }) => (
-              <button
+              <Button
                 key={id}
+                variant="secondary"
+                size="sm"
+                icon={<FileText size={9} />}
+                label={guide.title.length > 22 ? guide.title.slice(0, 22) + '…' : guide.title}
+                tooltip={guide.title}
                 onClick={() => onSourceClick(id)}
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              >
-                <FileText size={9} />
-                <span className="max-w-[160px] truncate">{guide.title}</span>
-              </button>
+              />
             ))}
-          </div>
+          </HStack>
         )}
-      </div>
+      </Card>
     )
   }
   return null

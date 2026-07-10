@@ -1,7 +1,14 @@
-/* src/components/common/RouteBoundary.astryx.css — 라우트 로딩 스켈레톤 레이아웃 (색상은 Skeleton 컴포넌트 자체 토큰 사용) */
-.rb-skel-shell {
-  margin: 0 auto;
-  width: 100%;
-  max-width: 1024px;
-  padding: 40px 24px;
+/* src/components/common/RouteBoundary.astryx.css
+ * 라우트 로딩 스켈레톤(DefaultSkeleton) — VStack/Grid가 표현하지 못하는
+ * 바깥 배치(mx-auto 중앙정렬)와 그리드 앞 여백 보정만 처리한다.
+ * 색·간격·라운드는 Skeleton/VStack/Grid 컴포넌트와 Astryx 토큰(var(--*))이 담당. */
+
+/* 컨테이너 중앙정렬 — width/maxWidth/padding은 VStack props로 처리, margin-inline만 여기서 */
+.route-boundary-skeleton {
+  margin-inline: auto;
+}
+
+/* 그리드 앞 간격을 32px로 — VStack gap(16px) 위에 16px를 더해 원래 여백(32px)을 재현 */
+.route-boundary-skeleton-grid {
+  margin-top: var(--spacing-4);
 }

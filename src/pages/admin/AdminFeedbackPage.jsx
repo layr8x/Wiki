@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Trash } from '@phosphor-icons/react'
 
 import { fetchAdminFeedback } from '@/lib/db'
-import { useToast } from '@/components/ui/toast'
+import { useToast } from '@astryxdesign/core/Toast'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
 
 import { VStack } from '@astryxdesign/core/VStack'
@@ -73,7 +73,7 @@ function readLocalQueue() {
 }
 
 export default function AdminFeedbackPage() {
-  const { toast } = useToast()
+  const toast = useToast()
   const [tab, setTab] = useState('all')
   const [localItems, setLocalItems] = useState(() => readLocalQueue())
   const [page, setPage] = useState(1)
@@ -96,7 +96,7 @@ export default function AdminFeedbackPage() {
   const clearLocal = () => {
     localStorage.removeItem(FEEDBACK_QUEUE_KEY)
     setLocalItems([])
-    toast({ title: '로컬 큐를 비웠습니다.', description: '서버에 저장된 피드백은 영향을 받지 않습니다.' })
+    toast({ body: '로컬 큐를 비웠습니다. — 서버에 저장된 피드백은 영향을 받지 않습니다.' })
   }
 
   // 통합 뷰: 로컬 → 원격 순

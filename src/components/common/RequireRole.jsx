@@ -25,7 +25,7 @@ export function RequireRole({ permission, role, fallback = '/' }) {
 
   if (isLoading) {
     return (
-      <div role="status" aria-live="polite" aria-label="권한 확인 중" className="rr-skel-shell">
+      <div className="rr-loading-shell" role="status" aria-live="polite" aria-label="권한 확인 중">
         <VStack gap={4}>
           <Skeleton width={160} height={24} />
           <Skeleton width="100%" height={16} />

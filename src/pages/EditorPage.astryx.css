@@ -1,7 +1,7 @@
 /* src/pages/EditorPage.astryx.css
  * 가이드 에디터(Chrome) — Astryx 표면. 색·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
- * 폼 컨트롤(Input/Textarea/Select/Checkbox/Sheet/Tabs)은 shadcn 그대로이며,
- * 이 파일은 주변 껍데기(사이드바·툴바·섹션 카드·행·스켈레톤)만 다룬다.
+ * 폼 컨트롤(TextInput/TextArea/Selector/CheckboxInput/Dialog/TabList)도 전부 Astryx로
+ * 교체됐고, 이 파일은 그걸로 표현 안 되는 세부 레이아웃(사이드바·툴바·섹션 카드·행·스켈레톤)만 다룬다.
  * 이 페이지는 AstryxAppFrame 밖(standalone route)이라 AstryxThemeRegion으로 자체 <Theme>를 연다. */
 
 /* ─── 전체 셸 ─────────────────────────────────────────────────── */
@@ -41,12 +41,7 @@
 .ep-sidebar-desc { display: block; margin-top: 4px; line-height: 1.5; }
 .ep-sidebar-list { flex: 1 1 auto; overflow-y: auto; padding: 8px; }
 
-/* 모바일 템플릿 Sheet 내부 리스트 */
-.ep-sheet-tpl-head { padding: 16px; border-bottom: 1px solid var(--color-border); }
-.ep-sheet-tpl-desc { display: block; margin-top: 4px; line-height: 1.5; }
-.ep-sheet-tpl-list { overflow-y: auto; padding: 8px; }
-
-/* 템플릿 카드(공용: 사이드바 + Sheet) */
+/* 템플릿 카드(공용: 사이드바 + 모바일 "가이드 타입 선택" Dialog — 제목/부제는 DialogHeader가 담당) */
 .ep-tpl-card { margin-bottom: 4px; }
 .ep-tpl-head { display: flex; align-items: center; gap: 8px; }
 .ep-tpl-icon { flex: none; color: var(--color-icon-secondary); }
@@ -150,7 +145,6 @@
 /* ─── 필드 그룹(제목 입력) ───────────────────────────────────────── */
 .ep-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
 .ep-tab-body { margin-top: 24px; display: flex; flex-direction: column; gap: 32px; }
-.ep-meta-help { margin-top: 4px; }
 
 /* ─── 섹션 카드 ──────────────────────────────────────────────────── */
 .ep-section-card { margin-bottom: 32px; }
@@ -176,6 +170,10 @@
 }
 .ep-row-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ep-row-head { display: flex; align-items: center; gap: 8px; }
+/* Badge 옆에서 폭을 채우는 컨트롤(단계 제목 TextInput 등) */
+.ep-row-fill { flex: 1 1 auto; min-width: 0; }
+/* 참조 데이터 "용어" 입력 — 코드값/용어를 고정폭 글꼴로 구분 */
+.ep-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 /* ─── 미리보기 ───────────────────────────────────────────────────── */
 .ep-preview-meta { display: flex; align-items: center; gap: 8px; margin: 8px 0 24px; color: var(--color-text-secondary); }
@@ -187,7 +185,7 @@
 .ep-preview-caution-list li { display: flex; gap: 8px; }
 .ep-preview-note { color: var(--color-text-secondary); font-style: italic; }
 
-/* ─── 버전 이력 Sheet ────────────────────────────────────────────── */
+/* ─── 버전 이력 Dialog ───────────────────────────────────────────── */
 .ep-vh-card { margin-bottom: 12px; }
 .ep-vh-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
 .ep-vh-note {

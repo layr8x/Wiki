@@ -1,17 +1,30 @@
-/* src/components/common/ErrorBoundary.astryx.css — 레이아웃 전용 (색상은 Astryx 컴포넌트 자체 토큰 사용) */
+/* src/components/common/ErrorBoundary.astryx.css
+ * ErrorBoundary — 전체화면(global)/페이지영역(page) 중앙정렬 컨테이너.
+ * VStack/HStack이 표현하지 못하는 바깥 배치(뷰포트 높이·최대폭·mx-auto 중앙정렬)만 여기서 처리한다.
+ * 색·간격·라운드는 전부 Astryx 토큰(var(--*))만 사용. */
+
 .eb-shell {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 24px;
   text-align: center;
 }
-.eb-shell-page {
-  margin: 0 auto;
-  min-height: 60dvh;
-  max-width: 512px;
+
+.eb-shell--global {
+  min-height: 100dvh;
+  padding-inline: var(--spacing-6);
+  background-color: var(--color-background-body);
 }
-.eb-shell-global {
-  min-height: 100vh;
+
+.eb-shell--page {
+  min-height: 60dvh;
+  max-width: 32rem;
+  margin-inline: auto;
+  padding: var(--spacing-10) var(--spacing-6);
+}
+
+/* 설명 문구 — 너무 넓게 퍼지지 않도록 최대폭만 제한 (색/크기는 Text type="supporting"이 담당) */
+.eb-desc {
+  max-width: 28rem;
 }

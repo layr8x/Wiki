@@ -1,22 +1,20 @@
-// src/components/common/ThemeToggle.jsx — shadcn/ui 표준
-import {
-  Moon,
-  Sun
-} from '@phosphor-icons/react'
+// src/components/common/ThemeToggle.jsx — Astryx 디자인시스템
+import { Moon, Sun } from '@phosphor-icons/react'
+import { IconButton } from '@astryxdesign/core/IconButton'
 import { useDarkMode } from '@/hooks/useDarkMode'
 
 export default function ThemeToggle() {
   const { isDark, toggle } = useDarkMode()
+  const label = isDark ? '라이트 모드 전환' : '다크 모드 전환'
 
   return (
-    <button
-      type="button"
+    <IconButton
+      label={label}
+      tooltip={label}
+      icon={isDark ? <Sun size={18} /> : <Moon size={18} />}
+      variant="ghost"
+      size="sm"
       onClick={toggle}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-      title={isDark ? '라이트 모드' : '다크 모드'}
-      aria-label={isDark ? '라이트 모드 전환' : '다크 모드 전환'}
-    >
-      {isDark ? <Sun size={16} /> : <Moon size={16} />}
-    </button>
+    />
   )
 }

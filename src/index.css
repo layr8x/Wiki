@@ -1,17 +1,21 @@
 /**
- * src/index.css — shadcn/ui 공식 패턴 (neutral + new-york)
- * 구조 원칙:
- *   1. @theme inline 에는 --color-* 매핑만 (값은 var() 참조)
- *   2. :root / .dark 에 실제 oklch 값
- *   3. radius는 base(--radius) 하나에서 파생
- *   4. Pretendard 는 --font-sans 로 Tailwind 에 주입
+ * src/index.css — 전역 베이스 스타일 (Tailwind 완전 제거, 순수 CSS).
+ *
+ * shadcn 컴포넌트는 전부 Astryx로, 챗봇 위젯(Chatbot.jsx)도 Astryx CSS로 전환 완료돼
+ * Tailwind 의존성이 더 이상 없다 — tailwindcss/@tailwindcss/vite/tw-animate-css/
+ * clsx/tailwind-merge 전부 package.json에서 제거됨.
+ *
+ * Astryx reset.css를 여기서 전역 적용한다(@layer reset — 최저 우선순위라 이 파일 이하
+ * 모든 unlayered CSS가 항상 이긴다. 예전엔 shadcn 전역 스타일 오염을 막으려 일부러
+ * import하지 않았으나, shadcn 제거 완료로 그 우려가 사라졌다. body/heading 여백·리스트·
+ * 버튼 기본 스타일 리셋을 이제부터 Tailwind preflight 대신 이 reset.css가 담당한다).
+ *
+ * 색 토큰은 :root/.dark 커스텀 프로퍼티로 유지 — 실제로 참조되는 것만 남김
+ * (배경·글자·muted·포인트·포커스링). Astryx 컴포넌트는 자기 자신의 --color-* 토큰
+ * (다른 네임스페이스)을 쓰므로 이 파일과 무관하다.
+ * .dark 클래스는 Astryx <Theme>과 useDarkMode.js가 함께 동기화하는 공유 스위치 — 삭제 금지.
  */
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
-
-/* Tailwind v4: dark:* 유틸을 .dark 클래스 기반으로 (기본은 media query) */
-@custom-variant dark (&:where(.dark, .dark *));
+@import '@astryxdesign/core/reset.css';
 
 /* ─── 한국어 폰트 ────────────────────────────────────────────────────────── */
 @font-face {
@@ -22,254 +26,126 @@
   font-display: swap;
 }
 
-/* ─── Tailwind 토큰 매핑 (공식 패턴: inline + var 참조) ─────────────────── */
-@theme inline {
-  --color-background:                 var(--background);
-  --color-foreground:                 var(--foreground);
-  --color-card:                       var(--card);
-  --color-card-foreground:            var(--card-foreground);
-  --color-popover:                    var(--popover);
-  --color-popover-foreground:         var(--popover-foreground);
-  --color-primary:                    var(--primary);
-  --color-primary-foreground:         var(--primary-foreground);
-  --color-secondary:                  var(--secondary);
-  --color-secondary-foreground:       var(--secondary-foreground);
-  --color-muted:                      var(--muted);
-  --color-muted-foreground:           var(--muted-foreground);
-  --color-accent:                     var(--accent);
-  --color-accent-foreground:          var(--accent-foreground);
-  --color-destructive:                var(--destructive);
-  --color-border:                     var(--border);
-  --color-input:                      var(--input);
-  --color-ring:                       var(--ring);
-  --color-chart-1:                    var(--chart-1);
-  --color-chart-2:                    var(--chart-2);
-  --color-chart-3:                    var(--chart-3);
-  --color-chart-4:                    var(--chart-4);
-  --color-chart-5:                    var(--chart-5);
-  --color-sidebar:                    var(--sidebar);
-  --color-sidebar-foreground:         var(--sidebar-foreground);
-  --color-sidebar-primary:            var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent:             var(--sidebar-accent);
-  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
-  --color-sidebar-border:             var(--sidebar-border);
-  --color-sidebar-ring:               var(--sidebar-ring);
-
+/* ─── 색 토큰 (라이트) ───────────────────────────────────────────────────── */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.157 0 0); /* #161616 brand */
+  --muted: oklch(0.967 0.001 286.375);
+  --primary: oklch(0.392 0.198 268.5); /* #0043CE point */
+  --ring: oklch(0.392 0.198 268.5); /* focus = point */
   --font-sans: 'Pretendard', ui-sans-serif, system-ui, -apple-system,
                BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Pretendard', ui-sans-serif, system-ui, -apple-system,
                   BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas',
                'Liberation Mono', monospace;
-
-  --radius-sm:  calc(var(--radius) - 4px);
-  --radius-md:  calc(var(--radius) - 2px);
-  --radius-lg:  var(--radius);
-  --radius-xl:  calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
-
-  /* ─── 타이포그래피 스케일 (2026-04-18: 한 단계 상향) ────────────────────────
-   * 기존 Tailwind v4 기본값보다 한 단계 큰 크기로 매핑.
-   * 본문 가독성 최우선 (14px → 15px, 16px → 17px) 이면서 미세 메타 텍스트는
-   * 12px → 13px 로 최소 가독 범위 유지.                                 */
-  --text-xs:                 0.8125rem; /* 13px (was 12) */
-  --text-xs--line-height:    1.125rem;  /* 18px */
-  --text-sm:                 0.9375rem; /* 15px (was 14) */
-  --text-sm--line-height:    1.375rem;  /* 22px */
-  --text-base:               1.0625rem; /* 17px (was 16) */
-  --text-base--line-height:  1.625rem;  /* 26px */
-  --text-lg:                 1.1875rem; /* 19px (was 18) */
-  --text-lg--line-height:    1.75rem;   /* 28px */
-  --text-xl:                 1.375rem;  /* 22px (was 20) */
-  --text-xl--line-height:    1.875rem;  /* 30px */
-  --text-2xl:                1.625rem;  /* 26px (was 24) */
-  --text-2xl--line-height:   2.125rem;  /* 34px */
-  --text-3xl:                2rem;      /* 32px (was 30) */
-  --text-3xl--line-height:   2.375rem;  /* 38px */
-  --text-4xl:                2.5rem;    /* 40px (was 36) */
-  --text-4xl--line-height:   2.75rem;   /* 44px */
-  --text-5xl:                3.125rem;  /* 50px (was 48) */
-  --text-5xl--line-height:   1.1;
-  --text-6xl:                3.75rem;   /* 60px */
-  --text-6xl--line-height:   1.05;
 }
 
-/* ─── 라이트 모드 값 ─────────────────────────────────────────────────────
- * 2026-05-19 v5 진화 (명준)
- * - foreground: #161616 (브랜드)
- * - primary:    #0043CE (포인트, IBM Blue 60)
- * - ring:       포인트 톤 (focus visibility)
- * - sidebar:    1.0 → 0.985 살짝 어둡게 (공식 패턴 유지)
- * - destructive·chart·border 등 나머지는 neutral 유지
- * ───────────────────────────────────────────────────────────────────── */
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.157 0 0);                  /* #161616 brand */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.157 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.157 0 0);
-  --primary: oklch(0.392 0.198 268.5);             /* #0043CE point */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.157 0 0);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.946 0.027 264);                /* #EDF1FB point-soft */
-  --accent-foreground: oklch(0.392 0.198 268.5);   /* point 위에 글씨 */
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.392 0.198 268.5);                /* focus = point */
-  --chart-1: oklch(0.871 0.006 286.286);
-  --chart-2: oklch(0.552 0.016 285.938);
-  --chart-3: oklch(0.442 0.017 285.786);
-  --chart-4: oklch(0.37 0.013 285.805);
-  --chart-5: oklch(0.274 0.006 286.033);
-  /* 사이드바: 본체(1.0)보다 살짝 어둡게 (0.985) — 공식 패턴 */
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.157 0 0);                  /* #161616 */
-  --sidebar-primary: oklch(0.392 0.198 268.5);             /* #0043CE */
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.946 0.027 264);                /* #EDF1FB */
-  --sidebar-accent-foreground: oklch(0.392 0.198 268.5);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.392 0.198 268.5);
-}
-
-/* ─── 다크 모드 값 ───────────────────────────────────────────────────────
- * 2026-05-19 v5 — 다크에서도 #0043CE 포인트 유지 (선명도 위해 lightness 약간 ↑)
- * ───────────────────────────────────────────────────────────────────── */
+/* ─── 색 토큰 (다크) — 2026-05-19 v5, 다크에서도 #0043CE 포인트 유지 ────────── */
 .dark {
-  --background: oklch(0.157 0 0);                          /* #161616 brand */
+  --background: oklch(0.157 0 0); /* #161616 brand */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.55 0.218 268);                        /* 다크에서 약간 밝게 */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.32 0.12 268);                          /* 다크 #0043CE soft */
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --primary: oklch(0.55 0.218 268); /* 다크에서 약간 밝게 */
   --ring: oklch(0.55 0.218 268);
-  --chart-1: oklch(0.871 0.006 286.286);
-  --chart-2: oklch(0.552 0.016 285.938);
-  --chart-3: oklch(0.442 0.017 285.786);
-  --chart-4: oklch(0.37 0.013 285.805);
-  --chart-5: oklch(0.274 0.006 286.033);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.55 0.218 268);                /* #0043CE 다크 */
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.32 0.12 268);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.55 0.218 268);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  html {
-    /* SSR hydration 시 스크롤바로 인한 레이아웃 점프 방지 */
-    scrollbar-gutter: stable;
-    /* color-scheme 을 테마에 맞춤 — Astryx light-dark() 토큰이 (reset.css 없이도)
-       포털/앱셸 영역까지 올바르게 해석되게 하고, 네이티브 컨트롤·스크롤바도 테마 반영 */
-    color-scheme: light;
-  }
-  html.dark {
-    color-scheme: dark;
-  }
-
-  /* 스크롤바 = 평소엔 완전 투명, 스크롤 중일 때만 반투명 노출(js가 html에 .is-scrolling 토글).
-     WebKit/Blink(Chrome·Edge·Safari) 계열은 썸(thumb) 배경색으로 직접 제어. */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 999px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-    transition: background-color 0.2s ease;
-  }
-  /* "html.is-scrolling ::-webkit-scrollbar-thumb"(자손 결합자)만으로는 html 자신의
-     루트 스크롤바에는 적용되지 않는다 — html은 자기 자신의 자손이 아니므로.
-     루트 스크롤바용으로 결합자 없는 "html.is-scrolling::-webkit-scrollbar-thumb"를 반드시 병기. */
-  html.is-scrolling ::-webkit-scrollbar-thumb,
-  html.is-scrolling::-webkit-scrollbar-thumb {
-    background-color: color-mix(in oklab, var(--color-text-primary, currentColor) 35%, transparent);
-  }
-  /* Firefox: scrollbar-color 는 트랜지션을 타지 않으므로 스크롤 중에만 값 자체를 바꿔 넣는다. */
-  * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
-  html.is-scrolling *,
-  html.is-scrolling {
-    scrollbar-color: color-mix(in oklab, var(--color-text-primary, currentColor) 35%, transparent) transparent;
-  }
-  body {
-    @apply font-sans antialiased bg-background text-foreground;
-    font-feature-settings: "ss01", "ss02", "cv11";
-    text-rendering: optimizeLegibility;
-  }
-  /* preset 미학: 헤딩은 mono 폰트 (한글은 Pretendard 로 자동 fallback) */
-  :where(h1, h2, h3, h4, h5, h6) {
-    font-family: var(--font-heading);
-    letter-spacing: -0.01em;
-  }
-
-  /* 한국어 본문 행간 최적화 */
-  :where(p, li, td, th, dd, dt) {
-    word-break: keep-all;
-    overflow-wrap: anywhere;
-  }
-
-  /* 선택 영역 */
-  ::selection {
-    background: color-mix(in oklab, var(--primary) 15%, transparent);
-    color: var(--foreground);
-  }
-
-  /* 포커스 스타일 일관성 */
-  :focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
-  }
-
-  /* 인터랙티브 요소 hover 시 포인터(손 모양) 커서
-     — Tailwind v4 preflight 는 button 에 cursor 를 지정하지 않아 화살표로 남음 */
-  button:not(:disabled):not([aria-disabled="true"]),
-  [role="button"]:not([aria-disabled="true"]),
-  label[for],
-  summary,
-  a[href] {
-    cursor: pointer;
-  }
-  button:disabled,
-  button[aria-disabled="true"],
-  [role="button"][aria-disabled="true"] {
-    cursor: not-allowed;
-  }
+html {
+  /* SSR hydration 시 스크롤바로 인한 레이아웃 점프 방지 */
+  scrollbar-gutter: stable;
+  /* color-scheme 을 테마에 맞춤 — Astryx light-dark() 토큰이 포털/앱셸 영역까지
+     올바르게 해석되게 하고, 네이티브 컨트롤·스크롤바도 테마 반영 */
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
-/* ─── 프로세(산문) 스타일 — GuidePage 본문 가독성 ──────────────────────── */
-@layer components {
-  .prose-ams {
-    @apply text-base leading-[1.8] text-foreground;
-  }
-  .prose-ams p { @apply mb-4; }
-  .prose-ams strong { @apply font-semibold text-foreground; }
-  .prose-ams code {
-    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.88em] text-foreground;
-  }
+/* 스크롤바 = 평소엔 완전 투명, 스크롤 중일 때만 반투명 노출(js가 html에 .is-scrolling 토글).
+   WebKit/Blink(Chrome·Edge·Safari) 계열은 썸(thumb) 배경색으로 직접 제어. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+/* "html.is-scrolling ::-webkit-scrollbar-thumb"(자손 결합자)만으로는 html 자신의
+   루트 스크롤바에는 적용되지 않는다 — html은 자기 자신의 자손이 아니므로.
+   루트 스크롤바용으로 결합자 없는 "html.is-scrolling::-webkit-scrollbar-thumb"를 반드시 병기. */
+html.is-scrolling ::-webkit-scrollbar-thumb,
+html.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-text-primary, currentColor) 35%, transparent);
+}
+/* Firefox: scrollbar-color 는 트랜지션을 타지 않으므로 스크롤 중에만 값 자체를 바꿔 넣는다. */
+* { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+html.is-scrolling *,
+html.is-scrolling {
+  scrollbar-color: color-mix(in oklab, var(--color-text-primary, currentColor) 35%, transparent) transparent;
+}
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "ss01", "ss02", "cv11";
+  text-rendering: optimizeLegibility;
+}
+
+/* preset 미학: 헤딩은 mono 폰트 (한글은 Pretendard 로 자동 fallback) */
+:where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-heading);
+  letter-spacing: -0.01em;
+}
+
+/* 한국어 본문 행간 최적화 */
+:where(p, li, td, th, dd, dt) {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 선택 영역 */
+::selection {
+  background: color-mix(in oklab, var(--primary) 15%, transparent);
+  color: var(--foreground);
+}
+
+/* 포커스 스타일 일관성 */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* 인터랙티브 요소 hover 시 포인터(손 모양) 커서 */
+button:not(:disabled):not([aria-disabled="true"]),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+summary,
+a[href] {
+  cursor: pointer;
+}
+button:disabled,
+button[aria-disabled="true"],
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* ─── 프로즈(산문) 스타일 — GuidePage/EditorPage 본문 가독성 ──────────────── */
+.prose-ams {
+  font-size: 1.0625rem; /* 17px */
+  line-height: 1.8;
+  color: var(--foreground);
+}
+.prose-ams p { margin-bottom: 1rem; }
+.prose-ams strong { font-weight: 600; color: var(--foreground); }
+.prose-ams code {
+  border-radius: 0.25rem;
+  background-color: var(--muted);
+  padding: 0.125rem 0.375rem;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  color: var(--foreground);
 }

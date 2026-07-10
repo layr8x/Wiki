@@ -1,0 +1,118 @@
+/* src/components/search/SearchOverlay.astryx.css
+ * 전역 검색 오버레이(Cmd+K) — Astryx 표면. 색·간격·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(Dialog/Layout/TextInput/Item/Badge/Card/Spinner/Kbd/Divider/Text)로
+ * 표현 못하는 세부 레이아웃(다이얼로그 위치·타입 아이콘 칩·리스트박스 리셋·AI 카드·푸터 힌트)만 여기서 처리한다. */
+
+/* ─── 다이얼로그 위치 ────────────────────────────────────────────────────
+ * Dialog는 기본적으로 뷰포트 정중앙에 뜬다(내부적으로 dialog:modal 의 inset:0 + margin:auto 트릭).
+ * 커맨드팔레트는 화면 상단 근처(6~10vh)에 고정되는 게 기존 UX였다. Dialog의 position prop은
+ * top/right/bottom/left 를 모두 개별 지정해야 해서, top 만 주고 left/right 는 비워두면 auto가 되어
+ * 좌측으로 붙어버린다(수평 중앙정렬이 깨짐) — 그래서 position prop 대신, element+class 선택자로
+ * top/bottom 만 오버라이드해 "수직은 상단 고정, 수평은 기본 중앙정렬 그대로" 를 유지한다.
+ * (element+class 선택자는 Dialog 내부 원자 클래스 하나짜리보다 명시도가 높아 로드 순서와 무관하게 항상 이긴다.
+ * 라운드·쉐도우·배경·백드롭 blur·포커스 트랩은 Dialog 기본 처리를 그대로 쓴다.) */
+dialog.so-dialog {
+  top: 6vh;
+  bottom: auto;
+}
+@media (min-width: 640px) {
+  dialog.so-dialog { top: 10vh; }
+}
+
+/* ─── 검색창 헤더 ────────────────────────────────────────────────────── */
+.so-searchbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+}
+.so-search-field { flex: 1 1 auto; min-width: 0; }
+.so-esc-hint { display: none; flex: none; }
+@media (min-width: 640px) {
+  .so-esc-hint { display: inline-flex; }
+}
+
+/* ─── 검색 중 스피너 ─────────────────────────────────────────────────── */
+.so-loading {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--spacing-10);
+}
+
+/* ─── 결과 리스트 ────────────────────────────────────────────────────── */
+.so-results { padding: var(--spacing-1); }
+.so-count { padding: var(--spacing-1-5) var(--spacing-3); display: block; }
+.so-listbox { list-style: none; margin: 0; padding: 0; }
+
+.so-result-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  min-width: 0;
+}
+.so-result-titletext { flex: 1 1 auto; min-width: 0; }
+.so-arrow { color: var(--color-icon-disabled); flex: none; margin-top: 2px; }
+
+/* ─── 최근/인기 (질의어 없을 때) ─────────────────────────────────────── */
+.so-lists { padding: var(--spacing-1); }
+.so-section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1-5);
+  padding: var(--spacing-1-5) var(--spacing-3);
+  color: var(--color-icon-secondary);
+}
+.so-divider { margin: var(--spacing-1) var(--spacing-2); }
+
+/* ─── 타입 아이콘 칩 (HomePage.jsx 의 home-tint 패턴과 동일 기법) ────── */
+.so-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: var(--radius-element);
+  margin-top: 2px;
+}
+.so-type-icon--sm { width: 24px; height: 24px; margin-top: 0; }
+.so-type-icon[data-tone="blue"]   { background: var(--color-background-blue);   color: var(--color-icon-blue); }
+.so-type-icon[data-tone="purple"] { background: var(--color-background-purple); color: var(--color-icon-purple); }
+.so-type-icon[data-tone="gray"]   { background: var(--color-background-gray);   color: var(--color-icon-gray); }
+.so-type-icon[data-tone="red"]    { background: var(--color-background-red);    color: var(--color-icon-red); }
+.so-type-icon[data-tone="green"]  { background: var(--color-background-green);  color: var(--color-icon-green); }
+.so-type-icon[data-tone="yellow"] { background: var(--color-background-yellow); color: var(--color-icon-yellow); }
+
+/* ─── AI 요약 카드 ───────────────────────────────────────────────────── */
+.so-ai-card {
+  margin: var(--spacing-1) var(--spacing-2) var(--spacing-2);
+  border: 1px solid var(--color-border-blue);
+}
+.so-ai-icon { color: var(--color-icon-accent); flex: none; }
+.so-ai-label { color: var(--color-text-accent); }
+.so-ai-skeleton { margin-top: var(--spacing-2); }
+.so-ai-error { margin-top: var(--spacing-1); }
+.so-ai-summary { margin-top: var(--spacing-1-5); }
+.so-ai-sources { margin-top: var(--spacing-2); }
+
+/* ─── 푸터 (키보드 힌트) ─────────────────────────────────────────────── */
+.so-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-background-muted);
+}
+@media (min-width: 640px) {
+  .so-footer { padding-inline: var(--spacing-4); }
+}
+.so-footer-hints { display: none; align-items: center; gap: var(--spacing-3); }
+@media (min-width: 640px) {
+  .so-footer-hints { display: flex; }
+}
+.so-hint { display: inline-flex; align-items: center; gap: var(--spacing-1); }
+.so-footer-mobile { display: block; }
+@media (min-width: 640px) {
+  .so-footer-mobile { display: none; }
+}

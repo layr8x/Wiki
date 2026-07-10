@@ -1,0 +1,25 @@
+/* src/components/search/NoResultFallback.astryx.css
+ * 검색 결과 0건 폴백 — Astryx 표면. 색·간격·라운드·쉐도우는 전부 Astryx 토큰(var)만 사용.
+ * Astryx primitive(VStack/HStack/EmptyState/Card/Item/Badge/TextArea/Button/Text)로 표현 못하는
+ * 세부(리스트 리셋·AI 카드 틴트·점수 텍스트)만 여기서 처리한다. */
+
+.nrf-ai-loading,
+.nrf-ai-answer {
+  border: 1px solid var(--color-border);
+}
+.nrf-ai-answer { border-color: var(--color-border-blue); }
+
+.nrf-ai-icon { color: var(--color-icon-accent); flex: none; }
+.nrf-ai-label { color: var(--color-text-accent); }
+
+.nrf-ai-sources,
+.nrf-related-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nrf-source-type { flex: none; }
+.nrf-related-score { flex: none; align-self: center; }
+
+.nrf-feedback-form { display: block; }

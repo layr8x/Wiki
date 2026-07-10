@@ -2,8 +2,10 @@
 // 구조: 헤더 → 타입 선택 카드 4개 → 제목/내용 입력 → 제출
 // Astryx(Meta 디자인시스템) 표면으로 마이그레이션.
 //   - 데이터 훅 없음. 폼 상태·검증·submitFeedback 제출·라우팅은 그대로 유지
-//   - 입력 컨트롤 포함 전체가 Astryx primitive (TextInput/TextArea) — shadcn 없음
-import { useState } from 'react'
+//   - 시각 chrome(헤더/카드/버튼/라벨/오류배너)는 Astryx primitive로 교체
+//   - 입력 컨트롤(Input/Textarea)도 Astryx(TextInput/TextArea)로 전환 — shadcn 잔재 제거
+//   - 타입 선택 카드도 네이티브 <button> 대신 Astryx SelectableCard(단일 선택 카드)로 교체
+import { useId, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ChatCircle as MessageCircle,
@@ -18,12 +20,16 @@ import {
 
 import { VStack } from '@astryxdesign/core/VStack'
 import { HStack } from '@astryxdesign/core/HStack'
+import { Grid } from '@astryxdesign/core/Grid'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { Button } from '@astryxdesign/core/Button'
-
+import { SelectableCard } from '@astryxdesign/core/SelectableCard'
+import { FieldLabel } from '@astryxdesign/core/Field'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { TextArea } from '@astryxdesign/core/TextArea'
+import { Banner } from '@astryxdesign/core/Banner'
+
 import { submitFeedback } from '@/lib/db'
 import './FeedbackPage.astryx.css'
 
@@ -44,6 +50,9 @@ export default function FeedbackPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState(null)
+
+  const typeInputId = useId()
+  const typeLabelId = useId()
 
   const canSubmit = selectedType && title.trim().length > 0 && body.trim().length > 0
 
@@ -121,61 +130,62 @@ export default function FeedbackPage() {
       <form onSubmit={handleSubmit} className="fb-form">
         {/* 1. 타입 선택 */}
         <div className="fb-field">
-          <Text as="label" className="fb-label">
-            1. 제보 유형 <span className="fb-req">*</span>
-          </Text>
-          <div className="fb-typegrid">
-            {TYPES.map(t => {
-              const active = selectedType === t.id
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  className="fb-type"
-                  data-active={active}
-                  onClick={() => setSelectedType(t.id)}
-                >
-                  <span className="fb-tint" data-family={t.family}>
-                    <t.Icon size={18} />
-                  </span>
-                  <span className="fb-type-body">
-                    <Text weight="semibold">{t.label}</Text>
-                    <Text type="supporting">{t.desc}</Text>
-                  </span>
-                  {active && <CheckCircle2 size={16} className="fb-type-check" />}
-                </button>
-              )
-            })}
+          <FieldLabel
+            label="1. 제보 유형"
+            inputID={typeInputId}
+            labelID={typeLabelId}
+            isGroupLabel
+            isRequired
+          />
+          <div role="group" aria-labelledby={typeLabelId}>
+            <Grid columns={{ minWidth: 260, max: 2 }} gap={3}>
+              {TYPES.map(t => {
+                const active = selectedType === t.id
+                return (
+                  <SelectableCard
+                    key={t.id}
+                    label={`${t.label}. ${t.desc}`}
+                    isSelected={active}
+                    onChange={() => setSelectedType(t.id)}
+                    padding={4}
+                  >
+                    <div className="fb-type-row">
+                      <span className="fb-tint" data-family={t.family}>
+                        <t.Icon size={18} />
+                      </span>
+                      <span className="fb-type-body">
+                        <Text weight="semibold">{t.label}</Text>
+                        <Text type="supporting">{t.desc}</Text>
+                      </span>
+                      {active && <CheckCircle2 size={16} className="fb-type-check" aria-hidden="true" />}
+                    </div>
+                  </SelectableCard>
+                )
+              })}
+            </Grid>
           </div>
         </div>
 
         {/* 2. 제목 */}
         <div className="fb-field">
-          <Text as="label" className="fb-label">
-            2. 제목 <span className="fb-req">*</span>
-          </Text>
           <TextInput
-            label="제목"
-            isLabelHidden
+            label="2. 제목"
+            isRequired
             placeholder="예: 회원 병합 가이드 3단계 스크린샷이 구버전"
             value={title}
-            onChange={(value) => setTitle(value.slice(0, 80))}
-            isRequired
+            onChange={(v) => setTitle(v)}
+            maxLength={80}
           />
           <div className="fb-count">{title.length} / 80</div>
         </div>
 
         {/* 3. 내용 */}
         <div className="fb-field">
-          <Text as="label" className="fb-label">
-            3. 상세 내용 <span className="fb-req">*</span>
-          </Text>
           <TextArea
-            label="상세 내용"
-            isLabelHidden
+            label="3. 상세 내용"
             placeholder="구체적인 상황, 현재 가이드와 실제의 차이, 개선 제안 등을 자세히 적어주세요."
             value={body}
-            onChange={(value) => setBody(value.slice(0, 1000))}
+            onChange={(v) => setBody(v.slice(0, 1000))}
             rows={8}
             maxLength={1000}
             isRequired
@@ -183,11 +193,7 @@ export default function FeedbackPage() {
         </div>
 
         {/* 오류 배너 */}
-        {error && (
-          <div role="alert" className="fb-error">
-            {error}
-          </div>
-        )}
+        {error && <Banner status="error" title={error} />}
 
         {/* 제출 */}
         <div className="fb-footer">

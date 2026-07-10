@@ -1,8 +1,9 @@
 /* src/pages/FeedbackPage.astryx.css
  * 피드백 제출 화면 — Astryx 표면. 색·라운드·간격은 전부 Astryx 토큰(var)만 사용.
- * Astryx primitive(VStack/HStack/Card/Heading/Text/Button/Badge/Divider)로 표현 못하는
- * 레이아웃(폼 컨테이너·타입 선택 그리드·틴트칩·문자수 카운터·오류 배너)만 여기서 처리한다.
- * 폼 입력(Input/Textarea)은 기존 shadcn 컨트롤 유지(하이브리드) — 이 파일은 chrome만 담당. */
+ * 폼 컨트롤(TextInput/TextArea/SelectableCard/Banner/FieldLabel)은 Astryx 컴포넌트가
+ * 자체 chrome(배경·보더·라운드·라벨·카운터)을 렌더링한다. 이 파일은 Astryx primitive로
+ * 표현 안 되는 세부 레이아웃(폼 컨테이너·브레드크럼·타입 카드 내부 행·틴트칩·문자수
+ * 카운터·성공 화면)만 처리한다. */
 
 /* 콘텐츠 컨테이너 — 기존 PageShell(max-w-3xl + 반응형 패딩) 재현 */
 .fb-shell {
@@ -31,29 +32,12 @@
 .fb-form { display: flex; flex-direction: column; gap: 32px; }
 .fb-field { display: flex; flex-direction: column; gap: 8px; }
 
-/* 라벨 */
-.fb-label { font-size: 14px; font-weight: 600; color: var(--color-text-primary); }
-.fb-req { color: var(--color-text-red); margin-inline-start: 2px; }
-
-/* 타입 선택 그리드 */
-.fb-typegrid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@media (min-width: 640px) { .fb-typegrid { grid-template-columns: 1fr 1fr; } }
-
-.fb-type {
+/* 타입 선택 카드 — 카드 chrome(배경·보더·라운드·선택 상태)은 SelectableCard가 담당,
+ * 여기서는 카드 내부(아이콘 칩 + 라벨/설명 + 체크 표시)의 가로 배치만 처리한다. */
+.fb-type-row {
   display: flex; align-items: flex-start; gap: 12px;
   width: 100%;
-  padding: 16px;
   text-align: start;
-  background: var(--color-background-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-element);
-  cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-}
-.fb-type:hover { border-color: var(--color-border-emphasized); }
-.fb-type[data-active="true"] {
-  border-color: var(--color-text-primary);
-  box-shadow: var(--shadow-low);
 }
 
 /* 틴트 아이콘 칩 */
@@ -76,16 +60,6 @@
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
-}
-
-/* 오류 배너 */
-.fb-error {
-  padding: 8px 12px;
-  font-size: 14px;
-  color: var(--color-text-red);
-  background: var(--color-background-red);
-  border: 1px solid var(--color-border-red);
-  border-radius: var(--radius-inner);
 }
 
 /* 하단 액션 바 */

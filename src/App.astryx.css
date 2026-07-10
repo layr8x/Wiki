@@ -1,8 +1,9 @@
-/* src/App.astryx.css — 최상위 Suspense fallback(PageSkeleton) 컨테이너.
- * Astryx primitive(VStack/Grid/Skeleton)로 표현 못하는 컨테이너 폭/패딩만 여기서 처리한다. */
-.app-page-skel {
-  margin: 0 auto;
-  width: 100%;
-  max-width: 1024px;
+/* src/App.astryx.css — lazy route 로딩 스켈레톤 레이아웃 (padding/max-width만, 색·라운드는 Skeleton 컴포넌트가 담당) */
+.page-skeleton {
   padding: 32px;
+  max-width: 64rem;
+  margin-inline: auto;
+}
+.page-skeleton-grid {
+  margin-top: 16px;
 }
