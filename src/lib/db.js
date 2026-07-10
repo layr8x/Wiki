@@ -355,6 +355,86 @@ export async function fetchSentimentTrend(windowDays = 30) {
   }))
 }
 
+// ─── 카카오 실시간 대기·SLA 현황 (채널별) ──────────────────────────────────
+export async function fetchKakaoSlaStatus() {
+  if (!isSupabaseEnabled) return null
+  const { data, error } = await supabase.rpc('kakao_sla_status')
+  if (error) throw error
+  return (data || []).map(row => ({
+    channel:                 row.channel,
+    waiting:                 Number(row.waiting),
+    answeredN:               Number(row.answered_n),
+    oldestWaitH:             Number(row.oldest_wait_h),
+    medianFirstResponseMin:  Number(row.median_first_response_min),
+  }))
+}
+
+// ─── 카카오 카테고리 이상 급증 (오늘, 최근 7일 평균 대비) ──────────────────
+export async function fetchKakaoCategorySpike(minRatio = 2.0, minCount = 5) {
+  if (!isSupabaseEnabled) return null
+  const { data, error } = await supabase.rpc('kakao_category_spike', {
+    min_ratio: minRatio, min_count: minCount,
+  })
+  if (error) throw error
+  return (data || []).map(row => ({
+    date:             row.d,
+    category:         row.category,
+    cnt:              Number(row.cnt),
+    baseline7d:       Number(row.baseline_7d),
+    ratio:            Number(row.ratio),
+    channelBreakdown: row.channel_breakdown || [],
+  }))
+}
+
+// ─── 카카오 감정 추세 (채널별, 이번주 vs 지난주 부정 비율) ─────────────────
+export async function fetchKakaoSentimentByChannel(minSamples = 30) {
+  if (!isSupabaseEnabled) return null
+  const { data, error } = await supabase.rpc('kakao_sentiment_trend', {
+    min_samples: minSamples,
+  })
+  if (error) throw error
+  return (data || []).map(row => ({
+    channel:    row.channel,
+    curNeg:     Number(row.cur_neg),
+    curRate:    Number(row.cur_rate),
+    prevNeg:    Number(row.prev_neg),
+    curTotal:   Number(row.cur_total),
+    prevRate:   Number(row.prev_rate),
+    worsening:  Boolean(row.worsening),
+    prevTotal:  Number(row.prev_total),
+  }))
+}
+
+// ─── 카카오 채널별 수집 파이프라인 상태 ────────────────────────────────────
+// ⚠️ RPC 원본의 health/health_reason 필드는 20분 주기 수집 대비 15분 임계값이
+// 너무 타이트해서, 주기 후반 5분 구간마다 정상 상태에서도 'warning'이 뜬다
+// (실측 확인됨 — 기준2: 허위 경고 방지를 위해 그대로 노출하지 않음). 원시
+// 수치(hb_age_min 등)만 받아 20분 주기 기준 여유를 둔 25분 임계값으로
+// 프론트에서 재계산한다. RPC 쪽 임계값 자체는 kakao-daily-summary·
+// kakao-alert 등 다른 소비자도 함께 쓰는 공유 자원이라, 별도 승인 없이
+// 직접 고치지 않고 백그라운드 작업으로 분리해 뒀다.
+export async function fetchKakaoCollectionHealth() {
+  if (!isSupabaseEnabled) return null
+  const { data, error } = await supabase.rpc('kakao_collection_health')
+  if (error) throw error
+  const HEARTBEAT_OK_MIN = 25 // 수집 주기 20분 + 여유 5분
+  return (data || []).map(row => {
+    const hbAgeMin = Number(row.hb_age_min)
+    const hasAuthError = row.last_error != null
+    const health = hasAuthError ? 'critical' : (hbAgeMin > HEARTBEAT_OK_MIN ? 'warning' : 'ok')
+    return {
+      profileId:     row.profile_id,
+      channelLabel:  row.channel_label,
+      hbAgeMin,
+      lastError:     row.last_error,
+      hrsSinceMsg:   Number(row.hrs_since_msg),
+      avgPerDay:     Number(row.avg_per_day),
+      health,
+      healthReason:  hasAuthError ? 'auth' : (health === 'warning' ? 'heartbeat' : 'ok'),
+    }
+  })
+}
+
 // ─── 모듈 트리 (항상 mockData) ───────────────────────────────────────────────
 export function getModuleTree() { return MODULE_TREE }
 

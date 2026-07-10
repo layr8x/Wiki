@@ -1,0 +1,30 @@
+/* src/components/analytics/KakaoConsultStatus.astryx.css
+ * 카카오 상담 실시간 운영 현황 — Astryx 표면. 색·간격·라운드는 전부 Astryx 토큰(var)만 사용. */
+
+.kcs-card { overflow: hidden; }
+
+.kcs-headline { min-width: 0; }
+
+.kcs-spike-banner { margin-top: 16px; }
+
+.kcs-divider { margin-block: 16px; }
+
+.kcs-section-title { margin-bottom: 8px; }
+
+.kcs-footnote {
+  display: block;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-disabled);
+  line-height: 1.5;
+}
+
+.kcs-skel {
+  border-radius: var(--radius-element);
+  background: var(--color-background-muted);
+  animation: kcs-pulse 1.4s ease-in-out infinite;
+}
+.kcs-skel-headline { height: 56px; }
+.kcs-skel-table { height: 120px; }
+@keyframes kcs-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

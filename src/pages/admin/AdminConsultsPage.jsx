@@ -34,6 +34,7 @@ import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
+import { KakaoConsultStatus } from '@/components/analytics/KakaoConsultStatus'
 import './AdminConsultsPage.astryx.css'
 
 const CHANNELS = [
@@ -339,6 +340,9 @@ export default function AdminConsultsPage() {
             </Text>
           </Card>
         )}
+
+        {/* ─── 실시간 운영 현황 (North Star: 지금 밀린 상담) ─────── */}
+        <KakaoConsultStatus />
 
         {/* ─── 분석 요약 (방법론 기반 상단 통계 영역) ───────────── */}
         <AnalyticsHeader

@@ -16,6 +16,10 @@ import {
   fetchResponseTimeDistribution,
   fetchChatCategoryDistribution,
   fetchSentimentTrend,
+  fetchKakaoSlaStatus,
+  fetchKakaoCategorySpike,
+  fetchKakaoSentimentByChannel,
+  fetchKakaoCollectionHealth,
 } from '../lib/db'
 
 // ─── 전체 가이드 목록 ─────────────────────────────────────────────────────────
@@ -140,5 +144,43 @@ export function useSentimentTrend(windowDays = 30) {
     queryKey: ['stats', 'sentiment-trend', windowDays],
     queryFn: () => fetchSentimentTrend(windowDays),
     staleTime: 10 * 60 * 1000,
+  })
+}
+
+// ─── 카카오 실시간 대기·SLA (North Star — 캐시 아님, 짧은 staleTime) ───────
+export function useKakaoSlaStatus() {
+  return useQuery({
+    queryKey: ['kakao-live', 'sla-status'],
+    queryFn: fetchKakaoSlaStatus,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
+  })
+}
+
+// ─── 카카오 카테고리 이상 급증 ──────────────────────────────────────────────
+export function useKakaoCategorySpike() {
+  return useQuery({
+    queryKey: ['kakao-live', 'category-spike'],
+    queryFn: () => fetchKakaoCategorySpike(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── 카카오 채널별 감정 추세(이번주 vs 지난주) ─────────────────────────────
+export function useKakaoSentimentByChannel() {
+  return useQuery({
+    queryKey: ['kakao-live', 'sentiment-by-channel'],
+    queryFn: () => fetchKakaoSentimentByChannel(),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// ─── 카카오 채널별 수집 파이프라인 상태 ────────────────────────────────────
+export function useKakaoCollectionHealth() {
+  return useQuery({
+    queryKey: ['kakao-live', 'collection-health'],
+    queryFn: fetchKakaoCollectionHealth,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
   })
 }
