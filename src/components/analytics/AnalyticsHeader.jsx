@@ -103,7 +103,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
       <div className="anh-grid">
         {/* 두괄식 헤드라인: 가장 중요한 숫자를 가장 크게, 가장 먼저 */}
         <VStack gap={1} className="anh-headline">
-          <Text type="supporting" size="sm">{title} · 최근 7일 (North Star 지표)</Text>
+          <Text type="supporting" size="sm">{title} · 최근 7일</Text>
           <HStack gap={3} vAlign="baseline">
             <Text as="span" size="3xl" weight="bold" hasTabularNumbers>
               {data.thisWeekTotal.toLocaleString('ko-KR')}
