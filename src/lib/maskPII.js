@@ -19,6 +19,22 @@ const LABEL_NAME_RE = new RegExp(
 const HAS_PHONE_OR_EMAIL_RE =
   /(01[016-9][-.\s]?\d{3,4}[-.\s]?\d{4})|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/
 const STANDALONE_NAME_RE = /(^|\n)[ \t]*([가-힣]{2,4})[ \t]*(?=\r?\n|$)/g
+// 전화번호 앞에 흔히 오지만 사람 이름이 아닌 낱말(오탐 방지용 제외 목록)
+const NON_NAME_BEFORE_PHONE = new Set([
+  '연락처', '전화번호', '휴대폰', '휴대전화', '핸드폰', '연락', '번호',
+  '문의', '접수', '상담', '아래', '여기', '이쪽', '저쪽', '카톡', '팀',
+])
+// 라벨/줄바꿈 없이 이름이 전화번호 바로 앞에 오는 패턴 — "신승윤 010-1234-5678입니다"
+const INLINE_NAME_BEFORE_PHONE_RE =
+  /(^|[\s,.\n])([가-힣]{2,4})(?=\s*(?:01[016-9][-.\s]?\d{3,4}[-.\s]?\d{4}|0\d{1,3}[-.\s]\d{3,4}[-.\s]\d{4}))/g
+
+// 조사(는/은/이/가/로 등)가 붙어도 걸리도록 접두 일치로 판정 — "번호는"도 "번호"로 제외됨.
+function isNonNameBeforePhone(name) {
+  for (const w of NON_NAME_BEFORE_PHONE) {
+    if (name.startsWith(w)) return true
+  }
+  return false
+}
 
 // 이름 마스킹: 외자→*, 2자→앞+*, 3자+→앞+가운데(*)+뒤.
 export function maskName(name) {
@@ -39,6 +55,8 @@ export function maskBody(text) {
   s = s.replace(CARD_RE, '[카드번호]')
   s = s.replace(RRN_RE, '[주민번호]')
   s = s.replace(EMAIL_RE, '***@$1')
+  s = s.replace(INLINE_NAME_BEFORE_PHONE_RE, (m, pre, name) =>
+    isNonNameBeforePhone(name) ? m : pre + maskName(name))
   s = s.replace(MOBILE_RE, '$1-****-$3')
   s = s.replace(LANDLINE_RE, '$1-****-$3')
   s = s.replace(LABEL_NAME_RE, (_m, label, sep, name) => label + sep + maskName(name))

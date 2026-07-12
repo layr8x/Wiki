@@ -46,10 +46,22 @@ const LANDLINE_RE = /(0\d{1,3})[-.\s](\d{3,4})[-.\s](\d{4})/g;
 const LABEL_NAME_RE = new RegExp('(' + NAME_LABELS + ')(\\s*[:：]\\s*)([가-힣*]{1,4})', 'g');
 const HAS_PHONE_OR_EMAIL_RE = /(01[016-9][-.\s]?\d{3,4}[-.\s]?\d{4})|([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/;
 const STANDALONE_NAME_RE = /(^|\n)[ \t]*([가-힣]{2,4})[ \t]*(?=\r?\n|$)/g;
+const NON_NAME_BEFORE_PHONE = new Set([
+  '연락처', '전화번호', '휴대폰', '휴대전화', '핸드폰', '연락', '번호',
+  '문의', '접수', '상담', '아래', '여기', '이쪽', '저쪽', '카톡', '팀',
+]);
+const INLINE_NAME_BEFORE_PHONE_RE =
+  /(^|[\s,.\n])([가-힣]{2,4})(?=\s*(?:01[016-9][-.\s]?\d{3,4}[-.\s]?\d{4}|0\d{1,3}[-.\s]\d{3,4}[-.\s]\d{4}))/g;
 
 function stripLoneSurrogates(s: any) {
   if (s == null) return s;
   return String(s).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '');
+}
+function isNonNameBeforePhone(name: string) {
+  for (const w of NON_NAME_BEFORE_PHONE) {
+    if (name.startsWith(w)) return true;
+  }
+  return false;
 }
 function maskName(name: any) {
   if (name == null) return name;
@@ -67,6 +79,8 @@ function maskBody(text: any) {
   s = s.replace(CARD_RE, '[카드번호]');
   s = s.replace(RRN_RE, '[주민번호]');
   s = s.replace(EMAIL_RE, '***@$1');
+  s = s.replace(INLINE_NAME_BEFORE_PHONE_RE, (m: string, pre: string, name: string) =>
+    isNonNameBeforePhone(name) ? m : pre + maskName(name));
   s = s.replace(MOBILE_RE, '$1-****-$3');
   s = s.replace(LANDLINE_RE, '$1-****-$3');
   s = s.replace(LABEL_NAME_RE, (_m: string, label: string, sep: string, name: string) => label + sep + maskName(name));
