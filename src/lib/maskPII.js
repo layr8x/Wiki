@@ -27,6 +27,11 @@ const NON_NAME_BEFORE_PHONE = new Set([
 // 라벨/줄바꿈 없이 이름이 전화번호 바로 앞에 오는 패턴 — "신승윤 010-1234-5678입니다"
 const INLINE_NAME_BEFORE_PHONE_RE =
   /(^|[\s,.\n])([가-힣]{2,4})(?=\s*(?:01[016-9][-.\s]?\d{3,4}[-.\s]?\d{4}|0\d{1,3}[-.\s]\d{3,4}[-.\s]\d{4}))/g
+// 이미 가운데가 가려진 전화번호(010-****-5678) 앞에 이름이 남아있는 경우 — 이 버그가
+// 있던 동안 이미 저장된 과거 메시지는 전화번호만 가려진 채라 원본 숫자가 없다. 표시
+// 단계에서 이런 레거시 행까지 잡으려면 별도 패턴(가운데가 숫자 대신 *)이 필요하다.
+const INLINE_NAME_BEFORE_MASKED_PHONE_RE =
+  /(^|[\s,.\n])([가-힣]{2,4})(?=\s*(?:01[016-9][-.\s]?\*{3,4}[-.\s]?\d{4}|0\d{1,3}[-.\s]\*{3,4}[-.\s]\d{4}))/g
 
 // 조사(는/은/이/가/로 등)가 붙어도 걸리도록 접두 일치로 판정 — "번호는"도 "번호"로 제외됨.
 function isNonNameBeforePhone(name) {
@@ -56,6 +61,8 @@ export function maskBody(text) {
   s = s.replace(RRN_RE, '[주민번호]')
   s = s.replace(EMAIL_RE, '***@$1')
   s = s.replace(INLINE_NAME_BEFORE_PHONE_RE, (m, pre, name) =>
+    isNonNameBeforePhone(name) ? m : pre + maskName(name))
+  s = s.replace(INLINE_NAME_BEFORE_MASKED_PHONE_RE, (m, pre, name) =>
     isNonNameBeforePhone(name) ? m : pre + maskName(name))
   s = s.replace(MOBILE_RE, '$1-****-$3')
   s = s.replace(LANDLINE_RE, '$1-****-$3')

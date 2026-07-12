@@ -35,6 +35,10 @@ describe('maskPII.maskBody', () => {
     expect(maskBody('연락처 010-1234-5678 입니다')).toBe('연락처 010-****-5678 입니다')
     expect(maskBody('전화번호 010-1234-5678로 부탁드려요')).toBe('전화번호 010-****-5678로 부탁드려요')
   })
+  it('이미 전화번호만 가려진 과거 데이터(레거시 행)의 이름도 표시 단계에서 마스킹', () => {
+    expect(maskBody('신승윤 010-****-5624입니다')).toBe('신*윤 010-****-5624입니다')
+    expect(maskBody('연락처 010-****-5678 입니다')).toBe('연락처 010-****-5678 입니다')
+  })
   it('PII 없으면 그대로, null 보존, 멱등', () => {
     expect(maskBody('수업 문의')).toBe('수업 문의')
     expect(maskBody(null)).toBe(null)

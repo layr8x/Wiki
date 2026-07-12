@@ -21,6 +21,10 @@
 }
 .kcs-action-empty-icon { color: var(--color-success); flex: none; }
 
+/* 대기시간 긴급도 — "지금 처리할 대화" 목록과 SLA 표의 최장 대기 칸에서 공용. */
+.kcs-wait-warning { color: var(--color-text-orange); }
+.kcs-wait-critical { color: var(--color-text-red); font-weight: var(--font-weight-semibold); }
+
 .kcs-spike-banner { margin-top: 16px; }
 
 .kcs-divider { margin-block: 16px; }

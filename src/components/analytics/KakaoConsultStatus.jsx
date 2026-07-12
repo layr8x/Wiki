@@ -38,6 +38,29 @@ const CHANNEL_BADGE = {
   '마이클래스': 'blue', 'LIVE': 'green', 'LIVE 기술지원': 'teal', '콘텐츠': 'purple', '통합로그인': 'orange',
 }
 
+// 대기시간 표시: 1시간 미만은 분 단위(원본 waited_h가 0.1시간=6분 단위로 반올림돼 있어
+// 분 값도 정확한 초 단위가 아닌 근사치), 그 이상은 기존처럼 시간 단위.
+function formatActionWait(waitedH) {
+  if (waitedH < 1) {
+    const min = Math.round(waitedH * 60)
+    return min <= 0 ? '방금 접수' : `${min}분 대기`
+  }
+  return `${waitedH.toFixed(1)}시간 대기`
+}
+function formatOldestWait(waitedH) {
+  if (waitedH <= 0) return '—'
+  if (waitedH < 1) return `${Math.max(1, Math.round(waitedH * 60))}분`
+  return `${waitedH.toFixed(1)}시간`
+}
+
+// 대기시간 긴급도 색 구분. [추정] 확정된 SLA(=Service Level Agreement, 응답 목표 시간) 값이
+// 따로 없어 상담 운영상 통상적인 기준(2시간·6시간)으로 잠정 설정 — 실제 목표치가 있으면 조정.
+function waitUrgencyClass(waitedH) {
+  if (waitedH >= 6) return 'kcs-wait-critical'
+  if (waitedH >= 2) return 'kcs-wait-warning'
+  return ''
+}
+
 const SLA_COLUMNS = [
   { key: 'channel', header: '채널', width: proportional(1.2) },
   { key: 'waiting', header: '대기', width: proportional(0.8), align: 'end' },
@@ -47,7 +70,11 @@ const SLA_COLUMNS = [
   },
   {
     key: 'oldestWaitH', header: '최장 대기', width: proportional(1), align: 'end',
-    renderCell: (row) => (row.oldestWaitH > 0 ? `${row.oldestWaitH.toFixed(1)}시간` : '—'),
+    renderCell: (row) => (
+      <Text as="span" hasTabularNumbers className={waitUrgencyClass(row.oldestWaitH)}>
+        {formatOldestWait(row.oldestWaitH)}
+      </Text>
+    ),
   },
 ]
 
@@ -149,8 +176,14 @@ export function KakaoConsultStatus() {
               description={maskBody(c.preview) || '(내용 없음)'}
               descriptionLines={1}
               endContent={
-                <Text as="span" type="supporting" size="sm" hasTabularNumbers className="kcs-action-wait">
-                  {c.waitedH.toFixed(1)}시간 대기
+                <Text
+                  as="span"
+                  type="supporting"
+                  size="sm"
+                  hasTabularNumbers
+                  className={`kcs-action-wait ${waitUrgencyClass(c.waitedH)}`}
+                >
+                  {formatActionWait(c.waitedH)}
                 </Text>
               }
             />
