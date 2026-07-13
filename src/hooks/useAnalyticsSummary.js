@@ -10,6 +10,8 @@
 // - 민감도(분모) 분석: summary.basis 에 집계 기준(테이블·기간·필터)을 명시해 반환 → 화면에서 각주로 노출.
 //   count-only 쿼리로 실제 총 건수(trueCount)를 함께 확인해, limit(FETCH_CAP) 초과 시
 //   isTruncated로 알림 — 잘린 채 조용히 틀린 통계를 보여주는 것을 방지.
+// - 민감도(표본크기) 분석: z검정·SPC 관리도는 표본이 작으면 신뢰 불가 — 14일 합계가
+//   MIN_SAMPLE_FOR_SIGNIFICANCE(10건) 미만이면 lowSample=true 로 두 판정 모두 보류.
 // - [미측정] 이중차분(대조군 없음, 이 위젯엔 부적합) · RICE우선순위(백로그 도구, 실시간 헤더엔 부적합)
 //
 // 데이터: timestamp 컬럼만 조회(본문 미조회 — PII 노출 최소화), 최근 30일 범위로 제한.
@@ -40,6 +42,13 @@ function twoCountZTest(n1, n2) {
   const z = (n1 - n2) / se
   return { z, significant: Math.abs(z) >= 1.96 }
 }
+
+// 정규근사 z검정과 ±2표준편차 관리도는 둘 다 표본이 충분히 클 때 성립하는 근사식이다.
+// 통합로그인·LIVE기술지원처럼 하루 0~1건 나오는 채널은 "1건→8건"만 돼도 계산상 z값이
+// 1.96을 넘고 관리상한도 쉽게 뚫려 "+700%, 통계적으로 유의미한 변화"·"이상치"가 동시에
+// 뜨는데, 절대량이 작아 실제로는 그냥 하루치 노이즈일 가능성이 크다 — 계산은 틀리지
+// 않았지만 비전문가에게 과신을 유발한다. 14일 합계가 이 미만이면 두 판정 모두 보류한다.
+const MIN_SAMPLE_FOR_SIGNIFICANCE = 10
 
 export function useAnalyticsSummary({ key, table, dateColumn, filters = {}, enabled = true }) {
   return useQuery({
@@ -109,15 +118,20 @@ export function useAnalyticsSummary({ key, table, dateColumn, filters = {}, enab
       const upper = m + 2 * sd
       const lower = Math.max(0, m - 2 * sd)
       const latest = trend[trend.length - 1]
-      const isAnomaly = sd > 0 && (latest.count > upper || latest.count < lower)
 
-      const { significant } = twoCountZTest(thisWeekTotal, lastWeekTotal)
+      // thisWeekTotal + lastWeekTotal == trend(14일) 합계 — z검정·관리도 둘 다 이 14일
+      // 표본에 기반하므로 같은 기준 하나로 표본 부족 여부를 판단한다.
+      const lowSample = thisWeekTotal + lastWeekTotal < MIN_SAMPLE_FOR_SIGNIFICANCE
+      const isAnomaly = !lowSample && sd > 0 && (latest.count > upper || latest.count < lower)
+      const { significant: rawSignificant } = twoCountZTest(thisWeekTotal, lastWeekTotal)
+      const significant = !lowSample && rawSignificant
 
       return {
         thisWeekTotal,
         lastWeekTotal,
         pctChange,
         significant,
+        lowSample,
         dailyAvg: thisWeekTotal / 7,
         trend,
         controlBand: { mean: m, upper, lower },
@@ -126,7 +140,7 @@ export function useAnalyticsSummary({ key, table, dateColumn, filters = {}, enab
         isTruncated,
         trueCount,
         fetchedCount,
-        basis: { table, dateColumn, filters, windowDays: TREND_DAYS, fetchCap: FETCH_CAP },
+        basis: { table, dateColumn, filters, windowDays: TREND_DAYS, fetchCap: FETCH_CAP, minSampleForSignificance: MIN_SAMPLE_FOR_SIGNIFICANCE },
       }
     },
   })
