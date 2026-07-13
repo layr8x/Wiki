@@ -49,19 +49,38 @@ export function useAnalyticsSummary({ key, table, dateColumn, filters = {}, enab
     retry: 0,
     queryFn: async () => {
       const since = new Date(Date.now() - (TREND_DAYS + 7) * DAY_MS).toISOString()
-      const FETCH_CAP = 200000
-      let dataQ = supabase.from(table).select(dateColumn).gte(dateColumn, since).limit(FETCH_CAP)
-      // 실제 총 건수를 별도 count-only 쿼리로 확인 — limit(FETCH_CAP)를 넘는 데이터가
-      // 있어도 그동안은 아무 표시 없이 조용히 통계가 잘려나가고 있었다. 이제 초과 시
+      // Supabase 앞단의 PostgREST(=DB를 자동으로 REST API로 열어주는 서버)는 프로젝트 기본
+      // 설정상 한 번의 요청에 최대 1,000행만 돌려준다 — .limit(FETCH_CAP)으로 더 크게 요청해도
+      // 서버가 조용히 1,000행에서 잘라버려, 21일치 데이터가 실제로 몇 천 건만 돼도 매번
+      // isTruncated 경고가 뜨는 원인이었다. CSV 다운로드(AdminConsultsPage.jsx)와 동일하게
+      // 1,000건씩 나눠 끝까지 받아오도록 수정 — 이러면 이 경고는 정말 극단적인 물량일 때만 뜬다.
+      const FETCH_CAP = 20000 // 21일 윈도우 실제 볼륨 대비 넉넉한 안전 상한(최대 20회 왕복)
+      async function fetchAllDates() {
+        const out = []
+        for (let from = 0; from < FETCH_CAP; from += 1000) {
+          let q = supabase.from(table).select(dateColumn).gte(dateColumn, since)
+            .order(dateColumn, { ascending: true }).range(from, from + 999)
+          for (const [col, val] of Object.entries(filters)) {
+            if (val != null) q = q.eq(col, val)
+          }
+          const { data, error } = await q
+          if (error) throw error
+          if (!data || !data.length) break
+          out.push(...data)
+          if (data.length < 1000) break
+        }
+        return out
+      }
+      // 실제 총 건수를 별도 count-only 쿼리로 확인 — 위 페이지네이션도 FETCH_CAP을 넘는
+      // 초극단적 물량에서는 잘릴 수 있으니, 그 경우에도 조용히 틀린 통계를 보여주지 않고
       // isTruncated로 명시적으로 알린다(기준2: 허위/오차 없이 완벽한 결과).
       let countQ = supabase.from(table).select('*', { count: 'exact', head: true }).gte(dateColumn, since)
       for (const [col, val] of Object.entries(filters)) {
-        if (val != null) { dataQ = dataQ.eq(col, val); countQ = countQ.eq(col, val) }
+        if (val != null) countQ = countQ.eq(col, val)
       }
-      const [{ data, error }, { count: trueCount, error: countError }] = await Promise.all([dataQ, countQ])
-      if (error) throw error
+      const [data, { count: trueCount, error: countError }] = await Promise.all([fetchAllDates(), countQ])
       if (countError) throw countError
-      const fetchedCount = (data || []).length
+      const fetchedCount = data.length
       const isTruncated = typeof trueCount === 'number' && trueCount > fetchedCount
 
       // 일자별 버킷 (최근 TREND_DAYS+7일)

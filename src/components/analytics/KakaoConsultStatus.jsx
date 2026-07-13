@@ -19,6 +19,7 @@ import { Divider } from '@astryxdesign/core/Divider'
 import { Table, proportional } from '@astryxdesign/core/Table'
 import { List } from '@astryxdesign/core/List'
 import { Item } from '@astryxdesign/core/Item'
+import { Collapsible } from '@astryxdesign/core/Collapsible'
 import { TrendUp as TrendUpIcon, CheckCircle as CheckIcon } from '@phosphor-icons/react'
 import {
   useKakaoSlaStatus,
@@ -119,6 +120,12 @@ export function KakaoConsultStatus() {
   const totalWaiting = sla ? sla.reduce((sum, row) => sum + row.waiting, 0) : null
   const worseningChannels = sentiment ? sentiment.filter((row) => row.worsening) : []
 
+  // SLA 표·파이프라인 상태 표는 "이상 없으면 안 봐도 되는" 참고 정보라 기본은 접어두고,
+  // 지연·장애가 있을 때만 자동으로 펼쳐서 눈에 띄게 한다(정상 채널까지 매번 표로 나열하면
+  // 화면 위쪽을 다 차지해 정작 "지금 처리할 대화"가 아래로 밀려남).
+  const slaAlerts = sla ? sla.filter((row) => waitUrgencyClass(row.oldestWaitH) !== '') : []
+  const healthAlerts = health ? health.filter((row) => row.health !== 'ok') : []
+
   return (
     <Card padding={5} className="kcs-card">
       {/* 두괄식: North Star를 가장 위 · 가장 크게 */}
@@ -198,24 +205,62 @@ export function KakaoConsultStatus() {
 
       <Divider className="kcs-divider" />
 
-      <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황(SLA)</Text>
       {slaLoading ? (
-        <div className="kcs-skel kcs-skel-table" />
+        <>
+          <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황(SLA)</Text>
+          <div className="kcs-skel kcs-skel-table" />
+        </>
       ) : slaError ? (
-        <ErrorNote label="SLA 표" />
+        <>
+          <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황(SLA)</Text>
+          <ErrorNote label="SLA 표" />
+        </>
       ) : (
-        <Table data={sla || []} columns={SLA_COLUMNS} idKey="channel" density="compact" dividers="rows" />
+        <Collapsible
+          defaultIsOpen={slaAlerts.length > 0}
+          trigger={
+            <HStack gap={2} vAlign="center" wrap="wrap">
+              <Text weight="semibold" size="sm">채널별 응답 현황(SLA)</Text>
+              {slaAlerts.length > 0 ? (
+                <Badge variant="warning" label={`${slaAlerts.length}개 채널 응답 지연`} />
+              ) : (
+                <Text type="supporting" size="sm">전 채널 정상</Text>
+              )}
+            </HStack>
+          }
+        >
+          <Table data={sla || []} columns={SLA_COLUMNS} idKey="channel" density="compact" dividers="rows" />
+        </Collapsible>
       )}
 
       <Divider className="kcs-divider" />
 
-      <Text weight="semibold" size="sm" className="kcs-section-title">수집 파이프라인 상태</Text>
       {healthLoading ? (
-        <div className="kcs-skel kcs-skel-table" />
+        <>
+          <Text weight="semibold" size="sm" className="kcs-section-title">수집 파이프라인 상태</Text>
+          <div className="kcs-skel kcs-skel-table" />
+        </>
       ) : healthError ? (
-        <ErrorNote label="수집 파이프라인 상태" />
+        <>
+          <Text weight="semibold" size="sm" className="kcs-section-title">수집 파이프라인 상태</Text>
+          <ErrorNote label="수집 파이프라인 상태" />
+        </>
       ) : (
-        <Table data={health || []} columns={HEALTH_COLUMNS} idKey="profileId" density="compact" dividers="rows" />
+        <Collapsible
+          defaultIsOpen={healthAlerts.length > 0}
+          trigger={
+            <HStack gap={2} vAlign="center" wrap="wrap">
+              <Text weight="semibold" size="sm">수집 파이프라인 상태</Text>
+              {healthAlerts.length > 0 ? (
+                <Badge variant="error" label={`${healthAlerts.length}개 채널 수집 이상`} />
+              ) : (
+                <Text type="supporting" size="sm">전 채널 정상 수집 중</Text>
+              )}
+            </HStack>
+          }
+        >
+          <Table data={health || []} columns={HEALTH_COLUMNS} idKey="profileId" density="compact" dividers="rows" />
+        </Collapsible>
       )}
 
       {sentError && (

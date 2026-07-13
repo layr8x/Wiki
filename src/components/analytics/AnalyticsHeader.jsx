@@ -94,9 +94,9 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
     <Card padding={5} className="anh-card">
       {data.isTruncated && (
         <Badge
-          variant="error"
+          variant="warning"
           icon={<WarningIcon size={12} />}
-          label={`집계 범위 내 실제 ${data.trueCount.toLocaleString('ko-KR')}건 중 ${data.fetchedCount.toLocaleString('ko-KR')}건만 반영됨 — 아래 수치는 불완전할 수 있음`}
+          label={`문의량이 너무 많아 최근 ${data.fetchedCount.toLocaleString('ko-KR')}건만 셌어요(전체 ${data.trueCount.toLocaleString('ko-KR')}건 중) — 아래 숫자가 실제보다 적을 수 있습니다`}
           className="anh-truncated-warning"
         />
       )}
