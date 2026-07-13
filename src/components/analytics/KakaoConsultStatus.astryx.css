@@ -42,6 +42,11 @@
 
 .kcs-error { color: var(--color-text-red); }
 
+/* Collapsible 트리거↔콘텐츠 기본 간격이 4px로 매우 좁아(라이브러리 기본은 "펼치기" 같은
+   한 줄짜리 트리거 전제) 표 헤더 행이 바로 붙어 보인다 — 표를 담는 두 군데만 여유를 더 준다.
+   (콘텐츠 div는 트리거 button 다음의 직계 자식 div 하나뿐이라 이 선택자로 안전하게 특정 가능) */
+.kcs-collapsible > div { padding-block-start: 12px; }
+
 .kcs-skel {
   border-radius: var(--radius-element);
   background: var(--color-background-muted);

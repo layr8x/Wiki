@@ -218,11 +218,14 @@ export function KakaoConsultStatus() {
       ) : (
         <Collapsible
           defaultIsOpen={slaAlerts.length > 0}
+          className="kcs-collapsible"
           trigger={
-            <HStack gap={2} vAlign="center" wrap="wrap">
+            // Collapsible 트리거는 한 줄을 전제로 만들어진 영역이라(내용-콘텐츠 간격이 4px뿐)
+            // 줄바꿈이 생기면 바로 아래 표와 겹쳐 보인다 — 절대 두 줄로 안 넘어가게 wrap 금지.
+            <HStack gap={2} vAlign="center" wrap="nowrap">
               <Text weight="semibold" size="sm">채널별 응답 현황(SLA)</Text>
               {slaAlerts.length > 0 ? (
-                <Badge variant="warning" label={`${slaAlerts.length}개 채널 응답 지연`} />
+                <Badge variant="warning" label={`지연 ${slaAlerts.length}채널`} />
               ) : (
                 <Text type="supporting" size="sm">전 채널 정상</Text>
               )}
@@ -248,11 +251,12 @@ export function KakaoConsultStatus() {
       ) : (
         <Collapsible
           defaultIsOpen={healthAlerts.length > 0}
+          className="kcs-collapsible"
           trigger={
-            <HStack gap={2} vAlign="center" wrap="wrap">
+            <HStack gap={2} vAlign="center" wrap="nowrap">
               <Text weight="semibold" size="sm">수집 파이프라인 상태</Text>
               {healthAlerts.length > 0 ? (
-                <Badge variant="error" label={`${healthAlerts.length}개 채널 수집 이상`} />
+                <Badge variant="error" label={`이상 ${healthAlerts.length}채널`} />
               ) : (
                 <Text type="supporting" size="sm">전 채널 정상 수집 중</Text>
               )}

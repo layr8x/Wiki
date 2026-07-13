@@ -50,3 +50,6 @@
 .anh-spark-line { stroke: var(--color-icon-primary); stroke-width: 1.75; }
 .anh-spark-dot { fill: var(--color-icon-secondary); }
 .anh-spark-dot-last { fill: var(--color-icon-primary); }
+/* fill=transparent(빈값 아님)라야 SVG가 이 영역도 마우스 이벤트 대상으로 잡는다 */
+.anh-spark-hit { fill: transparent; cursor: help; }
+.anh-spark-axis { fill: var(--color-text-disabled); font-size: 9px; }

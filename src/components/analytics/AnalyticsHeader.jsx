@@ -18,15 +18,25 @@ import {
 import { useAnalyticsSummary } from '@/hooks/useAnalyticsSummary'
 import './AnalyticsHeader.astryx.css'
 
+// 날짜를 "7/13"처럼 짧게 — 스파크라인 양 끝 축 라벨용
+function shortDate(dateKey) {
+  const [, m, d] = dateKey.split('-')
+  return `${Number(m)}/${Number(d)}`
+}
+
 // 관리도(SPC control band)를 포함한 14일 추세 스파크라인. Astryx에 차트 프리미티브가 없어
 // primitive로 표현 불가한 시각화만 인라인 SVG(토큰 색상)로 직접 그린다.
+// 축 눈금(양 끝 날짜)과 점마다 마우스오버 값(네이티브 <title>)을 더해 눈금 없이 선만 있던
+// 문제를 보완 — 값은 정확히 몇 건인지 숫자로 확인 가능해야 "차트"로 기능한다.
 function Sparkline({ trend, controlBand }) {
   const w = 280
-  const h = 56
+  const plotH = 56
+  const axisH = 14
+  const h = plotH + axisH
   const pad = 4
   const max = Math.max(controlBand.upper, ...trend.map((d) => d.count), 1)
   const x = (i) => pad + (i / (trend.length - 1)) * (w - pad * 2)
-  const y = (v) => h - pad - (v / max) * (h - pad * 2)
+  const y = (v) => plotH - pad - (v / max) * (plotH - pad * 2)
   const linePath = trend.map((d, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(d.count)}`).join(' ')
   const bandTop = y(controlBand.upper)
   const bandBottom = y(controlBand.lower)
@@ -37,14 +47,23 @@ function Sparkline({ trend, controlBand }) {
       <rect x={pad} y={bandTop} width={w - pad * 2} height={Math.max(0, bandBottom - bandTop)} className="anh-spark-band" />
       <path d={linePath} className="anh-spark-line" fill="none" />
       {trend.map((d, i) => (
-        <circle
-          key={d.date}
-          cx={x(i)}
-          cy={y(d.count)}
-          r={i === trend.length - 1 ? 3 : 1.6}
-          className={i === trend.length - 1 ? 'anh-spark-dot-last' : 'anh-spark-dot'}
-        />
+        <g key={d.date}>
+          {/* 실제 점(반지름 1.6~3)은 마우스로 올리기 너무 작아 — 보이지 않는 넓은 히트영역에
+              <title>을 달아 어디에 올려도 그 날짜·건수가 브라우저 기본 툴팁으로 뜨게 함 */}
+          <circle cx={x(i)} cy={y(d.count)} r={7} className="anh-spark-hit">
+            <title>{shortDate(d.date)}: {d.count.toLocaleString('ko-KR')}건</title>
+          </circle>
+          <circle
+            cx={x(i)}
+            cy={y(d.count)}
+            r={i === trend.length - 1 ? 3 : 1.6}
+            className={i === trend.length - 1 ? 'anh-spark-dot-last' : 'anh-spark-dot'}
+          />
+        </g>
       ))}
+      {/* 양 끝 날짜 — 이 선이 언제부터 언제까지인지 최소한의 기준점 */}
+      <text x={pad} y={h - 2} textAnchor="start" className="anh-spark-axis">{shortDate(trend[0].date)}</text>
+      <text x={w - pad} y={h - 2} textAnchor="end" className="anh-spark-axis">{shortDate(trend[trend.length - 1].date)}</text>
     </svg>
   )
 }
