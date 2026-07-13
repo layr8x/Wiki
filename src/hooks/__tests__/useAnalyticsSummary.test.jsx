@@ -17,7 +17,8 @@ vi.mock('@/lib/supabase', () => ({
         const chain = {
           gte: () => chain,
           eq: () => chain,
-          limit: () => chain,
+          order: () => chain,
+          range: () => chain,
           then: (resolve) =>
             resolve(
               isCountQuery
@@ -61,7 +62,7 @@ describe('useAnalyticsSummary — isTruncated 안전장치', () => {
 
   it('실제 총 건수 > fetch 상한 → isTruncated=true, 실제/반영 건수 모두 보고', async () => {
     mockState.rows = rowsOf(5) // 테스트 속도를 위해 소량 샘플로 "상한 초과" 상황을 흉내
-    mockState.trueCount = 250000 // FETCH_CAP(200000) 초과
+    mockState.trueCount = 250000 // FETCH_CAP(20000) 초과
     const { result } = renderHook(
       () => useAnalyticsSummary({ key: 'truncated', table: 't', dateColumn: 'sent_at' }),
       { wrapper }

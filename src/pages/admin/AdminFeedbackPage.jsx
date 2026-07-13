@@ -77,6 +77,13 @@ export default function AdminFeedbackPage() {
   const [tab, setTab] = useState('all')
   const [localItems, setLocalItems] = useState(() => readLocalQueue())
   const [page, setPage] = useState(1)
+  // 탭이 바뀌면 1페이지로 리셋 — useEffect 대신 렌더 중 상태 조정(react.dev 권장 패턴)으로
+  // 처리해 "탭 변경 렌더" 다음에 "리셋 렌더"가 한 번 더 도는 캐스케이딩 렌더를 없앤다.
+  const [prevTab, setPrevTab] = useState(tab)
+  if (tab !== prevTab) {
+    setPrevTab(tab)
+    setPage(1)
+  }
 
   const { data: remote = [], isLoading } = useQuery({
     queryKey: ['admin', 'feedback'],
@@ -122,8 +129,6 @@ export default function AdminFeedbackPage() {
         return true
       }),
   [tab, merged])
-
-  useEffect(() => { setPage(1) }, [tab])
 
   const paginationPlugin = useTablePagination({
     page,
