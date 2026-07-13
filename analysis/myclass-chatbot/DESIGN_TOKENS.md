@@ -1,15 +1,15 @@
-# HICONSY · LUMEN 디자인 시스템 — 챗봇 UI 토큰 (실측 추출 + TDS 구조 반영)
+# HICONSY · LUMEN 디자인 시스템 - 챗봇 UI 토큰 (실측 추출 + TDS 구조 반영)
 
-> ⚠️ 2026-07-02 갱신 — 정본은 v6 **4메뉴**(출결·보강 / 납부·결제 / 수업·시간표 / 전반) 챗봇. SSOT = `public/myclass-chatbot.html`(학생) + `public/myclass-chatbot-parent.html`(학부모) + `기획서_v6_요약.md`. 이 디자인 토큰은 메뉴와 무관하게 동일하며(값 변경 없음), 아래 "운영 빌드" 참조는 옛 v3 프로토타입에서 현재 빌드로 갱신함. (옛 v3 시절 8-메뉴 프로토타입 기록은 폐기)
+> ⚠️ 2026-07-02 갱신 - 정본은 v6 **4메뉴**(출결·보강 / 납부·결제 / 수업·시간표 / 전반) 챗봇. SSOT = `public/myclass-chatbot.html`(학생) + `public/myclass-chatbot-parent.html`(학부모) + `기획서_v6_요약.md`. 이 디자인 토큰은 메뉴와 무관하게 동일하며(값 변경 없음), 아래 "운영 빌드" 참조는 옛 v3 프로토타입에서 현재 빌드로 갱신함. (옛 v3 시절 8-메뉴 프로토타입 기록은 폐기)
 
-> **LUMEN** — *명료하게. 일관되게. 누구에게나.* (HICONSY DESIGN SYSTEM)
+> **LUMEN** - *명료하게. 일관되게. 누구에게나.* (HICONSY DESIGN SYSTEM)
 > 규모: **508 토큰 · 55 컴포넌트 · 2 모드(light/dark) · WCAG AA** · v1.1 · 2026. (Figma 커버 노드 `58:2763` 실측)
 >
 > 출처: LUMEN DS(`AWBOevxn4v0sjp6w22PPco`, 커버 노드 `58:2763`), 앱 참조(`A3JqKGl3NJD7CIRtjj6aNj/29431-133932`), AMS 챗봇(`6PSg6RlWrjpnNYk1zirmUp/830-5936`). 토큰 값은 Figma 변수 정의·컴포넌트 `get_design_context` 실측치 및 운영 `public/myclass-chatbot.html` `:root` 적용치. Carbon 기반(gray/blue/red 10~100). 컬렉션: `global`(원시) + `theme`(시맨틱 light/dark).
 >
 > **이 문서의 토큰 모델은 토스 디자인 시스템(TDS)의 3계층(Base→Semantic→Component) 구조를 차용해 정식화했다. 단, LUMEN은 단색 `#161616` 흑백 정체성을 유지하므로 TDS에서 가져온 것은 "색"이 아니라 _구조·원칙·네이밍·컴포넌트 스펙_ 이다. 색 액센트(토스 블루 등)는 도입하지 않는다.**
 
-> **현재 톤(운영 적용) — 하이엔드·모던·심플 흑백.** 분리(separation)를 *테두리*가 아니라 **옅은 회색 대화 캔버스 + 흰색 부유 요소 + 소프트 섀도우**로 만든다. 대화 영역(`.log`)은 회색 캔버스 `#f1f1f3`, 그 위에 흰색(`--bg #fff`) 봇 말풍선·메뉴타일·카드·칩이 그림자로 떠 있다. 헤더·입력창도 흰색, 유저(me) 말풍선만 검정 `#161616`. 테두리는 최소화하고, 쓰더라도 헤어라인(`--border-subtle #16161614`)만 쓴다.
+> **현재 톤(운영 적용) - 하이엔드·모던·심플 흑백.** 분리(separation)를 *테두리*가 아니라 **옅은 회색 대화 캔버스 + 흰색 부유 요소 + 소프트 섀도우**로 만든다. 대화 영역(`.log`)은 회색 캔버스 `#f1f1f3`, 그 위에 흰색(`--bg #fff`) 봇 말풍선·메뉴타일·카드·칩이 그림자로 떠 있다. 헤더·입력창도 흰색, 유저(me) 말풍선만 검정 `#161616`. 테두리는 최소화하고, 쓰더라도 헤어라인(`--border-subtle #16161614`)만 쓴다.
 
 ---
 
@@ -46,14 +46,14 @@
   --tb-40:#16161666; --tb-48:#1616167a; --tb-56:#1616168f; --tb-64:#161616a3;
   --tb-72:#161616b8; --tb-80:#161616cc; --tb-88:#161616e0; --tb-96:#161616f5;
   --tw-8:#ffffff14; --tw-64:#ffffffa3;  /* 흰색 위 알파(다크용), 중간단계 [확인필요] */
-  /* Radius — 운영 public/myclass-chatbot.html 적용치 (LUMEN 부유형 UI) */
+  /* Radius - 운영 public/myclass-chatbot.html 적용치 (LUMEN 부유형 UI) */
   --radius-xs:1px; --radius-sm:2px; --radius-md:4px; --radius-lg:8px; --radius-xl:12px; --radius-full:9999px;
   --r-tag:2px; --r-btn:2px; --r-card:14px; --r-pill:999px; --r-bubble:20px; --r-sheet:16px; --r-chip:6px;
   /* (그 외 부품별 고정 radius: 말풍선 tail 7px · .tt-block 10px · .seg 12px) */
   /* Spacing / layout */
   --s2:4px; --s3:8px; --s5:16px; --margin:24px; --g8:8px; --g16:16px; --g24:24px;
   --layout-width:430px; --layout-height:932px;
-  /* Shadow — 가볍고 공기감 있는 부유 섀도우(테두리 대체). 모두 rgba(22,22,22,...) */
+  /* Shadow - 가볍고 공기감 있는 부유 섀도우(테두리 대체). 모두 rgba(22,22,22,...) */
   --shadow-m:0 1px 2px rgba(22,22,22,.05),0 2px 10px rgba(22,22,22,.05);   /* 칩 등 */
   --shadow-2:0 1px 2px rgba(22,22,22,.04),0 10px 30px rgba(22,22,22,.07);  /* 정보카드 */
   --shadow-tile:0 1px 2px rgba(22,22,22,.06),0 5px 16px rgba(22,22,22,.08); /* 메뉴타일 */
@@ -98,9 +98,9 @@
 }
 ```
 
-### 2.2 시맨틱 세트 정식화 — text / fill / border (TDS 대상·역할 네이밍)
+### 2.2 시맨틱 세트 정식화 - text / fill / border (TDS 대상·역할 네이밍)
 
-TDS는 시맨틱을 **대상(Text/Fill/Border/Icon) × 역할(Neutral/Brand/…) × 변형(Weak/Alt/Strong)** 으로 짠다. 이를 LUMEN 흑백에 맞춰 정리하면 아래와 같다. **"역할" 자리에 Brand 대신 흑백 위계(Strong/Subtle)를 둔다** — 이것이 LUMEN의 핵심 번역이다.
+TDS는 시맨틱을 **대상(Text/Fill/Border/Icon) × 역할(Neutral/Brand/…) × 변형(Weak/Alt/Strong)** 으로 짠다. 이를 LUMEN 흑백에 맞춰 정리하면 아래와 같다. **"역할" 자리에 Brand 대신 흑백 위계(Strong/Subtle)를 둔다** - 이것이 LUMEN의 핵심 번역이다.
 
 운영(`public/myclass-chatbot.html`)에는 이미 다음 단축 시맨틱이 적용되어 있고(아래 매핑의 LUMEN 별칭), `--text-primary` 등 풀네임과 1:1 대응한다:
 `--text-neutral / --text-weak / --text-inverse`, `--fill-strong / --fill-subtle`, `--border-subtle / --border-strong`.
@@ -109,23 +109,23 @@ TDS는 시맨틱을 **대상(Text/Fill/Border/Icon) × 역할(Neutral/Brand/…)
 | 시맨틱 토큰 | LUMEN 별칭(운영) | → Base 매핑 (light) | → Base 매핑 (dark) | 명암비(흰 위) | 용도 |
 |---|---|---|---|---|---|
 | `--text-primary` | `--text-neutral` | `gray-100 #161616` | `gray-10 #f4f4f4` | 19.8:1 | 본문·제목·핵심 숫자 |
-| `--text-secondary` | — | `tb-72 #161616b8` | `tw-72 #ffffffb8` | ≈8.6:1 | 보조 본문·버튼 라벨 보조 |
+| `--text-secondary` | - | `tb-72 #161616b8` | `tw-72 #ffffffb8` | ≈8.6:1 | 보조 본문·버튼 라벨 보조 |
 | `--text-helper` | `--text-weak` | `tb-56 #1616168f` | `tw-56 #ffffff8f` | ≈5.7:1 | 헬퍼텍스트·캡션·출처 |
-| `--text-placeholder` | — | `tb-64 #161616a3` | (dark 미노출 [확인필요]) | ≈6.9:1 | 입력 플레이스홀더·비활성 탭 라벨 |
-| `--text-disabled` | — | `tb-24 #1616163d` | `tw-24 #ffffff3d` | ≈2.0:1 (장식 한정) | 비활성 — **본문 금지, 비활성 상태 표시 전용** |
+| `--text-placeholder` | - | `tb-64 #161616a3` | (dark 미노출 [확인필요]) | ≈6.9:1 | 입력 플레이스홀더·비활성 탭 라벨 |
+| `--text-disabled` | - | `tb-24 #1616163d` | `tw-24 #ffffff3d` | ≈2.0:1 (장식 한정) | 비활성 - **본문 금지, 비활성 상태 표시 전용** |
 | `--text-inverse` | `--text-inverse` | `gray-10 #f4f4f4` / `white` | `gray-100 #161616` | (검정 위) 18:1 | 검정 표면 위 텍스트(유저 말풍선·CTA) |
-| `--text-interactive` | — | `blue-70 #0043ce` | `blue-40 #78a9ff` | ≈8.6:1 | **링크 전용**(밑줄 동반). 액센트 아님 |
+| `--text-interactive` | - | `blue-70 #0043ce` | `blue-40 #78a9ff` | ≈8.6:1 | **링크 전용**(밑줄 동반). 액센트 아님 |
 
 #### Fill (배경·면)
 | 시맨틱 토큰 | LUMEN 별칭(운영) | → Base 매핑 (light) | → Base 매핑 (dark) | 용도 |
 |---|---|---|---|---|
 | `--bg-primary` | `--bg` | `white #ffffff` | `gray-100 #161616` | 1차 표면(카드·시트·메뉴타일·칩·봇 말풍선·헤더·입력바) |
 | `--bg-secondary` | `--fill-subtle` / `--surface` | `gray-10 #f4f4f4` | `gray-90 #262626` | 2차 표면(인풋 바탕·세그먼트 트랙·아이콘 칩 배경) |
-| `--bg-canvas`(운영 신규) | — | `#f1f1f3` | (dark [확인필요]) | **대화 영역(`.log`) 회색 캔버스** — 흰 부유 요소를 띄우는 바닥 |
+| `--bg-canvas`(운영 신규) | - | `#f1f1f3` | (dark [확인필요]) | **대화 영역(`.log`) 회색 캔버스** - 흰 부유 요소를 띄우는 바닥 |
 | `--bg-inverse` | `--fill-strong` | `gray-100 #161616` | `white #ffffff` | 강조 면(CTA·유저 말풍선·전송 버튼) |
-| `--bg-inverse-hover` | — | `black #000000` | (dark [확인필요]) | inverse 면 hover |
-| `--bg-inverse-selected` | — | `gray-80 #393939` | `gray-20 #e0e0e0` | inverse 면 선택 |
-| `--fill-inverse`(신규 권장) | — | = `--text-inverse` | = `--text-inverse` | inverse 면 위 텍스트/아이콘 색 별칭(가독성) |
+| `--bg-inverse-hover` | - | `black #000000` | (dark [확인필요]) | inverse 면 hover |
+| `--bg-inverse-selected` | - | `gray-80 #393939` | `gray-20 #e0e0e0` | inverse 면 선택 |
+| `--fill-inverse`(신규 권장) | - | = `--text-inverse` | = `--text-inverse` | inverse 면 위 텍스트/아이콘 색 별칭(가독성) |
 
 #### Border (테두리)
 | 시맨틱 토큰 | LUMEN 별칭(운영) | → Base 매핑 (light) | → Base 매핑 (dark) | 용도 |
@@ -139,7 +139,7 @@ TDS는 시맨틱을 **대상(Text/Fill/Border/Icon) × 역할(Neutral/Brand/…)
 
 TDS는 **OKLCH(= 사람 눈 기준으로 균일하게 설계된 색 좌표계. 같은 명도값이면 어떤 색이든 체감 밝기·대비가 같음)** 를 써서 라이트/다크에서 대비를 예측 가능하게 만든다. LUMEN은 색이 없으므로, 이 사고를 **"투명도 단계(tb-*)와 gray 램프의 명암비가 단계마다 일관되게 줄어들도록 관리한다"** 로 번역한다.
 
-### 2.5.1 투명도-온-블랙(tb-*) 스케일 — 흰 배경 기준 명암비
+### 2.5.1 투명도-온-블랙(tb-*) 스케일 - 흰 배경 기준 명암비
 검정(`#161616`)을 알파로 흰 위에 얹은 값. 숫자(8~96)는 **불투명도 %** ≈ 체감 진하기. 같은 표면(흰색)이면 단계마다 대비가 예측 가능하게 증가한다.
 
 | 토큰 | 알파 | 흰 위 명암비(근사) | WCAG 판정 | 권장 용도 |
@@ -155,9 +155,9 @@ TDS는 **OKLCH(= 사람 눈 기준으로 균일하게 설계된 색 좌표계. �
 | `--tb-80` #161616cc | 80% | 11:1 | AAA | 강한 보조 |
 | `--tb-96` #161616f5 | 96% | 18:1 | AAA | 거의 본문급 |
 
-> 알파 단계는 **위 라이트값을 흰색(#fff) 위에 합성한 근사치**다. 다크 모드에선 같은 _이름_의 흰색-온-블랙(tw-*) 토큰이 검정 위에서 대칭적 대비를 만든다. 그래서 시맨틱 이름(`--text-helper`)은 한 줄이지만 light/dark 양쪽에서 "본문 대비 약 절반"이라는 _체감_은 일정하다 — 이것이 OKLCH가 색으로 하던 일을 LUMEN이 알파로 흉내 내는 방식이다.
+> 알파 단계는 **위 라이트값을 흰색(#fff) 위에 합성한 근사치**다. 다크 모드에선 같은 _이름_의 흰색-온-블랙(tw-*) 토큰이 검정 위에서 대칭적 대비를 만든다. 그래서 시맨틱 이름(`--text-helper`)은 한 줄이지만 light/dark 양쪽에서 "본문 대비 약 절반"이라는 _체감_은 일정하다 - 이것이 OKLCH가 색으로 하던 일을 LUMEN이 알파로 흉내 내는 방식이다.
 
-### 2.5.2 gray 램프 — 불투명 단색의 명암비
+### 2.5.2 gray 램프 - 불투명 단색의 명암비
 표면 위계·히트맵·아이콘 등 **불투명**이 필요한 곳. 흰 배경 기준.
 
 | 토큰 | hex | 흰 위 명암비 | 용도 |
@@ -175,7 +175,7 @@ TDS는 **OKLCH(= 사람 눈 기준으로 균일하게 설계된 색 좌표계. �
 | 본문 텍스트(<18px) | **4.5:1 (AA)** | `--text-helper`(5.7:1) 이상만 본문에 사용 |
 | 큰 텍스트(≥18px Bold / ≥24px) | 3:1 | 비활성 라벨도 이 선 위로 |
 | UI 컴포넌트·아이콘 경계 | 3:1 | 핵심 아이콘은 `--icon-primary`(19.8:1) |
-| **금지** | — | `--tb-24` 이하를 본문 텍스트에 쓰지 않는다(장식·비활성 표시 전용) |
+| **금지** | - | `--tb-24` 이하를 본문 텍스트에 쓰지 않는다(장식·비활성 표시 전용) |
 
 ---
 
@@ -210,7 +210,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | heading-xs (`--fs-xs`) | 20/32 | 400 (강조 600/800) | 강좌 제목·`.big` 강조 숫자(800, ls −0.4) |
 | heading-md / display (`--fs-h`) | 32/40 | **200 ExtraLight, ls −0.64px** | 큰 타이틀(섹션 제목·데스크탑 내비) |
 
-## 4. 컴포넌트 스펙 (운영 public/myclass-chatbot.html 실측 — 부유형 LUMEN)
+## 4. 컴포넌트 스펙 (운영 public/myclass-chatbot.html 실측 - 부유형 LUMEN)
 > 공통 원칙: **테두리 대신 흰 면 + 소프트 섀도우로 분리.** 카드·타일·말풍선은 테두리 없음, 칩만 헤어라인.
 
 - **버튼/CTA**: 칩 형태가 기본. primary 칩 = bg `--fill-strong #161616`/텍스트 흰색/weight 700/섀도우 `0 2px 10px rgba(22,22,22,.22)`. tertiary(보조) = ghost 칩(텍스트 `--text-weak`). 본문 카드 내 링크는 underline.
@@ -225,7 +225,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 - **하단 탭바**: bg white, 상단 border 1px, 아이콘 24px+라벨 14/24. 활성 `#161616`/비활성 `--placeholder`.
 - **리스트 아이템(`.citem`)**: 하단 border 1px, py-24, Tag+상태 → 제목 20/32 → tertiary 액션.
 
-### 4.1 세그먼트 컨트롤 (`.seg`) — 신규 정식 스펙
+### 4.1 세그먼트 컨트롤 (`.seg`) - 신규 정식 스펙
 하나의 트랙 안에서 thumb(흰 알약)가 선택 항목으로 이동하는 컨트롤. (운영 `public/myclass-chatbot.html` 실측)
 
 | 부위 | 토큰/값 |
@@ -240,7 +240,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 > **흑백 원칙**: 선택 강조를 "색"이 아니라 **면 반전(회색 트랙 ↔ 흰 thumb) + 그림자 들림**으로만 표현. 토스가 thumb에 브랜드색을 안 쓰는 것과 같은 철학.
 
-### 4.2 Pill (상태 배지) — 6종 정식 스펙
+### 4.2 Pill (상태 배지) - 6종 정식 스펙
 조회 카드의 상태 표시용 작은 알약. font 12px / weight 700 / padding 3×9px / radius `--r-pill`(999px). (실측)
 
 | 변형 | 배경 | 텍스트 | 의미 | 권장 컴포넌트 토큰 |
@@ -249,12 +249,12 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | `.pill.due` | `--bg-inverse` #161616 | `--text-inverse` #fff | 강조·기한임박(반전) | `--pill-due-bg / -text` |
 | `.pill.wait` | `--fill-subtle` #f4f4f4 | `--tag-text` #393939 | 대기·진행중 | `--pill-wait-bg / -text` |
 | `.pill.muted` | transparent + border `--border-subtle` | `--text-helper` | 부가·비활성 | `--pill-muted-border / -text` |
-| `.pill.info`(권장 추가) | `--fill-subtle` | `--text-interactive` | 링크성 정보(밑줄 동반) | — |
-| `.pill.alert`(권장 추가) | `--bg-danger` 계열 | `--text-inverse` | 위험·환불 등 **danger 한정** | — |
+| `.pill.info`(권장 추가) | `--fill-subtle` | `--text-interactive` | 링크성 정보(밑줄 동반) | - |
+| `.pill.alert`(권장 추가) | `--bg-danger` 계열 | `--text-inverse` | 위험·환불 등 **danger 한정** | - |
 
 > **상승=빨강 금지 번역**: 토스는 증감을 빨강/파랑으로 쓰지만, LUMEN은 **강조=면 반전(`.due`)**, 위험만 danger 토큰으로 한정. 색으로 좋고-나쁨을 신호하지 않는다.
 
-### 4.3 진행바 (`.bar` + `.barrow`) — 신규 정식 스펙
+### 4.3 진행바 (`.bar` + `.barrow`) - 신규 정식 스펙
 대기·진척률 표시. (실측)
 
 | 부위 | 토큰/값 |
@@ -264,7 +264,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | 진입 모션 | `bargrow` 0.7s `cubic-bezier(.23,1,.32,1)` (scaleX 0→1) |
 | 캡션행(`.barrow`) | caption 12px · `--text-helper` · 강조 숫자 `b{color:#161616;font-weight:700;tabular-nums}` |
 
-### 4.4 대기 점 (`.qdots`) — 신규 정식 스펙
+### 4.4 대기 점 (`.qdots`) - 신규 정식 스펙
 대기 순번의 시각화(점들 중 내 위치). (실측)
 
 | 부위 | 토큰/값 |
@@ -274,7 +274,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | 라벨(`.qn`) | caption 12px · `--text-weak` · margin-left 7px |
 | 간격 | gap 4px · 상단 margin 8px |
 
-### 4.5 출결 히트맵 (`.hmap`) — 신규 정식 스펙
+### 4.5 출결 히트맵 (`.hmap`) - 신규 정식 스펙
 주차×요일 출결 격자. 색이 아니라 **명도 4단**으로 상태 구분(흑백 핵심). (실측)
 
 | 셀 상태 | 클래스 | 배경 | 명도 의미 |
@@ -283,7 +283,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 | 지각 | `.hcell.l` | `--gray-60 #6f6f6f` | 중간 |
 | 결석 | `.hcell.a` | `--gray-20 #e0e0e0` | 옅음 |
 | 예정/없음 | `.hcell.f` | transparent + `1px dashed --gray-20` | 빈칸(점선) |
-| 기본 | `.hcell` | `--fill-subtle #f4f4f4` | — |
+| 기본 | `.hcell` | `--fill-subtle #f4f4f4` | - |
 
 | 부위 | 값 |
 |---|---|
@@ -298,7 +298,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 | 챗봇 요소 | LUMEN 토큰 |
 |---|---|
-| 대화 캔버스(`.log`) | bg `#f1f1f3`(회색) — 흰 말풍선·카드·칩을 띄우는 바닥 |
+| 대화 캔버스(`.log`) | bg `#f1f1f3`(회색) - 흰 말풍선·카드·칩을 띄우는 바닥 |
 | 봇 말풍선 | bg `--bg`(흰), **테두리 없음**, 섀도우 `0 1px 2px rgba(22,22,22,.05),0 2px 8px rgba(22,22,22,.05)`, 텍스트 `--text-neutral`, radius **20**(말하는 모서리 7). 다크 bg `--bg-secondary` |
 | 유저 말풍선 | bg `--fill-strong #161616`, 텍스트 `--text-inverse`, radius **20**(말하는 모서리 7) |
 | 빠른답변 칩 | pill, bg `--bg`(흰), **헤어라인 border `--border-subtle #16161614`**, 텍스트 `--text-neutral`, `--shadow-m`, hover lift+그림자 확대 |
@@ -314,7 +314,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 토스가 색·브랜드로 구현한 원칙을, LUMEN은 **흑백·여백·모션**으로 구현한다. 각 원칙에 우리 챗봇(`public/myclass-chatbot.html`) 적용 예시를 붙인다.
 
-### 6.1 극단적 단순함 — "한 화면에 한 일"
+### 6.1 극단적 단순함 - "한 화면에 한 일"
 - **TDS**: 화면당 핵심 액션 하나, 나머지는 덜어낸다.
 - **LUMEN 번역**: 색이 없으니 _위계는 면 반전·여백·크기_로만 만든다. 강조는 검정 면(`--bg-inverse`) 하나로 통일.
 - **챗봇 예시**: 봇 답변마다 **주 행동(CTA 칩) 하나 + 보조(tertiary 밑줄)** 구조. 자유 입력창 없이 버튼 분기 → 사용자가 매 화면 결정 하나만.
@@ -322,7 +322,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 ### 6.2 여백 (Breathing space)
 - **TDS**: 여백을 "비용"이 아니라 정보 위계 도구로 본다.
 - **LUMEN 번역**: spacing 토큰(`02/03/05`=4/8/16)과 gap(8/16/24)을 8 배수로 고정. 카드 padding 16·gap 16, 리스트 py-24.
-- **챗봇 예시**: 말풍선 max-width 80%, 카드 92% — 화면 가장자리 여백을 남겨 "숨 쉴 공간". 칩 사이 gap 8.
+- **챗봇 예시**: 말풍선 max-width 80%, 카드 92% - 화면 가장자리 여백을 남겨 "숨 쉴 공간". 칩 사이 gap 8.
 
 ### 6.3 숫자 위계 (Tabular, 큰 숫자)
 - **TDS**: 핵심 수치를 크게·tabular(자릿수 고정)로 → 신뢰감.
@@ -341,7 +341,7 @@ TDS 토큰명 문법 **`카테고리-대상-역할-변형`** 을 LUMEN에 맞춰
 
 ### 6.6 접근성·기술스펙 내장 (3원칙: 엣지케이스·미적 정제·포용성)
 - **TDS**: 컴포넌트에 접근성·상태·엣지케이스를 처음부터 내장.
-- **LUMEN 번역**: 모든 시맨틱이 WCAG **AA(커버 명시)** 대비를 충족하도록 매핑(§2.5.3). 포커스 `:focus-visible` 2px outline 전 컴포넌트 공통. reduced-motion 전역 무효화. 장식 아이콘 `aria-hidden`.
+- **LUMEN 번역**: 모든 시맨틱이 WCAG **AA(커버 명시)** 대비를 충족하도록 매핑(2장.5.3). 포커스 `:focus-visible` 2px outline 전 컴포넌트 공통. reduced-motion 전역 무효화. 장식 아이콘 `aria-hidden`.
 - **챗봇 예시**: 대화 로그 `role=log aria-live=polite`(낭독), 시트 `role=dialog`+포커스 트랩, 히트맵은 색맹·흑백 인쇄에도 명도로 구분.
 
 ---
