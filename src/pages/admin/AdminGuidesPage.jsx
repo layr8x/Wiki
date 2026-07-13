@@ -4,7 +4,7 @@
 //   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Selector/Table/AlertDialog)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
 //   - 표현 못하는 레이아웃(툴바·세그먼트·hover·스켈레톤)은 co-located CSS(토큰 only)
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -89,6 +89,14 @@ export default function AdminGuidesPage() {
   const [search, setSearch]   = useState('')
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [page, setPage] = useState(1)
+  // 필터 변경 시 1페이지로 리셋 — 결과가 줄었는데 빈 페이지를 보여주는 것 방지.
+  // useEffect 대신 렌더 중 상태 조정(react.dev 권장 패턴)으로 처리해 캐스케이딩 렌더를 없앤다.
+  const filterKey = `${status}|${moduleF}|${search}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
 
   const { data: guides = [], isLoading } = useQuery({
     queryKey: ['admin', 'guides', { status, moduleF, search }],
@@ -130,9 +138,6 @@ export default function AdminGuidesPage() {
     for (const g of guides) by[g.status] = (by[g.status] || 0) + 1
     return by
   }, [guides])
-
-  // 필터 변경 시 1페이지로 리셋 — 결과가 줄었는데 빈 페이지를 보여주는 것 방지
-  useEffect(() => { setPage(1) }, [status, moduleF, search])
 
   const paginationPlugin = useTablePagination({
     page,
