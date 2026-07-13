@@ -68,20 +68,23 @@ function Sparkline({ trend, controlBand }) {
   )
 }
 
-function TrendBadge({ pctChange, significant }) {
+function TrendBadge({ pctChange, significant, lowSample }) {
   if (pctChange == null) return <Badge variant="neutral" label="전주 데이터 없음" />
   const up = pctChange > 0
   const flat = Math.abs(pctChange) < 0.5
   const Icon = flat ? FlatIcon : up ? TrendUpIcon : TrendDownIcon
-  const variant = flat ? 'neutral' : up ? 'success' : 'error'
+  // 표본이 적으면(14일 합계 10건 미만) z검정이 신뢰 불가 — success/error 같은 강한 색으로
+  // "확실한 증가/감소"처럼 보이게 하지 않고 중립색만 쓴다(숫자 자체는 사실이라 계속 보여줌).
+  const variant = lowSample ? 'neutral' : flat ? 'neutral' : up ? 'success' : 'error'
   const pct = Math.abs(pctChange).toFixed(1)
   const label = flat ? '전주 대비 변화 없음' : `전주 대비 ${up ? '+' : '-'}${pct}%`
+  const caption = lowSample
+    ? '(표본이 적어 판단 보류 — 14일 합계 10건 미만)'
+    : significant ? '(통계적으로 유의미한 변화)' : '(오차범위 내 변동으로 추정)'
   return (
     <HStack gap={2} vAlign="center">
       <Badge variant={variant} icon={<Icon size={12} />} label={label} />
-      <Text type="supporting" size="sm">
-        {significant ? '(통계적으로 유의미한 변화)' : '(오차범위 내 변동으로 추정)'}
-      </Text>
+      <Text type="supporting" size="sm">{caption}</Text>
     </HStack>
   )
 }
@@ -129,7 +132,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
             </Text>
             <Text as="span" type="supporting">건</Text>
           </HStack>
-          <TrendBadge pctChange={data.pctChange} significant={data.significant} />
+          <TrendBadge pctChange={data.pctChange} significant={data.significant} lowSample={data.lowSample} />
         </VStack>
 
         {/* 보조 지표: 일평균 + 이상치 여부(SPC) */}
@@ -153,6 +156,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
       {/* 민감도(분모) 분석 각주: 계산 기준 명시 — 방법론 태그 [측정]/[추정]/[미측정] */}
       <Text type="supporting" size="xs" className="anh-footnote">
         [측정] 현재 필터 기준({filterNote || '전체'}) {data.isTruncated ? `실제 ${data.trueCount.toLocaleString('ko-KR')}건 중 ${data.fetchedCount.toLocaleString('ko-KR')}건만` : '실측'} 집계 · [추정] 통계적 유의성은 정규근사 z검정 간이 판정 ·
+        [측정] 14일 합계 {data.basis.minSampleForSignificance}건 미만이면 표본 부족으로 유의성 판정 보류 ·
         [미측정] 대조군 인과추론(이중차분)은 대조군 부재로 이 위젯엔 미적용
       </Text>
     </Card>
