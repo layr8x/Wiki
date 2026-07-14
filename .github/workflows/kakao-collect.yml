@@ -40,7 +40,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies (prod only)
-        run: npm ci --omit=dev --no-audit --prefer-offline
+        run: npm ci --omit=dev --no-audit
 
       - name: Collect kakao partner chats
         env:
