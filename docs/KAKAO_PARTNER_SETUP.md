@@ -15,7 +15,7 @@ business.kakao   │  REST: /api/profiles/_VGAQn/...  │  ← 채팅 메타·�
               ▼                           ▼
    scripts/kakao-partner-       scripts/kakao-partner-
         bootstrap.mjs                 stream.mjs
-   (1회 채팅 메타 백필)        (상시 데몬 — WS + 60s 폴링 폴백)
+   (1회 채팅 메타 백필)        (상시 데몬 - WS + 60s 폴링 폴백)
               │                           │
               └────────────┬──────────────┘
                            ▼
@@ -24,9 +24,9 @@ business.kakao   │  REST: /api/profiles/_VGAQn/...  │  ← 채팅 메타·�
 ```
 
 핵심:
-- **인증은 쿠키만** — 별도 토큰/Bearer 없음. 카카오 로그인 세션 쿠키 그대로.
+- **인증은 쿠키만** - 별도 토큰/Bearer 없음. 카카오 로그인 세션 쿠키 그대로.
 - **메시지 본문은 WebSocket push 로만** 수신 (REST 단건 endpoint 발견 못함).
-- **service_role 키**로 RLS 우회 — 절대 브라우저 코드에 노출 금지.
+- **service_role 키**로 RLS 우회 - 절대 브라우저 코드에 노출 금지.
 
 ---
 
@@ -39,9 +39,9 @@ supabase/migrations/20260512_kakao_partner.sql
 ```
 
 생성되는 것:
-- `kakao_partner_chats` — 채팅방 메타 (chat_id PK)
-- `kakao_partner_messages` — 메시지 단건 (log_id PK, chat_id FK)
-- `kakao_partner_stream_state` — 스트림 재개 기준점 (profile_id PK)
+- `kakao_partner_chats` - 채팅방 메타 (chat_id PK)
+- `kakao_partner_messages` - 메시지 단건 (log_id PK, chat_id FK)
+- `kakao_partner_stream_state` - 스트림 재개 기준점 (profile_id PK)
 
 이어서 헬스 컬럼 마이그레이션도 적용 (수집 멈춤 원인 기록용, additive):
 ```
@@ -125,9 +125,9 @@ select count(*), max(last_log_send_at) from kakao_partner_chats;
 > launchd 데몬은 **삭제됨**. 회사 자산 맥 스튜디오(데스크탑)가 켜져 있을 때만 도는
 > 구조라 절전 모드가 되거나 종료되면 수집이 멈추는 근본 한계가 있었고, 지금은
 > **Supabase Edge Function `kakao-collect`가 pg_cron으로 5분마다 자동 실행**되며
-> 이 역할을 대체한다(맥 스튜디오 상태와 완전히 무관, CLAUDE.md §16 참고). 남겨야
-> 할 것은 **§7의 쿠키 자동 갱신(6시간마다)
-> 뿐**이다 — `kakao-collect`가 Supabase에 저장된 쿠키를 읽어 쓰므로, 그 쿠키를
+> 이 역할을 대체한다(맥 스튜디오 상태와 완전히 무관, CLAUDE.md 16장 참고). 남겨야
+> 할 것은 **7장의 쿠키 자동 갱신(6시간마다)
+> 뿐**이다 - `kakao-collect`가 Supabase에 저장된 쿠키를 읽어 쓰므로, 그 쿠키를
 > 최신으로 유지하는 이 갱신 작업은 계속 필요하다.
 
 ---
@@ -164,7 +164,7 @@ order by last_log_send_at desc;
 cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
 ```
-(값이 바뀐 경우에만 `.env.local` 갱신하며, 데몬은 끊지 않음 — 다음 401 때 재읽음.)
+(값이 바뀐 경우에만 `.env.local` 갱신하며, 데몬은 끊지 않음 - 다음 401 때 재읽음.)
 전제: **Chrome 으로 business.kakao.com 로그인 유지** + 최초 1회 키체인(Chrome Safe Storage) 허용.
 
 수집 상태 점검:
@@ -196,17 +196,17 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 
 1. payload 구조 확정 후 `_handlePayload()` 의 휴리스틱을 정식 매핑으로 교체
 2. `useCSInsightsLive` (PR #36) 에 `kakao_partner_messages` 소스 추가
-3. 메시지 첨부파일 (이미지) 의 카카오 CDN 만료 대응 — Supabase Storage 미러링
+3. 메시지 첨부파일 (이미지) 의 카카오 CDN 만료 대응 - Supabase Storage 미러링
 4. 갭 백필: `last_seen_log_id` 와 REST `last_log_id` 비교해서 누락 감지 시 알림
 
 ---
 
-## 10. GitHub Actions 상시 수집 (과거 방식 — 지금은 §5 참고)
+## 10. GitHub Actions 상시 수집 (과거 방식 - 지금은 5장 참고)
 
-> ⚠️ 이 섹션은 §5의 launchd 데몬을 대체하려던 과거 시도의 기록이다. **지금은 §5에
+> ⚠️ 이 섹션은 5장의 launchd 데몬을 대체하려던 과거 시도의 기록이다. **지금은 5장에
 > 적었듯 Supabase Edge Function `kakao-collect`(pg_cron, 5분마다)가 상시 수집을
 > 전담**하므로, 아래 GitHub Actions 경로는 실제로는 안 쓰인다. 쿠키 출처·배달
-> 메커니즘(§10-3, §11) 설명은 지금도 유효해 남겨둔다.
+> 메커니즘(10-3장, 11장) 설명은 지금도 유효해 남겨둔다.
 
 launchd 데몬은 맥 스튜디오가 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
 **100% REST 증분 폴링** 으로만 이뤄지므로(WS push 적재 0건), 그 폴링 1사이클을 떼어낸
@@ -221,9 +221,9 @@ GitHub → 저장소 → **Settings → Secrets and variables → Actions → Ne
 
 | 이름 | 값 | 비고 |
 |---|---|---|
-| `KAKAO_PARTNER_COOKIE` | 파트너센터 로그인 쿠키 (§3-1 방식으로 추출) | 보통 1~4주마다 갱신 필요 |
+| `KAKAO_PARTNER_COOKIE` | 파트너센터 로그인 쿠키 (3-1장 방식으로 추출) | 보통 1~4주마다 갱신 필요 |
 | `SUPABASE_URL` | `https://xxxx.supabase.co` | |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 (§3-3) | **절대 공개 금지** |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role 키 (3-3장) | **절대 공개 금지** |
 
 채널이 기본 3개(`_VGAQn,_TkpPG,_xfxilXn`)와 다르면 **Variables** 탭에
 `KAKAO_PARTNER_PROFILE_IDS` 를 CSV 로 추가(코드 수정 불필요).
@@ -232,16 +232,16 @@ GitHub → 저장소 → **Settings → Secrets and variables → Actions → Ne
 
 - 워크플로는 **`main` 브랜치에 머지된 뒤부터** 5분마다 자동 실행된다.
 - 즉시 1회 테스트: Actions 탭 → "카카오 상담 수집 (5분마다)" → **Run workflow**.
-- 수집 확인: `npm run kakao:status` 또는 §6 SQL.
+- 수집 확인: `npm run kakao:status` 또는 6장 SQL.
 
 ### 10-3. 쿠키 출처 & 만료 대응
 
 수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 맥 스튜디오 Chrome 이
-자동 배달 — **§11**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
+자동 배달 - **11장**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
 
-- **§11 자동 배달을 켜두면** 보관함 쿠키가 항상 최신이라 **수동 갱신이 사실상 사라진다.**
+- **11장 자동 배달을 켜두면** 보관함 쿠키가 항상 최신이라 **수동 갱신이 사실상 사라진다.**
 - 둘 다 만료된 경우에만 수집기가 `me()` 에서 401/403 → **워크플로 "실패" → 알림 메일**.
-  그때 Chrome 으로 재로그인하면(맥 스튜디오) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
+  그때 Chrome 으로 재로그인하면(맥 스튜디오) 11장 배달이 다음 주기에 자동 픽업하거나, 급하면
   **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 를 수동 갱신한다.
 
 ### 10-4. launchd 데몬 정리
@@ -251,7 +251,7 @@ upsert 라 중복 없음):
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
 ```
-단, **쿠키 자동 배달(§11)을 쓴다면 `com.amswiki.kakao-cookie-refresh` 는 끄지 말 것** —
+단, **쿠키 자동 배달(11장)을 쓴다면 `com.amswiki.kakao-cookie-refresh` 는 끄지 말 것** -
 이 6시간 잡이 최신 쿠키를 Supabase 로 배달하는 "쿠키 배달부"다. (만료 시 수동 갱신만 할
 거라면 이 잡도 꺼도 된다.)
 
@@ -262,7 +262,7 @@ launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
   지연은 데이터 누락 없이 메워진다.
 - **IP**: GitHub 데이터센터 IP 로 접속하므로, 카카오 어뷰즈 탐지에 걸리면 차단될 소지가
   주거용 IP 보다 약간 높다. 차단 시 `me()` 가 403 → 위 알림 메일로 감지된다.
-- **쿠키 갱신**: §11 자동 배달을 켜면 거의 무인 운영. 안 켜면 만료 시 §10-3 으로 수동(월 1회 안팎).
+- **쿠키 갱신**: 11장 자동 배달을 켜면 거의 무인 운영. 안 켜면 만료 시 10-3장 으로 수동(월 1회 안팎).
 
 ---
 
@@ -300,14 +300,14 @@ GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신
 - 맥 스튜디오는 회사 자산 데스크탑으로 상시 켜두는 게 원칙이지만, 재부팅 등으로
   잠깐 꺼졌다 켜져도 쿠키 수명(1~4주) 안에 6시간 잡이 한 번만 돌면 보관함 쿠키가
   갱신된다. 수집 자체는 그 상태와 무관하게 GitHub 에서 계속된다.
-- 맥 스튜디오가 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
+- 맥 스튜디오가 오래 꺼져 보관함·Secret 둘 다 만료되면 → 10-3장 알림 메일로 감지된다.
 - 배달되는 쿠키는 계정 로그인 권한과 동등 → 테이블은 RLS 로 service_role 외 접근 차단(위 1번).
 
 ---
 
-## 12. ✅ Supabase 예약 트리거 (GitHub cron 지연 보완 — 더 확실한 자동장치)
+## 12. ✅ Supabase 예약 트리거 (GitHub cron 지연 보완 - 더 확실한 자동장치)
 
-**문제**: §10 의 GitHub Actions `schedule` 은 무료 러너 부하에 따라 첫 실행이 수십 분~수
+**문제**: 10장 의 GitHub Actions `schedule` 은 무료 러너 부하에 따라 첫 실행이 수십 분~수
 시간 밀리거나 건너뛰는 경우가 있다(특히 새로 머지된 워크플로). "5분마다"가 보장되지 않는다.
 
 **해결**: 항상 켜져 있고 분 단위로 정확한 **Supabase pg_cron** 이 5분마다 GitHub 의
@@ -323,11 +323,11 @@ Supabase pg_cron(*/5)  ──▶  pg_net.http_post  ──▶  GitHub workflow_d
 
 ### 12-1. 설치 (1회)
 
-1. **GitHub Fine-grained PAT 발급** — https://github.com/settings/personal-access-tokens/new
+1. **GitHub Fine-grained PAT 발급** - https://github.com/settings/personal-access-tokens/new
    - Repository access: **Only select repositories → `sdij-wiki`**
    - Permissions → Repository permissions → **`Actions`: Read and write**
    - Generate → `github_pat_...` 복사(이 화면에서만 보임).
-2. **PAT 를 Supabase Vault 에 저장**(값은 저장소에 두지 않는다) — Dashboard → SQL Editor:
+2. **PAT 를 Supabase Vault 에 저장**(값은 저장소에 두지 않는다) - Dashboard → SQL Editor:
    ```sql
    select vault.create_secret(
      '여기에_PAT_붙여넣기', 'github_actions_pat', 'kakao-collect 5분 디스패치용 GitHub PAT');
@@ -338,7 +338,7 @@ Supabase pg_cron(*/5)  ──▶  pg_net.http_post  ──▶  GitHub workflow_d
      (select id from vault.secrets where name = 'github_actions_pat'),
      '여기에_새_PAT', 'github_actions_pat', 'kakao-collect 5분 디스패치용 GitHub PAT');
    ```
-3. **마이그레이션 적용**(잡 등록) — 위 SQL 파일 전체를 SQL Editor 에 붙여넣고 RUN.
+3. **마이그레이션 적용**(잡 등록) - 위 SQL 파일 전체를 SQL Editor 에 붙여넣고 RUN.
    잡은 Vault 에 PAT 가 있을 때만 호출하므로 2↔3 순서는 무관하다.
 
 ### 12-2. 동작/점검
@@ -359,15 +359,15 @@ GitHub 쪽은 Actions 탭에 `event: workflow_dispatch` 실행이 5분 간격으
 
 - **중지**: `select cron.unschedule('kakao-collect-dispatch');`
 - **PAT 만료**(발급 시 만료기한 지정한 경우): dispatch 응답이 **401** 로 바뀌고 수집이
-  멈춘다 → §12-1 의 `update_secret` 으로 새 PAT 로 교체. (만료 없는 PAT 를 쓰면 무인 운영.)
-- §10 의 GitHub 자체 schedule 백업은 그대로라, Supabase 트리거가 멈춰도 GitHub 이
+  멈춘다 → 12-1장 의 `update_secret` 으로 새 PAT 로 교체. (만료 없는 PAT 를 쓰면 무인 운영.)
+- 10장 의 GitHub 자체 schedule 백업은 그대로라, Supabase 트리거가 멈춰도 GitHub 이
   (지연은 있어도) 최소한의 수집은 이어간다.
 
 ---
 
 ## 13. ✅ 분류·이상탐지 자동화 (2026-07-02)
 
-**문제**: 수집(§1~12)은 상시 자동화돼 있었지만, **분류(category)·감정(sentiment)은 사람이
+**문제**: 수집(1장~12)은 상시 자동화돼 있었지만, **분류(category)·감정(sentiment)은 사람이
 `npm run classify:kakao:db` 를 수동 실행해야만 동작**했다. 실측 결과 분류는 2026-06-17
 단 하루만 돌고 완전히 멈춰 신규 채팅 207건이 미분류로 방치돼 있었고, 감정분석은 40,261건의
 user 메시지 중 **0건**이었다(`analysis/outputs/05_상담분류_고도화.md`·`00_운영화_체크리스트.md`의
@@ -381,27 +381,27 @@ Supabase pg_cron(15분) ──▶ Edge Function kakao-classify ──▶ chats.c
 Supabase pg_cron(10분) ──▶ Edge Function kakao-alert     ──▶ Slack(선택) + kakao_partner_alert_state
 ```
 
-### 13-1. kakao-classify — 분류·감정 자동화
+### 13-1. kakao-classify - 분류·감정 자동화
 
 - **입력 개선**: `chats.last_message`(대개 상담원의 종료 인사) 대신, 그 대화의 **첫 user
-  메시지**(실제 문의 내용)를 기준으로 분류한다(`05_상담분류_고도화.md` §8 실측 발견 반영).
+  메시지**(실제 문의 내용)를 기준으로 분류한다(`05_상담분류_고도화.md` 8장 실측 발견 반영).
 - **2단계 폴백(자동 감지, 재배포 불필요)**:
   - `ANTHROPIC_API_KEY` 시크릿이 있으면 → Claude Haiku few-shot 분류(연속 신뢰도).
   - 없으면 → 재구성 키워드 규칙(confidence 0.70/0.30 컨벤션 유지).
 - **처리 대상**: ① 신규 미분류 채팅 ② 레거시 '기타'(confidence=0.30) 재검토 큐(한 번 처리되면
-  다시 안 걸림 — 수렴) ③ 감정 미분류 user 메시지(최신순). 확정 분류(0.70)는 절대 안 건드림.
+  다시 안 걸림 - 수렴) ③ 감정 미분류 user 메시지(최신순). 확정 분류(0.70)는 절대 안 건드림.
 - **적용 마이그레이션**: `supabase/migrations/20260702_kakao_classify_pipeline.sql`
   (`category_model`/`sentiment_model` 컬럼 + `kakao_classify_token` 발급 + pg_cron 등록).
 - **함수 배포**: `supabase functions deploy kakao-classify --no-verify-jwt`
 
 **LLM 분류로 격상하려면(선택)**: Supabase Dashboard → Edge Functions → **kakao-classify** →
-Secrets → `ANTHROPIC_API_KEY` 추가. 다음 실행부터 자동 적용(비용은 05번 문서 §6-1 참고).
+Secrets → `ANTHROPIC_API_KEY` 추가. 다음 실행부터 자동 적용(비용은 05번 문서 6-1장 참고).
 
-### 13-2. kakao-alert — 이상탐지 Slack 알림
+### 13-2. kakao-alert - 이상탐지 Slack 알림
 
 - **감지 2종**: (A) 카테고리 급증(오늘자, 직전 7일 평균 대비) (B) 수집 중단
-  (heartbeat + 최근 에러 + 메시지 공백을 함께 판정 — "심장은 뛰는데 데이터 0" 함정 방지).
-- **중복 억제**: `kakao_partner_alert_state` 테이블에 사고별 상태 저장 — 같은 사고는
+  (heartbeat + 최근 에러 + 메시지 공백을 함께 판정 - "심장은 뛰는데 데이터 0" 함정 방지).
+- **중복 억제**: `kakao_partner_alert_state` 테이블에 사고별 상태 저장 - 같은 사고는
   쿨다운(1시간) 내 1회만, 해소되면 "복구" 알림 1회.
 - **적용 마이그레이션**: `supabase/migrations/20260702_kakao_alert_pipeline.sql`
   (`kakao_collection_health()`/`kakao_category_spike()` RPC + `kakao_partner_alert_state`

@@ -1,4 +1,4 @@
-# AMS Wiki — 학원 운영 통합 플랫폼
+# AMS Wiki - 학원 운영 통합 플랫폼
 
 학원 운영 시스템(AMS)을 위한 **가이드 위키 · 운영 챗봇 · 카카오 문의/상담 수집·분석**을 한 곳에 모은 사내 플랫폼.
 React 19 + shadcn/ui + Supabase 기반.
@@ -94,11 +94,11 @@ npm run dev          # → http://localhost:5173
 
 `.env.example`에 전체 목록과 설명이 있습니다. 주요 그룹만 요약하면:
 
-- **필수** — `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- **선택(Confluence)** — `VITE_CONFLUENCE_EMAIL`, `VITE_CONFLUENCE_TOKEN`, `VITE_CONFLUENCE_DOMAIN`, `VITE_CONFLUENCE_SPACE_KEY`
-- **선택(Jira/Confluence OAuth)** — `ATLASSIAN_*` (서버리스 OAuth 콜백용)
-- **선택(카카오/분석)** — Kakao·Supabase service role (수집 스크립트용, 서버 전용)
-- **선택(AI/실시간)** — `ANTHROPIC_API_KEY`(요약·분류), `VITE_MANAGER_FAQ_URL`(FAQ 외부 실시간 소스)
+- **필수** - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- **선택(Confluence)** - `VITE_CONFLUENCE_EMAIL`, `VITE_CONFLUENCE_TOKEN`, `VITE_CONFLUENCE_DOMAIN`, `VITE_CONFLUENCE_SPACE_KEY`
+- **선택(Jira/Confluence OAuth)** - `ATLASSIAN_*` (서버리스 OAuth 콜백용)
+- **선택(카카오/분석)** - Kakao·Supabase service role (수집 스크립트용, 서버 전용)
+- **선택(AI/실시간)** - `ANTHROPIC_API_KEY`(요약·분류), `VITE_MANAGER_FAQ_URL`(FAQ 외부 실시간 소스)
 
 > ⚠️ service role 등 **서버 전용 키는 `VITE_` 접두사를 붙이지 마세요**(클라이언트에 노출됨).
 
@@ -108,13 +108,13 @@ npm run dev          # → http://localhost:5173
 
 > 🧭 루트의 **설정 파일**들은 빌드·배포 도구(Vite·Vercel·Supabase·GitHub)가 *정해진 위치*에서 읽어가므로 옮기지 않습니다. 아래는 "무엇이 무엇인지" 한눈에 보는 지도입니다.
 
-### 📁 폴더 — 용도별
+### 📁 폴더 - 용도별
 | 폴더 | 용도 |
 |------|------|
-| `src/` | **웹앱 본체**(React) — 위키·운영챗봇·관리자 화면 소스 |
-| `api/` | **서버리스 함수**(Vercel) — Confluence/Jira 프록시·OAuth·동기화·검색요약 |
+| `src/` | **웹앱 본체**(React) - 위키·운영챗봇·관리자 화면 소스 |
+| `api/` | **서버리스 함수**(Vercel) - Confluence/Jira 프록시·OAuth·동기화·검색요약 |
 | `public/` | 정적 파일 + **마이클래스 챗봇 프로토타입**(`myclass-chatbot.html` → `/chatbot`) |
-| `supabase/` | **데이터베이스 설계도**(migrations) — 위키·카카오 수집·RLS |
+| `supabase/` | **데이터베이스 설계도**(migrations) - 위키·카카오 수집·RLS |
 | `scripts/` | 카카오 상담 **수집·대시보드 스크립트** |
 | `analysis/` | 분석·프로토타입 작업물(마이클래스 챗봇 디자인·문서) |
 | `docs/` | 설계·운영·연동 **문서 모음** (아래 [문서](#문서) 색인) |
@@ -122,7 +122,7 @@ npm run dev          # → http://localhost:5173
 | `.github/` | GitHub Actions(CI·배포) · 기여/보안 정책 문서 |
 | `.claude/` · `.codex/` | AI 에이전트(Claude·Codex) 설정 |
 
-### 📄 루트 설정 파일 — *옮기면 빌드/배포가 깨져 그대로 유지*
+### 📄 루트 설정 파일 - *옮기면 빌드/배포가 깨져 그대로 유지*
 | 파일 | 용도 |
 |------|------|
 | `package.json` · `package-lock.json` | 의존성·실행 스크립트 |
@@ -154,30 +154,30 @@ api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 ## 문서
 
 ### 설정 / 운영
-- [DEPLOYMENT](./docs/DEPLOYMENT.md) — 배포 가이드
-- [DEVELOPMENT](./docs/DEVELOPMENT.md) — 개발 환경
-- [CRON_SYNC_SETUP](./docs/CRON_SYNC_SETUP.md) — 가이드 원본 자동 동기화
-- [PIPELINE_SETUP](./docs/PIPELINE_SETUP.md) — 데이터 파이프라인
+- [DEPLOYMENT](./docs/DEPLOYMENT.md) - 배포 가이드
+- [DEVELOPMENT](./docs/DEVELOPMENT.md) - 개발 환경
+- [CRON_SYNC_SETUP](./docs/CRON_SYNC_SETUP.md) - 가이드 원본 자동 동기화
+- [PIPELINE_SETUP](./docs/PIPELINE_SETUP.md) - 데이터 파이프라인
 
 ### 연동
-- [JIRA_CONFLUENCE_INTEGRATION](./docs/JIRA_CONFLUENCE_INTEGRATION.md) — Jira/Confluence OAuth 2.0
-- [KAKAO_WEBHOOK_SETUP](./docs/KAKAO_WEBHOOK_SETUP.md) — 카카오 문의 webhook
-- [KAKAO_PARTNER_SETUP](./docs/KAKAO_PARTNER_SETUP.md) — 카카오 상담 수집
-- [scripts/README-kakao-sync](./scripts/README-kakao-sync.md) — 수집 스크립트 사용법
+- [JIRA_CONFLUENCE_INTEGRATION](./docs/JIRA_CONFLUENCE_INTEGRATION.md) - Jira/Confluence OAuth 2.0
+- [KAKAO_WEBHOOK_SETUP](./docs/KAKAO_WEBHOOK_SETUP.md) - 카카오 문의 webhook
+- [KAKAO_PARTNER_SETUP](./docs/KAKAO_PARTNER_SETUP.md) - 카카오 상담 수집
+- [scripts/README-kakao-sync](./scripts/README-kakao-sync.md) - 수집 스크립트 사용법
 
 ### 설계 / 명세 / 분석
-- [chatbot-design](./docs/chatbot-design.md) — 챗봇 설계
-- [서비스 기능 정의서](./docs/AMS_Wiki_서비스기능정의서.md) — 서비스 기능 명세
-- [상세 기능정의서 (SRS)](./docs/상세기능정의서.md) — 요구사항 명세
-- [ams-wiki-roadmap](./docs/ams-wiki-roadmap.md) — 로드맵
-- [manager-inquiries-analysis](./docs/manager-inquiries-analysis.md) — 실장 문의 분석
+- [chatbot-design](./docs/chatbot-design.md) - 챗봇 설계
+- [서비스 기능 정의서](./docs/AMS_Wiki_서비스기능정의서.md) - 서비스 기능 명세
+- [상세 기능정의서 (SRS)](./docs/상세기능정의서.md) - 요구사항 명세
+- [ams-wiki-roadmap](./docs/ams-wiki-roadmap.md) - 로드맵
+- [manager-inquiries-analysis](./docs/manager-inquiries-analysis.md) - 실장 문의 분석
 
 ### 디자인 시스템
-- [docs/shadcn-ui/](./docs/shadcn-ui/README.md) — shadcn/ui 철학·CLI·테마·v4 마이그레이션 (17개 주제)
+- [docs/shadcn-ui/](./docs/shadcn-ui/README.md) - shadcn/ui 철학·CLI·테마·v4 마이그레이션 (17개 주제)
 
 ### 기여 · 정책
-- [CONTRIBUTING](./.github/CONTRIBUTING.md) — 기여 가이드
-- [SECURITY](./.github/SECURITY.md) — 보안 정책(취약점 제보)
+- [CONTRIBUTING](./.github/CONTRIBUTING.md) - 기여 가이드
+- [SECURITY](./.github/SECURITY.md) - 보안 정책(취약점 제보)
 
 ---
 

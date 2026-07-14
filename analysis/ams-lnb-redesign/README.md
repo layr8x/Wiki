@@ -1,4 +1,4 @@
-# AMS LNB + 헤더 리디자인 — LUMEN 디자인시스템 프로토타입
+# AMS LNB + 헤더 리디자인 - LUMEN 디자인시스템 프로토타입
 
 AMS(ams.sdij.com) 좌측 내비게이션(LNB)·헤더를 **HICONSY Design System "LUMEN" v1.1**
 (Figma `AWBOevxn4v0sjp6w22PPco`, Carbon 기반 · 라이트/다크 2모드) 토큰으로 재구성한
@@ -28,6 +28,6 @@ node analysis/ams-lnb-redesign/render.cjs   # → out/shell.png, shell-expanded.
 
 ## 미결(다음 단계)
 - [ ] Figma `AWBOevxn4v0sjp6w22PPco`에 LNB 컴포넌트로 등록 + 실제 토큰 bind
-- [ ] 실제 AMS(Okta) 대조 — 메뉴 순서·'선생님(파트너) 관리' 하위·'즐겨찾기' 동작 확정
+- [ ] 실제 AMS(Okta) 대조 - 메뉴 순서·'선생님(파트너) 관리' 하위·'즐겨찾기' 동작 확정
 - [ ] 다크 사이드바 변형(2모드) 검토
 - [ ] 검색 필드 아이콘 `groups` → `search`로 교체(현재 placeholder)

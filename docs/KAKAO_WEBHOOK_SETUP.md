@@ -147,7 +147,7 @@ function DashboardCard() {
   return (
     <div>
       <p>출처: {data.source === 'live' ? '실시간 카카오' : '정적 데이터'}</p>
-      <p>마지막 수신: {data.lastReceivedAt ?? '—'}</p>
+      <p>마지막 수신: {data.lastReceivedAt ?? '-'}</p>
       <ul>{data.categories.map(c => <li key={c.id}>{c.label}: {c.count}건</li>)}</ul>
     </div>
   )
@@ -169,5 +169,5 @@ function DashboardCard() {
 | 401 unauthorized | URL token 불일치 | `supabase secrets list` 로 확인 후 카카오 스킬 URL 재등록 |
 | 카카오에서 응답 안 옴 | `--no-verify-jwt` 누락 배포 | `supabase functions deploy kakao-webhook --no-verify-jwt` 재실행 |
 | DB insert 실패 | 마이그레이션 미적용 | 1단계 SQL 재실행 |
-| 중복 메시지 | external_id 없는 webhook | unique 제약은 external_id null 일 때 미적용 — 정상 |
-| 위키 통계 미갱신 | 캐시 | hook `staleTime: 30s` — 강제: `queryClient.invalidateQueries(['cs-insights'])` |
+| 중복 메시지 | external_id 없는 webhook | unique 제약은 external_id null 일 때 미적용 - 정상 |
+| 위키 통계 미갱신 | 캐시 | hook `staleTime: 30s` - 강제: `queryClient.invalidateQueries(['cs-insights'])` |

@@ -7,8 +7,8 @@
 잔디는 **대화 전체를 외부로 내보내는 웹훅이 없다.** 잔디의 아웃고잉 웹훅은 "지정한 트리거 단어로
 시작하는 메시지"만 전송하므로 전체 대화 수집에 쓸 수 없다
 ([JANDI 지원 문서](https://support.jandi.com/en/articles/Using-Team-Outgoing-Webhook-for-All-Members-aea2650b)).
-따라서 **카카오 파트너센터와 동일한 방식** — 로그인 세션의 access token 으로 잔디 내부
-REST(`i1.jandi.com/message-api/v2`)를 방별로 증분 폴링 — 을 사용한다.
+따라서 **카카오 파트너센터와 동일한 방식** - 로그인 세션의 access token 으로 잔디 내부
+REST(`i1.jandi.com/message-api/v2`)를 방별로 증분 폴링 - 을 사용한다.
 
 ```
 잔디 웹앱(로그인)  access token(JWT, ~12h)
@@ -22,7 +22,7 @@ supabase/functions/jandi-collect  ── 방마다: 최신 메시지 page(count=
    jandi_channels / jandi_messages / jandi_stream_state
         │
         ▼
-   /admin/jandi (관리자 화면 — 채널 3개 탭 + 검색/기간/CSV)
+   /admin/jandi (관리자 화면 - 채널 3개 탭 + 검색/기간/CSV)
 ```
 
 수집 대상 방(시드됨):
@@ -76,11 +76,11 @@ Supabase Dashboard → SQL Editor:
 insert into jandi_secrets (key, value) values ('jandi_access_token', '여기에_eyJ...토큰')
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
--- Edge Function 자체 호출 인증 토큰(아무 랜덤 문자열) — 카카오 kakao_collect_token 과 같은 역할
+-- Edge Function 자체 호출 인증 토큰(아무 랜덤 문자열) - 카카오 kakao_collect_token 과 같은 역할
 insert into jandi_secrets (key, value) values ('jandi_collect_token', '여기에_긴_랜덤문자열')
 on conflict (key) do update set value = excluded.value, updated_at = now();
 
--- (선택) 팀/멤버 ID — 기본값(29522216)과 다를 때만
+-- (선택) 팀/멤버 ID - 기본값(29522216)과 다를 때만
 insert into jandi_secrets (key, value) values ('jandi_team_id', '29522216')
 on conflict (key) do update set value = excluded.value, updated_at = now();
 ```
@@ -89,7 +89,7 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 
 ## 4. 수집기 가동 (자동화)
 
-전체 자동화 그림 — 카카오와 동일하게 **상시 수집은 pg_cron→Edge Function** 이 담당하고,
+전체 자동화 그림 - 카카오와 동일하게 **상시 수집은 pg_cron→Edge Function** 이 담당하고,
 짧은 토큰 수명을 메우는 **토큰 갱신 배달** 과 최초 1회 **전체 백필** 이 붙는다.
 
 ```
@@ -99,7 +99,7 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 [최초 1회] jandi:backfill ──────────────────────────────▶ jandi_messages (과거 전량)
 ```
 
-### 4-A. 상시 수집 — Edge Function + pg_cron (권장, 항상 켜짐)
+### 4-A. 상시 수집 - Edge Function + pg_cron (권장, 항상 켜짐)
 
 1) 함수 배포:
 
@@ -107,7 +107,7 @@ on conflict (key) do update set value = excluded.value, updated_at = now();
 supabase functions deploy jandi-collect --no-verify-jwt
 ```
 
-2) 5분 디스패치 cron 등록 — 마이그레이션 적용(카카오 `kakao-collect-dispatch` 와 동일 패턴):
+2) 5분 디스패치 cron 등록 - 마이그레이션 적용(카카오 `kakao-collect-dispatch` 와 동일 패턴):
 
 ```
 supabase/migrations/20260706_jandi_collect_dispatch.sql
@@ -123,7 +123,7 @@ select jobname, schedule, active from cron.job where jobname='jandi-collect-disp
 select id, status_code, left(content,200) from net._http_response order by created desc limit 5;
 ```
 
-### 4-B. 상시 수집 폴백 — 로컬/수동
+### 4-B. 상시 수집 폴백 - 로컬/수동
 
 ```bash
 # .env.local 에 JANDI_ACCESS_TOKEN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY 설정 후
@@ -142,13 +142,13 @@ npm run jandi:collect-once
 
 로그인 방식 두 가지:
 
-- **모드 A — 전용 크롬 프로필 재사용 (권장):** `JANDI_CHROME_USER_DATA_DIR` 에 전용 프로필
+- **모드 A - 전용 크롬 프로필 재사용 (권장):** `JANDI_CHROME_USER_DATA_DIR` 에 전용 프로필
   경로를 주면, 그 프로필로 브라우저를 연다. **자격증명이 필요 없고 SSO/2단계 인증에도 안 막힌다**
   (카카오가 "이미 로그인된 크롬"을 쓰는 것과 동일 철학). 최초 1회만 로그인해두면 된다.
-- **모드 B — 이메일/비밀번호 (폴백):** `JANDI_EMAIL`/`JANDI_PASSWORD` 로 매번 새로 로그인.
+- **모드 B - 이메일/비밀번호 (폴백):** `JANDI_EMAIL`/`JANDI_PASSWORD` 로 매번 새로 로그인.
   ⚠️ 회사 SSO/MFA 면 막힐 수 있다.
 
-#### 맥 스튜디오 launchd 설정 (6시간마다 자동 — 카카오 쿠키 배달과 동일)
+#### 맥 스튜디오 launchd 설정 (6시간마다 자동 - 카카오 쿠키 배달과 동일)
 
 ```bash
 # 0) 준비(최초 1회)
@@ -174,7 +174,7 @@ tail -f ~/Library/Logs/ams-wiki/jandi-token-refresh.log   # 동작 확인
   풀면 되지만, 회사 계정을 클라우드에서 로그인하면 보안 경고·SSO/MFA 로 막힐 수 있다. 위
   맥 스튜디오 방식을 권장한다.
 
-### 4-D. 전체 백필 — 이전 모든 대화 (최초 1회)
+### 4-D. 전체 백필 - 이전 모든 대화 (최초 1회)
 
 각 방을 최신부터 과거 끝까지 훑어 과거 대화를 전량 적재한다(상시 증분 수집과 별개인 1회성).
 
@@ -187,10 +187,10 @@ npm run jandi:backfill 31495011     # 특정 방만
 전체). `scripts/jandi-backfill.mjs` 는 방당 `JANDI_BACKFILL_MAX_PAGES`(기본 무제한)까지
 `type=old` 로 페이지백하며 500건씩 멱등 upsert 하고, 커서가 정체되면(끝 도달) 자동 중단한다.
 
-### 4-D'. 전체 백필 — 서버측(Edge Function) 대안 (로컬 시크릿 불필요)
+### 4-D'. 전체 백필 - 서버측(Edge Function) 대안 (로컬 시크릿 불필요)
 
 `jandi_secrets.jandi_access_token` 이 이미 등록돼 있다면, 로컬에 아무 시크릿도 두지 않고
-서버(Supabase)에서만 실행되는 방식도 가능하다 — `supabase/functions/jandi-backfill`.
+서버(Supabase)에서만 실행되는 방식도 가능하다 - `supabase/functions/jandi-backfill`.
 
 ```sql
 select net.http_post(
@@ -202,7 +202,7 @@ select net.http_post(
 ```
 
 - 방마다 실행시간 예산(페이지 300장)을 넘기면 진행률(`jandi_channels.backfill_cursor`)을
-  저장해두고 멈춘다 — **위 호출을 몇 번 더 반복**하면 이어서 진행된다. 전부 끝나면
+  저장해두고 멈춘다 - **위 호출을 몇 번 더 반복**하면 이어서 진행된다. 전부 끝나면
   `jandi_channels.backfill_done` 이 3개 방 모두 `true` 가 된다.
 - 배포: `supabase functions deploy jandi-backfill --no-verify-jwt`.
 - 진행 확인: `select room_id, backfill_cursor, backfill_done from jandi_channels;`
@@ -277,9 +277,9 @@ select alert_key, status, last_notified_at, last_payload from jandi_alert_state 
   CI 로그인은 보안 경고를 유발할 수 있어 **사내 신뢰 PC 의 cron 실행을 권장**한다. 막히면
   2번의 수동 추출로 갱신한다. 세션 만료로 갱신이 헛돌면 5장-A 의 신선도 검증이 저장을 막고
   워치독이 Slack 으로 알린다.
-- **첫 수집 범위 / 전체 백필.** 상시 수집(§4-A)은 커서(`last_link_id`)가 없을 때 각 방의
+- **첫 수집 범위 / 전체 백필.** 상시 수집(4장-A)은 커서(`last_link_id`)가 없을 때 각 방의
   **최신 페이지(50건)만** 잡고 이후 증분한다. "이전 모든 대화"가 필요하면 `jandi:backfill`
-  (§4-D)을 1회 돌려 과거를 전량 채운다 — 이후는 상시 수집이 이어받는다.
+  (4장-D)을 1회 돌려 과거를 전량 채운다 - 이후는 상시 수집이 이어받는다.
 - **응답 필드 매핑은 first-collection 에서 검증.** 캡처(HAR)에 응답 본문이 빠져 있어 메시지
   객체의 정확한 키 이름을 확정하지 못했다. 그래서 수집기는 **원본 레코드를 `raw` 컬럼에
   통째로 저장**하고 본문·작성자·시각을 방어적으로 추출한다 → 표시용 필드가 어긋나도
