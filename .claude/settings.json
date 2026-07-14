@@ -1,5 +1,18 @@
 {
   "description": "AMS Wiki — shadcn/ui + Supabase + Confluence API 엔터프라이즈 가이드 위키",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/install_pkgs.sh"
+          }
+        ]
+      }
+    ]
+  },
   "rules": [
     "React Query 훅으로 데이터 조회 (mockData 직접 참조 금지)",
     "모든 API 호출은 try-catch 또는 에러 바운더리로 처리",
