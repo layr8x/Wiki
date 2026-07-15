@@ -1,7 +1,7 @@
 # AMS Wiki — 학원 운영 통합 플랫폼
 
 학원 운영 시스템(AMS)을 위한 **가이드 위키 · 운영 챗봇 · 카카오 문의/상담 수집·분석**을 한 곳에 모은 사내 플랫폼.
-React 19 + shadcn/ui + Supabase 기반.
+React 19 + Astryx 디자인시스템 + Supabase 기반.
 
 > 🔗 **라이브**: https://sdij-wiki.vercel.app
 
@@ -43,7 +43,7 @@ React 19 + shadcn/ui + Supabase 기반.
 - **⌘K 명령 팔레트** · 동의어 확장 검색 · 자동 목차(On This Page) · 최근/인기 가이드
 
 ### 🎨 UI/UX
-- shadcn/ui 표준 컴포넌트 **28개** · 다크모드(`@theme` + `html.dark`) · Pretendard 폰트 · 반응형 · Toast
+- Astryx 디자인시스템(`@astryxdesign/core`) 컴포넌트 · 다크모드 · Pretendard 폰트 · 반응형 · Toast
 
 ---
 
@@ -52,7 +52,7 @@ React 19 + shadcn/ui + Supabase 기반.
 | 구분 | 사용 기술 |
 |------|-----------|
 | 프레임워크 | React 19 · Vite 8 |
-| 스타일 | Tailwind CSS 4 (CSS-first `@theme`) · shadcn/ui |
+| 스타일 | Astryx 디자인시스템 (`@astryxdesign/core` · 토큰 기반, Tailwind 미사용) |
 | 라우팅/상태 | React Router 7 · TanStack Query 5 |
 | 데이터 | Supabase (PostgreSQL · Auth · Realtime) |
 | 서버리스 | Vercel Functions (`api/`) · Anthropic API(요약/분류) |
@@ -129,7 +129,6 @@ npm run dev          # → http://localhost:5173
 | `vite.config.js` · `index.html` | 빌드 도구(Vite) 설정·진입점 |
 | `vercel.json` · `.vercelignore` | 배포(Vercel) 설정 |
 | `eslint.config.js` · `jsconfig.json` | 코드 검사·경로 별칭 |
-| `components.json` | shadcn/ui 설정 |
 | `playwright.config.js` | E2E 테스트 설정 |
 | `.env.example` | 환경변수 **목록·설명**(실제 키는 `.env`, 커밋 금지) |
 | `.gitignore` · `.nvmrc` · `.mcp.json` | Git 제외 · Node 버전 · MCP |
@@ -138,7 +137,7 @@ npm run dev          # → http://localhost:5173
 ### 📂 `src/` 내부
 ```
 src/
-├── components/   # chatbot · common · integrations · search · ui(shadcn 28개)
+├── components/   # analytics · chatbot · common · search (Astryx 기반)
 ├── pages/        # 라우트 페이지 (Home·Guide·FAQ·Admin)
 ├── hooks/        # React Query 훅
 ├── data/         # 가이드·FAQ·분석 시드(폴백)
@@ -172,9 +171,6 @@ api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 - [ams-wiki-roadmap](./docs/ams-wiki-roadmap.md) — 로드맵
 - [manager-inquiries-analysis](./docs/manager-inquiries-analysis.md) — 실장 문의 분석
 
-### 디자인 시스템
-- [docs/shadcn-ui/](./docs/shadcn-ui/README.md) — shadcn/ui 철학·CLI·테마·v4 마이그레이션 (17개 주제)
-
 ### 기여 · 정책
 - [CONTRIBUTING](./.github/CONTRIBUTING.md) — 기여 가이드
 - [SECURITY](./.github/SECURITY.md) — 보안 정책(취약점 제보)
@@ -185,4 +181,4 @@ api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 
 - [라이브 데모](https://sdij-wiki.vercel.app)
 - [Vercel 대시보드](https://vercel.com/layr8xs-projects/sdij-wiki)
-- [shadcn/ui 문서](https://ui.shadcn.com) · [Supabase 문서](https://supabase.com/docs)
+- [Supabase 문서](https://supabase.com/docs)
