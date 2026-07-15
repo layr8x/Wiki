@@ -354,7 +354,10 @@ export default function AdminConsultsPage() {
         />
 
         {/* ─── 채널별 건수 KPI ──────────────────────────────────── */}
-        <Grid columns={{ minWidth: 200, max: 5 }} gap={4}>
+        {/* max 캡은 좁은 화면에서 트랙 최대폭이 최소폭보다 작아져(minmax(200px, 61px))
+            200px 고정 1열로 깨진다(모바일 실측). 캡 없이 auto-fit — 콘텐츠 폭 상한(72rem)이
+            데스크탑에서 자연히 5열을 만들고, 모바일(~390px)에선 2열로 흐른다. */}
+        <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
