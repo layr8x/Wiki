@@ -159,8 +159,16 @@ async function checkCollectionHealth(): Promise<string[]> {
   //   수집 함수는 채널을 순서대로 돌다 로그인 실패(401)를 만나면 나머지 채널을 건너뛰므로,
   //   첫 채널만 auth 로 기록되고 나머지는 heartbeat 정체처럼 보인다 — 실제 원인은 하나(쿠키 무효).
   //   그래서 auth 가 하나라도 있으면 로그인 만료 1건으로, 2채널 이상 동시 정체도 1건으로 묶는다.
-  const globalReason: 'auth' | 'stall' | null = anyAuth ? 'auth' : badRows.length >= 2 ? 'stall' : null;
+  let globalReason: 'auth' | 'stall' | null = anyAuth ? 'auth' : badRows.length >= 2 ? 'stall' : null;
   const globalPrev = await getState(HEALTH_GLOBAL_KEY);
+
+  // 원인 고정(sticky): 진행 중 사건의 원인이 auth 였다면, 감지 타이밍상 auth 표시가
+  // 잠깐 사라져도(수집 주기 사이 창 이탈) stall 로 강등하지 않는다. 강등을 허용하면
+  // 10분마다 만료↔지연으로 뒤집히며 "원인 변경 즉시 재알림"이 매번 발동해 스팸이 됐다
+  // (2026-07-15 실측). 완전 회복(badRows 없음) 시에만 사건이 끝난다.
+  if (globalReason === 'stall' && globalPrev?.status === 'alerting' && globalPrev.last_payload?.reason === 'auth') {
+    globalReason = 'auth';
+  }
 
   if (globalReason) {
     const prevReason = globalPrev?.status === 'alerting' ? globalPrev.last_payload?.reason ?? null : null;
