@@ -15,6 +15,8 @@ import {
 // variant = Astryx Badge variant
 // icon = @phosphor-icons/react 컴포넌트 참조
 // tone = 비-뱃지 컨텍스트(검색 오버레이 아이콘 칩 등) 용 틴트 pair
+// 색은 각 화면이 variant 값(sop/decision/…) → Astryx 토큰(data-tone/Badge variant)으로 매핑한다.
+// (이전엔 raw Tailwind 문자열 tone 필드가 있었으나 소비처가 없고 Tailwind도 제거돼 죽은 값이라 삭제.)
 export const GUIDE_TYPES = {
   SOP: {
     id: 'SOP',
@@ -22,7 +24,6 @@ export const GUIDE_TYPES = {
     shortLabel: '절차',
     variant: 'sop',
     icon: BookOpen,
-    tone: { text: 'text-blue-600 dark:text-blue-400',       bg: 'bg-blue-500/10' },
   },
   DECISION: {
     id: 'DECISION',
@@ -30,7 +31,6 @@ export const GUIDE_TYPES = {
     shortLabel: '판단',
     variant: 'decision',
     icon: GitBranch,
-    tone: { text: 'text-violet-600 dark:text-violet-400',   bg: 'bg-violet-500/10' },
   },
   REFERENCE: {
     id: 'REFERENCE',
@@ -38,7 +38,6 @@ export const GUIDE_TYPES = {
     shortLabel: '참조',
     variant: 'reference',
     icon: FileText,
-    tone: { text: 'text-slate-600 dark:text-slate-400',     bg: 'bg-slate-500/10' },
   },
   TROUBLE: {
     id: 'TROUBLE',
@@ -46,7 +45,6 @@ export const GUIDE_TYPES = {
     shortLabel: '트러블',
     variant: 'trouble',
     icon: Warning,
-    tone: { text: 'text-red-600 dark:text-red-400',         bg: 'bg-red-500/10' },
   },
   RESPONSE: {
     id: 'RESPONSE',
@@ -54,7 +52,6 @@ export const GUIDE_TYPES = {
     shortLabel: '대응',
     variant: 'response',
     icon: ChatText,
-    tone: { text: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
   },
   POLICY: {
     id: 'POLICY',
@@ -62,7 +59,6 @@ export const GUIDE_TYPES = {
     shortLabel: '정책',
     variant: 'policy',
     icon: SealCheck,
-    tone: { text: 'text-amber-600 dark:text-amber-400',     bg: 'bg-amber-500/10' },
   },
 }
 

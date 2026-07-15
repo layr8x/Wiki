@@ -260,17 +260,20 @@ export async function incrementFaqView(faqId) {
 
 export async function fetchDashboardStats() {
   if (isSupabaseEnabled) {
-    const [guidesRes, feedbackRes, , searchRes] = await Promise.all([
+    // 만족도(helpfulRate)는 head:true count 로 정확 집계한다. 예전엔 vote 행을 실제로
+    // 받아와(.data) 그 길이로 비율을 냈는데, PostgREST 기본 1,000행 상한에 걸려 피드백이
+    // 1,000건을 넘으면 임의의 1,000행 기준으로 비율이 틀어졌다(잘린 줄도 모르고 KPI 오도).
+    const [guidesRes, helpfulRes, feedbackRes, searchRes] = await Promise.all([
       supabase.from('guides').select('id,views,helpful').eq('status', 'published'),
-      supabase.from('guide_feedback').select('vote', { count: 'exact', head: false }),
-      supabase.from('guide_views').select('id', { count: 'exact', head: true }),
+      supabase.from('guide_feedback').select('id', { count: 'exact', head: true }).eq('vote', 'helpful'),
+      supabase.from('guide_feedback').select('id', { count: 'exact', head: true }),
       supabase.from('search_logs').select('id', { count: 'exact', head: true }),
     ])
     const guides  = guidesRes.data  || []
     const totalGuides = guides.length
     const totalViews  = guides.reduce((s, g) => s + (g.views || 0), 0)
-    const helpful     = (feedbackRes.data || []).filter(f => f.vote === 'helpful').length
-    const feedbackTotal = feedbackRes.data?.length || 0
+    const helpful       = helpfulRes.count || 0
+    const feedbackTotal = feedbackRes.count || 0
     return {
       totalGuides,
       totalViews,

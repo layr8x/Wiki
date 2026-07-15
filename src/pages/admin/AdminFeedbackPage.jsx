@@ -26,23 +26,32 @@ import './AdminFeedbackPage.astryx.css'
 const FEEDBACK_QUEUE_KEY = STORAGE_KEYS.feedbackQueue
 const PAGE_SIZE = 25
 
+// 라벨/색/탭 필터의 키는 실제로 저장되는 vote 값과 정확히 일치해야 한다.
+//   /feedback 폼(FeedbackPage) → error·missing·improvement·other
+//   가이드 상세 투표(GuidePage) → helpful·needs_improvement
+//   검색 실패 로컬 큐(NoResultFallback) → missing-guide(kind)
+// (이전 버전은 not-helpful·bug·praise 같은 저장되지 않는 값을 가정해 "오류/개선" 탭이 항상
+//  비고, 유형 뱃지가 영어 원문으로 표시되며, 오류·개선 제보가 "가이드 요청" 탭으로 오분류됐다.)
 const KIND_LABEL = {
-  'missing-guide': '가이드 요청',
-  'helpful':       '도움됨',
-  'not-helpful':   '개선 필요',
-  'praise':        '칭찬',
-  'bug':           '오류 제보',
+  'missing-guide':     '가이드 요청',
+  'missing':           '내용 추가 요청',
+  'other':             '기타 문의',
+  'helpful':           '도움됨',
+  'needs_improvement': '개선 필요',
+  'error':             '오류 제보',
+  'improvement':       '개선 제안',
 }
 
-// 피드백 유형 → Astryx Badge variant (shadcn VOTE_VARIANT 를 색 계열 기준으로 매핑)
-//   오류 제보 → error(red) · 개선 필요 → purple · 가이드 요청 → blue(추가요청)
-//   도움됨 → success · 칭찬 → green
+// 피드백 유형 → Astryx Badge variant (색 계열 기준)
+//   오류 제보 → error(red) · 개선 필요/개선 제안 → purple · 요청류 → blue · 도움됨 → success · 기타 → neutral
 const KIND_BADGE_VARIANT = {
-  'missing-guide': 'blue',
-  'helpful':       'success',
-  'not-helpful':   'purple',
-  'praise':        'green',
-  'bug':           'error',
+  'missing-guide':     'blue',
+  'missing':           'blue',
+  'other':             'neutral',
+  'helpful':           'success',
+  'needs_improvement': 'purple',
+  'error':             'error',
+  'improvement':       'purple',
 }
 const toKindVariant = (kind) => KIND_BADGE_VARIANT[kind] ?? 'neutral'
 
@@ -120,12 +129,13 @@ export default function AdminFeedbackPage() {
   ].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')),
   [localItems, remote])
 
+  // 탭 필터도 실제 vote 값 기준(위 KIND_LABEL 주석 참고). 7종이 빠짐없이 한 탭에는 속하게 한다.
   const filtered = useMemo(() => tab === 'all'
     ? merged
     : merged.filter(item => {
-        if (tab === 'requests') return item.kind === 'missing-guide' || !item.guideId
-        if (tab === 'issues')   return item.kind === 'not-helpful' || item.kind === 'bug'
-        if (tab === 'praise')   return item.kind === 'helpful' || item.kind === 'praise'
+        if (tab === 'requests') return ['missing-guide', 'missing', 'other'].includes(item.kind)
+        if (tab === 'issues')   return ['error', 'improvement', 'needs_improvement'].includes(item.kind)
+        if (tab === 'praise')   return item.kind === 'helpful'
         return true
       }),
   [tab, merged])
