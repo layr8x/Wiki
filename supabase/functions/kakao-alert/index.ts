@@ -2,7 +2,7 @@
 // 상담 데이터 이상탐지 알림 (채널별·원인별·진단형). Supabase Edge Function (pg_cron 10분).
 //
 // 인증: kakao_partner_secrets.key='kakao_alert_token'. 배포: --no-verify-jwt. 트리거: pg_cron 10분.
-// Slack: SLACK_WEBHOOK_URL 미설정 시 로그+상태기록만. 중복억제: 쿨다운 1시간.
+// Slack: SLACK_WEBHOOK_URL 미설정 시 로그+상태기록만. 중복억제: 지속시간 비례 쿨다운(아래).
 // 메시지 원칙: 결론 먼저·평문·행동 한 줄. 비율/평균/임계 같은 계산·해석이 필요한 수치는 노출하지 않는다.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -10,7 +10,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SLACK_WEBHOOK_URL = Deno.env.get('SLACK_WEBHOOK_URL') ?? '';
-const COOLDOWN_MS = 60 * 60 * 1000;
 
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -37,7 +36,13 @@ async function sendSlack(text: string) {
   }
 }
 
-type AlertState = { alert_key: string; status: string; first_alert_at: string | null; last_notified_at: string | null };
+type AlertState = {
+  alert_key: string;
+  status: string;
+  first_alert_at: string | null;
+  last_notified_at: string | null;
+  last_payload?: any;
+};
 
 async function getState(key: string): Promise<AlertState | null> {
   const { data } = await supabase.from('kakao_partner_alert_state').select('*').eq('alert_key', key).maybeSingle();
@@ -58,11 +63,21 @@ async function upsertState(key: string, status: string, payload: unknown, firstA
   );
 }
 
+// 재알림 간격은 장애 지속시간에 비례해 늘린다. 같은 장애를 1시간마다 무한 반복하면
+// 알림 채널이 스팸이 된다(2026-07-15 사용자 지적 — 로그인 만료 33시간 동안 매시간 6통씩).
+//   지속 6시간까지: 1시간 간격 / 하루까지: 6시간 간격 / 이후: 하루 1번.
+function cooldownMs(firstAlertAt: string | null): number {
+  const ageMs = firstAlertAt ? Date.now() - new Date(firstAlertAt).getTime() : 0;
+  if (ageMs < 6 * 3600_000) return 3600_000;
+  if (ageMs < 24 * 3600_000) return 6 * 3600_000;
+  return 24 * 3600_000;
+}
+
 function shouldNotify(prev: AlertState | null, nowBad: boolean): boolean {
   if (nowBad) {
     if (!prev || prev.status !== 'alerting') return true;
     const last = prev.last_notified_at ? new Date(prev.last_notified_at).getTime() : 0;
-    return Date.now() - last > COOLDOWN_MS;
+    return Date.now() - last > cooldownMs(prev.first_alert_at);
   }
   return !!prev && prev.status === 'alerting';
 }
@@ -75,7 +90,7 @@ function healthMessage(row: any, persistedH: string | null): string {
     return (
       `🔴 *${ch}* 상담 수집이 멈췄어요\n` +
       `카카오 로그인이 풀려서 새 상담을 못 가져오고 있어요.\n` +
-      `👉 카카오 비즈니스 채팅 쿠키를 다시 발급해 주세요. 발급하면 자동으로 다시 수집돼요.${persist}`
+      `👉 맥 스튜디오 Chrome에서 business.kakao.com에 다시 로그인해 주세요. 로그인하면 자동으로 다시 수집돼요.${persist}`
     );
   }
   if (row.health_reason === 'heartbeat') {
@@ -92,19 +107,100 @@ function healthMessage(row: any, persistedH: string | null): string {
   );
 }
 
+// 여러 채널이 함께 죽었을 때의 통합 메시지(원인 1개 = 알림 1건).
+function globalHealthMessage(reason: 'auth' | 'stall', badRows: any[], persistedH: string | null): string {
+  const chs = badRows.map((r) => `*${r.channel_label}*`).join(' · ');
+  const persist = persistedH ? `\n(${persistedH}시간째 계속되고 있어요)` : '';
+  if (reason === 'auth') {
+    return (
+      `🔴 카카오 로그인 만료 — 상담 수집이 멈췄어요\n` +
+      `로그인이 풀려서 전 채널이 새 상담을 못 가져오고 있어요(영향: ${chs}).\n` +
+      `👉 맥 스튜디오 Chrome에서 business.kakao.com에 다시 로그인해 주세요. 로그인하면 자동으로 다시 수집돼요.${persist}`
+    );
+  }
+  return (
+    `🟠 상담 수집이 여러 채널에서 지연되고 있어요\n` +
+    `영향: ${chs}. 대개 저절로 회복되지만, 오래 이어지면 점검이 필요해요.${persist}`
+  );
+}
+
+const HEALTH_GLOBAL_KEY = 'health:global';
+
+// 전역 인시던트로 새 상태를 만들 때, 기존 채널별 alerting 상태의 최초 시각을 물려받아
+// "N시간째" 표기가 끊기지 않게 한다(구버전 채널별 키 → 통합 키 이행용).
+async function earliestHealthFirstAlert(): Promise<string | null> {
+  const { data } = await supabase
+    .from('kakao_partner_alert_state')
+    .select('first_alert_at')
+    .like('alert_key', 'health:%')
+    .eq('status', 'alerting')
+    .not('first_alert_at', 'is', null)
+    .order('first_alert_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return (data as any)?.first_alert_at ?? null;
+}
+
 async function checkCollectionHealth(): Promise<string[]> {
   const { data, error } = await supabase.rpc('kakao_collection_health');
   if (error) {
     log('[alert] health rpc fail:', error.message);
     return [];
   }
+  const rows = (data as any[]) || [];
   const notified: string[] = [];
-  for (const row of (data as any[]) || []) {
+
+  // ⚠️ 실제 수집 "중단"만 알린다: auth(로그인 만료)·heartbeat(수집 정체).
+  //   'gap'(문의 뜸함)은 저트래픽 채널의 정상 상태라 알리지 않는다(2026-07-08 사용자 지적).
+  const badRows = rows.filter((r) => r.health_reason === 'auth' || r.health_reason === 'heartbeat');
+  const anyAuth = badRows.some((r) => r.health_reason === 'auth');
+
+  // 원인 1개 = 알림 1건 원칙(2026-07-15 사용자 지적 — 로그인 만료 하나에 채널별 5통씩 발송됨).
+  //   수집 함수는 채널을 순서대로 돌다 로그인 실패(401)를 만나면 나머지 채널을 건너뛰므로,
+  //   첫 채널만 auth 로 기록되고 나머지는 heartbeat 정체처럼 보인다 — 실제 원인은 하나(쿠키 무효).
+  //   그래서 auth 가 하나라도 있으면 로그인 만료 1건으로, 2채널 이상 동시 정체도 1건으로 묶는다.
+  let globalReason: 'auth' | 'stall' | null = anyAuth ? 'auth' : badRows.length >= 2 ? 'stall' : null;
+  const globalPrev = await getState(HEALTH_GLOBAL_KEY);
+
+  // 원인 고정(sticky): 진행 중 사건의 원인이 auth 였다면, 감지 타이밍상 auth 표시가
+  // 잠깐 사라져도(수집 주기 사이 창 이탈) stall 로 강등하지 않는다. 강등을 허용하면
+  // 10분마다 만료↔지연으로 뒤집히며 "원인 변경 즉시 재알림"이 매번 발동해 스팸이 됐다
+  // (2026-07-15 실측). 완전 회복(badRows 없음) 시에만 사건이 끝난다.
+  if (globalReason === 'stall' && globalPrev?.status === 'alerting' && globalPrev.last_payload?.reason === 'auth') {
+    globalReason = 'auth';
+  }
+
+  if (globalReason) {
+    const prevReason = globalPrev?.status === 'alerting' ? globalPrev.last_payload?.reason ?? null : null;
+    const reasonChanged = prevReason != null && prevReason !== globalReason;
+    if (shouldNotify(globalPrev, true) || reasonChanged) {
+      let firstAt = globalPrev?.status === 'alerting' && globalPrev.first_alert_at ? globalPrev.first_alert_at : null;
+      if (!firstAt) firstAt = (await earliestHealthFirstAlert()) ?? new Date().toISOString();
+      const ageMs = Date.now() - new Date(firstAt).getTime();
+      const persistedH = ageMs > 3600_000 ? (ageMs / 3600000).toFixed(1) : null;
+      await sendSlack(globalHealthMessage(globalReason, badRows, persistedH));
+      await upsertState(HEALTH_GLOBAL_KEY, 'alerting', { reason: globalReason, channels: badRows.map((r) => r.channel_label) }, firstAt);
+      notified.push(HEALTH_GLOBAL_KEY);
+    }
+    // 통합 키가 사건을 대표하는 동안 채널별 키는 조용히 정리(해제 시 "정상" 5연발 방지).
+    for (const row of rows) {
+      const key = `health:${row.profile_id}`;
+      const prev = await getState(key);
+      if (prev?.status === 'alerting') await upsertState(key, 'ok', { superseded_by: HEALTH_GLOBAL_KEY }, null);
+    }
+    return notified;
+  }
+
+  // 전역 인시던트 해제 → 회복도 1건으로.
+  if (globalPrev?.status === 'alerting') {
+    await sendSlack(`🟢 카카오 상담 수집이 전 채널 정상으로 돌아왔어요`);
+    await upsertState(HEALTH_GLOBAL_KEY, 'ok', null, null);
+    notified.push(HEALTH_GLOBAL_KEY);
+  }
+
+  // 단일 채널 이상만 채널별 알림.
+  for (const row of rows) {
     const key = `health:${row.profile_id}`;
-    // ⚠️ 실제 수집 "중단"만 알린다: auth(쿠키 만료)·heartbeat(수집 정체).
-    //   'gap'(문의 뜸함)은 저트래픽 채널의 정상 상태라 알리지 않는다 — 밤새 1시간마다
-    //   반복 발송돼 순수 스팸이 됐다(2026-07-08 사용자 지적). 수집 헬스는 auth/heartbeat 로
-    //   충분히 커버되고, gap 은 대시보드용 정보로만 남긴다.
     const bad = row.health_reason === 'auth' || row.health_reason === 'heartbeat';
     const prev = await getState(key);
     if (!shouldNotify(prev, bad)) continue;

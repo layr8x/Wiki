@@ -21,6 +21,10 @@ describe('maskPII.maskBody', () => {
     expect(maskBody('901231-1234567')).toBe('[주민번호]')
     expect(maskBody('1234-5678-9012-3456')).toBe('[카드번호]')
   })
+  it('국제표기 휴대폰(+82)·외국인 주민번호(성별 5-8)도 마스킹', () => {
+    expect(maskBody('+82-10-9876-5432')).toBe('+82-10-****-5432')
+    expect(maskBody('900101-5234567')).toBe('[주민번호]')
+  })
   it('라벨 이름 + 폼 단독줄 이름', () => {
     expect(maskBody('학생이름: 홍길동')).toBe('학생이름: 홍*동')
     expect(maskBody('홍길동\n010-1234-5678')).toBe('홍*동\n010-****-5678')

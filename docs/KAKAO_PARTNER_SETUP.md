@@ -195,7 +195,9 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 ## 9. 다음 작업 (PR 단위)
 
 1. payload 구조 확정 후 `_handlePayload()` 의 휴리스틱을 정식 매핑으로 교체
-2. `useCSInsightsLive` (PR #36) 에 `kakao_partner_messages` 소스 추가
+2. (폐기) ~~`useCSInsightsLive` 에 `kakao_partner_messages` 소스 추가~~ — 해당 훅과
+   집계 뷰(kakao_category_stats/kakao_daily_volume)는 삭제됨. 관리자 분석은
+   `get_*_distribution` RPC + `kakao_analytics_cache` 경로로 대체됨.
 3. 메시지 첨부파일 (이미지) 의 카카오 CDN 만료 대응 — Supabase Storage 미러링
 4. 갭 백필: `last_seen_log_id` 와 REST `last_log_id` 비교해서 누락 감지 시 알림
 

@@ -42,6 +42,10 @@
 
 .kcs-error { color: var(--color-text-red); }
 
+/* 표 안전장치: 열 최소폭 합이 화면 폭을 넘는 초소형 기기(320px대)에서는 카드의
+   overflow:hidden에 잘려 안 보이는 대신 표 스스로 가로 스크롤되게 한다. */
+.kcs-table-scroll { overflow-x: auto; }
+
 /* Collapsible 트리거↔콘텐츠 기본 간격이 4px로 매우 좁아(라이브러리 기본은 "펼치기" 같은
    한 줄짜리 트리거 전제) 표 헤더 행이 바로 붙어 보인다 — 표를 담는 두 군데만 여유를 더 준다.
    (콘텐츠 div는 트리거 button 다음의 직계 자식 div 하나뿐이라 이 선택자로 안전하게 특정 가능) */

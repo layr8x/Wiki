@@ -8,9 +8,12 @@ const NAME_LABELS =
   '회원명|가입자명|학생명|학생이름|학부모명|학부모이름|보호자명|자녀명|성함|이름'
 
 const CARD_RE = /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g
-const RRN_RE = /\b\d{6}[-\s]?[1-4]\d{6}\b/g
+// 주민등록번호 성별코드 1-4=내국인, 5-8=외국인(둘 다 가림)
+const RRN_RE = /\b\d{6}[-\s]?[1-8]\d{6}\b/g
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g
 const MOBILE_RE = /(01[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g
+// 국제표기 휴대폰(+82-10-…)
+const INTL_MOBILE_RE = /(\+82[-.\s]?1[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g
 const LANDLINE_RE = /(0\d{1,3})[-.\s](\d{3,4})[-.\s](\d{4})/g
 const LABEL_NAME_RE = new RegExp(
   '(' + NAME_LABELS + ')(\\s*[:：]\\s*)([가-힣*]{1,4})',
@@ -64,6 +67,7 @@ export function maskBody(text) {
     isNonNameBeforePhone(name) ? m : pre + maskName(name))
   s = s.replace(INLINE_NAME_BEFORE_MASKED_PHONE_RE, (m, pre, name) =>
     isNonNameBeforePhone(name) ? m : pre + maskName(name))
+  s = s.replace(INTL_MOBILE_RE, '$1-****-$3')
   s = s.replace(MOBILE_RE, '$1-****-$3')
   s = s.replace(LANDLINE_RE, '$1-****-$3')
   s = s.replace(LABEL_NAME_RE, (_m, label, sep, name) => label + sep + maskName(name))

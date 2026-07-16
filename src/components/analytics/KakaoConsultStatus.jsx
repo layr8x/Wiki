@@ -62,15 +62,18 @@ function waitUrgencyClass(waitedH) {
   return ''
 }
 
+// 열 최소폭 명시: Table 기본 최소폭은 열당 120px라 4열 = 480px가 되어 모바일(~390px)에서
+// 뒤쪽 열이 카드 밖으로 잘려 나갔다(실측 — "중앙값 응답"이 "중앙"까지만 보임).
+// 값이 짧은 숫자 열이므로 실제 콘텐츠 폭에 맞춰 낮춰 한 화면에 다 들어가게 한다.
 const SLA_COLUMNS = [
-  { key: 'channel', header: '채널', width: proportional(1.2) },
-  { key: 'waiting', header: '대기', width: proportional(0.8), align: 'end' },
+  { key: 'channel', header: '채널', width: proportional(1.2, { minWidth: 100 }) },
+  { key: 'waiting', header: '대기', width: proportional(0.8, { minWidth: 48 }), align: 'end' },
   {
-    key: 'medianFirstResponseMin', header: '중앙값 응답', width: proportional(1), align: 'end',
+    key: 'medianFirstResponseMin', header: '중앙값 응답', width: proportional(1, { minWidth: 84 }), align: 'end',
     renderCell: (row) => `${row.medianFirstResponseMin}분`,
   },
   {
-    key: 'oldestWaitH', header: '최장 대기', width: proportional(1), align: 'end',
+    key: 'oldestWaitH', header: '최장 대기', width: proportional(1, { minWidth: 76 }), align: 'end',
     renderCell: (row) => (
       <Text as="span" hasTabularNumbers className={waitUrgencyClass(row.oldestWaitH)}>
         {formatOldestWait(row.oldestWaitH)}
@@ -81,7 +84,7 @@ const SLA_COLUMNS = [
 
 const HEALTH_COLUMNS = [
   {
-    key: 'channelLabel', header: '채널', width: proportional(1.2),
+    key: 'channelLabel', header: '채널', width: proportional(1.2, { minWidth: 116 }),
     renderCell: (row) => (
       <HStack gap={2} vAlign="center">
         <StatusDot
@@ -94,11 +97,15 @@ const HEALTH_COLUMNS = [
     ),
   },
   {
-    key: 'hbAgeMin', header: '마지막 수집', width: proportional(1), align: 'end',
-    renderCell: (row) => `${row.hbAgeMin.toFixed(0)}분 전`,
+    key: 'hbAgeMin', header: '마지막 수집', width: proportional(1, { minWidth: 84 }), align: 'end',
+    // 하트비트(생존 신호)는 로그인 만료로 수집이 "실패"해도 갱신된다 — 실패 채널에
+    // "19분 전"처럼 방금 수집한 듯한 시각을 보여주면 오해를 부른다(실측). 실패 사유를 그대로 표기.
+    renderCell: (row) => row.healthReason === 'auth'
+      ? <Text as="span" size="sm" className="kcs-error">로그인 만료</Text>
+      : `${row.hbAgeMin.toFixed(0)}분 전`,
   },
   {
-    key: 'avgPerDay', header: '일평균', width: proportional(1), align: 'end',
+    key: 'avgPerDay', header: '일평균', width: proportional(1, { minWidth: 64 }), align: 'end',
     renderCell: (row) => `${row.avgPerDay.toFixed(1)}건`,
   },
 ]
@@ -126,6 +133,12 @@ export function KakaoConsultStatus() {
   const slaAlerts = sla ? sla.filter((row) => waitUrgencyClass(row.oldestWaitH) !== '') : []
   const healthAlerts = health ? health.filter((row) => row.health !== 'ok') : []
 
+  // 수집이 멈추면 대기·응답 수치가 "마지막 수집 시점" 기준으로 굳는다 — 이걸 모르고 보면
+  // 이미 답변된 대화가 24시간+ 대기로 보이는 착시가 생긴다(실측). 원인과 조치까지 배너로 안내.
+  const authDown = health ? health.some((row) => row.healthReason === 'auth') : false
+  const allStale = !authDown && health != null && health.length > 0 && health.every((row) => row.health !== 'ok')
+  const staleMin = allStale ? Math.round(Math.min(...health.map((row) => row.hbAgeMin))) : 0
+
   return (
     <Card padding={5} className="kcs-card">
       {/* 두괄식: North Star를 가장 위 · 가장 크게 */}
@@ -145,6 +158,22 @@ export function KakaoConsultStatus() {
         )}
       </VStack>
 
+      {authDown && (
+        <Banner
+          status="error"
+          title="카카오 로그인 만료 — 수집이 중단되었습니다"
+          description="맥 스튜디오 Chrome에서 business.kakao.com에 다시 로그인해야 재개됩니다. 아래 대기·응답 수치는 마지막 수집 시점 기준이라 실제와 다를 수 있습니다."
+          className="kcs-spike-banner"
+        />
+      )}
+      {allStale && (
+        <Banner
+          status="warning"
+          title={`수집 지연 — 마지막 수집 ${staleMin.toLocaleString('ko-KR')}분 전`}
+          description="아래 대기·응답 수치가 최신이 아닐 수 있습니다. 수집 파이프라인 상태를 확인해 주세요."
+          className="kcs-spike-banner"
+        />
+      )}
       {spikeError && (
         <Text type="supporting" size="sm" className="kcs-error kcs-spike-banner">
           카테고리 급증 확인 실패 — 새로고침해 주세요
@@ -232,7 +261,9 @@ export function KakaoConsultStatus() {
             </HStack>
           }
         >
-          <Table data={sla || []} columns={SLA_COLUMNS} idKey="channel" density="compact" dividers="rows" />
+          <div className="kcs-table-scroll">
+            <Table data={sla || []} columns={SLA_COLUMNS} idKey="channel" density="compact" dividers="rows" />
+          </div>
         </Collapsible>
       )}
 
@@ -263,7 +294,9 @@ export function KakaoConsultStatus() {
             </HStack>
           }
         >
-          <Table data={health || []} columns={HEALTH_COLUMNS} idKey="profileId" density="compact" dividers="rows" />
+          <div className="kcs-table-scroll">
+            <Table data={health || []} columns={HEALTH_COLUMNS} idKey="profileId" density="compact" dividers="rows" />
+          </div>
         </Collapsible>
       )}
 

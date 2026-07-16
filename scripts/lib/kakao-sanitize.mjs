@@ -19,12 +19,14 @@ const NAME_LABELS =
 
 // 16자리 카드(4-4-4-4, 구분자 -/공백 허용)
 const CARD_RE = /\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g;
-// 주민등록번호 6자리-[1-4]+6자리
-const RRN_RE = /\b\d{6}[-\s]?[1-4]\d{6}\b/g;
+// 주민등록번호 6자리-성별코드+6자리. 성별코드 1-4=내국인, 5-8=외국인(둘 다 가림).
+const RRN_RE = /\b\d{6}[-\s]?[1-8]\d{6}\b/g;
 // 이메일 (로컬부만 가림, 도메인 보존)
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})/g;
 // 휴대폰 01[016-9]
 const MOBILE_RE = /(01[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g;
+// 국제표기 휴대폰(+82-10-…) — 선행 0 없이 +82 뒤에 바로 1[016-9] 가 오는 형태.
+const INTL_MOBILE_RE = /(\+82[-.\s]?1[016-9])[-.\s]?(\d{3,4})[-.\s]?(\d{4})/g;
 // 유선(지역번호): 구분자 필수 — 무작위 긴 숫자열 오마스킹 방지
 const LANDLINE_RE = /(0\d{1,3})[-.\s](\d{3,4})[-.\s](\d{4})/g;
 // 라벨: 이름 (이름 그룹은 마스킹 문자 '*' 도 허용 → 재적용 시 멱등)
@@ -87,6 +89,7 @@ export function maskBody(text) {
   s = s.replace(EMAIL_RE, '***@$1');
   s = s.replace(INLINE_NAME_BEFORE_PHONE_RE, (m, pre, name) =>
     isNonNameBeforePhone(name) ? m : pre + maskName(name));
+  s = s.replace(INTL_MOBILE_RE, '$1-****-$3');
   s = s.replace(MOBILE_RE, '$1-****-$3');
   s = s.replace(LANDLINE_RE, '$1-****-$3');
   s = s.replace(LABEL_NAME_RE, (_m, label, sep, name) => label + sep + maskName(name));

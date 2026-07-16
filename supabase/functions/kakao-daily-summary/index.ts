@@ -29,6 +29,7 @@ function fmtDelta(n: number): string {
 // 채널 코드->정식명 (5채널, 2026-07-03 확정).
 const CHANNEL_BY_PID: Record<string, string> = { _VGAQn: '마이클래스', _rcpPG: 'LIVE', _TkpPG: 'LIVE 기술지원', _xfxilXn: '콘텐츠', _rkbcn: '통합로그인' };
 function friendlyAlert(key: string): string {
+  if (key === 'health:global') return '수집 중단(전 채널)';
   if (key.startsWith('health:')) return `${CHANNEL_BY_PID[key.slice('health:'.length)] || key.slice(7)} 수집`;
   if (key.startsWith('spike:')) return `${key.slice('spike:'.length)} 급증`;
   if (key.startsWith('milestone:')) return '재분류 완료';

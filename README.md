@@ -1,7 +1,7 @@
 # AMS Wiki — 학원 운영 통합 플랫폼
 
 학원 운영 시스템(AMS)을 위한 **가이드 위키 · 운영 챗봇 · 카카오 문의/상담 수집·분석**을 한 곳에 모은 사내 플랫폼.
-React 19 + shadcn/ui + Supabase 기반.
+React 19 + Astryx 디자인시스템 + Supabase 기반.
 
 > 🔗 **라이브**: https://sdij-wiki.vercel.app
 
@@ -13,7 +13,6 @@ React 19 + shadcn/ui + Supabase 기반.
 |------|------|
 | 📚 **가이드 위키** | 학원 운영 매뉴얼·가이드를 직원이 검색·열람하는 지식 베이스 (6개 가이드 유형) |
 | 💬 **운영 챗봇** | 자주 묻는 운영 FAQ를 7개 대메뉴로 안내 + 오류신고·처리현황·음성입력 |
-| 📨 **카카오 문의 수집** | 학부모 카카오톡 문의를 자동 분류해 DB에 적재 (webhook) |
 | 📊 **상담 수집·분석** | 카카오 비즈니스 채팅(학부모↔학원)을 실시간 수집 → 감정·응답시간·카테고리 분석 |
 | 🔗 **외부 연동** | Confluence/Jira OAuth 2.0, 가이드 원본 동기화(Cron) |
 
@@ -31,8 +30,7 @@ React 19 + shadcn/ui + Supabase 기반.
 - 처리 현황 · 종료 요약 · **음성 입력** · 오류신고 폼 · 관련 가이드 딥링크
 - 위키 FAQ 페이지(`/faq`)와 **동일한 데이터·분류**를 공유(단일 원본)
 
-### 📨 카카오 연동 (문의·상담)
-- **Webhook**: 학부모 문의 실시간 수신 → 자동 분류 → Supabase 적재
+### 📨 카카오 상담 수집·분석
 - **Partner Stream**: 비즈니스 채팅 실시간 수집 데몬 + 대시보드 스크립트
 - 운영 분석: **감정 추세 · 응답시간 분포 · Claude 기반 카테고리 분류** 차트(Admin)
 
@@ -43,7 +41,7 @@ React 19 + shadcn/ui + Supabase 기반.
 - **⌘K 명령 팔레트** · 동의어 확장 검색 · 자동 목차(On This Page) · 최근/인기 가이드
 
 ### 🎨 UI/UX
-- shadcn/ui 표준 컴포넌트 **28개** · 다크모드(`@theme` + `html.dark`) · Pretendard 폰트 · 반응형 · Toast
+- Astryx 디자인시스템(`@astryxdesign/core`) 컴포넌트 · 다크모드 · Pretendard 폰트 · 반응형 · Toast
 
 ---
 
@@ -52,7 +50,7 @@ React 19 + shadcn/ui + Supabase 기반.
 | 구분 | 사용 기술 |
 |------|-----------|
 | 프레임워크 | React 19 · Vite 8 |
-| 스타일 | Tailwind CSS 4 (CSS-first `@theme`) · shadcn/ui |
+| 스타일 | Astryx 디자인시스템 (`@astryxdesign/core` · 토큰 기반, Tailwind 미사용) |
 | 라우팅/상태 | React Router 7 · TanStack Query 5 |
 | 데이터 | Supabase (PostgreSQL · Auth · Realtime) |
 | 서버리스 | Vercel Functions (`api/`) · Anthropic API(요약/분류) |
@@ -129,7 +127,6 @@ npm run dev          # → http://localhost:5173
 | `vite.config.js` · `index.html` | 빌드 도구(Vite) 설정·진입점 |
 | `vercel.json` · `.vercelignore` | 배포(Vercel) 설정 |
 | `eslint.config.js` · `jsconfig.json` | 코드 검사·경로 별칭 |
-| `components.json` | shadcn/ui 설정 |
 | `playwright.config.js` | E2E 테스트 설정 |
 | `.env.example` | 환경변수 **목록·설명**(실제 키는 `.env`, 커밋 금지) |
 | `.gitignore` · `.nvmrc` · `.mcp.json` | Git 제외 · Node 버전 · MCP |
@@ -138,7 +135,7 @@ npm run dev          # → http://localhost:5173
 ### 📂 `src/` 내부
 ```
 src/
-├── components/   # chatbot · common · integrations · search · ui(shadcn 28개)
+├── components/   # analytics · chatbot · common · search (Astryx 기반)
 ├── pages/        # 라우트 페이지 (Home·Guide·FAQ·Admin)
 ├── hooks/        # React Query 훅
 ├── data/         # 가이드·FAQ·분석 시드(폴백)
@@ -161,7 +158,6 @@ api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 
 ### 연동
 - [JIRA_CONFLUENCE_INTEGRATION](./docs/JIRA_CONFLUENCE_INTEGRATION.md) — Jira/Confluence OAuth 2.0
-- [KAKAO_WEBHOOK_SETUP](./docs/KAKAO_WEBHOOK_SETUP.md) — 카카오 문의 webhook
 - [KAKAO_PARTNER_SETUP](./docs/KAKAO_PARTNER_SETUP.md) — 카카오 상담 수집
 - [scripts/README-kakao-sync](./scripts/README-kakao-sync.md) — 수집 스크립트 사용법
 
@@ -171,9 +167,6 @@ api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 - [상세 기능정의서 (SRS)](./docs/상세기능정의서.md) — 요구사항 명세
 - [ams-wiki-roadmap](./docs/ams-wiki-roadmap.md) — 로드맵
 - [manager-inquiries-analysis](./docs/manager-inquiries-analysis.md) — 실장 문의 분석
-
-### 디자인 시스템
-- [docs/shadcn-ui/](./docs/shadcn-ui/README.md) — shadcn/ui 철학·CLI·테마·v4 마이그레이션 (17개 주제)
 
 ### 기여 · 정책
 - [CONTRIBUTING](./.github/CONTRIBUTING.md) — 기여 가이드
@@ -185,4 +178,4 @@ api/  서버리스 함수 (confluence·jira·oauth·sync·search-summary)
 
 - [라이브 데모](https://sdij-wiki.vercel.app)
 - [Vercel 대시보드](https://vercel.com/layr8xs-projects/sdij-wiki)
-- [shadcn/ui 문서](https://ui.shadcn.com) · [Supabase 문서](https://supabase.com/docs)
+- [Supabase 문서](https://supabase.com/docs)
