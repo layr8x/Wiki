@@ -336,7 +336,7 @@ S.append(f'''
     <div style="margin-bottom:24px">
       <div class="kick" style="margin-bottom:12px">근거 3, 넘김 방식</div>
       <h2 style="font-size:40px;max-width:900px">자동으로 돌리면 <span class="off">첫 건만 읽힌다</span></h2>
-      <p class="sub">쇼피파이 기본 테마조차 자동 회전이 꺼진 채 출고됩니다. <b>기본은 화살표, 자동은 제외합니다.</b></p>
+      <p class="sub">쇼피파이 기본 테마조차 자동 회전이 꺼진 채 출고됩니다. <b>기본은 화살표, 자동은 제외합니다.</b> 자동이 꼭 필요해지면 6초 간격, 진행 표시, 정지 버튼 상시 제공, 마우스 오버 시 정지, 조작 시 완전 꺼짐, 모바일 제외 조건에서만 엽니다.</p>
     </div>
     <div class="crow">
       {CARD["clicks"]}
