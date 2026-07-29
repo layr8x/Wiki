@@ -57,3 +57,15 @@ public/cs-stats.json
 
 # 카카오 쿠키 갱신 스크립트의 실행 중 lock 파일 (이 기기 로컬 런타임 상태, 커밋 금지)
 .kakao-cookie-refresh.lock
+
+# 에이전트 스킬(.agents/skills) — 데모용 이미지·영상은 용량이 커서 제외
+# (SKILL.md·데모 HTML·JS는 커밋. 이미지는 npx skills add 재실행 시 다시 받음)
+.agents/skills/**/*.jpg
+.agents/skills/**/*.jpeg
+.agents/skills/**/*.png
+.agents/skills/**/*.gif
+.agents/skills/**/*.webp
+.agents/skills/**/*.avif
+.agents/skills/**/*.mp4
+.agents/skills/**/*.mov
+.agents/skills/**/*.webm

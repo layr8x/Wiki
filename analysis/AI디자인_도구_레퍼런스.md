@@ -2,12 +2,14 @@
 
 ## 한 줄 요약
 
-공유받은 카드뉴스 9장을 정리하고 실물 확인까지 마쳤습니다. **바로 쓸 만한 건 3개**(`make-interfaces-feel-better`, `emilkowalski/skills`, Lazyweb MCP), 우리 저장소에 이미 비슷한 게 있어 겹치는 건 1개(디자인 QA 자동화), 나머지는 참고용 웹사이트입니다.
+공유받은 카드뉴스 9장을 정리하고 실물 확인까지 마쳤습니다. **2026-07-29 전부 설치 완료** (사용자 지시).
 
-- **설치 권장 1순위**: `make-interfaces-feel-better` (완성도 체크 16가지, 우리 챗봇 화면 다듬기에 바로 씀)
-- **설치 권장 2순위**: `emilkowalski/skills` (모션 리뷰 스킬 8종)
-- **연동 검토**: Lazyweb MCP (실제 앱 화면 25.7만 개를 에이전트가 검색)
+- **설치 완료**: 스킬 127개 (`make-interfaces-feel-better` 1 + `emilkowalski/skills` 8 + `MengTo/Skills` 118)
+- **연동 완료**: Lazyweb MCP (`.mcp.json` 등록, 토큰만 넣으면 동작)
+- **설치 불필요**: UI Skills (그때그때 `npx ui-skills start`로 호출하는 방식)
 - **이미 있음**: 디자인 QA 자동화 → `tools/design-audit/` 가 같은 일을 함
+
+설치·사용 방법은 `docs/AGENT_SKILLS_SETUP.md` 참고.
 
 MCP(= Model Context Protocol, AI가 외부 서비스에 직접 접속하게 해주는 규격)
 스킬(= Skill, AI에게 "이 작업은 이렇게 해라"를 적어둔 설명서 파일 `SKILL.md`)
@@ -111,17 +113,32 @@ MCP(= Model Context Protocol, AI가 외부 서비스에 직접 접속하게 해�
 
 ---
 
-## 3. 권고
+## 3. 설치 결과 (2026-07-29)
+
+| 항목 | 상태 | 위치 |
+|---|---|---|
+| make-interfaces-feel-better | 설치 완료 (1개) | `.agents/skills/make-interfaces-feel-better` |
+| emilkowalski/skills | 설치 완료 (8개) | `.agents/skills/` |
+| MengTo/Skills | 설치 완료 (118개) | `.agents/skills/` |
+| Lazyweb MCP | 등록 완료, 토큰 입력 필요 | `.mcp.json` |
+| UI Skills | 설치 대상 아님 | `npx ui-skills start`로 호출 |
+
+### 남은 할 일
 
 | 우선순위 | 할 일 | 이유 |
 |---|---|---|
-| 1 | `make-interfaces-feel-better` 설치 후 챗봇 화면 전수 점검 | 원칙 16가지가 구체적 수치라 검증 가능. 우리 CLAUDE.md 규칙과 충돌 없음 |
-| 2 | `emilkowalski/skills` 설치 | 챗봇에 모션 규칙이 아직 없음. 모션 도입 시점에 바로 씀 |
-| 3 | Lazyweb MCP 연동 | 무료. 레퍼런스 조사 시간 단축 |
-| 4 | `tools/design-audit/`에 엑셀 리포트 출력 추가 | 4번 워크플로의 유일한 우위 항목 |
-| 보류 | UI Skills, MengTo/Skills 전체 설치 | 스킬이 너무 많으면 에이전트가 엉뚱한 걸 고름. 필요할 때 개별로 |
+| 1 | `make-interfaces-feel-better`로 챗봇 화면 전수 점검 | 원칙 16가지가 구체적 수치라 검증 가능. 우리 CLAUDE.md 규칙과 충돌 없음 |
+| 2 | `find-animation-opportunities`로 모션 넣을 위치 발굴 | 챗봇에 모션 규칙이 아직 없음 |
+| 3 | `tools/design-audit/`에 엑셀 리포트 출력 추가 | 4번 워크플로의 유일한 우위 항목 |
 
-**결정이 필요한 부분**: 1~3번을 실제로 설치할지 여부. 설치는 저장소 설정을 바꾸는 일이라 말씀 주시면 진행하겠습니다.
+### 설치하며 확인한 주의점
+
+- **스킬 127개는 많습니다.** MengTo 묶음에 우리와 무관한 게 섞여 있습니다 (게임 개발 17개,
+  `write-like-meng-on-x`, `elevenlabs-tts` 등). 엉뚱한 스킬이 발동하면 해당 폴더를 지우면 됩니다
+- **데모용 이미지·영상 291개(78MB)는 커밋에서 제외**했습니다. 스킬 본체(`SKILL.md`)와 데모 HTML은
+  그대로 있어 기능에는 영향 없습니다
+- **Lazyweb 서버가 우리 지침 파일 수정을 요청**하는 동작이 있어 적용하지 않았습니다
+  (`docs/AGENT_SKILLS_SETUP.md` 3-4 참고)
 
 ---
 
