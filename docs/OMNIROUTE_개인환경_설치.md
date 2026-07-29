@@ -7,6 +7,8 @@ npm 방식은 서버 주소를 내 컴퓨터로 묶을 수 없어 사내망에 �
 
 - 설치 위치: **김명준님 맥 스튜디오** (개인 작업 환경)
 - **이 저장소 운영 코드에는 적용하지 않습니다.** 이유는 아래 5장
+- **설치 직후 Cloudflare 터널을 반드시 끄세요.** 포트를 막아도 프로그램이 스스로 공개 주소를
+  만듭니다 (1장)
 - 되돌리기: `docker rm -f omniroute`
 
 OmniRoute(= AI 제공사 290곳을 하나의 주소로 묶어주는 중계 서버. 전기로 치면 여러 발전소를
@@ -57,6 +59,22 @@ lsof -nP -iTCP:20128 | grep LISTEN
 `127.0.0.1:20128` **하나만** 나와야 합니다. `*:20128`이나 `0.0.0.0:20128`이 같이 뜨면
 사내망에 열려 있다는 뜻입니다.
 
+### ⚠️ 터널 끄기 (포트를 막아도 뚫립니다)
+
+**포트를 `127.0.0.1`로 묶어도 끝이 아닙니다.** OmniRoute는 Cloudflare 터널을 스스로 켜서
+그 벽을 우회하는 공개 주소를 만듭니다. 실제로 `https://attending-isp-ratios-zshops.
+trycloudflare.com/v1` 같은 주소가 인터넷에 열려 있었습니다. 포트 차단은 건물 문을 잠그는
+일인데, 이 프로그램은 스스로 바깥으로 굴을 팝니다.
+
+대시보드 **엔드포인트** 화면에서 두 가지를 끄세요.
+
+| 항목 | 조치 |
+|---|---|
+| Cloudflare Quick Tunnel | **Stop Tunnel** 버튼 |
+| 클라우드 옴니루트 | **클라우드 비활성화** 버튼 |
+
+끄고 나면 `ACTIVE ENDPOINTS`에 `Local` 하나만 남아야 합니다. **설치 직후 반드시 확인하세요.**
+
 대시보드는 `http://localhost:20128`, API는 `http://localhost:20128/v1`입니다.
 
 ### 필요 사양
@@ -83,7 +101,28 @@ lsof -nP -iTCP:20128 | grep LISTEN
 | Kilo Code | 자동 라우터, 무료 |
 | Pollinations | 키 없이 여러 모델 |
 
-이 세 개만 연결해도 동작합니다. 유료 제공사는 각 연결 양식에 API 키를 붙여넣으면 됩니다.
+**2026-07-29 실측 결과는 표와 달랐습니다.**
+
+| 제공사 | 결과 |
+|---|---|
+| OpenCode Free | 정상. 모델 6개 동작 (DeepSeek V4 Flash 등) |
+| Kilo Code | `kc/openrouter/free` 1개만 동작. 나머지는 무료 등급 대상이 아니라 오류 |
+| Pollinations | **실패.** `Authentication required` — 이제 키가 필요합니다 |
+
+Pollinations는 `https://pollinations.ai`에서 키를 받거나, 안 쓸 거면 연결을 꺼두세요. 실패한
+제공사를 켜두면 그쪽으로 요청을 보냈다가 되돌아오느라 응답이 느려집니다.
+
+Kilo Code의 빨간 표시는 `Testing ...`이 끝나면 `Auto-hide failed models` 설정이 자동으로
+숨깁니다. 기다리면 됩니다.
+
+### API 키 발급
+
+왼쪽 메뉴 **API 관리자** → **+ API 키 생성**.
+
+- 권한은 **모든 모델만** 주고 `manage`는 빼세요. Claude Code는 모델 호출만 하면 되지 설정을
+  바꿀 필요가 없습니다
+- **생성 직후 뜨는 값을 바로 복사하세요.** 화면을 벗어나면 `sk-440ab****60c2`처럼 가려져
+  다시 볼 수 없습니다
 
 ---
 
@@ -100,8 +139,12 @@ OmniRoute를 거칩니다. 회사 업무 세션까지 무료 제공사로 흘러
 대신 별칭(alias)으로 만들어 스위치처럼 켜고 끕니다. `~/.zshrc`에 넣으세요.
 
 ```bash
-alias cc-free='ANTHROPIC_BASE_URL=http://localhost:20128/v1 ANTHROPIC_API_KEY=복사한-키 claude'
+alias cc-free='ANTHROPIC_BASE_URL=http://localhost:20128 ANTHROPIC_API_KEY=복사한-키 claude'
 ```
+
+⚠️ **주소 끝에 `/v1`을 붙이지 마세요.** Claude Code가 `/v1/messages`를 자기가 붙이기 때문에
+`/v1`을 넣으면 `/v1/v1/messages`가 됩니다. Cursor 같은 OpenAI 호환 도구는 반대로 `/v1`까지
+넣어야 합니다.
 
 이러면 이렇게 나뉩니다.
 
@@ -113,7 +156,7 @@ alias cc-free='ANTHROPIC_BASE_URL=http://localhost:20128/v1 ANTHROPIC_API_KEY=�
 한 번만 써볼 거라면 별칭 없이 그 명령 앞에만 붙여도 됩니다.
 
 ```bash
-ANTHROPIC_BASE_URL=http://localhost:20128/v1 ANTHROPIC_API_KEY=복사한-키 claude
+ANTHROPIC_BASE_URL=http://localhost:20128 ANTHROPIC_API_KEY=복사한-키 claude
 ```
 
 **되돌리려면 `~/.zshrc`에서 alias 한 줄만 지우면 됩니다.**
@@ -155,6 +198,11 @@ curl http://localhost:20128/v1/models -H "Authorization: Bearer 복사한-키"
 띄우는데 안쪽이 설정을 무시한다.
 
 Docker는 포트를 컨테이너 바깥에서 묶으므로 이 문제가 원천적으로 없다.
+
+**함정 4 — 포트를 막아도 프로그램이 스스로 터널을 판다.** 이건 npm·Docker 공통 문제다.
+OmniRoute는 Cloudflare Quick Tunnel을 자동으로 켜서 `127.0.0.1` 제한을 우회하는 공개
+주소를 만든다. 설치 방식과 무관하므로 **설치 직후 엔드포인트 화면에서 터널을 직접 꺼야
+한다**(1장 참고).
 
 `npm warn`(peer dependency, deprecated) 경고는 무시해도 된다. 동작과 무관하다.
 
