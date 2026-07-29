@@ -17,12 +17,33 @@ OmniRoute(= AI 제공사 290곳을 하나의 주소로 묶어주는 중계 서�
 
 ### 방법 A: npm (간단, 권장)
 
+**먼저 설치 위치를 내 폴더로 바꿔야 합니다.** 안 그러면 권한 오류(`EACCES: permission denied`)로
+설치가 실패합니다. npm 기본 설치 위치(`/usr/local/lib/node_modules`)는 관리자만 쓸 수 있는
+폴더이기 때문입니다.
+
+```bash
+mkdir -p ~/.npm-global
+npm config set prefix ~/.npm-global
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.zshrc
+source ~/.zshrc
+```
+
+한 번만 하면 됩니다. 그다음 설치합니다.
+
 ```bash
 npm install -g omniroute
 omniroute
 ```
 
-실행하면 대시보드가 `http://localhost:20128`에 뜹니다. 터미널을 닫으면 서버도 꺼집니다.
+**`sudo npm install -g`는 쓰지 마세요.** 되기는 하지만 npm 패키지는 설치 중에 자기 스크립트를
+실행할 수 있고, sudo로 깔면 그 스크립트가 관리자 권한으로 돕니다. 신뢰도를 확인하지 않은
+프로젝트(5장 참고)에 회사 컴퓨터의 관리자 권한을 내주는 셈입니다.
+
+실행하면 대시보드가 `http://localhost:20128`에 뜹니다. **서버가 그 터미널을 계속 붙잡고 있으므로
+다음 명령은 새 탭(`Cmd+T`)에서 치세요.** `Ctrl+C`를 누르면 서버가 꺼집니다.
+
+설치 중 노란 `npm warn` 경고(peer dependency, deprecated)는 무시해도 됩니다. 패키지끼리 버전이
+살짝 안 맞는다는 알림일 뿐 동작과 무관합니다.
 
 ### 방법 B: Docker (계속 켜두고 싶을 때)
 
@@ -71,14 +92,32 @@ docker run -d --name omniroute --restart unless-stopped \
 
 대시보드 **Endpoints** 항목에서 OmniRoute 자체 키를 복사합니다.
 
-### Claude Code
+### Claude Code (⚠️ 필요할 때만 켜는 방식으로)
+
+**`export`를 `~/.zshrc`에 그냥 넣지 마세요.** 그러면 앞으로 여는 **모든** Claude Code 세션이
+OmniRoute를 거칩니다. 회사 업무 세션까지 무료 제공사로 흘러가 답변 품질이 떨어지거나 중간에
+끊길 수 있습니다.
+
+대신 별칭(alias)으로 만들어 스위치처럼 켜고 끕니다. `~/.zshrc`에 넣으세요.
 
 ```bash
-export ANTHROPIC_BASE_URL=http://localhost:20128/v1
-export ANTHROPIC_API_KEY=복사한-OmniRoute-키
+alias cc-free='ANTHROPIC_BASE_URL=http://localhost:20128/v1 ANTHROPIC_API_KEY=복사한-키 claude'
 ```
 
-계속 쓰려면 `~/.zshrc`에 넣으시면 됩니다. **되돌리려면 이 두 줄만 지우면 원래대로 돌아갑니다.**
+이러면 이렇게 나뉩니다.
+
+| 명령 | 어디로 |
+|---|---|
+| `claude` | Anthropic 직결 (평소대로) |
+| `cc-free` | OmniRoute 경유 (무료 제공사) |
+
+한 번만 써볼 거라면 별칭 없이 그 명령 앞에만 붙여도 됩니다.
+
+```bash
+ANTHROPIC_BASE_URL=http://localhost:20128/v1 ANTHROPIC_API_KEY=복사한-키 claude
+```
+
+**되돌리려면 `~/.zshrc`에서 alias 한 줄만 지우면 됩니다.**
 
 ### Cursor
 
@@ -152,8 +191,9 @@ docker stop omniroute && docker rm omniroute
 docker volume rm omniroute-data    # 설정까지 지울 때
 ```
 
-Claude Code 설정도 되돌리려면 `~/.zshrc`에 넣은 두 줄(`ANTHROPIC_BASE_URL`,
-`ANTHROPIC_API_KEY`)을 지우고 터미널을 새로 여시면 됩니다.
+Claude Code 설정도 되돌리려면 `~/.zshrc`에서 `cc-free` alias 한 줄을 지우고 터미널을 새로
+여시면 됩니다. npm 설치 위치를 원래대로 돌리려면 `npm config delete prefix`와 `~/.zshrc`의
+PATH 한 줄 삭제까지 하면 됩니다.
 
 ---
 
