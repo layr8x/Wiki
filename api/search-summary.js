@@ -96,7 +96,9 @@ async function isAuthenticated(req) {
   const hit = authCache.get(token)
   if (hit && Date.now() - hit.at < AUTH_CACHE_TTL_MS) return hit.ok
 
-  let ok = false
+  // 초기값을 두지 않는 이유: 아래 두 갈래가 모두 값을 넣으므로 초기값은 읽히지 않는다
+  // (린트 규칙 no-useless-assignment 가 이를 잡는다).
+  let ok
   try {
     const resp = await fetch(`${SUPABASE_URL.replace(/\/+$/, '')}/auth/v1/user`, {
       headers: { apikey: SUPABASE_ANON_KEY, authorization: `Bearer ${token}` },
