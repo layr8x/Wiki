@@ -1,14 +1,28 @@
 name: CI - Quality Checks
 
+# push 와 pull_request 를 같은 브랜치 목록에 걸어 두면, PR 이 열린 claude/* 브랜치에
+# 커밋을 올릴 때마다 같은 검사가 두 벌 돌았다. 실측(2026-08-04, 커밋 2cb752f):
+# 한 번의 푸시에 run 30895729623 과 30895733040 이 동시에 생성돼
+# quality-checks·unit-tests·security-audit 3종이 각각 두 번씩 실행됐다.
+# 분 단위 올림 과금이라 실행 1건당 약 4분(44초+59초+25초 → 1+2+1분), 두 벌이면 약 8분이다.
+#
+# push 에서 claude/* 를 뺀다. PR 이 열려 있으면 head 브랜치에 커밋을 올릴 때
+# pull_request 의 synchronize 이벤트가 그대로 잡아 주므로 검사 범위는 줄지 않는다.
+# main 은 병합 후 검증을 위해 push 에 남긴다.
 on:
   push:
     branches:
       - main
-      - claude/*
   pull_request:
     branches:
       - main
       - claude/*
+
+# 같은 브랜치에 연달아 푸시하면 앞선 실행은 어차피 버릴 결과다. 취소해 분을 아낀다.
+# (이 저장소의 jandi-*·kakao-collect 워크플로가 이미 쓰는 방식과 같다.)
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   quality-checks:
