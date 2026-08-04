@@ -7,6 +7,7 @@
 // - 서버가 ANTHROPIC_API_KEY 미설정(503)이면 조용히 비활성화 (세션 내 재시도 차단)
 
 import { useEffect, useRef, useState } from 'react'
+import { authHeaders } from '@/lib/apiAuth'
 
 const DEBOUNCE_MS = 500
 const MIN_QUERY_LEN = 2
@@ -34,7 +35,7 @@ export function useAiSearch(query, enabled = true) {
       try {
         const res = await fetch('/api/search-summary', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ mode: 'ai-search', query: q }),
           signal: ctrl.signal,
         })
