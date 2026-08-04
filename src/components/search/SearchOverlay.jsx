@@ -212,6 +212,7 @@ export default function SearchOverlay() {
               results.length === 0 && !loading ? (
                 <NoResultFallback
                   query={query}
+                  guides={guidePool}
                   onGoTo={goTo}
                   onGoToRoute={goToRoute}
                   onNavigateFeedback={openFeedback}

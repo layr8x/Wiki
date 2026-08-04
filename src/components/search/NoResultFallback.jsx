@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from '@phosphor-icons/react'
 import { GUIDES } from '@/data/mockData'
+import { similarity } from '@/lib/hangul'
 import { useAiSearch } from '@/hooks/useAiSearch'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
 
@@ -38,32 +39,28 @@ import './NoResultFallback.astryx.css'
 
 const FEEDBACK_QUEUE_KEY = STORAGE_KEYS.feedbackQueue
 
-function bigrams(str) {
-  const s = (str || '').toLowerCase().replace(/\s+/g, '')
-  if (s.length < 2) return new Set(s ? [s] : [])
-  const out = new Set()
-  for (let i = 0; i < s.length - 1; i++) out.add(s.slice(i, i + 2))
-  return out
-}
+// 유사도는 lib/hangul.js 로 옮겼다. 예전에는 여기서 글자 단위 bigram 을 썼는데,
+// 한글은 한 글자에 초성·중성·종성이 뭉쳐 있어 "석"과 "섹"이 아무 조각도 공유하지 않는다.
+// 그래서 오타를 하나도 못 잡았다(실측: "출섹"·"겹제"·"츨결" 전부 0건).
+// 이제 자모로 쪼갠 뒤 비교하므로 한 글자 오타에도 점수가 나온다.
 
-function similarity(a, b) {
-  const A = bigrams(a)
-  const B = bigrams(b)
-  if (A.size === 0 || B.size === 0) return 0
-  let inter = 0
-  for (const x of A) if (B.has(x)) inter++
-  return (2 * inter) / (A.size + B.size) // Dice 계수
-}
+// mockData 의 GUIDES 는 35건뿐인데 guides 테이블에는 135건이 있다. 검색 팔레트는 이미
+// DB 전량을 보도록 고쳤으므로, 폴백 제안도 같은 목록을 받아 쓴다. 못 받았을 때만
+// mockData 로 되돌아간다(로컬 개발·DB 조회 실패).
+const MOCK_GUIDE_LIST = Object.entries(GUIDES).map(([id, g]) => ({ id, ...g }))
 
-function suggestRelatedGuides(query, limit = 5) {
+function suggestRelatedGuides(query, guides, limit = 5) {
   const q = (query || '').trim()
   if (!q) return []
-  const scored = Object.entries(GUIDES).map(([id, g]) => {
+  const pool = guides?.length ? guides : MOCK_GUIDE_LIST
+  const scored = pool.map(g => {
     const bag = [g.title, g.tldr, g.module, ...(g.targets || [])].filter(Boolean).join(' ')
-    return { id, guide: g, score: similarity(q, bag) }
+    return { id: g.id, guide: g, score: similarity(q, bag) }
   })
+  // 임계값으로 거르지 않고 점수순 상위만 남긴다. 짧은 질의어 대 긴 제목이라
+  // 유사도 절대값이 원래 낮게 나와서(실측 0.09~0.41), 문턱을 세우면 전부 탈락한다.
   return scored
-    .filter(s => s.score > 0.05)
+    .filter(s => s.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
 }
@@ -81,8 +78,8 @@ function queueFeedback(entry) {
   }
 }
 
-export default function NoResultFallback({ query, onGoTo, onGoToRoute, onNavigateFeedback }) {
-  const related = useMemo(() => suggestRelatedGuides(query), [query])
+export default function NoResultFallback({ query, guides, onGoTo, onGoToRoute, onNavigateFeedback }) {
+  const related = useMemo(() => suggestRelatedGuides(query, guides), [query, guides])
   const ai = useAiSearch(query)
   const goRoute = onGoToRoute || ((route) => { const m = /^\/guides\/(.+)$/.exec(route || ''); if (m) onGoTo(m[1]) })
   const [note, setNote] = useState('')
