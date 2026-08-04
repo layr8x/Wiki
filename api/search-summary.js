@@ -61,6 +61,58 @@ function getClientIp(req) {
   return req.socket?.remoteAddress || 'unknown'
 }
 
+// ── 로그인 확인 ──────────────────────────────────────────────────────────────
+// 이 엔드포인트는 호출 한 번마다 Anthropic 요금이 나간다. 그런데 예전에는 인증 검사가
+// 하나도 없어서, 주소만 알면 누구나 호출할 수 있었다. IP당 분당 20회 제한이 유일한
+// 방어였는데 그건 IP를 바꾸면 그만이고, 코드 주석도 스스로 "완전한 보호는 아님"이라 적어 뒀다.
+// 사내용 위키이고 Supabase 로그인이 이미 붙어 있으니, 로그인한 사람만 쓰게 한다.
+//
+// 검증은 Supabase에 토큰을 그대로 물어보는 방식(GET /auth/v1/user)이다. JWT 서명을 직접
+// 푸는 방법도 있지만 라이브러리와 시크릿이 더 필요하고, 여기는 같은 리전(ap-northeast-2)이라
+// 왕복이 짧다. 같은 토큰을 반복해서 묻지 않도록 60초만 결과를 기억한다.
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ''
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ''
+const AUTH_ENFORCED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY)
+const AUTH_CACHE_TTL_MS = 60 * 1000
+const authCache = new Map()
+
+function bearerFrom(req) {
+  const h = req.headers['authorization'] || req.headers['Authorization']
+  if (typeof h !== 'string') return ''
+  const m = /^Bearer\s+(.+)$/i.exec(h.trim())
+  return m ? m[1].trim() : ''
+}
+
+/** 로그인한 사용자면 true. Supabase 환경변수가 없으면(로컬 목데이터 모드) 검사를 건너뛴다. */
+async function isAuthenticated(req) {
+  // 환경변수가 없다는 건 이 배포가 애초에 Supabase를 안 쓴다는 뜻이다(로컬 개발·목데이터).
+  // 이때까지 막으면 설정 하나 빠졌을 때 위키 전체가 조용히 멈춘다. 운영에는 값이 있으므로
+  // 그쪽에서는 아래 검사가 그대로 걸린다.
+  if (!AUTH_ENFORCED) return true
+
+  const token = bearerFrom(req)
+  if (!token) return false
+
+  const hit = authCache.get(token)
+  if (hit && Date.now() - hit.at < AUTH_CACHE_TTL_MS) return hit.ok
+
+  let ok = false
+  try {
+    const resp = await fetch(`${SUPABASE_URL.replace(/\/+$/, '')}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY, authorization: `Bearer ${token}` },
+    })
+    ok = resp.ok
+  } catch {
+    // Supabase에 못 닿았을 때 통과시키면 인증이 무력화된다. 막는 쪽이 맞다.
+    ok = false
+  }
+
+  // 토큰 문자열을 그대로 키로 쓰므로 무한정 쌓이지 않게 상한을 둔다.
+  if (authCache.size > 500) authCache.clear()
+  authCache.set(token, { ok, at: Date.now() })
+  return ok
+}
+
 function readJsonWithLimit(req, limit) {
   return new Promise((resolve, reject) => {
     let received = 0
@@ -193,6 +245,11 @@ export default async function handler(req, res) {
   if (!rl.ok) {
     res.setHeader('Retry-After', String(rl.retryAfter))
     return json(res, 429, { error: 'rate_limited', retryAfter: rl.retryAfter })
+  }
+
+  // 2-1) 로그인 확인 — 호출마다 Anthropic 요금이 나가므로 사내 로그인 사용자만 허용한다.
+  if (!(await isAuthenticated(req))) {
+    return json(res, 401, { error: 'unauthorized', message: '로그인이 필요합니다.' })
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY

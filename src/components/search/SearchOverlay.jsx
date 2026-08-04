@@ -22,6 +22,7 @@ import {
 } from '@phosphor-icons/react'
 import { useSearchStore } from '@/store/searchStore.jsx'
 import { GUIDES, RECENT_GUIDES, SEARCH_SYNONYMS } from '@/data/mockData'
+import { useGuideList } from '@/hooks/useGuides'
 import { useSearchSummary } from '@/hooks/useSearchSummary'
 import NoResultFallback from '@/components/search/NoResultFallback'
 import { getGuideType } from '@/lib/guideTypes'
@@ -71,7 +72,15 @@ const TYPE_ICON_TONE = {
 }
 const toIconTone = (typeKey) => TYPE_ICON_TONE[typeKey] ?? 'gray'
 
-function searchGuides(query) {
+// mockData의 GUIDES는 35건뿐인데 실제 guides 테이블에는 135건이 published로 들어 있다.
+// 예전에는 이 함수가 GUIDES만 훑어서, 검색이 전체 문서의 26%만 대상으로 삼고 있었다
+// (나머지 100건은 /guides 목록과 상세 페이지에는 있는데 검색으로는 절대 못 찾음).
+// 이제 대상 목록을 인자로 받아 DB에서 온 전체 목록을 넘길 수 있게 한다.
+//
+// 검색 방식(부분일치 + 동의어 확장)은 그대로 둔다. 색인형 검색 라이브러리를 얹어 보는 실험도
+// 했는데, 한국어는 조사가 붙어서 단어 단위로 끊는 순간 재현율이 오히려 떨어졌다
+// (실측: '출석' 12건→5건, '환불' 61건→30건). 부분일치가 우리 데이터에는 더 맞는다.
+function searchGuides(query, guides) {
   if (!query.trim()) return []
   const q = query.toLowerCase()
   const expandedTerms = [q]
@@ -80,14 +89,16 @@ function searchGuides(query) {
       expandedTerms.push(canonical.toLowerCase())
     }
   }
-  return Object.entries(GUIDES)
-    .filter(([, g]) => {
+  return guides
+    .filter(g => {
       const text = [g.title, g.tldr, g.module, g.path, ...(g.targets || [])].join(' ').toLowerCase()
       return expandedTerms.some(t => text.includes(t))
     })
     .slice(0, 8)
-    .map(([id, g]) => ({ id, ...g }))
 }
+
+// DB 조회 전(또는 Supabase 미설정)에는 mockData로라도 검색이 되게 하는 폴백.
+const MOCK_GUIDE_LIST = Object.entries(GUIDES).map(([id, g]) => ({ id, ...g }))
 
 export default function SearchOverlay() {
   const { isOpen, close } = useSearchStore()
@@ -97,6 +108,11 @@ export default function SearchOverlay() {
   const [selected, setSelected] = useState(0)
   const [loading, setLoading]  = useState(false)
   const inputRef = useRef(null)
+
+  // 검색 대상 = guides 테이블 전량. GuideListPage가 쓰는 것과 같은 쿼리 키라
+  // React Query 캐시를 공유한다(검색 때문에 요청이 한 번 더 나가지 않는다).
+  const { data: dbGuides } = useGuideList()
+  const guidePool = dbGuides?.length ? dbGuides : MOCK_GUIDE_LIST
 
   const prevOpen = useRef(isOpen)
   useEffect(() => {
@@ -119,10 +135,10 @@ export default function SearchOverlay() {
     }
     const loadTimer = setTimeout(() => setLoading(true), 0)
     const timer = setTimeout(() => {
-      setResults(searchGuides(query)); setSelected(0); setLoading(false)
+      setResults(searchGuides(query, guidePool)); setSelected(0); setLoading(false)
     }, 120)
     return () => { clearTimeout(loadTimer); clearTimeout(timer) }
-  }, [query])
+  }, [query, guidePool])
 
   const summary = useSearchSummary(query, results)
 

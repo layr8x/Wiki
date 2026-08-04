@@ -44,8 +44,14 @@ function rowToGuide(row) {
 
 // ─── 가이드 조회 ─────────────────────────────────────────────────────────────
 
-/** 전체 가이드 목록 (Supabase 또는 mockData 폴백) */
-export async function fetchGuides({ module: mod, type, search, limit = 100, offset = 0 } = {}) {
+/** 전체 가이드 목록 (Supabase 또는 mockData 폴백)
+ *
+ * limit 기본값이 100이던 시절, guides 테이블에는 이미 135건이 published 상태로
+ * 들어 있었다. 목록 화면(GuideListPage)이 limit을 넘기지 않아 35건이 조용히 잘려
+ * 나갔고, 화면에는 오류 없이 100건만 떠서 누락을 눈치채기 어려웠다.
+ * 500으로 올려 여유를 둔다(현재 135건, .range는 요청 수보다 적으면 있는 만큼만 준다).
+ */
+export async function fetchGuides({ module: mod, type, search, limit = 500, offset = 0 } = {}) {
   if (isSupabaseEnabled) {
     let q = supabase
       .from('guides')

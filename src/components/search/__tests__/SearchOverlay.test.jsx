@@ -5,6 +5,7 @@ import React from 'react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SearchOverlay from '../SearchOverlay'
 import { SearchProvider, useSearchStore } from '@/store/searchStore'
 
@@ -13,14 +14,21 @@ function OpenTrigger() {
   return <button onClick={open}>OPEN_OVERLAY</button>
 }
 
+// SearchOverlay 는 검색 대상을 useGuideList(React Query)로 가져온다. Supabase 가 꺼진
+// 테스트 환경에서는 mockData 로 폴백하므로 결과는 예전과 같고, provider 만 있으면 된다.
 function renderOverlay() {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  })
   return render(
-    <MemoryRouter>
-      <SearchProvider>
-        <OpenTrigger />
-        <SearchOverlay />
-      </SearchProvider>
-    </MemoryRouter>
+    <QueryClientProvider client={qc}>
+      <MemoryRouter>
+        <SearchProvider>
+          <OpenTrigger />
+          <SearchOverlay />
+        </SearchProvider>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 }
 
