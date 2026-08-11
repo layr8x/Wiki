@@ -116,11 +116,43 @@ const BASE = 'https://business.kakao.com';
 const DEFAULT_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
 
 class KakaoPartnerClient {
-  cookie: string; profileId: string; userAgent: string; jitterMs: number;
+  cookie: string; profileId: string; userAgent: string; jitterMs: number; rotated: boolean;
   constructor({ cookie, profileId, userAgent = DEFAULT_UA, jitterMs = JITTER_MS }: any) {
     if (!cookie) throw new Error('cookie required');
     if (!profileId) throw new Error('profileId required');
     this.cookie = cookie; this.profileId = profileId; this.userAgent = userAgent; this.jitterMs = jitterMs;
+    this.rotated = false;
+  }
+  // 카카오가 응답으로 내려주는 갱신 토큰(Set-Cookie)을 흡수한다.
+  // 왜: 브라우저가 로그인을 유지하는 원리가 이 토큰 회전인데, 기존엔 응답 쿠키를 전부 버려
+  //   세션이 갱신되지 않고 결국 만료 → 사람이 다시 로그인해야 했다. 20분마다 도는 수집이
+  //   곧 "활동"이므로, 회전분만 받아 보관하면 조작 없이 세션이 계속 살아 있는다.
+  _absorbSetCookie(res: Response) {
+    let list: string[] = [];
+    try { list = (res.headers as any).getSetCookie?.() ?? []; } catch { /* 구버전 런타임 */ }
+    if (!list.length) { const one = res.headers.get('set-cookie'); if (one) list = [one]; }
+    if (!list.length) return;
+    const jar = new Map<string, string>();
+    for (const part of this.cookie.split(';')) {
+      const s = part.trim(); if (!s) continue;
+      const i = s.indexOf('=');
+      if (i > 0) jar.set(s.slice(0, i), s.slice(i + 1));
+    }
+    let changed = false;
+    for (const sc of list) {
+      const first = String(sc).split(';')[0].trim();
+      const i = first.indexOf('=');
+      if (i <= 0) continue;
+      const name = first.slice(0, i);
+      const val = first.slice(i + 1);
+      // 삭제 지시(빈 값)는 무시 — 멀쩡한 세션을 스스로 깎지 않기 위해.
+      if (!val || val === 'deleted') continue;
+      if (jar.get(name) !== val) { jar.set(name, val); changed = true; }
+    }
+    if (changed) {
+      this.cookie = [...jar.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
+      this.rotated = true;
+    }
   }
   async _jitter() { await new Promise((r) => setTimeout(r, Math.floor(Math.random() * this.jitterMs) + 100)); }
   async _fetch(path: string, opts: any = {}) {
@@ -137,6 +169,7 @@ class KakaoPartnerClient {
         ...(opts.headers || {}),
       },
     });
+    if (res.ok) this._absorbSetCookie(res);
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       const err: any = new Error(`HTTP ${res.status} ${path} :: ${body.slice(0, 200)}`);
@@ -231,8 +264,8 @@ async function persistHeartbeat(profileId: string, lastSeenLogId: string | null,
     } catch { /* last_error 컬럼 미존재 무시 */ }
   } catch (e: any) { log(`[${profileId}] state persist fail:`, e.message); }
 }
-async function collectChannel(profileId: string, cookie: string) {
-  const client = new KakaoPartnerClient({ cookie, profileId });
+async function collectChannel(profileId: string, session: { cookie: string; rotated: boolean }) {
+  const client = new KakaoPartnerClient({ cookie: session.cookie, profileId });
   try {
     const me: any = await client.me();
     log(`[${profileId}] auth ok: ${me.email || me.id || 'unknown'}`);
@@ -280,7 +313,9 @@ async function collectChannel(profileId: string, cookie: string) {
     if (error) { log(`[${profileId}] chats upsert fail:`, error.message); chatsUpsertError = error.message; }
   }
   await persistHeartbeat(profileId, lastSeen, null);
-  log(`[${profileId}] done: scanned=${items.length} changed=${changed} upserted=${upserted} capped=${capped}`);
+  // 이 채널에서 토큰이 회전됐으면 세션에 반영 → 다음 채널부터 새 쿠키로 호출하고, 끝나면 보관함에 저장.
+  if (client.rotated) { session.cookie = client.cookie; session.rotated = true; }
+  log(`[${profileId}] done: scanned=${items.length} changed=${changed} upserted=${upserted} capped=${capped} rotated=${client.rotated}`);
   return { profile_id: profileId, scanned: items.length, changed, upserted, capped,
     errors: errors.length ? errors : undefined, chats_upsert_error: chatsUpsertError ?? undefined };
 }
@@ -298,16 +333,30 @@ Deno.serve(async (req: Request) => {
   if (!cookie) return json({ status: 'skip', reason: 'no cookie in kakao_partner_secrets' });
 
   // 3) 채널별 수집
+  const session = { cookie, rotated: false };
   const channels: any[] = [];
   let authExpired = false;
   for (const pid of PROFILE_IDS) {
     try {
-      channels.push(await collectChannel(pid, cookie));
+      channels.push(await collectChannel(pid, session));
     } catch (e: any) {
       if (e.authExpired) { authExpired = true; channels.push({ profile_id: pid, error: 'cookie expired' }); break; }
       log(`[${pid}] channel error:`, e.message);
       channels.push({ profile_id: pid, error: String(e.message || e) });
     }
   }
-  return json({ status: authExpired ? 'auth_expired' : 'ok', at: new Date().toISOString(), channels });
+
+  // 회전된 토큰을 보관함에 되돌려 저장 → 다음 호출부터 갱신된 세션 사용(사람 개입 0).
+  // 실패해도 수집 결과엔 영향 없음(다음 회차에 다시 시도).
+  if (session.rotated && session.cookie && session.cookie !== cookie) {
+    const { error } = await supabase.from('kakao_partner_secrets').upsert(
+      { key: 'kakao_partner_cookie', value: session.cookie, updated_at: new Date().toISOString() },
+      { onConflict: 'key' },
+    );
+    log(error ? `cookie rotate persist fail: ${error.message}` : 'cookie rotated → 보관함 갱신');
+  }
+
+  // 인증 만료는 200 이 아니라 실패로 응답한다(엣지 로그·모니터에서 바로 드러나게).
+  return json({ status: authExpired ? 'auth_expired' : 'ok', at: new Date().toISOString(),
+    cookie_rotated: session.rotated, channels }, authExpired ? 502 : 200);
 });
