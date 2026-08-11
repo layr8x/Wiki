@@ -88,8 +88,12 @@ function readProfile(dir) {
   return map;
 }
 
-// _kawlt(로그인 토큰) 보유 프로필 중 가장 최근 것 선택
-let best = null;
+// _kawlt(로그인 토큰) 보유 프로필을 "전부" 후보로 수집(최근 수정순).
+// 왜: 예전엔 mtime 이 가장 최근인 프로필 1개만 골랐다. Chrome 에 카카오 계정이 여러 개
+//   물려 있으면(예: gmail 계정 / kakao 계정) 파트너센터 권한이 없는 프로필이 더 최근에
+//   수정될 수 있고, 그 쿠키를 배달하면 수집기가 401 을 맞는다. 실제로 2026-07-25 부터
+//   17일간 수집이 조용히 멈춘 원인이 이것이었다. → 이제 "실제로 통하는" 쿠키만 배달한다.
+const candidates = [];
 for (const name of fs.readdirSync(CHROME)) {
   const dir = path.join(CHROME, name);
   if (!fs.existsSync(path.join(dir, 'Cookies'))) continue;
@@ -97,17 +101,57 @@ for (const name of fs.readdirSync(CHROME)) {
   try { map = readProfile(dir); } catch { continue; }
   if (map && map.has('_kawlt')) {
     const mtime = fs.statSync(path.join(dir, 'Cookies')).mtimeMs;
-    if (!best || mtime > best.mtime) best = { name, map, mtime };
+    candidates.push({ name, map, mtime });
   }
 }
+candidates.sort((a, b) => b.mtime - a.mtime);
 
-if (!best) {
+if (!candidates.length) {
   console.error('[refresh] _kawlt 쿠키를 가진 Chrome 프로필을 못 찾음. Chrome 으로 business.kakao.com 에 로그인했는지 확인.');
   process.exit(1);
 }
 
-const cookieStr = [...best.map.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
-console.log(`[refresh] profile="${best.name}" cookies=${best.map.size} length=${cookieStr.length} has_kawlt=${best.map.has('_kawlt')}`);
+// 파트너센터에서 실제로 인증되고 채널 조회까지 되는지 확인(권한 없는 계정 걸러냄).
+// 수집기(kakao-collect)와 동일한 호출을 그대로 흉내내므로, 통과하면 수집도 통과한다.
+const BASE = 'https://business.kakao.com';
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36';
+const VERIFY_PROFILE = process.env.KAKAO_VERIFY_PROFILE_ID || '_VGAQn'; // 마이클래스(주 채널)
+
+async function verifyCookie(cookie) {
+  const headers = {
+    'user-agent': UA,
+    'accept': 'application/json, text/plain, */*',
+    'accept-language': 'ko-KR,ko;q=0.9,en;q=0.8',
+    cookie,
+  };
+  const me = await fetch(`${BASE}/api/users/me`, { headers });
+  if (!me.ok) return { ok: false, why: `me ${me.status}` };
+  const chats = await fetch(`${BASE}/api/profiles/${VERIFY_PROFILE}/chats/search?size=1`, {
+    method: 'POST',
+    headers: { ...headers, 'content-type': 'application/json', referer: `${BASE}/${VERIFY_PROFILE}/chats` },
+    body: '{}',
+  });
+  if (!chats.ok) return { ok: false, why: `chats ${chats.status}` };
+  return { ok: true };
+}
+
+let best = null;
+for (const c of candidates) {
+  const cookie = [...c.map.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
+  const r = await verifyCookie(cookie);
+  console.log(`[refresh] 후보 profile="${c.name}" cookies=${c.map.size} → ${r.ok ? '통과' : '탈락(' + r.why + ')'}`);
+  if (r.ok) { best = { ...c, cookie }; break; }
+}
+
+if (!best) {
+  // 통하는 쿠키가 하나도 없으면 보관함을 덮어쓰지 않는다(마지막 정상 쿠키 보존).
+  console.error('[refresh] 검증 통과한 프로필 없음 → 배달 생략(기존 쿠키 유지). '
+    + 'Chrome 에서 파트너센터 권한 계정으로 business.kakao.com 에 로그인 필요.');
+  process.exit(2);
+}
+
+const cookieStr = best.cookie;
+console.log(`[refresh] 선택 profile="${best.name}" cookies=${best.map.size} length=${cookieStr.length} (검증 통과)`);
 
 const envPath = path.join(process.cwd(), '.env.local');
 let env = fs.readFileSync(envPath, 'utf8');
