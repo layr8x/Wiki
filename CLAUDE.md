@@ -423,3 +423,30 @@ raw hex/숫자를 직접 박지 말고 전부 라이브러리에 연결:
   내가 "알림 없음"이라 잘못 보고했다가 정정했다. 사용자는 그 알림대로 로그인을 반복했는데도 안 고쳐진 상태였다.
 - 사용자가 "로그인하지 않아도 되게 해달라"고 하면, 그건 **이미 여러 번 시켰는데 안 됐다**는 신호다. 같은 요구를
   반복하면 내가 원인을 못 잡은 것(§0 메타원칙과 동일).
+
+## 20-5. 이전으로 옮긴 뒤 드러난 두 번째 결함 — 외래키(FK) 순서 버그 (2026-08-12)
+
+맥 스튜디오 첫 복구 실행 로그에 전 채널에서 이 에러가 쏟아졌다.
+
+```
+upsert 4980289237671803 fail: insert or update on table "kakao_partner_messages"
+violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
+```
+
+- **뜻**: `kakao_partner_messages.chat_id`는 `kakao_partner_chats`를 가리키는 외래키(FK = 부모 행이 먼저 있어야 자식 행을 넣을 수 있는 규칙). **처음 보는 대화방**은 부모 행이 아직 없어, 메시지부터 저장하면 그 묶음이 통째로 실패한다.
+- **왜 영구 유실인가**: 실행 끝에서 채팅 메타는 저장되므로 그 대화방은 "메시지 0건 + 커서는 최신"으로 굳는다 → 증분 수집기가 "변경 없음"으로 판단해 **다시는 안 가져온다**. 실측 피해 646개 대화방(LIVE 635 · 마이클래스 6 · 통합로그인 3 · LIVE 기술지원 2).
+- **고친 곳**: `scripts/kakao-partner-collect-once.mjs` — 메시지 저장 **전에** 부모 행부터 upsert.
+  이때 **`last_log_id`(변경감지 커서)는 예전 값 그대로** 넣는다. 여기서 최신값으로 올리면 메시지 저장이 실패했을 때 위와 똑같이 영구 유실된다. (엣지 함수 v12의 2026-07-09 수정본은 이 부분이 빠져 있으니 되살릴 땐 같이 고칠 것.)
+- **복구 도구**: `node --env-file=.env.local scripts/kakao-partner-backfill-missing.mjs` — 메시지 0건 대화방만 골라 과거분을 되메운다(전 채널·멱등). 목록은 RPC `kakao_chats_missing_messages(p_pid,p_lim,p_after)`로 가져오고, 카카오에도 로그가 없는 방은 `kakao_backfill_empty`에 기록해 다음 실행에서 제외한다.
+  ⚠️ 예전 이 스크립트는 자체 매핑을 써서 **PII 마스킹을 건너뛰고 원문을 적재**했다 → 수집기와 같은 `logToRow`+`sanitizeMessageRow` 경로로 교체 완료. 새 백필 코드를 쓸 땐 반드시 이 경로를 쓸 것.
+- **교훈**: "복구 성공(4,474건)" 같은 총계만 보고 끝내지 말 것. **로그 본문의 에러 줄**을 읽어야 한다. 이 버그는 총계 뒤에 묻혀 있었다.
+
+# 21. ★ 관리자 표 헤더 글자 잘림 = Astryx Table 의 기본 말줄임 (2026-08-12 실측)
+
+- **증상**: 표 헤더가 조용히 `중앙값 응…` 으로 잘려 무슨 열인지 알 수 없음. 값(td)은 멀쩡.
+- **원인**: Astryx `Table`의 헤더 칸(`th`)은 `white-space:nowrap + overflow:hidden + text-overflow:ellipsis` + `max-width:0`. 배정 폭보다 라벨이 **2px만 길어도** 잘린다(실측 390px: "중앙값 응답" 91px 필요 / 89px 배정).
+- **해결(전역, `src/App.astryx.css`)**: `.astryx-table-header-cell { white-space:normal !important; text-overflow:clip !important; word-break:keep-all }` — 폭이 부족할 때만 두 줄로 흐르고, 충분하면 종전과 동일한 한 줄. 320~768px 6개 폭에서 잘림 0 확인.
+- **열 minWidth를 키우는 방식은 쓰지 말 것**: 글꼴·기기·라벨이 바뀔 때마다 다시 깨진다(이 자리만 세 번째 재발이었다).
+- **!important 는 여기선 불가피**: Astryx가 `:not(#\#)` 반복으로 명시도를 (3,1,0)까지 올려놔 일반 클래스 규칙은 절대 못 이긴다. (CLAUDE.md §18의 "토큰만 쓰라"와 충돌 아님 — 색·간격이 아니라 잘림 방지 레이아웃 규칙.)
+- **검증법(재사용)**: `react-dom/server`로 실제 Astryx 컴포넌트를 SSR → 빌드된 CSS와 함께 정적 페이지로 띄움 → Playwright(`/opt/pw-browsers/chromium`)로 `th.scrollWidth > th.clientWidth` 측정. 눈대중 금지(§15-2).
+  ⚠️ 이때 **링크할 CSS 청크를 반드시 확인**할 것. 컴포넌트 CSS는 `index-*.css`가 아니라 라우트 청크(예 `AdminConsultsPage-*.css`)에 들어간다 — 엉뚱한 파일을 링크하면 "수정이 안 먹는다"고 오진한다(이번에 한 번 겪음).

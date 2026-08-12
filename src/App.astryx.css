@@ -7,3 +7,21 @@
 .page-skeleton-grid {
   margin-top: 16px;
 }
+
+/* ─── 표 헤더 글자 잘림 방지 (전역, 2026-08-12 실측) ──────────────────────────
+   증상: 관리자 화면의 표 헤더가 조용히 "중앙값 응…" 처럼 말줄임돼 무슨 열인지 알 수 없었다.
+   원인: Astryx Table 의 헤더 칸(th)은 `white-space:nowrap + overflow:hidden +
+        text-overflow:ellipsis` 라, 배정된 열 폭보다 라벨이 조금만 길어도 바로 잘린다.
+        실측(뷰포트 390px): "중앙값 응답" 은 91px 필요 / 배정 폭 89px → 2px 모자라 잘림.
+   해결: 열 최소폭(minWidth)을 키우는 방식은 글꼴·기기·라벨이 바뀔 때마다 다시 깨진다.
+        헤더는 말줄임 대신 두 줄로 흐르게 해 폭과 무관하게 항상 전부 보이게 한다.
+        폭이 충분할 땐 지금까지와 똑같이 한 줄로 나오므로 다른 표에 부작용이 없다.
+   · word-break:keep-all → 한글이 글자 단위로 쪼개지지 않고 어절(띄어쓰기)에서만 줄바꿈.
+   · !important 는 Astryx 가 명시도를 `:not(#\#)` 반복으로 (3,1,0) 까지 끌어올려 둬서 불가피.
+     (이 규칙은 (0,1,0) — !important 없이는 절대 이기지 못한다.)
+   · 값 칸(td)은 원래 줄바꿈되므로 손대지 않는다. */
+.astryx-table-header-cell {
+  white-space: normal !important;
+  text-overflow: clip !important;
+  word-break: keep-all;
+}
