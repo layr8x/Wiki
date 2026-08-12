@@ -261,9 +261,9 @@ export function KakaoConsultStatus() {
             </HStack>
           }
         >
-          <div className="kcs-table-scroll">
-            <Table data={sla || []} columns={SLA_COLUMNS} idKey="channel" density="compact" dividers="rows" />
-          </div>
+          {/* 표를 div 로 한 겹 더 감싸지 말 것 — Astryx Table 이 자체 가로 스크롤 래퍼를
+              갖고 있어, 그 위에 overflow 상자를 씌우면 세로로 잘린다(CSS 파일 주석 참고). */}
+          <Table data={sla || []} columns={SLA_COLUMNS} idKey="channel" density="compact" dividers="rows" />
         </Collapsible>
       )}
 
@@ -294,9 +294,7 @@ export function KakaoConsultStatus() {
             </HStack>
           }
         >
-          <div className="kcs-table-scroll">
-            <Table data={health || []} columns={HEALTH_COLUMNS} idKey="profileId" density="compact" dividers="rows" />
-          </div>
+          <Table data={health || []} columns={HEALTH_COLUMNS} idKey="profileId" density="compact" dividers="rows" />
         </Collapsible>
       )}
 
