@@ -5,6 +5,7 @@
 // - 서버가 ANTHROPIC_API_KEY 미설정(503)이면 조용히 비활성화 (hidden 상태)
 
 import { useEffect, useRef, useState } from 'react'
+import { authHeaders } from '@/lib/apiAuth'
 
 const DEBOUNCE_MS = 400
 const MIN_QUERY_LEN = 2
@@ -47,7 +48,7 @@ export function useSearchSummary(query, results) {
       try {
         const res = await fetch('/api/search-summary', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...(await authHeaders()) },
           body: JSON.stringify({ query: q, guides }),
           signal: ctrl.signal,
         })

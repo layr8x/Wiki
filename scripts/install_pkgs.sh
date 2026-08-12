@@ -11,4 +11,15 @@ if [ ! -d node_modules ]; then
   npm install || true
 fi
 
+# 에이전트 스킬 연결 복원.
+# 스킬 본체(.agents/skills)는 저장소에 커밋돼 있지만 .claude/는 git 무시라
+# 새 클론에서는 Claude Code가 읽는 .claude/skills 링크가 비어 있다. 여기서 다시 건다.
+if [ -d .agents/skills ]; then
+  mkdir -p .claude/skills
+  for skill in .agents/skills/*/; do
+    name=$(basename "$skill")
+    [ -e ".claude/skills/$name" ] || ln -s "../../.agents/skills/$name" ".claude/skills/$name" 2>/dev/null || true
+  done
+fi
+
 exit 0

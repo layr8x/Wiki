@@ -5,7 +5,9 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // .agents/skills = 외부에서 받은 에이전트 스킬. 데모에 번들 라이브러리(three.module.min.js 등)가
+  // 들어 있어 우리 규칙으로 검사할 대상이 아니다.
+  globalIgnores(['dist', '.agents']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
