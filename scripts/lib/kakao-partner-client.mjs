@@ -17,6 +17,41 @@ export class KakaoPartnerClient {
     this.profileId = profileId;
     this.userAgent = userAgent;
     this.jitterMs = jitterMs;
+    this.rotated = false; // 카카오가 응답으로 새 토큰을 내려준 적이 있으면 true
+  }
+
+  // 카카오는 호출 도중 로그인 토큰(_kawlt 등)을 갱신해 Set-Cookie 로 돌려줄 때가 있다.
+  // 이걸 무시하고 처음 쿠키만 계속 쓰면, 카카오 쪽에서 옛 토큰을 무효화하는 순간
+  // 다음 호출부터 401 이 나고 수집이 조용히 멈춘다(2026-07-25 중단의 재발 방지책).
+  // → 응답에 실린 새 값을 쿠키 보따리에 합쳐 이후 호출부터 최신 토큰을 쓴다.
+  _absorbSetCookie(res) {
+    let list = [];
+    try { list = res.headers.getSetCookie?.() ?? []; } catch { /* 구버전 런타임 */ }
+    if (!list.length) { const one = res.headers.get('set-cookie'); if (one) list = [one]; }
+    if (!list.length) return;
+
+    const jar = new Map();
+    for (const part of this.cookie.split(';')) {
+      const s = part.trim();
+      if (!s) continue;
+      const i = s.indexOf('=');
+      if (i > 0) jar.set(s.slice(0, i), s.slice(i + 1));
+    }
+    let changed = false;
+    for (const sc of list) {
+      const first = String(sc).split(';')[0].trim();
+      const i = first.indexOf('=');
+      if (i <= 0) continue;
+      const name = first.slice(0, i);
+      const val = first.slice(i + 1);
+      // 삭제 지시(빈 값/deleted)는 무시 — 멀쩡한 세션을 스스로 깎지 않기 위해.
+      if (!val || val === 'deleted') continue;
+      if (jar.get(name) !== val) { jar.set(name, val); changed = true; }
+    }
+    if (changed) {
+      this.cookie = [...jar.entries()].map(([k, v]) => `${k}=${v}`).join('; ');
+      this.rotated = true;
+    }
   }
 
   // 쿠키 만료 후 갱신된 값으로 런타임 교체 (장시간 데몬 자가복구용).
@@ -48,6 +83,7 @@ export class KakaoPartnerClient {
         ...(opts.headers || {}),
       },
     });
+    if (res.ok) this._absorbSetCookie(res);
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       const err = new Error(`HTTP ${res.status} ${path} :: ${body.slice(0, 200)}`);

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  카카오 파트너센터 상시 수집 (5분마다) — 회사 자산 맥 스튜디오에서 직접 실행.
+
+  왜 클라우드가 아니라 이 기기인가 (2026-08-12 실측으로 확정):
+    Supabase Edge Function(pg_cron 20분)으로 수집하던 구조가 2026-07-25부터 401 로 전면 중단됐다.
+    원인은 쿠키 만료가 아니었다. 동일 쿠키·동일 헤더로
+      · 맥 스튜디오에서 호출 → 200 정상
+      · Supabase(클라우드 IP)에서 호출 → 401 거부
+    즉 카카오가 클라우드 IP 요청을 막는다. 쿠키를 아무리 잘 갱신해도 클라우드에선 통과할 수 없다.
+    → 수집 자체를 쿠키가 살아 있는 이 기기에서 돌린다. 네트워크로 쿠키를 옮길 필요도 없어진다.
+
+  전제:
+    · Chrome 으로 business.kakao.com 에 파트너센터 권한 계정 로그인 유지
+    · .env.local 에 KAKAO_PARTNER_COOKIE / SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY
+      (쿠키는 com.amswiki.kakao-cookie-refresh 가 6시간마다 검증 후 자동 갱신)
+
+  설치 (한 번만):
+    cp scripts/launchd/com.amswiki.kakao-collect.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-collect.plist
+    tail -f ~/Library/Logs/ams-wiki/kakao-collect.log
+  중지:
+    launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-collect.plist
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.amswiki.kakao-collect</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>--env-file=.env.local</string>
+    <string>scripts/kakao-partner-collect-once.mjs</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/local</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- 5분마다 = 준실시간. 기존 클라우드 크론(20분)보다 촘촘하다. -->
+  <key>StartInterval</key>
+  <integer>300</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/layr8x/Library/Logs/ams-wiki/kakao-collect.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/layr8x/Library/Logs/ams-wiki/kakao-collect.err.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>NODE_ENV</key>
+    <string>production</string>
+    <!-- 시대인재 운영 채널 5개(2026-07-03 확정). .env.local 값에 의존하지 않도록 여기서 고정. -->
+    <key>KAKAO_PARTNER_PROFILE_IDS</key>
+    <string>_VGAQn,_rcpPG,_TkpPG,_xfxilXn,_rkbcn</string>
+  </dict>
+</dict>
+</plist>

@@ -307,3 +307,85 @@
 - **모델·effort 선택**(claude.com/blog/claude-model-and-effort-level-in-claude-code): 대개 신경 쓸 필요 없다.
   틀렸을 때만 원인을 나눠 판단 — **파일을 안 읽거나 검증을 건너뛴 것이면 effort를 올리고, 충분히 보고도
   틀렸으면 모델을 올린다.** effort는 생각 시간이 아니라 읽는 파일 수·도구 사용·단계 수 전체를 조절한다.
+
+---
+
+# 22. ★★ 카카오 수집이 멈추면 = 쿠키가 아니라 "어디서 호출하나"를 먼저 의심 (2026-08-12 실측 확정)
+
+> 배경: 2026-07-25부터 18일간 5채널 수집이 전면 중단. 겉지표는 전부 정상(크론 72회 성공,
+> 쿠키 6h마다 갱신, 함수 HTTP 200, 알림도 정상 발송)인데 실제 수집만 0건이었다.
+> "쿠키 만료"로 오진해 사용자에게 반복 로그인을 요구한 게 가장 큰 실수.
+
+## 22-1. 진짜 원인 — 카카오의 클라우드 IP 차단
+
+**동일 쿠키·동일 헤더로 호출 위치만 바꾼 실측**이 결정적이었다.
+
+| 호출 위치 | 결과 |
+|---|---|
+| 맥 스튜디오 (02:16) | **200 정상** |
+| Supabase Edge Function (02:20) | **401 거부** |
+
+4분 간격·같은 쿠키·같은 UA. 변수는 IP뿐. → **클라우드에선 쿠키가 아무리 싱싱해도 통과 못 한다.**
+
+**진단 순서(다음에 멈추면 이대로)**:
+1. `kakao_partner_stream_state.last_error` 확인 → `auth 401` 이면 인증 문제.
+2. `kakao_partner_secrets.updated_at` 확인 → 최근이면 **쿠키 배달은 정상**. 여기서 "쿠키 만료"로 단정하지 말 것.
+3. **맥 스튜디오에서 같은 쿠키로 직접 호출**해 본다(`kakao-partner-refresh-cookie.mjs` 가 검증 수행).
+   맥에서 200인데 클라우드에서 401이면 → **IP 차단**. 수집 위치를 옮기는 게 유일한 해법.
+
+## 22-2. 현재 구조 — 전부 맥 스튜디오 launchd (조작 0)
+
+| launchd 잡 | 주기 | 역할 |
+|---|---|---|
+| `com.amswiki.kakao-cookie-refresh` | 6시간 | 쿠키 추출·**검증**·배달 |
+| `com.amswiki.kakao-collect` | 5분 | **수집 본체** |
+
+- Supabase `kakao-collect-dispatch` 크론은 **비활성화**(jobid 1). 되살리기: `select cron.alter_job(1, active := true);`
+- 실제 저장소 경로는 `~/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/**local**`.
+  같은 iCloud 아래 `ams-wiki` 폴더는 **무관한 다른 저장소**다(2026-08-12 혼선 발생). plist의 WorkingDirectory가 정답.
+
+## 22-3. 함께 고친 재발 방지 3가지
+
+1. **쿠키 갱신 시 프로필 검증** — 전에는 `_kawlt` 보유 프로필 중 **mtime 최신 1개**만 골랐다.
+   Chrome에 카카오 계정이 2개(`basis9@gmail.com`/`basis9@kakao.com`) 물려 있어 권한 없는 쪽이
+   뽑히면 401. **사용자가 로그인해도 스크립트가 딴 프로필을 집어가 "다시 로그인하세요" 알림만 반복**됐다.
+   → 후보 전부를 `me()`+`chats/search`로 실제 호출해 **통과한 것만** 배달. 통과 0이면 기존 쿠키 보존.
+2. **토큰 회전 흡수** — 카카오 응답의 `Set-Cookie`를 버리고 있었다(브라우저가 로그인을 유지하는 원리).
+   → 흡수해 보관함에 되돌려 저장(Edge Function v12).
+3. **401을 200으로 응답하던 것 → 502** — 18일간 로그상 "정상"으로 보인 이유.
+
+## 22-4. 이 사건의 교훈 (사용자 대응)
+
+- 겉지표가 전부 초록이어도 **최종 산출물(실제 적재 건수)**을 봐야 한다. 크론 성공·HTTP 200은 아무 보증이 아니다.
+- "알림이 없었다"고 단정하기 전에 `kakao_partner_alert_state`를 확인할 것. 이번엔 **알림이 18일 내내 울리고 있었고**,
+  내가 "알림 없음"이라 잘못 보고했다가 정정했다. 사용자는 그 알림대로 로그인을 반복했는데도 안 고쳐진 상태였다.
+- 사용자가 "로그인하지 않아도 되게 해달라"고 하면, 그건 **이미 여러 번 시켰는데 안 됐다**는 신호다. 같은 요구를
+  반복하면 내가 원인을 못 잡은 것(§0 메타원칙과 동일).
+
+## 22-5. 이전으로 옮긴 뒤 드러난 두 번째 결함 — 외래키(FK) 순서 버그 (2026-08-12)
+
+맥 스튜디오 첫 복구 실행 로그에 전 채널에서 이 에러가 쏟아졌다.
+
+```
+upsert 4980289237671803 fail: insert or update on table "kakao_partner_messages"
+violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
+```
+
+- **뜻**: `kakao_partner_messages.chat_id`는 `kakao_partner_chats`를 가리키는 외래키(FK = 부모 행이 먼저 있어야 자식 행을 넣을 수 있는 규칙). **처음 보는 대화방**은 부모 행이 아직 없어, 메시지부터 저장하면 그 묶음이 통째로 실패한다.
+- **왜 영구 유실인가**: 실행 끝에서 채팅 메타는 저장되므로 그 대화방은 "메시지 0건 + 커서는 최신"으로 굳는다 → 증분 수집기가 "변경 없음"으로 판단해 **다시는 안 가져온다**. 실측 피해 646개 대화방(LIVE 635 · 마이클래스 6 · 통합로그인 3 · LIVE 기술지원 2).
+- **고친 곳**: `scripts/kakao-partner-collect-once.mjs` — 메시지 저장 **전에** 부모 행부터 upsert.
+  이때 **`last_log_id`(변경감지 커서)는 예전 값 그대로** 넣는다. 여기서 최신값으로 올리면 메시지 저장이 실패했을 때 위와 똑같이 영구 유실된다. (엣지 함수 v12의 2026-07-09 수정본은 이 부분이 빠져 있으니 되살릴 땐 같이 고칠 것.)
+- **복구 도구**: `node --env-file=.env.local scripts/kakao-partner-backfill-missing.mjs` — 메시지 0건 대화방만 골라 과거분을 되메운다(전 채널·멱등). 목록은 RPC `kakao_chats_missing_messages(p_pid,p_lim,p_after)`로 가져오고, 카카오에도 로그가 없는 방은 `kakao_backfill_empty`에 기록해 다음 실행에서 제외한다.
+  ⚠️ 예전 이 스크립트는 자체 매핑을 써서 **PII 마스킹을 건너뛰고 원문을 적재**했다 → 수집기와 같은 `logToRow`+`sanitizeMessageRow` 경로로 교체 완료. 새 백필 코드를 쓸 땐 반드시 이 경로를 쓸 것.
+- **교훈**: "복구 성공(4,474건)" 같은 총계만 보고 끝내지 말 것. **로그 본문의 에러 줄**을 읽어야 한다. 이 버그는 총계 뒤에 묻혀 있었다.
+
+# 23. ★ 관리자 표 헤더 글자 잘림 = Astryx Table 의 기본 말줄임 (2026-08-12 실측)
+
+- **증상**: 표 헤더가 조용히 `중앙값 응…` 으로 잘려 무슨 열인지 알 수 없음. 값(td)은 멀쩡.
+- **원인**: Astryx `Table`의 헤더 칸(`th`)은 `white-space:nowrap + overflow:hidden + text-overflow:ellipsis` + `max-width:0`. 배정 폭보다 라벨이 **2px만 길어도** 잘린다(실측 390px: "중앙값 응답" 91px 필요 / 89px 배정).
+- **해결(전역, `src/App.astryx.css`)**: `.astryx-table-header-cell { white-space:normal !important; text-overflow:clip !important; word-break:keep-all }` — 폭이 부족할 때만 두 줄로 흐르고, 충분하면 종전과 동일한 한 줄. 320~768px 6개 폭에서 잘림 0 확인.
+- **열 minWidth를 키우는 방식은 쓰지 말 것**: 글꼴·기기·라벨이 바뀔 때마다 다시 깨진다(이 자리만 세 번째 재발이었다).
+- **!important 는 여기선 불가피**: Astryx가 `:not(#\#)` 반복으로 명시도를 (3,1,0)까지 올려놔 일반 클래스 규칙은 절대 못 이긴다. (CLAUDE.md §18의 "토큰만 쓰라"와 충돌 아님 — 색·간격이 아니라 잘림 방지 레이아웃 규칙.)
+- **검증법(재사용)**: `react-dom/server`로 실제 Astryx 컴포넌트를 SSR → 빌드된 CSS와 함께 정적 페이지로 띄움 → Playwright(`/opt/pw-browsers/chromium`)로 `th.scrollWidth > th.clientWidth` 측정. 눈대중 금지(§15-2).
+  ⚠️ 이때 **링크할 CSS 청크를 반드시 확인**할 것. 컴포넌트 CSS는 `index-*.css`가 아니라 라우트 청크(예 `AdminConsultsPage-*.css`)에 들어간다 — 엉뚱한 파일을 링크하면 "수정이 안 먹는다"고 오진한다(이번에 한 번 겪음).
+
