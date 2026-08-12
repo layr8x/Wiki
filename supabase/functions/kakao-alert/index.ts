@@ -1,8 +1,21 @@
 // supabase/functions/kakao-alert/index.ts
-// 상담 데이터 이상탐지 알림 (채널별·원인별·진단형). Supabase Edge Function (pg_cron 10분).
+// 상담 알럿봇 — 상담 운영 + 수집 파이프라인 감시. Supabase Edge Function (pg_cron 10분).
+//
+// 감시 항목 5가지 (2026-08-12 기준)
+//   [운영] 오래 기다리는 상담   checkWaitingSla        영업시간에만 · 영업 6시간 이상 미응답
+//   [수집] 수집 중단·지연       checkCollectionHealth  로그인 만료 / heartbeat 정체 · 즉시
+//   [운영] 문의량 급증          checkCategorySpike     야간 보류 · 카테고리 통합 1건
+//   [파이프] 감정분류·일일요약  checkAnalysisFreshness 뒤 단계가 조용히 멈춘 것 탐지
+//   [파이프] 대시보드 RPC       checkRpcHealth         8초 타임아웃 전에 미리 경보
+//
+// 발송 원칙
+//   · 한 번 실행에서 나가는 Slack 메시지는 **최대 1통**(flushOutbox 가 묶어 보냄, 🔴 먼저).
+//   · 같은 사건 재알림 간격은 지속시간에 비례해 늘어난다(1시간 → 6시간 → 하루, cooldownMs).
+//   · 사람이 조치 못 하는 시간대에는 보내지 않는다(운영 알림=영업시간, 급증=야간 제외).
+//     단 수집 중단은 시간 무관 즉시 — 방치할수록 데이터가 유실된다.
 //
 // 인증: kakao_partner_secrets.key='kakao_alert_token'. 배포: --no-verify-jwt. 트리거: pg_cron 10분.
-// Slack: SLACK_WEBHOOK_URL 미설정 시 로그+상태기록만. 중복억제: 지속시간 비례 쿨다운(아래).
+// Slack: SLACK_WEBHOOK_URL 미설정 시 로그+상태기록만.
 // 메시지 원칙: 결론 먼저·평문·행동 한 줄. 비율/평균/임계 같은 계산·해석이 필요한 수치는 노출하지 않는다.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
@@ -18,6 +31,31 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
 const log = (...a: unknown[]) => console.log(`[${new Date().toISOString()}]`, ...a);
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
+
+// ─── 알림 모아 보내기 (2026-08-12) ────────────────────────────────────────────
+// 예전에는 검사 항목마다 각자 Slack 을 호출해, 한 번 실행에서 최대 4~5통이 연달아 나갔다.
+// 이제는 각 검사가 outbox 에 담기만 하고, 마지막에 **한 통으로 묶어** 보낸다.
+// 급한 것(🔴)이 위로 오도록 정렬하고, 맨 아래에 대시보드 링크를 붙여 바로 조치로 잇는다.
+const DASHBOARD_URL = 'https://sdij-wiki.vercel.app/admin/consults';
+type Level = 'red' | 'orange' | 'green';
+const LEVEL_ORDER: Record<Level, number> = { red: 0, orange: 1, green: 2 };
+// ⚠️ Edge Function 은 요청마다 새로 뜨지 않고 같은 인스턴스를 재사용한다. 이 배열을 매 요청
+//    시작에 비우지 않으면 지난 실행에서 담긴 알림이 다음 실행에 딸려 나간다(중복 발송).
+const outbox: { level: Level; text: string }[] = [];
+function resetOutbox() {
+  outbox.length = 0;
+}
+function notify(level: Level, text: string) {
+  outbox.push({ level, text });
+}
+
+async function flushOutbox(): Promise<number> {
+  if (!outbox.length) return 0;
+  outbox.sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
+  const header = outbox.length > 1 ? `📣 상담 알림 ${outbox.length}건\n\n` : '';
+  await sendSlack(header + outbox.map((o) => o.text).join('\n\n') + `\n\n대시보드: ${DASHBOARD_URL}`);
+  return outbox.length;
+}
 
 async function sendSlack(text: string) {
   if (!SLACK_WEBHOOK_URL) {
@@ -178,7 +216,7 @@ async function checkCollectionHealth(): Promise<string[]> {
       if (!firstAt) firstAt = (await earliestHealthFirstAlert()) ?? new Date().toISOString();
       const ageMs = Date.now() - new Date(firstAt).getTime();
       const persistedH = ageMs > 3600_000 ? (ageMs / 3600000).toFixed(1) : null;
-      await sendSlack(globalHealthMessage(globalReason, badRows, persistedH));
+      notify('red', globalHealthMessage(globalReason, badRows, persistedH));
       await upsertState(HEALTH_GLOBAL_KEY, 'alerting', { reason: globalReason, channels: badRows.map((r) => r.channel_label) }, firstAt);
       notified.push(HEALTH_GLOBAL_KEY);
     }
@@ -193,7 +231,7 @@ async function checkCollectionHealth(): Promise<string[]> {
 
   // 전역 인시던트 해제 → 회복도 1건으로.
   if (globalPrev?.status === 'alerting') {
-    await sendSlack(`🟢 카카오 상담 수집이 전 채널 정상으로 돌아왔어요`);
+    notify('green', `🟢 카카오 상담 수집이 전 채널 정상으로 돌아왔어요`);
     await upsertState(HEALTH_GLOBAL_KEY, 'ok', null, null);
     notified.push(HEALTH_GLOBAL_KEY);
   }
@@ -211,10 +249,10 @@ async function checkCollectionHealth(): Promise<string[]> {
         prev?.status === 'alerting' && prev.first_alert_at
           ? ((Date.now() - new Date(prev.first_alert_at).getTime()) / 3600000).toFixed(1)
           : null;
-      await sendSlack(healthMessage(row, persistedH));
+      notify(row.health_reason === 'auth' ? 'red' : 'orange', healthMessage(row, persistedH));
       await upsertState(key, 'alerting', row, firstAt);
     } else {
-      await sendSlack(`🟢 *${row.channel_label}* 수집이 정상으로 돌아왔어요`);
+      notify('green', `🟢 *${row.channel_label}* 수집이 정상으로 돌아왔어요`);
       await upsertState(key, 'ok', row, null);
     }
     notified.push(key);
@@ -319,7 +357,7 @@ async function checkCategorySpike(): Promise<string[]> {
   due.sort((a, b) => Number(b.row.ratio || 0) - Number(a.row.ratio || 0));
   const head = due[0];
   const others = due.length - 1;
-  await sendSlack(spikeMessage(head.row) + (others > 0 ? `\n(같은 시간대에 *${others}개* 카테고리도 함께 늘었어요)` : ''));
+  notify('red', spikeMessage(head.row) + (others > 0 ? `\n(같은 시간대에 *${others}개* 카테고리도 함께 늘었어요)` : ''));
 
   // 함께 늘어난 카테고리도 알린 것으로 처리 — 안 그러면 다음 실행에서 하나씩 또 나간다.
   for (const { row, prev } of due) {
@@ -329,6 +367,68 @@ async function checkCategorySpike(): Promise<string[]> {
     notified.push(key);
   }
   return notified;
+}
+
+// ─── 오래 기다리는 상담 감시 (2026-08-12 신규) ────────────────────────────────
+// 이 알림이 없던 게 알럿봇의 가장 큰 구멍이었다. 지금까지 알럿봇은 "수집 프로그램이
+// 살아 있나"만 봤고, 정작 "고객이 답을 못 받고 방치되고 있나"는 아무도 안 봤다.
+// 실측(2026-08-12): 마이클래스 40시간·콘텐츠 18.6시간 미응답(영업시간 기준!)인데 알림 0건.
+// 아침 9시 일일 요약에만 한 줄 들어갈 뿐이라, 그날 안에 손쓸 방법이 없었다.
+//
+// 설계:
+//   · 기준 시간은 kakao_sla_status 가 주는 **영업 시간**(평일 09~19시 KST)이다. 야간·주말은
+//     애초에 세지 않으므로 "6시간"은 실제로 근무일 기준 6시간을 뜻한다.
+//   · 알림도 영업시간에만 보낸다 — 밤 10시에 알려도 처리할 사람이 없다. 상태를 굳히지
+//     않으므로 다음 근무시간 첫 실행에서 다시 판단한다.
+//   · 채널이 여럿이어도 1건으로 묶는다(원인 1개 = 알림 1건 원칙, §22-3과 동일).
+//   · 회복은 알리지 않고 상태만 조용히 해제한다.
+const SLA_WAIT_ALERT_H = 6;         // 영업시간 기준 6시간 = 근무일 기준 하루의 절반 넘게 방치
+const SLA_KEY = 'sla:waiting';
+
+function isBusinessHours(): boolean {
+  const kst = new Date(Date.now() + 9 * 3600_000);
+  const day = kst.getUTCDay();               // 0=일 … 6=토
+  const h = kst.getUTCHours();
+  return day >= 1 && day <= 5 && h >= 9 && h < 19;
+}
+
+function waitingMessage(bad: any[]): string {
+  const detail = bad
+    .map((r) => `${r.channel} ${r.waiting}건(가장 오래 영업 ${Math.round(Number(r.oldest_wait_h))}시간)`)
+    .join(' · ');
+  return (
+    `🔴 오래 기다리는 상담이 있어요\n` +
+    `${detail}\n` +
+    `👉 대시보드 "지금 처리할 대화"에서 오래 기다린 순으로 답변해 주세요.`
+  );
+}
+
+async function checkWaitingSla(): Promise<string[]> {
+  const { data, error } = await supabase.rpc('kakao_sla_status');
+  if (error) {
+    log('[alert] sla rpc fail:', error.message);
+    return [];
+  }
+  const rows = (data as any[]) || [];
+  const bad = rows
+    .filter((r) => Number(r.waiting) > 0 && Number(r.oldest_wait_h) >= SLA_WAIT_ALERT_H)
+    .sort((a, b) => Number(b.oldest_wait_h) - Number(a.oldest_wait_h));
+  const prev = await getState(SLA_KEY);
+
+  if (!bad.length) {
+    if (prev?.status === 'alerting') await upsertState(SLA_KEY, 'ok', null, null); // 회복은 조용히
+    return [];
+  }
+  if (!isBusinessHours()) {
+    log('[alert] 영업시간 외 — 미응답 상담 알림 보류, 다음 근무시간에 재평가');
+    return [];
+  }
+  if (!shouldNotify(prev, true)) return [];
+
+  const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+  notify('red', waitingMessage(bad));
+  await upsertState(SLA_KEY, 'alerting', { channels: bad.map((r) => ({ channel: r.channel, waiting: r.waiting, oldest_wait_h: r.oldest_wait_h })) }, firstAt);
+  return [SLA_KEY];
 }
 
 // 대시보드 실시간 RPC 지연/실패 감시(2026-07-10 신규).
@@ -371,10 +471,10 @@ async function checkRpcHealth(): Promise<string[]> {
 
     if (bad) {
       const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
-      await sendSlack(rpcHealthMessage(rpc.label, rpc.name, error ? null : ms, error?.message ?? null));
+      notify(error ? 'red' : 'orange', rpcHealthMessage(rpc.label, rpc.name, error ? null : ms, error?.message ?? null));
       await upsertState(key, 'alerting', { ms, error: error?.message ?? null }, firstAt);
     } else {
-      await sendSlack(`🟢 *${rpc.label}* 조회 속도가 정상으로 돌아왔어요(${(ms / 1000).toFixed(1)}초)`);
+      notify('green', `🟢 *${rpc.label}* 조회 속도가 정상으로 돌아왔어요(${(ms / 1000).toFixed(1)}초)`);
       await upsertState(key, 'ok', { ms }, null);
     }
     notified.push(key);
@@ -413,14 +513,14 @@ async function checkAnalysisFreshness(): Promise<string[]> {
     if (shouldNotify(prev, bad)) {
       if (bad) {
         const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
-        await sendSlack(
+        notify('orange',
           `🟠 *감정 분석*이 밀리고 있어요\n` +
           `상담은 정상 수집되는데, 감정 분석 단계가 한동안 멈춰 미처리가 쌓이고 있어요.\n` +
           `👉 개발 담당에게 kakao-classify 확인을 요청해 주세요.`,
         );
         await upsertState(key, 'alerting', { backlog, last_at: (last as any)?.sentiment_classified_at ?? null }, firstAt);
       } else {
-        await sendSlack(`🟢 *감정 분석*이 정상으로 돌아왔어요`);
+        notify('green', `🟢 *감정 분석*이 정상으로 돌아왔어요`);
         await upsertState(key, 'ok', null, null);
       }
       notified.push(key);
@@ -442,14 +542,14 @@ async function checkAnalysisFreshness(): Promise<string[]> {
     if (shouldNotify(prev, bad)) {
       if (bad) {
         const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
-        await sendSlack(
+        notify('orange',
           `🟠 *일일 요약*이 갱신되지 않고 있어요\n` +
           `매일 만들어지는 상담 요약 스냅샷이 어제·오늘 만들어지지 않았어요.\n` +
           `👉 개발 담당에게 kakao-daily-summary 확인을 요청해 주세요.`,
         );
         await upsertState(key, 'alerting', { last_snapshot: (snap as any)?.snapshot_date ?? null }, firstAt);
       } else {
-        await sendSlack(`🟢 *일일 요약*이 정상으로 돌아왔어요`);
+        notify('green', `🟢 *일일 요약*이 정상으로 돌아왔어요`);
         await upsertState(key, 'ok', null, null);
       }
       notified.push(key);
@@ -469,11 +569,21 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
   if (!secret?.value || token !== secret.value) return json({ error: 'unauthorized' }, 401);
 
+  // 검사는 각자 outbox 에 담기만 하고, 발송은 아래에서 한 통으로 묶어 한 번만 한다.
+  resetOutbox();
   const health = await checkCollectionHealth();
+  const waiting = await checkWaitingSla();
   const spike = await checkCategorySpike();
   const analysis = await checkAnalysisFreshness();
   const rpcHealth = await checkRpcHealth();
-  const result = { at: new Date().toISOString(), slack_configured: !!SLACK_WEBHOOK_URL, notified: [...health, ...spike, ...analysis, ...rpcHealth] };
+  const messages = await flushOutbox();
+  const result = {
+    at: new Date().toISOString(),
+    slack_configured: !!SLACK_WEBHOOK_URL,
+    business_hours: isBusinessHours(),
+    slack_messages_sent: messages ? 1 : 0,
+    notified: [...health, ...waiting, ...spike, ...analysis, ...rpcHealth],
+  };
   log('done', JSON.stringify(result));
   return json(result);
 });
