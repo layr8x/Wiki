@@ -254,23 +254,43 @@ function spikeMessage(row: any): string {
   );
 }
 
+// 문의량 급증 알림은 "지금 사람이 확인해야 하는가"가 기준이다. 아래 셋을 지킨다
+// (2026-08-12 사용자 지적 "알림이 너무 잦다" — 새벽 00:10~07:40 에만 6통이 갔다).
+//   ① 야간(23시~08시)에는 보내지 않는다 — 그 시간에 상담을 확인할 사람이 없다.
+//      상태를 alerting 으로 굳히지 않으므로, 아침에도 계속 튀어 있으면 그때 1통 간다.
+//   ② 여러 카테고리가 동시에 튀어도 알림은 1통 — 가장 심한 것만 쓰고 나머지는 "외 N건".
+//   ③ 회복(🟢 평소 수준으로 돌아왔어요)은 보내지 않고 상태만 조용히 되돌린다.
+//      급증 알림은 조치 안내가 목적이지 상황 중계가 아니다(회복 알림이 통수를 두 배로 만들었다).
+// ※ 수집 장애(로그인 만료 등)는 이 규칙과 무관하게 종전대로 즉시 보낸다 — 사람이 고쳐야 낫는다.
+const SPIKE_MIN_RATIO = 2.5;   // 평소의 2.5배 (기존 2.0 — 저볼륨 카테고리 노이즈 컷)
+const SPIKE_MIN_COUNT = 10;    // 최소 10건 (기존 5 — 3건→7건 같은 건 급증이 아니다)
+const SPIKE_QUIET_START_KST = 23;
+const SPIKE_QUIET_END_KST = 8;
+// 무엇을 확인해야 하는지 짚어주지 못하는 카테고리는 알리지 않는다.
+const SPIKE_SKIP_CATEGORIES = new Set(['기타']);
+
+function kstHour(): number {
+  return (new Date().getUTCHours() + 9) % 24;
+}
+function inQuietHours(): boolean {
+  const h = kstHour();
+  return h >= SPIKE_QUIET_START_KST || h < SPIKE_QUIET_END_KST;
+}
+
 async function checkCategorySpike(): Promise<string[]> {
-  const { data, error } = await supabase.rpc('kakao_category_spike', { min_ratio: 2.0, min_count: 5 });
+  const { data, error } = await supabase.rpc('kakao_category_spike', {
+    min_ratio: SPIKE_MIN_RATIO,
+    min_count: SPIKE_MIN_COUNT,
+  });
   if (error) {
     log('[alert] spike rpc fail:', error.message);
     return [];
   }
-  const spikingToday = new Set(((data as any[]) || []).map((r) => r.category as string));
+  const rows = ((data as any[]) || []).filter((r) => !SPIKE_SKIP_CATEGORIES.has(r.category));
+  const spikingToday = new Set(rows.map((r) => r.category as string));
   const notified: string[] = [];
-  for (const row of (data as any[]) || []) {
-    const key = `spike:${row.category}`;
-    const prev = await getState(key);
-    if (!shouldNotify(prev, true)) continue;
-    const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
-    await sendSlack(spikeMessage(row));
-    await upsertState(key, 'alerting', row, firstAt);
-    notified.push(key);
-  }
+
+  // 급증이 끝난 카테고리는 조용히 해제(알림 없음).
   const { data: alertingRows } = await supabase
     .from('kakao_partner_alert_state')
     .select('alert_key')
@@ -279,9 +299,34 @@ async function checkCategorySpike(): Promise<string[]> {
   for (const r of (alertingRows as any[]) || []) {
     const category = String(r.alert_key).slice('spike:'.length);
     if (spikingToday.has(category)) continue;
-    await sendSlack(`🟢 "${category}" 문의량이 평소 수준으로 돌아왔어요`);
     await upsertState(r.alert_key, 'ok', null, null);
-    notified.push(r.alert_key);
+  }
+
+  if (!rows.length) return notified;
+  if (inQuietHours()) {
+    log(`[alert] 야간(${kstHour()}시 KST) — 급증 ${rows.length}건 발송 보류, 아침에 재평가`);
+    return notified;
+  }
+
+  // 쿨다운이 끝나 실제로 알릴 수 있는 것만 추린 뒤, 그중 가장 심한 1건으로 대표해 1통만 보낸다.
+  const due: any[] = [];
+  for (const row of rows) {
+    const prev = await getState(`spike:${row.category}`);
+    if (shouldNotify(prev, true)) due.push({ row, prev });
+  }
+  if (!due.length) return notified;
+
+  due.sort((a, b) => Number(b.row.ratio || 0) - Number(a.row.ratio || 0));
+  const head = due[0];
+  const others = due.length - 1;
+  await sendSlack(spikeMessage(head.row) + (others > 0 ? `\n(같은 시간대에 *${others}개* 카테고리도 함께 늘었어요)` : ''));
+
+  // 함께 늘어난 카테고리도 알린 것으로 처리 — 안 그러면 다음 실행에서 하나씩 또 나간다.
+  for (const { row, prev } of due) {
+    const key = `spike:${row.category}`;
+    const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+    await upsertState(key, 'alerting', row, firstAt);
+    notified.push(key);
   }
   return notified;
 }
