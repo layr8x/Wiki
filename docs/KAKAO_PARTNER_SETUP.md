@@ -73,18 +73,40 @@ Supabase 쪽 수집 크론은 비활성화했다(무한 401·오탐 알림 방�
    → 이제 후보를 **전부** 놓고 `me()` + `chats/search` 를 실제 호출해 **통과한 것만** 배달한다.
    통과가 하나도 없으면 보관함을 덮어쓰지 않는다(마지막 정상 쿠키 보존).
 
-2. **토큰 회전 흡수** (`supabase/functions/kakao-collect/index.ts`, v12)
+2. **토큰 회전 흡수** (`supabase/functions/kakao-collect/index.ts` v12, `scripts/lib/kakao-partner-client.mjs`)
    카카오 응답의 `Set-Cookie`(갱신 토큰)를 전부 버리고 있었다. 브라우저가 로그인을 유지하는
    원리가 이 회전인데 받지 않으니 세션이 갱신되지 않았다. → 이제 흡수해 보관함에 되돌려 저장.
+   (맥 스튜디오 수집기도 동일 — 회전이 있으면 그 실행 끝에 보관함을 갱신한다.)
 
 3. **인증 실패를 드러나게**
    401 을 HTTP 200 으로 응답해 로그상 18일간 "정상"으로 보였다. → 502 로 응답.
+
+4. **새 대화방 메시지 유실(외래키 순서) 수정** (`scripts/kakao-partner-collect-once.mjs`)
+   `kakao_partner_messages.chat_id` 는 `kakao_partner_chats` 를 가리키는 외래키(FK = 부모 행이
+   먼저 있어야 자식 행을 넣을 수 있는 규칙)다. **처음 보는 대화방**은 부모 행이 아직 없어
+   메시지부터 저장하면 그 묶음이 통째로 실패했다. 그런데 실행 끝에서 채팅 메타는 저장되므로
+   그 대화방은 "메시지 0건 + 커서는 최신" 으로 굳어 **증분 수집기가 다시는 안 가져왔다**.
+   실측 피해 646개 대화방(LIVE 635 · 마이클래스 6 · 통합로그인 3 · LIVE 기술지원 2).
+   → 메시지 저장 **전에** 부모 행부터 upsert 한다. 이때 `last_log_id`(변경감지 커서)는 예전 값을
+   유지해, 메시지 저장이 실패하면 다음 실행이 반드시 재시도하게 한다.
 
 ### 공백 데이터 회수
 
 7/25~8/12 공백은 **정규 수집기가 자동으로 메운다**. 대화별 `last_log_id` 가 바뀐 것을 감지해
 `chatlogs(size=200)` 를 다시 가져오기 때문이다. 채널당 1회 호출 상한이 있어 여러 번에 걸쳐
 따라잡는다(5분 주기라 자동). 대화당 200건을 넘게 쌓인 경우만 유실 가능.
+
+**단, 위 4번(외래키)으로 이미 유실된 646개 대화방은 자동으로 안 메워진다** — 커서가 이미
+최신이라 "변경 없음" 으로 판정되기 때문이다. 맥 스튜디오에서 한 번 돌려 복구한다.
+
+```bash
+cd ~/Library/Mobile\ Documents/com~apple~CloudDocs/MacStudio-MJ/local
+node --env-file=.env.local scripts/kakao-partner-backfill-missing.mjs
+```
+
+메시지가 0건인 대화방만 골라 과거분을 채운다(전 채널·멱등, 여러 번 돌려도 안전).
+카카오에도 로그가 없는 방은 `kakao_backfill_empty` 에 기록해 다음 실행에서 건너뛴다.
+진행 상황은 `select profile_id, count(*) from kakao_partner_messages group by 1;` 로 확인.
 
 ---
 
