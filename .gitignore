@@ -73,3 +73,5 @@ public/cs-stats.json
 # 관리자 화면 렌더 하네스 산출물(빌드·스크린샷) — 언제든 재생성 가능해 커밋하지 않는다
 tools/design-audit/admin/dist/
 tools/design-audit/admin/out/
+# 하네스 디렉터리 안의 작업용 임시 스크립트(밑줄로 시작) — 감사 에이전트가 그때그때 만든다
+tools/design-audit/admin/_*.cjs
