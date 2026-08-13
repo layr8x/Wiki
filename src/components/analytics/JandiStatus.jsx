@@ -27,7 +27,7 @@ function StatBlock({ label, value, suffix, isLoading }) {
         <div className="js-skel" />
       ) : (
         <HStack gap={2} vAlign="baseline">
-          <Text as="span" size="2xl" weight="bold" hasTabularNumbers>{value}</Text>
+          <Text as="span" type="display-3" weight="bold" hasTabularNumbers>{value}</Text>
           {suffix && <Text as="span" type="supporting">{suffix}</Text>}
         </HStack>
       )}
@@ -48,7 +48,7 @@ export function JandiStatus() {
           <div className="js-skel js-skel-headline" />
         ) : (
           <HStack gap={3} vAlign="baseline">
-            <Text as="span" size="3xl" weight="bold" hasTabularNumbers>
+            <Text as="span" type="display-2" weight="bold" hasTabularNumbers>
               {(todayCount ?? 0).toLocaleString('ko-KR')}
             </Text>
             <Text as="span" type="supporting">건</Text>

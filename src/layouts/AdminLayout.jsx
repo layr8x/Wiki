@@ -128,7 +128,8 @@ function AdminTopNav({ crumbs }) {
     <TopNav
       label="관리자 상단 내비게이션"
       startContent={
-        <nav aria-label="Breadcrumb" className="admin-crumbs">
+        // 화면 읽어주는 기능이 aria-label 값을 그대로 읽는다. 화면 전체가 한국어인데 여기만 영어였다.
+        <nav aria-label="현재 위치" className="admin-crumbs">
           {crumbs.map((c, i) => (
             <span key={c.href} className="admin-crumb-seg">
               {i > 0 && <ChevronRight size={12} className="admin-crumb-sep" />}
@@ -173,6 +174,11 @@ export default function AdminLayout() {
           topNav={<AdminTopNav crumbs={crumbs} />}
           // mobileNav.content 를 직접 넘기면 AppShell 자체 드로어(열기/닫기 토글)가
           // 비활성화된다 — content 없이 두면 위 sideNav 를 재사용해 자동 구성.
+          // ⚠️ hasToggle:false + <MobileNavToggle label="메뉴 열기" /> 직접 배치는 하지 말 것.
+          // 좁은 폭에서 AppShell 은 자체 "모바일 바"를 그리고 TopNav 를 그 안에 다른 모드로
+          // 렌더한다 — 직접 놓은 토글은 startContent 째로 사라져 햄버거가 통째로 없어진다(실측).
+          // 그래서 자동 생성 버튼을 쓴다. 그 버튼의 읽어주는 이름이 "Open navigation"(영어)로
+          // 고정인 건 Astryx 쪽 옵션이 없어 남는 문제다(계획서 4장 보류 항목).
           mobileNav={{ hasToggle: true }}
         >
           <CloseMobileNavOnNavigate />

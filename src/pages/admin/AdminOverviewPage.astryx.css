@@ -12,6 +12,9 @@
 }
 @media (min-width: 640px)  { .ov-shell { padding: 24px; } }
 @media (min-width: 1024px) { .ov-shell { padding: 32px; } }
+/* 넓은 화면에서 폭 상한 확대 — 카드 2열이 제 폭을 갖도록. */
+@media (min-width: 1440px) { .ov-shell { max-width: 88rem; } }
+@media (min-width: 1800px) { .ov-shell { max-width: 104rem; } }
 
 /* ─── 유틸 ───────────────────────────────────────────────────── */
 .ov-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
@@ -39,22 +42,8 @@
 .ov-bar { display: flex; flex-direction: column; gap: 6px; }
 .ov-bar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ov-bar-meta { display: inline-flex; align-items: center; gap: 4px; }
-.ov-bar-track {
-  height: 8px; width: 100%;
-  overflow: hidden;
-  border-radius: var(--radius-full);
-  background: var(--color-background-muted);
-}
-.ov-bar-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  background: var(--color-text-primary);
-  transition: width .3s ease;
-}
-.ov-bar-fill[data-tone="green"]  { background: var(--color-icon-green); }
-.ov-bar-fill[data-tone="yellow"] { background: var(--color-icon-yellow); }
-.ov-bar-fill[data-tone="orange"] { background: var(--color-icon-orange); }
-.ov-bar-fill[data-tone="red"]    { background: var(--color-icon-red); }
+/* 막대 자체(.ov-bar-track/.ov-bar-fill 수제 div)는 Astryx ProgressBar 로 교체됨.
+   색은 ProgressBar 의 variant 가 담당하므로 여기서 다시 칠하지 않는다. */
 .ov-neg { color: var(--color-text-secondary); }
 .ov-neg-hot { color: var(--color-text-red); }
 

@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
+import { fetchAllByCursor } from '@/lib/csvExport'
 import { maskBody } from '@/lib/maskPII'
 import {
   MagnifyingGlass as Search,
@@ -17,6 +18,7 @@ import {
 } from '@phosphor-icons/react'
 
 import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
@@ -181,44 +183,48 @@ function ChannelKpi({ ch }) {
   return (
     <Card className="aj-kpi">
       <div className="aj-kpi-head">
-        <Text type="supporting" maxLines={1}>{ch.label}</Text>
+        {/* 방 이름은 두 줄까지 — "재종통합행정 + 플랫폼서비스실"이 한 줄 고정이면 1920px 을 뺀
+            모든 폭에서 끝이 잘려 어느 방인지 알 수 없었다(실측 필요 170px / 배정 150px). */}
+        <Text type="supporting" maxLines={2}>{ch.label}</Text>
         <MessageSquare size={16} className="aj-kpi-icon" />
       </div>
-      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
-      <Text type="supporting" size="sm">전체 누적</Text>
+      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2).
+          ⚠️ 여기 숫자는 "메시지 수"다(카카오 상담 화면의 같은 자리는 "대화방 수"). 상담 화면 주석 참고. */}
+      <Text type="supporting" size="sm">전체 누적 메시지</Text>
       {isLoading ? (
         <div className="aj-skel aj-skel-kpi" />
       ) : (
         <div className="aj-kpi-value">
-          <Text as="span" size="2xl" weight="semibold" hasTabularNumbers>
+          <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
             {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
           </Text>
-          <Text as="span" type="supporting">개</Text>
+          <Text as="span" type="supporting">건</Text>
         </div>
       )}
     </Card>
   )
 }
 
-async function fetchAllForCsv({ roomId, query, year, month }) {
-  const out = []
-  for (let from = 0; ; from += 1000) {
-    let q = supabase
-      .from('jandi_messages')
-      .select('link_id, writer_id, writer_name, content_type, message, created_at')
-      .eq('room_id', roomId)
-      .order('created_at', { ascending: false })
-      .range(from, from + 999)
-    if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
-    const range = periodRange(year, month)
-    if (range) q = q.gte('created_at', range.gte).lt('created_at', range.lt)
-    const { data, error } = await q
-    if (error) throw error
-    if (!data || !data.length) break
-    out.push(...data)
-    if (data.length < 1000) break
-  }
-  return out
+// 페이지 넘김은 @/lib/csvExport 의 커서 방식을 쓴다(카카오 LIVE 102만 건에서 예전 건너뛰기
+// 방식이 타임아웃났던 문제 — 잔디도 같은 코드였다. 그 파일 주석 참고).
+async function fetchAllForCsv({ roomId, query, year, month, onProgress }) {
+  const range = periodRange(year, month)
+  return fetchAllByCursor({
+    timeColumn: 'created_at',
+    idColumn: 'link_id',
+    onProgress,
+    buildQuery: (limit) => {
+      let q = supabase
+        .from('jandi_messages')
+        .select('link_id, writer_id, writer_name, content_type, message, created_at')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
+      if (range) q = q.gte('created_at', range.gte).lt('created_at', range.lt)
+      return q
+    },
+  })
 }
 
 function buildCsv(rows, channelLabel) {
@@ -254,6 +260,7 @@ export default function AdminJandiPage() {
   const [month, setMonth] = useState('all')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [csvLoading, setCsvLoading] = useState(false)
+  const [csvCount, setCsvCount] = useState(0)
 
   const qc = useQueryClient()
   const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
@@ -272,8 +279,13 @@ export default function AdminJandiPage() {
 
   const onDownloadCsv = async () => {
     setCsvLoading(true)
+    setCsvCount(0)
     try {
-      const all = await fetchAllForCsv({ roomId: channel, query, year, month })
+      const all = await fetchAllForCsv({ roomId: channel, query, year, month, onProgress: setCsvCount })
+      if (!all.length) {
+        alert('내려받을 메시지가 없습니다. 방·기간·검색어를 확인해 주세요.')
+        return
+      }
       const csv = buildCsv(all, channelLabel)
       const today = new Date().toISOString().slice(0, 10)
       const tag = year === 'all' ? '전체기간' : (year + (month === 'all' ? '' : '-' + String(month).padStart(2, '0')))
@@ -378,20 +390,24 @@ export default function AdminJandiPage() {
               </Text>
               {threads.length > 0 && (
                 <Text type="supporting" hasTabularNumbers>
-                  {threads.length}개 대화 · {rows.length}개 메시지
+                  {threads.length}개 대화 · {rows.length}건 메시지
                 </Text>
               )}
             </div>
             <div className="aj-main-actions">
               {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
-              {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              {csvLoading && (
+                <Text type="supporting">
+                  {csvCount > 0 ? `CSV 준비 중 · ${csvCount.toLocaleString('ko-KR')}건` : 'CSV 준비 중…'}
+                </Text>
+              )}
               {!isFetching && dataUpdatedAt > 0 && (
                 <Text type="supporting" size="sm">
                   마지막 갱신 {new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               )}
-              <Button label="새로고침" variant="secondary" size="sm" icon={<RefreshIcon size={14} />} onClick={onRefresh} isDisabled={isFetching} />
-              <Button label="CSV" variant="secondary" size="sm" icon={<DownloadIcon size={14} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
+              <Button label="새로고침" variant="secondary" size="sm" icon={<RefreshIcon size={16} />} onClick={onRefresh} isDisabled={isFetching} />
+              <Button label="CSV" variant="secondary" size="sm" icon={<DownloadIcon size={16} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
             </div>
           </div>
 
@@ -411,7 +427,10 @@ export default function AdminJandiPage() {
                     <div className="aj-thread-head">
                       <div className="aj-thread-head-l">
                         <Badge variant="neutral" label={writerLabel(t.root)} icon={<User size={12} />} className="aj-thread-who" />
-                        <Text weight="medium" maxLines={1} className="aj-thread-title">{threadTitle(t.root)}</Text>
+                        {/* 두 줄까지 허용 — 넉넉한 폭에서는 어차피 한 줄에 들어가고(1024px 이상 실측),
+                            좁아졌을 때만 둘째 줄이 생겨 제목이 더 보인다. 한 줄 고정이면 390px 에서
+                            60자 제목의 39%만 남는다. */}
+                        <Text weight="medium" maxLines={2} className="aj-thread-title">{threadTitle(t.root)}</Text>
                       </div>
                       <div className="aj-thread-meta">
                         <Text as="span" type="supporting" hasTabularNumbers>{t.count}건</Text>
@@ -429,9 +448,9 @@ export default function AdminJandiPage() {
             )}
 
             {!isLoading && !isError && rows.length >= limit && (
-              <div className="aj-more">
+              <HStack hAlign="center" className="aj-more">
                 <Button label={`더 보기 (+${PAGE_SIZE})`} variant="secondary" size="sm" onClick={() => setLimit((l) => l + PAGE_SIZE)} />
-              </div>
+              </HStack>
             )}
           </div>
         </Card>

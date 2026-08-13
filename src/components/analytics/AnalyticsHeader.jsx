@@ -127,7 +127,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
         <VStack gap={1} className="anh-headline">
           <Text type="supporting" size="sm">{title} · 최근 7일</Text>
           <HStack gap={3} vAlign="baseline">
-            <Text as="span" size="3xl" weight="bold" hasTabularNumbers>
+            <Text as="span" type="display-3" weight="bold" hasTabularNumbers>
               {data.thisWeekTotal.toLocaleString('ko-KR')}
             </Text>
             <Text as="span" type="supporting">건</Text>
@@ -138,7 +138,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
         {/* 보조 지표: 일평균 + 이상치 여부(SPC) */}
         <VStack gap={1} className="anh-sub">
           <Text type="supporting" size="sm">일평균</Text>
-          <Text as="span" size="xl" weight="semibold" hasTabularNumbers>
+          <Text as="span" type="large" weight="semibold" hasTabularNumbers>
             {data.dailyAvg.toFixed(1)}건/일
           </Text>
           {data.isAnomaly && (

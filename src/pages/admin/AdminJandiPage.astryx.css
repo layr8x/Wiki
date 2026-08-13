@@ -12,6 +12,9 @@
 }
 @media (min-width: 640px) { .aj-shell { padding: 24px; } }
 @media (min-width: 1024px) { .aj-shell { padding: 32px; } }
+/* 넓은 화면에서 폭 상한 확대 — 로그 표라 본문 기준(72rem)을 지킬 이유가 없다. */
+@media (min-width: 1440px) { .aj-shell { max-width: 88rem; } }
+@media (min-width: 1800px) { .aj-shell { max-width: 104rem; } }
 
 /* Supabase 미설정 안내 — Card(variant="muted") 안쪽 Text만 감싸므로 별도 레이아웃 불필요 */
 
@@ -36,6 +39,8 @@
 /* 기간 드롭다운은 Astryx Selector(디자인시스템)로 렌더 — 네이티브 select CSS 제거됨. */
 
 /* ─── 결과 카드 ───────────────────────────────────────────────── */
+/* 카카오 상담의 .ac-panel 과 같은 규칙 — 카드 모서리 밖으로 내용이 삐져나오지 않게 한다. */
+.aj-main { overflow: hidden; }
 .aj-main-head {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: 12px;
@@ -58,8 +63,8 @@
   background: var(--color-background-body);
 }
 .aj-thread-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
-  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 16px;
   background: var(--color-background-muted);
   border-bottom: 1px solid var(--color-border);
 }
@@ -72,13 +77,28 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 좁은 화면에서는 헤더도 줄바꿈시킨다. 작성자 배지(최대 160px)와 건수·최근시각(고정폭)이
+   먼저 자리를 가져가 제목에 60px 밖에 안 남았다(2026-08-13 실측 — 필요 692px 중 60px,
+   91%가 가려졌다). 제목이 스레드가 무슨 얘기인지 알려주는 유일한 글자라 가장 손해가 크다.
+   ⚠️ 이 문제는 대역 데이터의 본문 필드 이름이 틀려 모든 제목이 "(내용 없음)"으로 렌더되는 바람에
+   그동안 감사에서 안 잡혔다. 대역을 고치자마자 드러났다. */
+@media (max-width: 640px) {
+  .aj-thread-head { flex-wrap: wrap; row-gap: 4px; }
+  .aj-thread-head-l { flex: 1 1 100%; flex-wrap: wrap; row-gap: 4px; }
+  .aj-thread-title { flex: 1 1 100%; }
+}
+
 /* ─── 메시지 리스트 ───────────────────────────────────────────── */
-.aj-msglist { list-style: none; margin: 0; padding: 4px 12px; }
+/* 밀도 — 카카오 상담 화면과 동일 기준(동종 페이지 동일 스펙, CLAUDE.md 18장).
+   행 수만큼 곱해지는 자리라 4px 을 줄이면 화면 전체가 눈에 띄게 줄어든다. */
+.aj-msglist { list-style: none; margin: 0; padding: 2px 12px; }
 .aj-msg {
   display: flex; align-items: flex-start; gap: 12px;
-  padding: 8px 4px;
+  padding: 4px 4px;
 }
-.aj-msg + .aj-msg { border-top: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); }
+/* 구분선 진하기는 카카오 상담 화면과 같은 값(--color-border)을 쓴다. 예전에는 이 화면만
+   60%로 흐려서, 두 화면을 번갈아 보면 같은 표인데 선 굵기가 달라 보였다. */
+.aj-msg + .aj-msg { border-top: 1px solid var(--color-border); }
 .aj-msg-reply {
   padding-left: 12px;
   border-radius: var(--radius-inner);
@@ -98,10 +118,22 @@
   white-space: pre-wrap; word-break: break-word;
   font-size: 14px; color: var(--color-text-primary);
 }
+
+/* 좁은 화면: 한 줄에 안 들어가면 본문이 아랫줄로 내려가 폭을 통째로 쓴다.
+   카카오 상담 화면과 동일 기준(동종 페이지 동일 스펙, CLAUDE.md 18장) — 한쪽만 고치면
+   두 화면이 어긋난다. 세로로 무조건 쌓지 않는 이유·짧은 메시지를 한 줄로 두는 이유는
+   AdminConsultsPage.astryx.css 의 같은 자리 주석 참고. */
+@media (max-width: 640px) {
+  .aj-msg { flex-wrap: wrap; gap: 4px 8px; }
+  .aj-msg-time { width: auto; padding-top: 0; }
+  .aj-msg-who { margin-top: 0; }
+  .aj-msg-tag { margin-top: 0; }
+}
 .aj-msg-empty { color: var(--color-text-secondary); }
 
 /* ─── 더 보기 ─────────────────────────────────────────────────── */
-.aj-more { display: flex; justify-content: center; margin-top: 16px; }
+/* 가운데 정렬은 HStack hAlign 이 담당(상담 화면과 같은 방식) — 여기는 여백만. */
+.aj-more { margin-top: 16px; }
 
 /* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
 .aj-skel {

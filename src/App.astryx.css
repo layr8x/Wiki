@@ -1,7 +1,8 @@
 /* src/App.astryx.css — lazy route 로딩 스켈레톤 레이아웃 (padding/max-width만, 색·라운드는 Skeleton 컴포넌트가 담당) */
 .page-skeleton {
   padding: 32px;
-  max-width: 64rem;
+  /* 실제 화면 폭(72rem)과 같아야 로딩 -> 본문 전환에서 폭이 안 튄다. */
+  max-width: 72rem;
   margin-inline: auto;
 }
 .page-skeleton-grid {

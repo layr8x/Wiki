@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { maskBody, maskName } from '@/lib/maskPII'
+import { fetchAllByCursor } from '@/lib/csvExport'
 import {
   MagnifyingGlass as Search,
   ChatText as MessageSquare,
@@ -185,13 +186,15 @@ function ChannelKpi({ ch }) {
         <Badge label={ch.label} variant={CHANNEL_BADGE[ch.id]} />
         <MessageSquare size={16} className="ac-kpi-icon" />
       </div>
-      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
-      <Text type="supporting" size="sm">전체 누적</Text>
+      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2).
+          ⚠️ 여기 숫자는 "대화방 수"다(잔디 화면의 같은 자리는 "메시지 수"). 둘 다 "개"로만 적혀 있어
+          서로 다른 것을 같은 단위로 세는 것처럼 보였다 → 세는 대상을 라벨에 적는다. */}
+      <Text type="supporting" size="sm">전체 누적 대화</Text>
       {isLoading ? (
         <div className="ac-skel ac-skel-kpi" />
       ) : (
         <div className="ac-kpi-value">
-          <Text as="span" size="2xl" weight="semibold" hasTabularNumbers>
+          <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
             {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
           </Text>
           <Text as="span" type="supporting">개</Text>
@@ -201,26 +204,27 @@ function ChannelKpi({ ch }) {
   )
 }
 
-// 현재 필터의 메시지를 1,000건씩 페이지네이션으로 전부 받아 CSV 빌드.
-async function fetchAllForCsv({ profileId, query, year, month }) {
-  const out = []
-  for (let from = 0; ; from += 1000) {
-    let q = supabase
-      .from('kakao_partner_messages')
-      .select('log_id, chat_id, sender_type, message, message_type, sent_at, manager_name:raw->manager->>name')
-      .eq('profile_id', profileId)
-      .order('sent_at', { ascending: false })
-      .range(from, from + 999)
-    if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
-    const range = periodRange(year, month)
-    if (range) q = q.gte('sent_at', range.gte).lt('sent_at', range.lt)
-    const { data, error } = await q
-    if (error) throw error
-    if (!data || !data.length) break
-    out.push(...data)
-    if (data.length < 1000) break
-  }
-  return out
+// 현재 필터의 메시지를 전부 받아 CSV 빌드.
+// 페이지 넘김은 @/lib/csvExport 의 커서 방식을 쓴다(LIVE 102만 건에서 예전 건너뛰기 방식이
+// 타임아웃났던 문제 — 그 파일 주석 참고).
+async function fetchAllForCsv({ profileId, query, year, month, onProgress }) {
+  const range = periodRange(year, month)
+  return fetchAllByCursor({
+    timeColumn: 'sent_at',
+    idColumn: 'log_id',
+    onProgress,
+    buildQuery: (limit) => {
+      let q = supabase
+        .from('kakao_partner_messages')
+        .select('log_id, chat_id, sender_type, message, message_type, sent_at, manager_name:raw->manager->>name')
+        .eq('profile_id', profileId)
+        .order('sent_at', { ascending: false })
+        .limit(limit)
+      if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
+      if (range) q = q.gte('sent_at', range.gte).lt('sent_at', range.lt)
+      return q
+    },
+  })
 }
 
 function buildCsv(rows, nickMap, channelLabel) {
@@ -267,6 +271,9 @@ export default function AdminConsultsPage() {
   const [month, setMonth] = useState('all')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [csvLoading, setCsvLoading] = useState(false)
+  // LIVE 는 102만 건이라 CSV 만드는 데 1~3분이 걸린다. 진행 건수를 보여주지 않으면
+  // 멈춘 것처럼 보여 사용자가 창을 닫아버린다.
+  const [csvCount, setCsvCount] = useState(0)
 
   const qc = useQueryClient()
   const { data: nickMap = new Map() } = useNicknames(channel)
@@ -307,8 +314,13 @@ export default function AdminConsultsPage() {
 
   const onDownloadCsv = async () => {
     setCsvLoading(true)
+    setCsvCount(0)
     try {
-      const all = await fetchAllForCsv({ profileId: channel, query, year, month })
+      const all = await fetchAllForCsv({ profileId: channel, query, year, month, onProgress: setCsvCount })
+      if (!all.length) {
+        alert('내려받을 메시지가 없습니다. 채널·기간·검색어를 확인해 주세요.')
+        return
+      }
       const csv = buildCsv(all, nickMap, channelLabel)
       const today = new Date().toISOString().slice(0, 10)
       const tag = year === 'all' ? '전체기간' : (year + (month === 'all' ? '' : '-' + String(month).padStart(2, '0')))
@@ -341,23 +353,32 @@ export default function AdminConsultsPage() {
           </Card>
         )}
 
-        {/* ─── 실시간 운영 현황 (North Star: 지금 밀린 상담) ─────── */}
-        <KakaoConsultStatus />
+        {/* ─── 상단 분석 영역 ────────────────────────────────────
+            예전엔 실시간 위젯 · 문의량 추세 · 채널 KPI 가 세로로만 쌓여, 정작 목적인
+            상담 스레드에 닿기까지 1,266px(1.5화면)을 지나야 했다. 1440px 화면에서는
+            오른쪽이 비어 있었는데도 그랬다(실측). 넓은 화면에서만 2열로 나눠 그 높이를 줄인다.
+            좁은 화면에서는 자동으로 예전처럼 세로로 쌓인다. */}
+        <div className="ac-analysis">
+          {/* 실시간 운영 현황 (North Star: 지금 밀린 상담) */}
+          <KakaoConsultStatus />
 
-        {/* ─── 분석 요약 (방법론 기반 상단 통계 영역) ───────────── */}
-        <AnalyticsHeader
-          analyticsKey="kakao-consults"
-          table="kakao_partner_messages"
-          dateColumn="sent_at"
-          filters={{ profile_id: channel }}
-          title={channelLabel + ' 문의량'}
-        />
+          <div className="ac-analysis-side">
+            {/* 분석 요약 (방법론 기반 상단 통계 영역) */}
+            <AnalyticsHeader
+              analyticsKey="kakao-consults"
+              table="kakao_partner_messages"
+              dateColumn="sent_at"
+              filters={{ profile_id: channel }}
+              title={channelLabel + ' 문의량'}
+            />
+          </div>
+        </div>
 
-        {/* ─── 채널별 건수 KPI ──────────────────────────────────── */}
-        {/* max 캡은 좁은 화면에서 트랙 최대폭이 최소폭보다 작아져(minmax(200px, 61px))
-            200px 고정 1열로 깨진다(모바일 실측). 캡 없이 auto-fit — 콘텐츠 폭 상한(72rem)이
-            데스크탑에서 자연히 5열을 만들고, 모바일(~390px)에선 2열로 흐른다. */}
-        <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
+        {/* ─── 채널별 건수 KPI ────────────────────────────────────
+            5개를 한 줄로 둔다. 좁은 칸(오른쪽 열)에 넣었더니 4+1 로 접혀 두 줄이 되면서
+            오히려 세로로 더 길어졌다(약 250px). 전체 폭에 한 줄로 두면 111px 이면 된다.
+            좁은 화면에서는 자동으로 접힌다. */}
+        <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
@@ -417,13 +438,17 @@ export default function AdminConsultsPage() {
               <Text weight="semibold">상담 스레드{titleSuffix}</Text>
               {grouped.length > 0 && (
                 <Text type="supporting" hasTabularNumbers>
-                  {grouped.length}개 채팅 · {rows.length}개 메시지
+                  {grouped.length}개 대화 · {rows.length}건 메시지
                 </Text>
               )}
             </div>
             <div className="ac-panel-actions">
               {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
-              {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              {csvLoading && (
+                <Text type="supporting">
+                  {csvCount > 0 ? `CSV 준비 중 · ${csvCount.toLocaleString('ko-KR')}건` : 'CSV 준비 중…'}
+                </Text>
+              )}
               {/* 실시간 구독 없이 수동 새로고침 방식이라, 화면이 "지금 상태"처럼 보이지 않도록
                   마지막으로 실제 데이터를 받아온 시각을 명시(기준2: 오래된 데이터를 최신처럼
                   보여주지 않기 — 카카오 통계 대시보드에서 발견된 것과 같은 유형의 위험 예방). */}
