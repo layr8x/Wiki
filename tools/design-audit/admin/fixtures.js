@@ -125,12 +125,22 @@ export const FIXTURES = {
     updated_at: iso(i * 600),
     views: 1200 - i * 87,
   })),
+  // ⚠️ 컬럼 이름은 실제 조회(db.js fetchAdminFeedback)가 읽는 것과 같아야 한다:
+  //    vote(rating 아님) · session_id. 예전 대역은 `rating` 이라 vote 가 undefined 가 되어
+  //    유형 배지가 전부 "기타"로, 탭 건수가 전부 0으로 나왔다(실제 화면과 다른 그림).
   guide_feedback: Array.from({ length: 4 }, (_, i) => ({
     id: 'f' + i,
     guide_id: 'g' + i,
-    guide_title: ['출결 처리 매뉴얼', '수납·환불 가이드', '교재 배송 프로세스', '라이브 장애 대응'][i],
-    rating: i % 2 === 0 ? 'helpful' : 'unhelpful',
-    comment: '화면 캡처가 예전 버전이라 지금이랑 달라요.',
+    session_id: 'sess-' + i,
+    vote: ['error', 'missing', 'improvement', 'helpful'][i],
+    // ⚠️ 실제 저장 포맷은 `[유형] 제목\n\n본문` 이다(FeedbackPage.jsx). 예전 대역은 한 줄짜리
+    //    평문이라 화면의 제목/본문 분리와 접두 제거를 한 번도 검증할 수 없었다.
+    comment: [
+      '[error] 화면 캡처가 예전 버전이라 지금이랑 달라요\n\n출결 처리 매뉴얼 3단계 캡처가 개편 전 화면입니다. 실제 버튼 위치가 달라 그대로 따라가면 막힙니다.',
+      '[missing] 부분 환불 절차가 빠져 있어요\n\n전액 환불만 적혀 있고 수강 중 환불은 안 나옵니다.',
+      '[improvement] 검색으로 잘 안 찾아집니다\n\n"보강"으로 검색하면 관련 없는 문서가 먼저 나옵니다.',
+      '[helpful] 덕분에 바로 처리했습니다',
+    ][i],
     created_at: iso(i * 300),
   })),
   search_logs: [],

@@ -4,7 +4,7 @@
 //   - 시각 요소는 Astryx primitive(VStack/HStack/Card/Badge/Button/Heading/Text/Table)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/CSS 를 감싸지 않음
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link as RRLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Trash, ArrowsClockwise as RefreshIcon } from '@phosphor-icons/react'
 
@@ -12,9 +12,12 @@ import { fetchAdminFeedback } from '@/lib/db'
 import { useToast } from '@astryxdesign/core/Toast'
 import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 import { VStack } from '@astryxdesign/core/VStack'
 import { HStack } from '@astryxdesign/core/HStack'
+import { Link } from '@astryxdesign/core/Link'
+import { Dialog } from '@astryxdesign/core/Dialog'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
@@ -65,6 +68,15 @@ const TABS = [
   { value: 'praise',   label: '칭찬' },
 ]
 
+// 피드백 본문 저장 포맷은 `[유형] 제목\n\n본문` 이다(FeedbackPage.jsx 68행).
+// ⚠️ **저장 포맷은 건드리지 않는다**(과거 데이터 호환). 보여줄 때만 접두를 떼고 제목/본문을 나눈다.
+// 접두를 떼는 이유: 바로 옆 칸에 같은 뜻의 유형 배지가 이미 있어 두 번 읽게 된다.
+function parseNote(note) {
+  const stripped = String(note || '').replace(/^\[[^\]]+\]\s*/, '').trim()
+  const [head, ...rest] = stripped.split('\n\n')
+  return { title: (head || '').trim(), body: rest.join('\n\n').trim(), full: stripped }
+}
+
 function readLocalQueue() {
   try {
     const raw = localStorage.getItem(FEEDBACK_QUEUE_KEY)
@@ -86,6 +98,7 @@ function readLocalQueue() {
 
 export default function AdminFeedbackPage() {
   const toast = useToast()
+  const isMobile = useIsMobile()
   const [tab, setTab] = useState('all')
   const [localItems, setLocalItems] = useState(() => readLocalQueue())
   const [page, setPage] = useState(1)
@@ -159,50 +172,63 @@ export default function AdminFeedbackPage() {
   const pageItems = useMemo(() => paginateData(filtered, page, PAGE_SIZE), [filtered, page])
 
   const showSkeleton = isLoading && remote.length === 0
+  const [detailItem, setDetailItem] = useState(null)
 
-  const columns = useMemo(() => [
-    {
+  // 390px 에서 표의 43%(264px)가 화면 밖이었고 가로 스크롤 신호도 없었다(스크롤바 두께 0px).
+  // 고정 열을 붙여 봐야 610px 를 밀어야 해서 소용이 없다 → **좁은 폭에서는 열 자체를 줄인다.**
+  // 일시·가이드는 내용 칸 안의 보조 줄로 합치고, 전문은 "자세히"로 연다.
+  const columns = useMemo(() => {
+    const kind = {
       key: 'kind',
       header: '유형',
-      width: pixel(120),
+      width: isMobile ? pixel(96) : pixel(120),
       renderCell: (item) => (
         <Badge label={KIND_LABEL[item.kind] || item.kind || '기타'} variant={toKindVariant(item.kind)} />
       ),
-    },
-    {
+    }
+    const content = {
       key: 'content',
       header: '내용',
       width: proportional(3),
-      renderCell: (item) => (
-        <VStack gap={0.5}>
-          {item.query && (
-            <Text type="supporting">검색어: &ldquo;{item.query}&rdquo;</Text>
-          )}
-          <Text maxLines={2}>{item.note || '내용 없음'}</Text>
-        </VStack>
-      ),
-    },
-    {
+      renderCell: (item) => {
+        const { title, body } = parseNote(item.note)
+        return (
+          <VStack gap={0.5}>
+            {item.query && <Text type="supporting">검색어: &ldquo;{item.query}&rdquo;</Text>}
+            <Text maxLines={2}>{title || '내용 없음'}</Text>
+            {!isMobile && body && <Text type="supporting" maxLines={1}>{body}</Text>}
+            {isMobile && (
+              <Text type="supporting" hasTabularNumbers>
+                {item.createdAt?.slice(0, 16).replace('T', ' ') || '—'}
+                {item.guideId ? ` · ${item.guideId}` : ''}
+              </Text>
+            )}
+          </VStack>
+        )
+      },
+    }
+    const guide = {
       key: 'guideId',
       header: '가이드',
-      width: pixel(120),
+      width: pixel(140),
       renderCell: (item) => (
-        item.guideId ? (
-          <Link to={`/guides/${item.guideId}`} className="af-guide-link">{item.guideId}</Link>
-        ) : (
-          <span className="af-dash">—</span>
-        )
+        item.guideId
+          // 예전에는 16x16 짜리 수제 <a> 였고 밑줄이 없어 링크 단서가 색뿐인데
+          // 그 색이 본문과 대비 1.4:1(다크)이었다 → 디자인시스템 Link + 항상 밑줄.
+          ? <Link as={RRLink} to={`/guides/${item.guideId}`} hasUnderline>{item.guideId}</Link>
+          : <span className="af-dash">—</span>
       ),
-    },
-    {
+    }
+    // 값이 항상 '서버' 하나뿐이면 열을 둘 이유가 없다(헤더에 이미 건수가 적혀 있다).
+    const source = {
       key: 'source',
       header: '출처',
       width: pixel(100),
       renderCell: (item) => (
-        <Badge label={item.source === 'local' ? '로컬' : '서버'} variant="neutral" />
+        <Badge label={item.source === 'local' ? '이 브라우저' : '서버'} variant="neutral" />
       ),
-    },
-    {
+    }
+    const createdAt = {
       key: 'createdAt',
       header: '일시',
       width: pixel(150),
@@ -211,8 +237,21 @@ export default function AdminFeedbackPage() {
           {item.createdAt?.slice(0, 16).replace('T', ' ') || '—'}
         </Text>
       ),
-    },
-  ], [])
+    }
+    const detail = {
+      key: 'detail',
+      // 96px — 80px 이면 "자세히" 버튼(실측 86px)이 6px 잘린다.
+      header: '전문',
+      width: pixel(96),
+      align: 'end',
+      renderCell: (item) => (
+        <Button label="자세히" variant="ghost" size="sm" onClick={() => setDetailItem(item)} />
+      ),
+    }
+    return isMobile
+      ? [kind, content, detail]
+      : [kind, content, guide, ...(localItems.length > 0 ? [source] : []), createdAt, detail]
+  }, [isMobile, localItems.length])
 
   return (
     <div className="af-shell">
@@ -299,6 +338,46 @@ export default function AdminFeedbackPage() {
             />
           </Card>
         )}
+
+        {/* 전문 보기. 표 안에서는 두 줄로 잘라 두고, 전체는 여기서 읽는다.
+            좁은 화면에서 잘라낸 일시·가이드도 여기에 다시 나온다(정보를 지우는 게 아니라 옮긴 것). */}
+        <Dialog isOpen={detailItem !== null} onOpenChange={(open) => { if (!open) setDetailItem(null) }} width={560}>
+          {detailItem && (
+            <VStack gap={4} hAlign="stretch">
+              <HStack gap={2} vAlign="center">
+                <Badge
+                  label={KIND_LABEL[detailItem.kind] || detailItem.kind || '기타'}
+                  variant={toKindVariant(detailItem.kind)}
+                />
+                <Text type="supporting" hasTabularNumbers>
+                  {detailItem.createdAt?.slice(0, 16).replace('T', ' ') || '—'}
+                </Text>
+              </HStack>
+
+              {detailItem.query && (
+                <Text type="supporting">검색어: &ldquo;{detailItem.query}&rdquo;</Text>
+              )}
+
+              <VStack gap={1} hAlign="stretch">
+                <Heading level={4}>{parseNote(detailItem.note).title || '내용 없음'}</Heading>
+                {parseNote(detailItem.note).body && (
+                  <Text as="p" className="af-detail-body">{parseNote(detailItem.note).body}</Text>
+                )}
+              </VStack>
+
+              <HStack gap={3} vAlign="center">
+                <Text type="supporting">가이드</Text>
+                {detailItem.guideId
+                  ? <Link as={RRLink} to={`/guides/${detailItem.guideId}`} hasUnderline>{detailItem.guideId}</Link>
+                  : <Text type="supporting">연결된 가이드 없음</Text>}
+              </HStack>
+
+              <HStack gap={2} hAlign="end">
+                <Button label="닫기" variant="secondary" size="sm" onClick={() => setDetailItem(null)} />
+              </HStack>
+            </VStack>
+          )}
+        </Dialog>
 
       </VStack>
     </div>
