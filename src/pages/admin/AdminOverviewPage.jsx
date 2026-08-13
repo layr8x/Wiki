@@ -29,6 +29,7 @@ import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { ProgressBar } from '@astryxdesign/core/ProgressBar'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 
 import './AdminOverviewPage.astryx.css'
 
@@ -113,7 +114,7 @@ export default function AdminOverviewPage() {
                     <span className="ov-kpi-icon"><Icon size={16} /></span>
                   </div>
                   {statsLoading ? (
-                    <div className="ov-skel ov-skel-kpi" />
+                    <Skeleton width={96} height={32} />
                   ) : (
                     <div className="ov-kpi-value">
                       <Heading level={3}>{formatNumber(value)}</Heading>
@@ -141,7 +142,7 @@ export default function AdminOverviewPage() {
               <VStack gap={3} hAlign="stretch">
                 {modsLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="ov-skel ov-skel-bar" />
+                    <Skeleton key={i} width="100%" height={32} index={i} />
                   ))
                 ) : (
                   getModuleTree().map((mod) => {
@@ -174,7 +175,7 @@ export default function AdminOverviewPage() {
               <div className="ov-cardbody">
                 <VStack gap={2} hAlign="stretch">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="ov-skel ov-skel-row" />
+                    <Skeleton key={i} width="100%" height={40} index={i} />
                   ))}
                 </VStack>
               </div>
@@ -223,7 +224,7 @@ export default function AdminOverviewPage() {
               <VStack gap={3} hAlign="stretch">
                 {rtLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="ov-skel ov-skel-bar" />
+                    <Skeleton key={i} width="100%" height={32} index={i} />
                   ))
                 ) : (
                   rtDist.map((row) => (
@@ -259,7 +260,7 @@ export default function AdminOverviewPage() {
               <VStack gap={3} hAlign="stretch">
                 {catLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="ov-skel ov-skel-bar" />
+                    <Skeleton key={i} width="100%" height={32} index={i} />
                   ))
                 ) : (
                   catDist.map((row) => {
@@ -306,7 +307,7 @@ export default function AdminOverviewPage() {
             </div>
             <div className="ov-cardbody">
               {sentLoading ? (
-                <div className="ov-skel ov-skel-sent" />
+                <Skeleton width="100%" height={128} />
               ) : (
                 <div className="ov-sent">
                   {sentTrend.map((d) => {

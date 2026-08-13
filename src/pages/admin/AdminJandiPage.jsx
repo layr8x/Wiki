@@ -27,6 +27,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { JandiStatus } from '@/components/analytics/JandiStatus'
 
@@ -192,7 +193,7 @@ function ChannelKpi({ ch }) {
           ⚠️ 여기 숫자는 "메시지 수"다(카카오 상담 화면의 같은 자리는 "대화방 수"). 상담 화면 주석 참고. */}
       <Text type="supporting" size="sm">전체 누적 메시지</Text>
       {isLoading ? (
-        <div className="aj-skel aj-skel-kpi" />
+        <Skeleton width={96} height={32} />
       ) : (
         <div className="aj-kpi-value">
           <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
@@ -415,9 +416,11 @@ export default function AdminJandiPage() {
             {isError ? (
               <Text as="p" className="aj-state aj-error">불러오기 실패: {error?.message || '오류'}</Text>
             ) : isLoading ? (
-              <div className="aj-skel-list">
-                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="aj-skel aj-skel-thread" />)}
-              </div>
+              <VStack gap={2} hAlign="stretch">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} width="100%" height={80} index={i} />
+                ))}
+              </VStack>
             ) : threads.length === 0 ? (
               <Text as="p" type="supporting" className="aj-state">조건에 맞는 메시지가 없습니다.</Text>
             ) : (

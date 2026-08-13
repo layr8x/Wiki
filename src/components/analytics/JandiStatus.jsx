@@ -9,6 +9,7 @@
 // 색·간격·라운드는 전부 Astryx 토큰/prop — raw hex/px 없음.
 import { Card } from '@astryxdesign/core/Card'
 import { Text } from '@astryxdesign/core/Text'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { HStack } from '@astryxdesign/core/HStack'
 import { VStack } from '@astryxdesign/core/VStack'
 import { Divider } from '@astryxdesign/core/Divider'
@@ -24,7 +25,7 @@ function StatBlock({ label, value, suffix, isLoading }) {
     <VStack gap={1} className="js-stat">
       <Text type="supporting" size="sm">{label}</Text>
       {isLoading ? (
-        <div className="js-skel" />
+        <Skeleton width={80} height={32} />
       ) : (
         <HStack gap={2} vAlign="baseline">
           <Text as="span" type="display-3" weight="bold" hasTabularNumbers>{value}</Text>
@@ -45,7 +46,7 @@ export function JandiStatus() {
       <VStack gap={1} className="js-headline">
         <Text type="supporting" size="sm">오늘 대화량 (North Star · 5개 방 합산, 실시간)</Text>
         {todayLoading ? (
-          <div className="js-skel js-skel-headline" />
+          <Skeleton width={160} height={44} />
         ) : (
           <HStack gap={3} vAlign="baseline">
             <Text as="span" type="display-2" weight="bold" hasTabularNumbers>

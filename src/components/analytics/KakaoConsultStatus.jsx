@@ -19,6 +19,7 @@ import { Table, proportional } from '@astryxdesign/core/Table'
 import { List } from '@astryxdesign/core/List'
 import { Item } from '@astryxdesign/core/Item'
 import { Collapsible } from '@astryxdesign/core/Collapsible'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { TrendUp as TrendUpIcon, CheckCircle as CheckIcon } from '@phosphor-icons/react'
 import {
   useKakaoSlaStatus,
@@ -159,7 +160,7 @@ export function KakaoConsultStatus({ onSelectChat }) {
             "밀린"·"North Star"는 이 화면을 처음 보는 직원에게 설명이 필요한 표현이었다. */}
         <Text type="supporting" size="sm">지금 답을 기다리는 상담 (5채널 합산, 실시간)</Text>
         {slaLoading ? (
-          <div className="kcs-skel kcs-skel-headline" />
+          <Skeleton width={160} height={44} />
         ) : slaError ? (
           <ErrorNote label="대기 건수" />
         ) : (
@@ -216,7 +217,11 @@ export function KakaoConsultStatus({ onSelectChat }) {
           kakao_action_chats 기반 — 오래 기다린 순 상위 6건. */}
       <Text weight="semibold" size="sm" className="kcs-section-title">지금 처리할 대화</Text>
       {actionLoading ? (
-        <div className="kcs-skel kcs-skel-list" />
+        <VStack gap={2} hAlign="stretch">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} width="100%" height={40} index={i} />
+          ))}
+        </VStack>
       ) : actionError ? (
         <ErrorNote label="지금 처리할 대화" />
       ) : actionChats && actionChats.length > 0 ? (
@@ -267,7 +272,11 @@ export function KakaoConsultStatus({ onSelectChat }) {
       {slaLoading ? (
         <>
           <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황 (응답 목표 시간 기준)</Text>
-          <div className="kcs-skel kcs-skel-table" />
+          <VStack gap={2} hAlign="stretch">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} width="100%" height={32} index={i} />
+            ))}
+          </VStack>
         </>
       ) : slaError ? (
         <>
@@ -302,7 +311,11 @@ export function KakaoConsultStatus({ onSelectChat }) {
       {healthLoading ? (
         <>
           <Text weight="semibold" size="sm" className="kcs-section-title">수집 파이프라인 상태</Text>
-          <div className="kcs-skel kcs-skel-table" />
+          <VStack gap={2} hAlign="stretch">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} width="100%" height={32} index={i} />
+            ))}
+          </VStack>
         </>
       ) : healthError ? (
         <>

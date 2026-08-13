@@ -62,10 +62,12 @@
   overflow: hidden;
   background: var(--color-background-body);
 }
+/* 다크에서 muted 는 카드와 같은 값(#1b1b1b)이라 헤더 면이 사라진다 —
+   카드 위에 얹히는 면은 surface. 상담 화면 같은 자리 주석 참고. */
 .aj-thread-head {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 16px;
-  background: var(--color-background-muted);
+  background: var(--color-background-surface);
   border-bottom: 1px solid var(--color-border);
 }
 .aj-thread-head-l { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
@@ -135,13 +137,3 @@
 /* 가운데 정렬은 HStack hAlign 이 담당(상담 화면과 같은 방식) — 여기는 여백만. */
 .aj-more { margin-top: 16px; }
 
-/* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
-.aj-skel {
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: aj-pulse 1.4s ease-in-out infinite;
-}
-.aj-skel-kpi { height: 32px; width: 96px; }
-.aj-skel-list { display: flex; flex-direction: column; gap: 8px; }
-.aj-skel-thread { height: 80px; width: 100%; }
-@keyframes aj-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

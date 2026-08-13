@@ -58,10 +58,14 @@
   overflow: hidden;
   background: var(--color-background-body);
 }
+/* ⚠️ 다크에서 이 면은 --color-background-muted 를 쓰면 안 된다.
+   neutral 테마는 다크에서 body·card·muted 를 전부 #1b1b1b 로 정의한다(실측) — 즉 카드 위에
+   muted 를 얹으면 대비 1.00 이라 면이 통째로 사라진다. 카드 위에 얹히는 면은 surface(#262626).
+   라이트에서는 둘 다 흰색 계열이라 보이는 결과가 거의 같다. */
 .ac-thread-head {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 16px;
-  background: var(--color-background-muted);
+  background: var(--color-background-surface);
   border-bottom: 1px solid var(--color-border);
 }
 .ac-thread-id { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -124,24 +128,17 @@
   background: var(--color-background-blue);
   border: 1px solid var(--color-border-blue);
 }
+/* 상담원·시스템 말풍선. 위 주석과 같은 이유로 surface 를 쓴다 — muted 로 두면 다크에서
+   상담원 말풍선이 배경에 녹아 누가 말했는지 구분이 안 됐다.
+   고객 말풍선(background-blue)은 그대로 둔다. 2자 대화의 방향 구분이 이 색 차이다. */
 .ac-msg[data-dir="out"] .ac-msg-bubble {
-  background: var(--color-background-muted);
+  background: var(--color-background-surface);
   border: 1px solid var(--color-border);
 }
 .ac-msg-empty { color: var(--color-text-secondary); }
 
 /* "더 보기" 버튼 여백 */
 .ac-more { margin-top: 16px; }
-
-/* ─── 스켈레톤 ───────────────────────────────────────────────── */
-.ac-skel {
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: ac-pulse 1.4s ease-in-out infinite;
-}
-.ac-skel-kpi { height: 32px; width: 96px; }
-.ac-skel-thread { height: 80px; width: 100%; }
-@keyframes ac-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 
 /* ─── 상단 분석 영역 2열 (2026-08-13) ────────────────────────────────────────
    사용자 요청: "스크롤을 많이 하지 않아도 내용 대부분을 확인할 수 있도록".

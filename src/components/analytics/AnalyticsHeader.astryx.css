@@ -46,14 +46,6 @@
   line-height: 1.5;
 }
 
-.anh-skel {
-  height: 96px;
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: anh-pulse 1.4s ease-in-out infinite;
-}
-@keyframes anh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
-
 /* 스파크라인 SVG — 색은 Astryx 아이콘/보더 토큰만 사용 */
 .anh-spark { display: block; }
 .anh-spark-band { fill: var(--color-background-muted); }

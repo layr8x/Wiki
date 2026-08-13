@@ -27,6 +27,10 @@ const PREVIEWS = [
   '보강 신청 방법 알려주세요',
 ]
 
+// 잔디 방 id (AdminJandiPage 의 CHANNELS 와 같은 순서). 앞쪽 메시지는 기본으로 열리는
+// 첫 번째 방에 몰아 둬야 기본 화면이 비어 보이지 않는다.
+const JANDI_ROOMS = ['31495011', '31962045', '33385655', '31495551', '29522222']
+
 const iso = (minutesAgo) => new Date(Date.UTC(2026, 7, 13, 4, 0, 0) - minutesAgo * 60000).toISOString()
 
 // ─── 상담 메시지(카카오 상담 로그 화면) ────────────────────────────────────
@@ -73,6 +77,9 @@ export const FIXTURES = {
   //    모든 메시지가 "(본문 없음)"·"(내용 없음)"으로 렌더돼, 이 화면의 글자 길이·줄바꿈을
   //    한 번도 제대로 검증하지 못하고 있었다.
   //    link_id 는 화면이 스레드 묶음 키로 쓴다. 길이가 제각각이어야 줄바꿈을 확인할 수 있다.
+  // ⚠️ room_id 는 AdminJandiPage 의 CHANNELS id 와 같아야 한다. 예전 대역은 'room0'·'room1'
+  //    같은 임의 값이라, 방 필터가 실제로 동작하기 시작하자 목록이 통째로 비었다.
+  //    (필터를 no-op 으로 두던 시절에는 이 어긋남이 드러나지 않았다.)
   jandi_messages: [
     '이번 주 배포 일정 공유드립니다. 확인 부탁드려요.',
     '넵 확인했습니다.',
@@ -85,8 +92,8 @@ export const FIXTURES = {
   ].map((message, i) => ({
     link_id: String(9000 + i),
     message_id: String(9000 + i),
-    room_id: 'room' + (i % 3),
-    room_name: ['플랫폼서비스팀', '캠퍼스파트', 'TECH 공지'][i % 3],
+    room_id: JANDI_ROOMS[i < 5 ? 0 : (i % JANDI_ROOMS.length)],
+    room_name: ['시대 APP 기획/문의', '시대 APP 실험실', '재종통합행정 + 플랫폼서비스실', '재종 데스크 업무', '전체공지'][i < 5 ? 0 : (i % 5)],
     writer_id: String(10 + (i % 3)),
     writer_name: ['김명준', '박미혜', '김수민'][i % 3],
     content_type: 'text',

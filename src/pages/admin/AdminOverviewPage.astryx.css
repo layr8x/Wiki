@@ -50,14 +50,18 @@
 /* ─── 감정 추세 스택 차트 ────────────────────────────────────── */
 .ov-sent { display: flex; align-items: flex-end; gap: 4px; height: 128px; }
 .ov-sent-col { flex: 1 1 0; min-width: 0; height: 100%; }
+/* 막대가 놓이는 바닥. 다크에서 muted 는 카드와 같은 값이라 차트 영역이 안 보인다 → surface. */
 .ov-sent-stack {
   display: flex; flex-direction: column-reverse; justify-content: flex-end;
   overflow: hidden;
   border-radius: var(--radius-inner);
-  background: var(--color-background-muted);
+  background: var(--color-background-surface);
 }
+/* 중립 막대에 --color-icon-disabled 를 쓰면 대비가 라이트 2.52:1 · 다크 2.20:1 로
+   그래픽 최소 기준 3:1 에 못 미친다(실측). disabled 는 "조작 불가"를 뜻하는 상태 토큰이지
+   회색이 필요할 때 쓰는 색이 아니다 → 회색 계열 토큰(icon-gray, 7.81:1 / 6.83:1)으로 바꾼다. */
 .ov-sent-seg[data-tone="pos"] { background: var(--color-icon-green); }
-.ov-sent-seg[data-tone="neu"] { background: var(--color-icon-disabled); }
+.ov-sent-seg[data-tone="neu"] { background: var(--color-icon-gray); }
 .ov-sent-seg[data-tone="neg"] { background: var(--color-icon-red); }
 .ov-legend {
   display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap;
@@ -69,7 +73,7 @@
    원형에 가깝게 둥글어져 상태점(StatusDot)과 혼동되므로 의도적으로 raw 값 유지 */
 .ov-dot { display: inline-block; width: var(--spacing-2); height: var(--spacing-2); border-radius: 2px; }
 .ov-dot[data-tone="pos"] { background: var(--color-icon-green); }
-.ov-dot[data-tone="neu"] { background: var(--color-icon-disabled); }
+.ov-dot[data-tone="neu"] { background: var(--color-icon-gray); }
 .ov-dot[data-tone="neg"] { background: var(--color-icon-red); }
 
 /* ─── 최근 업데이트 리스트 ───────────────────────────────────── */
@@ -88,14 +92,3 @@
 /* ─── 빈 상태 ────────────────────────────────────────────────── */
 .ov-empty { padding: 40px 24px; text-align: center; }
 
-/* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
-.ov-skel {
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: ov-pulse 1.4s ease-in-out infinite;
-}
-.ov-skel-kpi  { height: 32px; width: 96px; }
-.ov-skel-bar  { height: 32px; width: 100%; }
-.ov-skel-row  { height: 40px; width: 100%; }
-.ov-skel-sent { height: 128px; width: 100%; }
-@keyframes ov-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

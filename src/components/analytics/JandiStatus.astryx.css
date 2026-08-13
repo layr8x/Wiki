@@ -26,12 +26,3 @@
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
-
-.js-skel {
-  height: 32px;
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: js-pulse 1.4s ease-in-out infinite;
-}
-.js-skel-headline { height: 56px; }
-@keyframes js-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

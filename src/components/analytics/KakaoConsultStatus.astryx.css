@@ -73,13 +73,3 @@
    (가로는 표가 카드 폭을 꽉 채워 구분선과 맞아떨어져야 해서 그대로 두는 게 맞다).
    !important 는 Astryx 명시도(:not(#\#) 4회) 때문에 불가피. */
 .kcs-collapsible .astryx-table-scroll-wrapper { margin-block: 0 !important; }
-
-.kcs-skel {
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: kcs-pulse 1.4s ease-in-out infinite;
-}
-.kcs-skel-headline { height: 56px; }
-.kcs-skel-table { height: 120px; }
-.kcs-skel-list { height: 168px; }
-@keyframes kcs-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

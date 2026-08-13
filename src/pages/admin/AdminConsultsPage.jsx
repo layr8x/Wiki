@@ -35,6 +35,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { KakaoConsultStatus } from '@/components/analytics/KakaoConsultStatus'
 import './AdminConsultsPage.astryx.css'
@@ -192,7 +193,7 @@ function ChannelKpi({ ch }) {
           서로 다른 것을 같은 단위로 세는 것처럼 보였다 → 세는 대상을 라벨에 적는다. */}
       <Text type="supporting" size="sm">전체 누적 대화</Text>
       {isLoading ? (
-        <div className="ac-skel ac-skel-kpi" />
+        <Skeleton width={96} height={32} />
       ) : (
         <div className="ac-kpi-value">
           <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
@@ -504,7 +505,9 @@ export default function AdminConsultsPage() {
               <Text as="p" className="ac-state ac-error">불러오기 실패: {error?.message || '오류'}</Text>
             ) : isLoading ? (
               <VStack gap={2} hAlign="stretch">
-                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="ac-skel ac-skel-thread" />)}
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} width="100%" height={80} index={i} />
+                ))}
               </VStack>
             ) : grouped.length === 0 ? (
               <Text as="p" type="supporting" className="ac-state">조건에 맞는 메시지가 없습니다.</Text>
