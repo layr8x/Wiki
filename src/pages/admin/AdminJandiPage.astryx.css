@@ -137,3 +137,17 @@
 /* 가운데 정렬은 HStack hAlign 이 담당(상담 화면과 같은 방식) — 여기는 여백만. */
 .aj-more { margin-top: 16px; }
 
+
+/* ─── 상단 분석 영역 2열 (2026-08-13) ────────────────────────────────────────
+   카카오 상담 화면(.ac-analysis)과 같은 규칙. 값이 갈라지지 않도록 같은 폭·같은 간격을 쓴다.
+   1100px 이상에서만 2열로 나누고, 그 아래에서는 규칙이 적용되지 않아 예전처럼 세로로 쌓인다. */
+.aj-analysis { display: flex; flex-direction: column; gap: 24px; }
+.aj-analysis-side { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+
+@media (min-width: 1100px) {
+  .aj-analysis {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}

@@ -320,20 +320,28 @@ export default function AdminJandiPage() {
           </Card>
         )}
 
-        {/* ─── 실시간 현황 (North Star: 오늘 대화량) ─────────────── */}
-        <JandiStatus />
+        {/* ─── 상단 분석 영역 (카카오 상담 화면과 같은 2열 구조) ──────────────────
+            실시간 현황과 분석 요약이 세로로만 쌓여, 정작 목적인 대화 목록에 닿기까지
+            965px 을 지나야 했다(1440x900 실측 — 첫 화면에 대화가 한 줄도 없었다).
+            넓은 화면에서만 2열로 나눈다. 좁은 화면에서는 예전처럼 세로로 쌓인다.
+            ⚠️ 상담 화면을 이쪽에 맞추지 말고 이쪽을 상담 화면에 맞춘다(그쪽이 먼저 정리됐다). */}
+        <div className="aj-analysis">
+          <JandiStatus />
+          <div className="aj-analysis-side">
+            <AnalyticsHeader
+              analyticsKey="jandi"
+              table="jandi_messages"
+              dateColumn="created_at"
+              filters={{ room_id: channel }}
+              title={channelLabel + ' 대화량'}
+            />
+          </div>
+        </div>
 
-        {/* ─── 분석 요약 (방법론 기반 상단 통계 영역, 카카오 상담 페이지와 동일 스펙) ── */}
-        <AnalyticsHeader
-          analyticsKey="jandi"
-          table="jandi_messages"
-          dateColumn="created_at"
-          filters={{ room_id: channel }}
-          title={channelLabel + ' 대화량'}
-        />
-
-        {/* ─── 채널별 메시지 수 (KPI) ───────────────────────────── */}
-        <Grid columns={{ minWidth: 200, max: 5 }} gap={4}>
+        {/* ─── 채널별 메시지 수 (KPI) ─────────────────────────────
+            5개를 한 줄로 둔다. 상담 화면과 같은 기준(minWidth 200 이면 좁은 칸에서 4+1 로 접혀
+            오히려 세로로 길어진다). */}
+        <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
