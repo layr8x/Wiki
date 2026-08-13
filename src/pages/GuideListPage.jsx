@@ -5,6 +5,7 @@
 //   - 전역 <Theme>(AstryxAppFrame)에서 토큰/모드를 상속하므로 이 페이지는 Theme/CSS 를 감싸지 않음
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { plainSummary } from '@/lib/plainSummary'
 import {
   MagnifyingGlass as Search,
   Eye,
@@ -31,7 +32,16 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 import { getGuideType, GUIDE_TYPE_FILTER } from '@/lib/guideTypes'
 import './GuideListPage.astryx.css'
 
-const SORT_OPTIONS = [
+// 정렬 선택지.
+//
+// "인기순"은 조회수가 실제로 쌓였을 때만 낸다. 조회 로깅을 켜기 전에는 전 가이드가
+// 0이라 이 정렬이 순서를 하나도 바꾸지 못했다. 눌러도 목록이 그대로인데 버튼은
+// 눌린 상태로 남으니, 쓰는 사람은 화면이 고장 났다고 읽는다.
+const SORT_BASE = [
+  { value: 'updated', label: '최신순' },
+  { value: 'title',   label: '제목순' },
+]
+const SORT_WITH_VIEWS = [
   { value: 'updated', label: '최신순' },
   { value: 'views',   label: '인기순' },
   { value: 'title',   label: '제목순' },
@@ -65,6 +75,15 @@ export default function GuideListPage() {
   })
   const allGuides = useMemo(() => fetchedGuides ?? [], [fetchedGuides])
 
+  // 조회수가 하나라도 쌓였을 때만 "인기순"을 낸다(위 SORT_BASE 주석 참고).
+  const hasViewData = useMemo(() => allGuides.some(g => (g.views ?? 0) > 0), [allGuides])
+  const sortOptions = hasViewData ? SORT_WITH_VIEWS : SORT_BASE
+
+  // 선택값을 되돌리는 대신 실제로 쓸 값을 그때그때 계산한다. 상태를 고치려고
+  // effect 에서 setSort 를 부르면 렌더가 한 번 더 돌고, 목록에 없는 값이 잠깐
+  // 선택된 채로 그려진다. 파생값이면 그런 중간 상태가 아예 없다.
+  const effectiveSort = !hasViewData && sort === 'views' ? 'updated' : sort
+
   const filtered = useMemo(() => {
     let list = allGuides
     if (typeFilter !== 'ALL') list = list.filter(g => g.type === typeFilter)
@@ -77,12 +96,12 @@ export default function GuideListPage() {
       )
     }
     list = [...list].sort((a, b) => {
-      if (sort === 'views')   return (b.views ?? 0) - (a.views ?? 0)
-      if (sort === 'title')   return a.title.localeCompare(b.title, 'ko')
+      if (effectiveSort === 'views') return (b.views ?? 0) - (a.views ?? 0)
+      if (effectiveSort === 'title') return a.title.localeCompare(b.title, 'ko')
       return (b.updated ?? '').localeCompare(a.updated ?? '')
     })
     return list
-  }, [allGuides, typeFilter, search, sort])
+  }, [allGuides, typeFilter, search, effectiveSort])
 
   const pagination = usePagination(filtered, 24) // 3-col × 8행
   useEffect(() => { pagination.reset() }, [typeFilter, search, sort, moduleId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -137,12 +156,12 @@ export default function GuideListPage() {
               />
             </div>
             <div className="gl-seg" role="group" aria-label="정렬">
-              {SORT_OPTIONS.map(o => (
+              {sortOptions.map(o => (
                 <Button
                   key={o.value}
                   label={o.label}
                   size="sm"
-                  variant={sort === o.value ? 'primary' : 'ghost'}
+                  variant={effectiveSort === o.value ? 'primary' : 'ghost'}
                   onClick={() => setSort(o.value)}
                 />
               ))}
@@ -199,14 +218,18 @@ export default function GuideListPage() {
                       <Text className="gl-title" weight="semibold" maxLines={2}>{g.title}</Text>
                     </div>
                     <div className="gl-card-body">
-                      <Text type="supporting" maxLines={3}>{g.tldr}</Text>
+                      <Text type="supporting" maxLines={3}>{plainSummary(g.tldr)}</Text>
                     </div>
                     <div className="gl-card-foot">
+                      {/* 0 은 내보내지 않는다. 조건이 `!= null` 이라 조회 로깅을 켜기 전에도
+                          카드마다 "조회 0 · 좋아요 0" 이 붙었다. 35장이면 70개가 화면에
+                          깔리는데 전부 같은 값이라 아무 구분도 못 한다. 지식베이스 목록
+                          사례(Veeam)도 제목·요약·날짜·유형만 싣고 참여 지표는 없었다. */}
                       <div className="gl-metas">
-                        {g.views != null && (
+                        {g.views > 0 && (
                           <span className="gl-meta"><Eye size={11} />{g.views}</span>
                         )}
-                        {g.helpful != null && (
+                        {g.helpful > 0 && (
                           <span className="gl-meta"><ThumbsUp size={11} />{g.helpful}</span>
                         )}
                       </div>
