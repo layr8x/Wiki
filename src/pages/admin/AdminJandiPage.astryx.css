@@ -39,6 +39,8 @@
 /* 기간 드롭다운은 Astryx Selector(디자인시스템)로 렌더 — 네이티브 select CSS 제거됨. */
 
 /* ─── 결과 카드 ───────────────────────────────────────────────── */
+/* 카카오 상담의 .ac-panel 과 같은 규칙 — 카드 모서리 밖으로 내용이 삐져나오지 않게 한다. */
+.aj-main { overflow: hidden; }
 .aj-main-head {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: 12px;
@@ -61,7 +63,7 @@
   background: var(--color-background-body);
 }
 .aj-thread-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 16px;
   background: var(--color-background-muted);
   border-bottom: 1px solid var(--color-border);
@@ -94,7 +96,9 @@
   display: flex; align-items: flex-start; gap: 12px;
   padding: 4px 4px;
 }
-.aj-msg + .aj-msg { border-top: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); }
+/* 구분선 진하기는 카카오 상담 화면과 같은 값(--color-border)을 쓴다. 예전에는 이 화면만
+   60%로 흐려서, 두 화면을 번갈아 보면 같은 표인데 선 굵기가 달라 보였다. */
+.aj-msg + .aj-msg { border-top: 1px solid var(--color-border); }
 .aj-msg-reply {
   padding-left: 12px;
   border-radius: var(--radius-inner);
@@ -128,7 +132,8 @@
 .aj-msg-empty { color: var(--color-text-secondary); }
 
 /* ─── 더 보기 ─────────────────────────────────────────────────── */
-.aj-more { display: flex; justify-content: center; margin-top: 16px; }
+/* 가운데 정렬은 HStack hAlign 이 담당(상담 화면과 같은 방식) — 여기는 여백만. */
+.aj-more { margin-top: 16px; }
 
 /* ─── 로딩 스켈레톤 ──────────────────────────────────────────── */
 .aj-skel {

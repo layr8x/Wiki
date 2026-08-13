@@ -18,6 +18,7 @@ import {
 } from '@phosphor-icons/react'
 
 import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
@@ -187,8 +188,9 @@ function ChannelKpi({ ch }) {
         <Text type="supporting" maxLines={2}>{ch.label}</Text>
         <MessageSquare size={16} className="aj-kpi-icon" />
       </div>
-      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
-      <Text type="supporting" size="sm">전체 누적</Text>
+      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2).
+          ⚠️ 여기 숫자는 "메시지 수"다(카카오 상담 화면의 같은 자리는 "대화방 수"). 상담 화면 주석 참고. */}
+      <Text type="supporting" size="sm">전체 누적 메시지</Text>
       {isLoading ? (
         <div className="aj-skel aj-skel-kpi" />
       ) : (
@@ -196,7 +198,7 @@ function ChannelKpi({ ch }) {
           <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
             {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
           </Text>
-          <Text as="span" type="supporting">개</Text>
+          <Text as="span" type="supporting">건</Text>
         </div>
       )}
     </Card>
@@ -388,7 +390,7 @@ export default function AdminJandiPage() {
               </Text>
               {threads.length > 0 && (
                 <Text type="supporting" hasTabularNumbers>
-                  {threads.length}개 대화 · {rows.length}개 메시지
+                  {threads.length}개 대화 · {rows.length}건 메시지
                 </Text>
               )}
             </div>
@@ -404,8 +406,8 @@ export default function AdminJandiPage() {
                   마지막 갱신 {new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                 </Text>
               )}
-              <Button label="새로고침" variant="secondary" size="sm" icon={<RefreshIcon size={14} />} onClick={onRefresh} isDisabled={isFetching} />
-              <Button label="CSV" variant="secondary" size="sm" icon={<DownloadIcon size={14} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
+              <Button label="새로고침" variant="secondary" size="sm" icon={<RefreshIcon size={16} />} onClick={onRefresh} isDisabled={isFetching} />
+              <Button label="CSV" variant="secondary" size="sm" icon={<DownloadIcon size={16} />} onClick={onDownloadCsv} isDisabled={csvLoading || isLoading} />
             </div>
           </div>
 
@@ -446,9 +448,9 @@ export default function AdminJandiPage() {
             )}
 
             {!isLoading && !isError && rows.length >= limit && (
-              <div className="aj-more">
+              <HStack hAlign="center" className="aj-more">
                 <Button label={`더 보기 (+${PAGE_SIZE})`} variant="secondary" size="sm" onClick={() => setLimit((l) => l + PAGE_SIZE)} />
-              </div>
+              </HStack>
             )}
           </div>
         </Card>

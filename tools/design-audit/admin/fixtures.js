@@ -159,17 +159,20 @@ export function rpcFixture(name) {
         { channel: '콘텐츠', cur_neg: 22, cur_total: 96, cur_rate: 22.9, prev_neg: 11, prev_total: 88, prev_rate: 12.5, worsening: true },
         { channel: 'LIVE', cur_neg: 18, cur_total: 210, cur_rate: 8.6, prev_neg: 21, prev_total: 198, prev_rate: 10.6, worsening: false },
       ]
+    // 전 채널을 'ok' 로만 두면 상태 배지의 지연·만료 모양을 한 번도 못 본다(접힘 상태로만 렌더).
+    // 한 채널만 '지연'으로 둔다 — 표가 자동으로 펼쳐지고, 배너가 뜨는 조건(전 채널 비정상 /
+    // 로그인 만료)은 건드리지 않아 평소 화면과 가장 가깝다.
     case 'kakao_collection_health':
       return CHANNELS.map((label, i) => ({
         profile_id: ['_VGAQn', '_rcpPG', '_TkpPG', '_xfxilXn', '_rkbcn'][i],
         channel_label: label,
-        hb_age_min: [2.6, 3.1, 4.0, 2.9, 5.2][i],
+        hb_age_min: [2.6, 3.1, 4.0, 2.9, 68.4][i],
         last_error: null,
         avg_per_day: [18.2, 312.5, 3.1, 44.0, 1.2][i],
         hrs_since_msg: [0.2, 0.1, 6.4, 0.3, 22.0][i],
         gap_threshold_h: 6.0,
-        health: 'ok',
-        health_reason: 'ok',
+        health: i === 4 ? 'warning' : 'ok',
+        health_reason: i === 4 ? 'gap' : 'ok',
       }))
     // ⚠️ 버킷 이름은 실제 RPC 가 돌려주는 형태 그대로여야 한다("00. 0-5분" 처럼 정렬용 번호가 붙어
     //    나오고, db.js 가 앞의 번호를 떼어낸다). 예전 대역은 "5분 이내" 같은 임의 이름이라

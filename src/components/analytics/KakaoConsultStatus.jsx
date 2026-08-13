@@ -10,7 +10,6 @@
 // 색·간격·라운드는 전부 Astryx 토큰/prop — raw hex/px 없음.
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
-import { StatusDot } from '@astryxdesign/core/StatusDot'
 import { Banner } from '@astryxdesign/core/Banner'
 import { Text } from '@astryxdesign/core/Text'
 import { HStack } from '@astryxdesign/core/HStack'
@@ -31,8 +30,16 @@ import {
 import { maskName, maskBody } from '@/lib/maskPII'
 import './KakaoConsultStatus.astryx.css'
 
-const HEALTH_VARIANT = { ok: 'success', warning: 'warning', critical: 'error' }
-const HEALTH_LABEL = { ok: '정상 수집 중', warning: '수집 지연', critical: '로그인 만료' }
+// 수집 상태는 글자로 적는다. 예전에는 8px 점의 색깔만으로 정상·지연·만료를 구분했고
+// 상태 이름은 읽어주는 기능에만 있었다 — 색을 구분하기 어려운 사람에게는 아무 정보가 없었고,
+// 실제로 수집이 18일간 멈춘 걸 아무도 못 알아챈 자리라 판단이 틀렸을 때 비용이 크다.
+// 색만 진하게 쓰는 건 "지금 조치가 필요한" 두 상태뿐이고, 정상은 조용한 회색으로 둔다
+// (Astryx Badge 지침: 정상 항목마다 success 배지를 붙이지 말 것).
+const HEALTH_BADGE = {
+  ok:       { label: '정상',        variant: 'neutral' },
+  warning:  { label: '지연',        variant: 'warning' },
+  critical: { label: '로그인 만료', variant: 'error' },
+}
 
 // 채널 배지 색(AdminConsultsPage의 CHANNEL_BADGE와 동일 계열 — 페이지 전체 색 일관성).
 const CHANNEL_BADGE = {
@@ -69,8 +76,9 @@ const SLA_COLUMNS = [
   { key: 'channel', header: '채널', width: proportional(1.2, { minWidth: 100 }) },
   { key: 'waiting', header: '대기', width: proportional(0.8, { minWidth: 48 }), align: 'end' },
   {
-    key: 'medianFirstResponseMin', header: '중앙값 응답', width: proportional(1, { minWidth: 84 }), align: 'end',
-    renderCell: (row) => `${row.medianFirstResponseMin}분`,
+    // 단위는 값이 아니라 헤더에 둔다(숫자 열이 값마다 "분"을 달고 다니면 눈으로 비교하기 어렵다).
+    key: 'medianFirstResponseMin', header: '중앙값 첫 응답(분)', width: proportional(1, { minWidth: 84 }), align: 'end',
+    renderCell: (row) => row.medianFirstResponseMin.toLocaleString('ko-KR'),
   },
   {
     key: 'oldestWaitH', header: '최장 대기', width: proportional(1, { minWidth: 76 }), align: 'end',
@@ -83,26 +91,24 @@ const SLA_COLUMNS = [
 ]
 
 const HEALTH_COLUMNS = [
+  { key: 'channelLabel', header: '채널', width: proportional(1.2, { minWidth: 100 }) },
   {
-    key: 'channelLabel', header: '채널', width: proportional(1.2, { minWidth: 116 }),
-    renderCell: (row) => (
-      <HStack gap={2} vAlign="center">
-        <StatusDot
-          variant={HEALTH_VARIANT[row.health]}
-          label={HEALTH_LABEL[row.health]}
-          isPulsing={row.health !== 'ok'}
-        />
-        <Text as="span">{row.channelLabel}</Text>
-      </HStack>
-    ),
-  },
-  {
-    key: 'hbAgeMin', header: '마지막 수집', width: proportional(1, { minWidth: 84 }), align: 'end',
+    // 배지가 앞에 오는 칸이라 왼쪽 정렬로 둔다(오른쪽 정렬이면 머리글만 오른쪽에 붙어 어긋난다).
+    key: 'hbAgeMin', header: '마지막 수집', width: proportional(1.2, { minWidth: 128 }),
     // 하트비트(생존 신호)는 로그인 만료로 수집이 "실패"해도 갱신된다 — 실패 채널에
-    // "19분 전"처럼 방금 수집한 듯한 시각을 보여주면 오해를 부른다(실측). 실패 사유를 그대로 표기.
-    renderCell: (row) => row.healthReason === 'auth'
-      ? <Text as="span" size="sm" className="kcs-error">로그인 만료</Text>
-      : `${row.hbAgeMin.toFixed(0)}분 전`,
+    // "19분 전"처럼 방금 수집한 듯한 시각을 보여주면 오해를 부른다(실측). 그래서 만료일 때는
+    // 시각을 아예 안 쓰고 상태 배지만 남긴다.
+    renderCell: (row) => {
+      const badge = HEALTH_BADGE[row.health] || HEALTH_BADGE.warning
+      return (
+        <HStack gap={2} vAlign="center">
+          <Badge label={badge.label} variant={badge.variant} />
+          {row.healthReason !== 'auth' && (
+            <Text as="span" hasTabularNumbers>{`${row.hbAgeMin.toFixed(0)}분 전`}</Text>
+          )}
+        </HStack>
+      )
+    },
   },
   {
     key: 'avgPerDay', header: '일평균', width: proportional(1, { minWidth: 64 }), align: 'end',
@@ -143,7 +149,9 @@ export function KakaoConsultStatus() {
     <Card padding={5} className="kcs-card">
       {/* 두괄식: North Star를 가장 위 · 가장 크게 */}
       <VStack gap={1} className="kcs-headline">
-        <Text type="supporting" size="sm">지금 밀린 상담 (North Star · 5채널 합산, 실시간)</Text>
+        {/* 화면에는 뜻이 바로 읽히는 말로 쓰고, 이게 North Star 지표라는 사실은 각주로 내린다.
+            "밀린"·"North Star"는 이 화면을 처음 보는 직원에게 설명이 필요한 표현이었다. */}
+        <Text type="supporting" size="sm">지금 답을 기다리는 상담 (5채널 합산, 실시간)</Text>
         {slaLoading ? (
           <div className="kcs-skel kcs-skel-headline" />
         ) : slaError ? (
@@ -180,10 +188,18 @@ export function KakaoConsultStatus() {
         </Text>
       )}
       {!spikeLoading && !spikeError && spikes && spikes.length > 0 && (
+        // "라이브"는 문의 유형 이름이면서 이 화면 아래에 채널 이름으로도 나온다(LIVE·LIVE 기술지원).
+        // 어느 쪽인지 헷갈리므로 "유형"을 붙이고, 이미 받아 두고도 안 쓰던 채널별 내역을 함께 보여
+        // 어느 채널을 열어야 하는지 바로 알 수 있게 한다(새로 조회하지 않는다).
         <Banner
           status="warning"
-          title={`오늘 "${spikes[0].category}" 문의가 평소보다 ${spikes[0].ratio.toFixed(1)}배 늘었습니다`}
-          description={`최근 7일 평균 ${spikes[0].baseline7d.toFixed(1)}건 → 오늘 ${spikes[0].cnt}건`}
+          title={`오늘 '${spikes[0].category}' 유형 문의가 평소보다 ${spikes[0].ratio.toFixed(1)}배 늘었습니다`}
+          description={
+            `최근 7일 평균 ${spikes[0].baseline7d.toFixed(1)}건 → 오늘 ${spikes[0].cnt}건`
+            + (spikes[0].channelBreakdown?.length
+              ? ` (${spikes[0].channelBreakdown.map((b) => `${b.channel} ${b.cnt}건`).join(' · ')})`
+              : '')
+          }
           className="kcs-spike-banner"
         />
       )}
@@ -236,12 +252,12 @@ export function KakaoConsultStatus() {
 
       {slaLoading ? (
         <>
-          <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황(SLA)</Text>
+          <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황 (응답 목표 시간 기준)</Text>
           <div className="kcs-skel kcs-skel-table" />
         </>
       ) : slaError ? (
         <>
-          <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황(SLA)</Text>
+          <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황 (응답 목표 시간 기준)</Text>
           <ErrorNote label="SLA 표" />
         </>
       ) : (
@@ -252,7 +268,7 @@ export function KakaoConsultStatus() {
             // Collapsible 트리거는 한 줄을 전제로 만들어진 영역이라(내용-콘텐츠 간격이 4px뿐)
             // 줄바꿈이 생기면 바로 아래 표와 겹쳐 보인다 — 절대 두 줄로 안 넘어가게 wrap 금지.
             <HStack gap={2} vAlign="center" wrap="nowrap">
-              <Text weight="semibold" size="sm">채널별 응답 현황(SLA)</Text>
+              <Text weight="semibold" size="sm">채널별 응답 현황 (응답 목표 시간 기준)</Text>
               {slaAlerts.length > 0 ? (
                 <Badge variant="warning" label={`지연 ${slaAlerts.length}채널`} />
               ) : (
@@ -324,8 +340,10 @@ export function KakaoConsultStatus() {
       )}
 
       <Text type="supporting" size="xs" className="kcs-footnote">
-        [측정] 대기·SLA·수집상태·지금 처리할 대화는 실시간 직접 조회(캐시 아님) · [측정] 지금 처리할 대화는 5채널 통합 대기 중 오래 기다린 순 상위 6건 ·
-        [측정] 카테고리 급증은 최근 7일 평균 대비 오늘 실적(비율 2배 이상, 최소 5건) · [측정] 감정 추세는 이번주 vs 지난주 부정 비율 비교
+        맨 위 "지금 답을 기다리는 상담"이 이 화면의 North Star 지표(= 팀이 가장 먼저 보는 대표 숫자)입니다 ·
+        [측정] 대기·응답 현황·수집상태·지금 처리할 대화는 실시간 직접 조회(캐시 아님) · [측정] 지금 처리할 대화는 5채널 통합 대기 중 오래 기다린 순 상위 6건 ·
+        [측정] 카테고리 급증은 최근 7일 평균 대비 오늘 실적(비율 2배 이상, 최소 5건) · [측정] 감정 추세는 이번주 vs 지난주 부정 비율 비교 ·
+        [추정] 응답 목표 시간은 확정된 값이 없어 2시간·6시간을 잠정 기준으로 색을 나눕니다
       </Text>
     </Card>
   )

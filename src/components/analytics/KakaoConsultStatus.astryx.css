@@ -29,7 +29,10 @@
 
 .kcs-divider { margin-block: 16px; }
 
-.kcs-section-title { margin-bottom: 8px; }
+/* display:block 이 필요한 이유 — Astryx Text 는 기본이 인라인이라 아래 내용과 같은 줄에 붙는다.
+   조회 실패일 때 "채널별 응답 현황 (응답 목표 시간 기준)SLA 표 불러오기 실패"처럼 한 덩어리로
+   읽혔고, margin-bottom 도 인라인 요소라 세로 방향으로는 먹지 않아 무효였다. */
+.kcs-section-title { display: block; margin-bottom: 8px; }
 
 .kcs-footnote {
   display: block;

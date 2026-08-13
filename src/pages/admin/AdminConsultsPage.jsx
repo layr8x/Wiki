@@ -186,8 +186,10 @@ function ChannelKpi({ ch }) {
         <Badge label={ch.label} variant={CHANNEL_BADGE[ch.id]} />
         <MessageSquare size={16} className="ac-kpi-icon" />
       </div>
-      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
-      <Text type="supporting" size="sm">전체 누적</Text>
+      {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2).
+          ⚠️ 여기 숫자는 "대화방 수"다(잔디 화면의 같은 자리는 "메시지 수"). 둘 다 "개"로만 적혀 있어
+          서로 다른 것을 같은 단위로 세는 것처럼 보였다 → 세는 대상을 라벨에 적는다. */}
+      <Text type="supporting" size="sm">전체 누적 대화</Text>
       {isLoading ? (
         <div className="ac-skel ac-skel-kpi" />
       ) : (
@@ -436,7 +438,7 @@ export default function AdminConsultsPage() {
               <Text weight="semibold">상담 스레드{titleSuffix}</Text>
               {grouped.length > 0 && (
                 <Text type="supporting" hasTabularNumbers>
-                  {grouped.length}개 채팅 · {rows.length}개 메시지
+                  {grouped.length}개 대화 · {rows.length}건 메시지
                 </Text>
               )}
             </div>

@@ -42,10 +42,14 @@ const STATUS_TABS = [
   { value: 'archived',  label: '보관됨' },
 ]
 
-// 상태 → Astryx Badge variant (발행=success, 임시저장=warning, 보관=neutral)
+// 상태 → Astryx Badge variant.
+// 대부분의 행이 '발행'이라 발행을 success(초록)로 두면 표 전체가 초록으로 덮여, 정작 눈에 띄어야 할
+// '임시저장'(=아직 직원에게 안 보이는 글)이 묻힌다. Astryx Badge 지침도 "정상 항목마다 success 배지를
+// 붙이지 말 것"·"모든 행에 같은 배지를 반복하지 말 것"을 명시한다.
+// 그래서 정상 상태는 조용한 회색으로 내리고, 손이 필요한 '임시저장'만 눈에 띄는 색으로 남긴다.
 const STATUS_BADGE_VARIANT = {
-  published: 'success',
-  draft:     'warning',
+  published: 'neutral',
+  draft:     'blue',
   archived:  'neutral',
 }
 
@@ -266,7 +270,14 @@ export default function AdminGuidesPage() {
               {stats.all.toLocaleString('ko-KR')}개의 가이드가 관리 범위에 있습니다.
             </Text>
           </VStack>
-          <Button label="새 가이드 작성" onClick={() => navigate('/editor')} />
+          {/* 대시보드의 같은 버튼과 스펙을 맞춘다(그쪽은 주요 스타일 + 연필 아이콘 + sm). */}
+          <Button
+            label="새 가이드 작성"
+            variant="primary"
+            size="sm"
+            icon={<Pencil size={14} />}
+            onClick={() => navigate('/editor')}
+          />
         </header>
 
         {/* ─── 카드: 툴바 + 테이블 ───────────────────────────────── */}
