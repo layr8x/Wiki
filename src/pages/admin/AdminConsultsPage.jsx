@@ -201,24 +201,57 @@ function ChannelKpi({ ch }) {
   )
 }
 
-// 현재 필터의 메시지를 1,000건씩 페이지네이션으로 전부 받아 CSV 빌드.
-async function fetchAllForCsv({ profileId, query, year, month }) {
+// 현재 필터의 메시지를 전부 받아 CSV 빌드.
+//
+// ⚠️ 예전에는 range(from, from+999) 로 건너뛰기(offset) 방식을 썼는데, LIVE 채널에서 아예 안 됐다
+//    (2026-08-13 사용자 신고 → 원인 규명).
+//    LIVE 는 메시지가 102만 건이라 1,000건씩이면 1,024번을 요청해야 하는데, 건너뛰기 방식은
+//    뒤로 갈수록 앞의 행을 전부 세고 지나가야 해서 급격히 느려진다.
+//    실측: 50만 번째 페이지 한 장이 60초를 넘겨 타임아웃. 그런 페이지가 1,024장 필요했다.
+//    (다른 채널은 5만 건 이하라 티가 안 나서 LIVE 에서만 문제로 보였다.)
+//
+//    → 커서(keyset) 방식으로 바꿨다. "마지막으로 받은 시각보다 이전 것"만 인덱스로 바로 찾으므로
+//      몇 번째 페이지든 속도가 같다. 실측: 5,000건 255ms, 깊이와 무관.
+//      같은 시각(sent_at)에 걸친 메시지가 페이지 경계에서 잘리지 않도록 lte 로 겹쳐 받고
+//      log_id 로 중복을 걸러낸다.
+const CSV_PAGE = 5000
+
+export async function fetchAllForCsv({ profileId, query, year, month, onProgress }) {
   const out = []
-  for (let from = 0; ; from += 1000) {
+  const seen = new Set()
+  const range = periodRange(year, month)
+  let cursor = null   // 마지막으로 받은 sent_at
+
+  for (let guard = 0; guard < 1000; guard++) {
     let q = supabase
       .from('kakao_partner_messages')
       .select('log_id, chat_id, sender_type, message, message_type, sent_at, manager_name:raw->manager->>name')
       .eq('profile_id', profileId)
       .order('sent_at', { ascending: false })
-      .range(from, from + 999)
+      .limit(CSV_PAGE)
     if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
-    const range = periodRange(year, month)
     if (range) q = q.gte('sent_at', range.gte).lt('sent_at', range.lt)
+    // 같은 시각 동률을 놓치지 않으려 lte 로 겹쳐 받는다(중복은 아래에서 제거).
+    if (cursor) q = q.lte('sent_at', cursor)
+
     const { data, error } = await q
     if (error) throw error
     if (!data || !data.length) break
-    out.push(...data)
-    if (data.length < 1000) break
+
+    let added = 0
+    for (const row of data) {
+      const id = String(row.log_id)
+      if (seen.has(id)) continue
+      seen.add(id)
+      out.push(row)
+      added++
+    }
+    onProgress?.(out.length)
+
+    // 겹쳐 받은 것이 전부 중복이면 같은 시각에 CSV_PAGE 건 이상 몰린 것 — 더 진행할 수 없으니 멈춘다.
+    if (added === 0) break
+    if (data.length < CSV_PAGE) break
+    cursor = data[data.length - 1].sent_at
   }
   return out
 }
@@ -267,6 +300,9 @@ export default function AdminConsultsPage() {
   const [month, setMonth] = useState('all')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [csvLoading, setCsvLoading] = useState(false)
+  // LIVE 는 102만 건이라 CSV 만드는 데 1~3분이 걸린다. 진행 건수를 보여주지 않으면
+  // 멈춘 것처럼 보여 사용자가 창을 닫아버린다.
+  const [csvCount, setCsvCount] = useState(0)
 
   const qc = useQueryClient()
   const { data: nickMap = new Map() } = useNicknames(channel)
@@ -307,8 +343,13 @@ export default function AdminConsultsPage() {
 
   const onDownloadCsv = async () => {
     setCsvLoading(true)
+    setCsvCount(0)
     try {
-      const all = await fetchAllForCsv({ profileId: channel, query, year, month })
+      const all = await fetchAllForCsv({ profileId: channel, query, year, month, onProgress: setCsvCount })
+      if (!all.length) {
+        alert('내려받을 메시지가 없습니다. 채널·기간·검색어를 확인해 주세요.')
+        return
+      }
       const csv = buildCsv(all, nickMap, channelLabel)
       const today = new Date().toISOString().slice(0, 10)
       const tag = year === 'all' ? '전체기간' : (year + (month === 'all' ? '' : '-' + String(month).padStart(2, '0')))
@@ -423,7 +464,11 @@ export default function AdminConsultsPage() {
             </div>
             <div className="ac-panel-actions">
               {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
-              {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              {csvLoading && (
+                <Text type="supporting">
+                  {csvCount > 0 ? `CSV 준비 중 · ${csvCount.toLocaleString('ko-KR')}건` : 'CSV 준비 중…'}
+                </Text>
+              )}
               {/* 실시간 구독 없이 수동 새로고침 방식이라, 화면이 "지금 상태"처럼 보이지 않도록
                   마지막으로 실제 데이터를 받아온 시각을 명시(기준2: 오래된 데이터를 최신처럼
                   보여주지 않기 — 카카오 통계 대시보드에서 발견된 것과 같은 유형의 위험 예방). */}

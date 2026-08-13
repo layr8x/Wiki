@@ -200,23 +200,46 @@ function ChannelKpi({ ch }) {
   )
 }
 
-async function fetchAllForCsv({ roomId, query, year, month }) {
+// ⚠️ 건너뛰기(offset) 방식은 방이 커지면 뒤 페이지로 갈수록 급격히 느려져 결국 타임아웃난다
+//    (카카오 상담 화면에서 LIVE 채널 102만 건이 실제로 그렇게 실패했다, 2026-08-13).
+//    잔디도 같은 코드였어서 함께 커서(keyset) 방식으로 바꿨다. 몇 번째 페이지든 속도가 같다.
+//    같은 시각에 걸친 메시지가 페이지 경계에서 잘리지 않도록 lte 로 겹쳐 받고 link_id 로 중복 제거.
+const CSV_PAGE = 5000
+
+export async function fetchAllForCsv({ roomId, query, year, month, onProgress }) {
   const out = []
-  for (let from = 0; ; from += 1000) {
+  const seen = new Set()
+  const range = periodRange(year, month)
+  let cursor = null
+
+  for (let guard = 0; guard < 1000; guard++) {
     let q = supabase
       .from('jandi_messages')
       .select('link_id, writer_id, writer_name, content_type, message, created_at')
       .eq('room_id', roomId)
       .order('created_at', { ascending: false })
-      .range(from, from + 999)
+      .limit(CSV_PAGE)
     if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
-    const range = periodRange(year, month)
     if (range) q = q.gte('created_at', range.gte).lt('created_at', range.lt)
+    if (cursor) q = q.lte('created_at', cursor)
+
     const { data, error } = await q
     if (error) throw error
     if (!data || !data.length) break
-    out.push(...data)
-    if (data.length < 1000) break
+
+    let added = 0
+    for (const row of data) {
+      const id = String(row.link_id)
+      if (seen.has(id)) continue
+      seen.add(id)
+      out.push(row)
+      added++
+    }
+    onProgress?.(out.length)
+
+    if (added === 0) break
+    if (data.length < CSV_PAGE) break
+    cursor = data[data.length - 1].created_at
   }
   return out
 }
@@ -254,6 +277,7 @@ export default function AdminJandiPage() {
   const [month, setMonth] = useState('all')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [csvLoading, setCsvLoading] = useState(false)
+  const [csvCount, setCsvCount] = useState(0)
 
   const qc = useQueryClient()
   const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
@@ -272,8 +296,13 @@ export default function AdminJandiPage() {
 
   const onDownloadCsv = async () => {
     setCsvLoading(true)
+    setCsvCount(0)
     try {
-      const all = await fetchAllForCsv({ roomId: channel, query, year, month })
+      const all = await fetchAllForCsv({ roomId: channel, query, year, month, onProgress: setCsvCount })
+      if (!all.length) {
+        alert('내려받을 메시지가 없습니다. 방·기간·검색어를 확인해 주세요.')
+        return
+      }
       const csv = buildCsv(all, channelLabel)
       const today = new Date().toISOString().slice(0, 10)
       const tag = year === 'all' ? '전체기간' : (year + (month === 'all' ? '' : '-' + String(month).padStart(2, '0')))
@@ -384,7 +413,11 @@ export default function AdminJandiPage() {
             </div>
             <div className="aj-main-actions">
               {isFetching && !csvLoading && <Text type="supporting">불러오는 중…</Text>}
-              {csvLoading && <Text type="supporting">CSV 준비 중…</Text>}
+              {csvLoading && (
+                <Text type="supporting">
+                  {csvCount > 0 ? `CSV 준비 중 · ${csvCount.toLocaleString('ko-KR')}건` : 'CSV 준비 중…'}
+                </Text>
+              )}
               {!isFetching && dataUpdatedAt > 0 && (
                 <Text type="supporting" size="sm">
                   마지막 갱신 {new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
