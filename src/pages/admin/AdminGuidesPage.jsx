@@ -291,11 +291,11 @@ export default function AdminGuidesPage() {
   }, [isNarrow, moduleLabelById, rowActions])
 
   return (
-    <div className="ag-shell">
+    <div className="admin-shell">
       <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
-        <header className="ag-header">
+        <header className="admin-page-header">
           <VStack gap={1.5}>
             <Heading level={1}>가이드 관리</Heading>
             <Text type="supporting">

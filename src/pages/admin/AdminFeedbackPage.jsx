@@ -254,11 +254,11 @@ export default function AdminFeedbackPage() {
   }, [isMobile, localItems.length])
 
   return (
-    <div className="af-shell">
+    <div className="admin-shell">
       <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
-        <div className="af-row-between af-header">
+        <div className="admin-page-header">
           <VStack gap={1.5}>
             <Heading level={1}>피드백 수신함</Heading>
             <Text type="supporting">

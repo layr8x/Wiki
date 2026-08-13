@@ -368,7 +368,7 @@ export default function AdminConsultsPage() {
     + (query ? ' · "' + query + '"' : '')
 
   return (
-    <div className="ac-shell">
+    <div className="admin-shell">
       <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
@@ -466,7 +466,7 @@ export default function AdminConsultsPage() {
 
         {/* ─── 결과 패널 ────────────────────────────────────────── */}
         <Card className="ac-panel" padding={0}>
-          <div className="ac-panel-head">
+          <div className="admin-cardhead admin-row-between ac-panel-head">
             <div className="ac-panel-titlewrap">
               <Text weight="semibold">상담 스레드{titleSuffix}</Text>
               {grouped.length > 0 && (
@@ -497,7 +497,7 @@ export default function AdminConsultsPage() {
 
           <Divider />
 
-          <div className="ac-panel-body">
+          <div className="admin-cardbody">
             {jumpMissed && (
               <Banner
                 status="info"

@@ -6,24 +6,13 @@
 /* 콘텐츠 컨테이너.
    ⚠️ 폭 상한은 다른 관리자 화면(72rem)과 같아야 한다. 이 화면만 64rem 이라 좌측 메뉴에서
    화면을 옮길 때 본문 시작 위치가 64px 씩 튀었다(실측 128px 차이의 절반). */
-.af-shell {
-  margin-inline: auto;
-  width: 100%;
-  max-width: 72rem;
-  padding: 24px 16px;
-}
-@media (min-width: 640px) { .af-shell { padding: 24px; } }
-@media (min-width: 1024px) { .af-shell { padding: 32px; } }
-
-/* 헤더 정렬 (제목 좌 · 액션 우, 반응형 wrap) */
-.af-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.af-header { align-items: flex-end; flex-wrap: wrap; gap: 16px; }
+/* 콘텐츠 컨테이너는 공용 .admin-shell (src/App.astryx.css) 를 쓴다. */
 
 /* 유형 필터 세그먼트 컨테이너 */
 .af-seg {
-  display: inline-flex; flex-wrap: wrap; gap: 2px;
+  display: inline-flex; flex-wrap: wrap; gap: var(--spacing-0-5);
   align-self: flex-start;
-  padding: 4px;
+  padding: var(--spacing-1);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-element);
   background: var(--color-background-body);
@@ -35,24 +24,9 @@
 .af-dash { color: var(--color-text-secondary); }
 
 /* ─── 빈 상태 (GuideListPage .gl-empty 준용) ─────────────────── */
-.af-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center;
-  padding: 56px 24px;
-  border: 1px dashed var(--color-border-emphasized);
-  border-radius: var(--radius-container);
-  background: color-mix(in oklab, var(--color-text-primary) 2%, transparent);
-}
-.af-empty-icon {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 40px; height: 40px; margin-bottom: 12px;
-  border-radius: var(--radius-full);
-  background: var(--color-background-gray);
-  color: var(--color-text-secondary);
-}
 
 /* ─── 로딩 스켈레톤 (Astryx Skeleton 컴포넌트 래퍼) ──────────── */
-.af-skel-wrap { padding: 16px; }
+.af-skel-wrap { padding: var(--spacing-4); }
 
 /* 전문 보기 본문 — 줄바꿈을 그대로 살린다(사용자가 문단을 나눠 적은 그대로 읽혀야 한다). */
 .af-detail-body { white-space: pre-wrap; word-break: break-word; }

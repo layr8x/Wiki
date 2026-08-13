@@ -28,6 +28,7 @@ import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
+import { Divider } from '@astryxdesign/core/Divider'
 import { ProgressBar } from '@astryxdesign/core/ProgressBar'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
@@ -114,11 +115,11 @@ export default function AdminOverviewPage() {
   const sentSummary = summarizeSentiment(sentTrend)
 
   return (
-    <div className="ov-shell">
+    <div className="admin-shell">
       <VStack gap={8} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
-        <div className="ov-header ov-row-between">
+        <div className="admin-page-header">
           <VStack gap={1.5}>
             <Heading level={1}>대시보드</Heading>
             <Text type="supporting">AMS Wiki 전체 현황을 한눈에 확인합니다.</Text>
@@ -145,7 +146,7 @@ export default function AdminOverviewPage() {
             return (
               <Card key={item.key} padding={5}>
                 <VStack gap={2}>
-                  <div className="ov-row-between">
+                  <div className="admin-row-between">
                     <Text type="supporting">{item.label}</Text>
                     <span className="ov-kpi-icon"><Icon size={16} /></span>
                   </div>
@@ -171,13 +172,14 @@ export default function AdminOverviewPage() {
 
           {/* 모듈별 가이드 분포 */}
           <Card padding={0}>
-            <div className="ov-cardhead">
+            <div className="admin-cardhead">
               <VStack gap={1}>
                 <Heading level={4}>모듈별 가이드 분포</Heading>
                 <Text type="supporting">막대 길이는 가장 많은 모듈을 기준으로 한 상대 길이입니다.</Text>
               </VStack>
             </div>
-            <div className="ov-cardbody">
+            <Divider />
+            <div className="admin-cardbody">
               <VStack gap={3} hAlign="stretch">
                 {modsLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
@@ -203,7 +205,7 @@ export default function AdminOverviewPage() {
 
           {/* 최근 업데이트 */}
           <Card padding={0}>
-            <div className="ov-cardhead ov-row-between">
+            <div className="admin-cardhead admin-row-between">
               <Heading level={4}>최근 업데이트</Heading>
               <Button
                 label="전체 보기"
@@ -212,8 +214,9 @@ export default function AdminOverviewPage() {
                 onClick={() => navigate('/admin/guides')}
               />
             </div>
+            <Divider />
             {recentsLoading ? (
-              <div className="ov-cardbody">
+              <div className="admin-cardbody">
                 <VStack gap={2} hAlign="stretch">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Skeleton key={i} width="100%" height={40} index={i} />
@@ -221,11 +224,11 @@ export default function AdminOverviewPage() {
                 </VStack>
               </div>
             ) : recentsError ? (
-              <div className="ov-cardbody">
+              <div className="admin-cardbody">
                 <QueryError label="최근 업데이트" error={recentsErr} onRetry={recentsRefetch} />
               </div>
             ) : recents.length === 0 ? (
-              <div className="ov-cardbody">
+              <div className="admin-cardbody">
                 <QueryEmpty
                   title="최근 업데이트된 가이드가 없습니다"
                   description="가이드를 새로 쓰거나 고치면 여기에 나타납니다."
@@ -265,7 +268,7 @@ export default function AdminOverviewPage() {
             카드는 항상 두고 안쪽에서 로딩·실패·없음을 구분한다. */}
         {(
           <Card padding={0}>
-            <div className="ov-cardhead ov-row-between">
+            <div className="admin-cardhead admin-row-between">
               <VStack gap={1}>
                 <Heading level={4}>카카오 상담 응답시간 분포 (최근 90일)</Heading>
                 <Text type="supporting">
@@ -282,7 +285,8 @@ export default function AdminOverviewPage() {
               onClick={() => navigate('/admin/consults')}
             />
             </div>
-            <div className="ov-cardbody">
+            <Divider />
+            <div className="admin-cardbody">
               <VStack gap={3} hAlign="stretch">
                 {rtLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
@@ -314,7 +318,7 @@ export default function AdminOverviewPage() {
         {/* ─── 카카오 상담 카테고리 분포 (AI 분류) ──────────────── */}
         {(
           <Card padding={0}>
-            <div className="ov-cardhead ov-row-between">
+            <div className="admin-cardhead admin-row-between">
               <VStack gap={1}>
                 <Heading level={4}>카카오 상담 카테고리 분포 (최근 90일, AI 분류)</Heading>
                 <Text type="supporting">
@@ -331,7 +335,8 @@ export default function AdminOverviewPage() {
               onClick={() => navigate('/admin/consults')}
             />
             </div>
-            <div className="ov-cardbody">
+            <Divider />
+            <div className="admin-cardbody">
               <VStack gap={3} hAlign="stretch">
                 {catLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
@@ -376,7 +381,7 @@ export default function AdminOverviewPage() {
         {/* ─── 학부모 감정 추세 (일별) ──────────────────────────── */}
         {(
           <Card padding={0}>
-            <div className="ov-cardhead ov-row-between">
+            <div className="admin-cardhead admin-row-between">
               <VStack gap={1}>
                 <Heading level={4}>학부모 감정 추세 (최근 30일)</Heading>
                 <Text type="supporting">
@@ -393,7 +398,8 @@ export default function AdminOverviewPage() {
               onClick={() => navigate('/admin/consults')}
             />
             </div>
-            <div className="ov-cardbody">
+            <Divider />
+            <div className="admin-cardbody">
               {sentLoading ? (
                 <Skeleton width="100%" height={128} />
               ) : sentError ? (

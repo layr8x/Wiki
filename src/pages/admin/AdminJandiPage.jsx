@@ -25,6 +25,7 @@ import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
+import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
@@ -303,7 +304,7 @@ export default function AdminJandiPage() {
   }
 
   return (
-    <div className="aj-shell">
+    <div className="admin-shell">
       <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
@@ -394,7 +395,7 @@ export default function AdminJandiPage() {
 
         {/* ─── 결과 카드 ─────────────────────────────────────────── */}
         <Card padding={0} className="aj-main">
-          <div className="aj-main-head">
+          <div className="admin-cardhead admin-row-between aj-main-head">
             <div className="aj-main-title">
               <Text weight="semibold">
                 {channelLabel}{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
@@ -422,7 +423,9 @@ export default function AdminJandiPage() {
             </div>
           </div>
 
-          <div className="aj-main-body">
+          <Divider />
+
+          <div className="admin-cardbody">
             {isError ? (
               <QueryError label="대화 메시지" error={error} onRetry={refetch} />
             ) : isLoading ? (
