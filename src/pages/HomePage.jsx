@@ -17,13 +17,13 @@ import {
   ChatText as MessageSquare,
   Gear as Settings,
   ArrowRight,
-  Clock,
   FileText,
   CaretRight as ChevronRight,
   Bell,
   ChatCircle as MessageCircle,
   PencilSimple as PencilLine,
   Eye,
+  MagnifyingGlass,
 } from '@phosphor-icons/react'
 
 import { VStack } from '@astryxdesign/core/VStack'
@@ -36,6 +36,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
+import { useSearchStore } from '@/store/searchStore'
 import { getGuideType } from '@/lib/guideTypes'
 import './HomePage.astryx.css'
 
@@ -85,6 +86,7 @@ function SectionHead({ title, description, link, linkLabel = '전체 보기' }) 
 export default function HomePage() {
   const navigate = useNavigate()
   const { entries: recentlyViewed } = useRecentlyViewed()
+  const { open: openSearch } = useSearchStore()
   const moduleTree = getModuleTree()
 
   // 실제 DB 통계 — Supabase 미설정 시 mockData 기반 값이 폴백으로 반환됨 (db.js)
@@ -111,6 +113,16 @@ export default function HomePage() {
       .slice(0, 4)
   }, [allGuides, recentlyViewed])
 
+  // 지표 카드.
+  //
+  // 조회수 카드는 실측값이 있을 때만 낸다. 예전에는 값이 없으면 "집계 전"이라고 적어
+  // 카드를 그대로 세워 뒀는데, 화면 맨 위 세 칸 중 한 칸이 아무 정보도 없는 상태로
+  // 남았다(모바일에서는 한 화면을 통째로 차지했다). 숫자가 들어갈 자리에 "집계 전"이
+  // 적혀 있으면 지표를 읽으러 온 사람이 한 번 멈춰서 해석해야 한다.
+  //
+  // 지식베이스 화면들을 대조해 봐도(Suno·Freshdesk·Veeam·Airbnb·Messenger 등 8건)
+  // 첫 화면에 조회수 같은 참여 지표를 세우는 곳은 없었다. 검색과 분류가 먼저였다.
+  // 실측값이 들어오면 카드는 저절로 다시 나온다.
   const statCards = [
     {
       label: '등록 가이드',
@@ -118,12 +130,14 @@ export default function HomePage() {
       footerTitle: '시트 Q&A + 컨플 인덱스 합산',
       footerDesc: '실장님 SSOT 25 + FVSOL 130 + AMS 1',
     },
-    {
-      label: '누적 조회수',
-      value: stats?.totalViews != null ? stats.totalViews.toLocaleString('ko-KR') : '집계 전',
-      footerTitle: stats?.helpfulRate != null ? `만족도 ${stats.helpfulRate}%` : 'Supabase 연결 후 실측',
-      footerDesc: 'View/Feedback 로깅 활성화 시 표시',
-    },
+    ...(stats?.totalViews != null
+      ? [{
+          label: '누적 조회수',
+          value: stats.totalViews.toLocaleString('ko-KR'),
+          footerTitle: stats.helpfulRate != null ? `만족도 ${stats.helpfulRate}%` : '조회 로깅 기준',
+          footerDesc: 'View/Feedback 로깅 집계',
+        }]
+      : []),
     {
       label: '최근 업데이트',
       value: stats?.recentDate ?? '2026-05-20',
@@ -160,7 +174,19 @@ export default function HomePage() {
             </HStack>
           </div>
 
-          {/* ─── Stat Cards (3) ───────────────────────────────────── */}
+          {/* ─── 검색 진입 ────────────────────────────────────────────
+              이 위키에 오는 사람은 대개 "찾으러" 온다. 그런데 검색은 헤더 오른쪽
+              구석의 작은 버튼 하나뿐이었고, 첫 화면은 지표 카드가 차지하고 있었다.
+              지식베이스 화면 8건을 대조해 보니 전부 검색이 화면 맨 앞이었다
+              (Suno·Freshdesk·Veeam·Airbnb·Messenger·Peacock·Geocaching 등).
+              같은 오버레이(Ctrl+K)를 여는 넓은 진입점을 본문 맨 위에 둔다. */}
+          <button type="button" className="home-search" onClick={openSearch}>
+            <MagnifyingGlass size={18} aria-hidden="true" />
+            <span className="home-search-label">가이드 제목·내용·모듈로 검색</span>
+            <kbd className="home-search-kbd">Ctrl K</kbd>
+          </button>
+
+          {/* ─── Stat Cards ───────────────────────────────────────── */}
           <Grid columns={{ minWidth: 240, max: 3 }} gap={4}>
             {statCards.map((s) => (
               <Card key={s.label} padding={5}>
@@ -176,42 +202,38 @@ export default function HomePage() {
             ))}
           </Grid>
 
-          {/* ─── 최근 본 가이드 ───────────────────────────────────── */}
+          {/* ─── 최근 본 가이드 ─────────────────────────────────────
+              하나도 없으면 이 구역을 통째로 감춘다. 예전에는 "아직 열람한 가이드가
+              없습니다"라는 빈 상자를 세워 뒀는데, 첫 방문자에게는 화면 위쪽 200px가
+              아무것도 없는 채로 남았다(모바일에서는 카테고리가 그만큼 더 밀렸다).
+              가이드를 한 번이라도 열면 이 구역이 저절로 나타나므로 기능을 놓치지 않는다. */}
+          {recentlyViewedGuides.length > 0 && (
           <section>
             <SectionHead
               title="최근 본 가이드"
               description="이어서 보거나 관련 가이드로 빠르게 이동하세요"
             />
-            {recentlyViewedGuides.length === 0 ? (
-              <div className="home-empty">
-                <span className="home-empty-icon"><Clock size={18} /></span>
-                <Text weight="medium">아직 열람한 가이드가 없습니다</Text>
-                <Text type="supporting">
-                  아래 카테고리에서 관심 있는 가이드를 열어보세요. 여기에 최근 본 항목이 쌓입니다.
-                </Text>
-              </div>
-            ) : (
-              <Grid columns={{ minWidth: 220, max: 4 }} gap={3}>
-                {recentlyViewedGuides.map((g) => {
-                  const tm = getGuideType(g.type)
-                  return (
-                    <Link key={g.id} to={`/guides/${g.id}`} className="home-link">
-                      <Card className="home-card" padding={4}>
-                        <VStack gap={2}>
-                          <div className="home-row-between">
-                            <Badge label={tm.shortLabel} variant={toBadgeVariant(tm.variant)} />
-                            <Text type="supporting" hasTabularNumbers>{g.module}</Text>
-                          </div>
-                          <Text weight="semibold" maxLines={2}>{g.title}</Text>
-                          <Text type="supporting" maxLines={2}>{g.tldr}</Text>
-                        </VStack>
-                      </Card>
-                    </Link>
-                  )
-                })}
-              </Grid>
-            )}
+            <Grid columns={{ minWidth: 220, max: 4 }} gap={3}>
+              {recentlyViewedGuides.map((g) => {
+                const tm = getGuideType(g.type)
+                return (
+                  <Link key={g.id} to={`/guides/${g.id}`} className="home-link">
+                    <Card className="home-card" padding={4}>
+                      <VStack gap={2}>
+                        <div className="home-row-between">
+                          <Badge label={tm.shortLabel} variant={toBadgeVariant(tm.variant)} />
+                          <Text type="supporting" hasTabularNumbers>{g.module}</Text>
+                        </div>
+                        <Text weight="semibold" maxLines={2}>{g.title}</Text>
+                        <Text type="supporting" maxLines={2}>{g.tldr}</Text>
+                      </VStack>
+                    </Card>
+                  </Link>
+                )
+              })}
+            </Grid>
           </section>
+          )}
 
           {/* ─── 카테고리 ─────────────────────────────────────────── */}
           <section>
