@@ -22,6 +22,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Table, useTablePagination, paginateData, proportional, pixel } from '@astryxdesign/core/Table'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 
 import './AdminFeedbackPage.astryx.css'
 
@@ -132,15 +133,22 @@ export default function AdminFeedbackPage() {
   [localItems, remote])
 
   // 탭 필터도 실제 vote 값 기준(위 KIND_LABEL 주석 참고). 7종이 빠짐없이 한 탭에는 속하게 한다.
-  const filtered = useMemo(() => tab === 'all'
-    ? merged
-    : merged.filter(item => {
-        if (tab === 'requests') return ['missing-guide', 'missing', 'other'].includes(item.kind)
-        if (tab === 'issues')   return ['error', 'improvement', 'needs_improvement'].includes(item.kind)
-        if (tab === 'praise')   return item.kind === 'helpful'
-        return true
-      }),
-  [tab, merged])
+  // 판정을 한 곳에 모아 두면 목록과 탭 옆 건수가 어긋날 일이 없다.
+  const inTab = (item, t) => {
+    if (t === 'all')      return true
+    if (t === 'requests') return ['missing-guide', 'missing', 'other'].includes(item.kind)
+    if (t === 'issues')   return ['error', 'improvement', 'needs_improvement'].includes(item.kind)
+    if (t === 'praise')   return item.kind === 'helpful'
+    return true
+  }
+  const filtered = useMemo(() => merged.filter((item) => inTab(item, tab)), [tab, merged])
+
+  // 탭 옆 건수 — 이미 받아 둔 목록을 한 번 세면 되므로 추가 조회가 없다.
+  const tabCounts = useMemo(() => {
+    const by = {}
+    for (const t of TABS) by[t.value] = merged.filter((item) => inTab(item, t.value)).length
+    return by
+  }, [merged])
 
   const paginationPlugin = useTablePagination({
     page,
@@ -249,16 +257,14 @@ export default function AdminFeedbackPage() {
         </div>
 
         {/* ─── 유형 필터(세그먼트) ───────────────────────────────── */}
-        <div className="af-seg" role="group" aria-label="피드백 유형 필터">
-          {TABS.map(t => (
-            <Button
-              key={t.value}
-              label={t.label}
-              size="sm"
-              variant={tab === t.value ? 'primary' : 'ghost'}
-              onClick={() => setTab(t.value)}
-            />
-          ))}
+        {/* 상담·가이드 화면과 같은 컴포넌트. 건수는 이미 받아 둔 merged 를 한 번 세면 되므로
+            추가 조회가 없다. */}
+        <div className="af-seg">
+          <SegmentedControl value={tab} onChange={setTab} label="피드백 유형 필터" size="sm">
+            {TABS.map((t) => (
+              <SegmentedControlItem key={t.value} value={t.value} label={`${t.label} ${tabCounts[t.value] ?? 0}`} />
+            ))}
+          </SegmentedControl>
         </div>
 
         {/* ─── 결과 ─────────────────────────────────────────────── */}

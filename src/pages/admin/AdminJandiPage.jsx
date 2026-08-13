@@ -27,6 +27,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { JandiStatus } from '@/components/analytics/JandiStatus'
@@ -338,16 +339,13 @@ export default function AdminJandiPage() {
 
         {/* ─── 툴바: 채널 탭 + 기간 + 검색 ───────────────────────── */}
         <div className="aj-toolbar">
-          <div className="aj-tabs" role="group" aria-label="채널 선택">
-            {CHANNELS.map((ch) => (
-              <Button
-                key={ch.id}
-                label={ch.label}
-                size="sm"
-                variant={channel === ch.id ? 'primary' : 'secondary'}
-                onClick={() => onChannel(ch.id)}
-              />
-            ))}
+          {/* 카카오 상담 화면과 같은 이유·같은 컴포넌트. 그쪽 주석 참고. */}
+          <div className="aj-tabs">
+            <SegmentedControl value={channel} onChange={onChannel} label="방 선택" size="sm">
+              {CHANNELS.map((ch) => (
+                <SegmentedControlItem key={ch.id} value={ch.id} label={ch.label} />
+              ))}
+            </SegmentedControl>
           </div>
 
           <div className="aj-selects">
@@ -372,6 +370,7 @@ export default function AdminJandiPage() {
 
           <div className="aj-search">
             <TextInput
+              size="sm"
               label="메시지 검색"
               isLabelHidden
               placeholder="메시지 검색 후 Enter"

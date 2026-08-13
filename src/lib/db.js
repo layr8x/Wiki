@@ -556,6 +556,35 @@ export async function fetchAdminGuides({ status = 'all', module: mod, search } =
   return list
 }
 
+/**
+ * 상태 탭에 붙일 건수. 상태만 빼고 나머지 필터(모듈·검색)는 그대로 적용한다.
+ *
+ * ⚠️ 화면이 이미 갖고 있는 `guides` 배열을 세면 안 된다 — 그건 **이미 상태로 걸러진 결과**라
+ *   "발행됨" 탭에서는 임시저장 건수가 0으로 보인다(2026-08-13 감사에서 지적된 지점).
+ *   행 데이터를 상태별로 또 끌어오는 것도 낭비라, 개수만 세는 질의(head:true)를 쓴다.
+ */
+export async function fetchAdminGuideCounts({ module: mod, search } = {}) {
+  if (!isSupabaseEnabled) {
+    const list = await fetchAdminGuides({ status: 'all', module: mod, search })
+    const by = { all: list.length, published: 0, draft: 0, archived: 0 }
+    for (const g of list) by[g.status] = (by[g.status] || 0) + 1
+    return by
+  }
+  const countFor = async (status) => {
+    let q = supabase.from('guides').select('id', { count: 'exact', head: true })
+    if (status !== 'all') q = q.eq('status', status)
+    if (mod)              q = q.eq('module', mod)
+    if (search)           q = q.or(`title.ilike.%${search}%,tldr.ilike.%${search}%`)
+    const { count, error } = await q
+    if (error) throw error
+    return count ?? 0
+  }
+  const [all, published, draft, archived] = await Promise.all(
+    ['all', 'published', 'draft', 'archived'].map(countFor)
+  )
+  return { all, published, draft, archived }
+}
+
 /** 가이드 status 변경 (발행/해제/보관) — 어드민 전용 */
 export async function updateGuideStatus(id, status) {
   if (!['draft', 'published', 'archived'].includes(status)) {

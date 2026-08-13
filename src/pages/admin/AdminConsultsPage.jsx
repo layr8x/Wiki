@@ -35,6 +35,7 @@ import { Text } from '@astryxdesign/core/Text'
 import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { KakaoConsultStatus } from '@/components/analytics/KakaoConsultStatus'
@@ -415,16 +416,16 @@ export default function AdminConsultsPage() {
 
         {/* ─── 툴바: 채널 + 기간 + 검색 ─────────────────────────── */}
         <div className="ac-toolbar">
-          <div className="ac-chips" role="group" aria-label="채널 선택">
-            {CHANNELS.map((ch) => (
-              <Button
-                key={ch.id}
-                label={ch.label}
-                size="sm"
-                variant={channel === ch.id ? 'primary' : 'secondary'}
-                onClick={() => onChannel(ch.id)}
-              />
-            ))}
+          {/* 수제 div[role=group] + Button 조합이었다. 어느 것이 켜졌는지 알리는 속성이
+              하나도 없어(aria-pressed·selected·current 전부 없음), 화면 전체가 이 필터의
+              결과인데 읽어주는 기능은 그 사실을 말하지 못했다.
+              값 선택이지 화면 이동이 아니므로 TabList 가 아니라 SegmentedControl 이 맞다(문서 기준). */}
+          <div className="ac-chips">
+            <SegmentedControl value={channel} onChange={onChannel} label="채널 선택" size="sm">
+              {CHANNELS.map((ch) => (
+                <SegmentedControlItem key={ch.id} value={ch.id} label={ch.label} />
+              ))}
+            </SegmentedControl>
           </div>
 
           <div className="ac-selects">
@@ -449,6 +450,7 @@ export default function AdminConsultsPage() {
 
           <div className="ac-search">
             <TextInput
+              size="sm"
               label="메시지 검색"
               isLabelHidden
               placeholder="메시지 검색 후 Enter"

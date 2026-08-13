@@ -15,7 +15,7 @@ import {
   ArrowCounterClockwise,
   Archive,
 } from '@phosphor-icons/react'
-import { fetchAdminGuides, updateGuideStatus, deleteGuide, getModuleTree } from '@/lib/db'
+import { fetchAdminGuides, fetchAdminGuideCounts, updateGuideStatus, deleteGuide, getModuleTree } from '@/lib/db'
 import { GUIDE_TYPES } from '@/lib/guideTypes'
 
 import { VStack } from '@astryxdesign/core/VStack'
@@ -27,6 +27,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Table, useTablePagination, paginateData, proportional, pixel } from '@astryxdesign/core/Table'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
@@ -133,6 +134,16 @@ export default function AdminGuidesPage() {
       setDeleteTarget(null)
     },
     onError: (err) => toast({ body: `삭제 실패 — ${String(err?.message || err)}`, type: 'error' }),
+  })
+
+  // 상태 탭 옆 건수. 상태만 빼고 모듈·검색은 그대로 반영해야 탭을 눌렀을 때 숫자와 결과가 맞는다.
+  const { data: counts } = useQuery({
+    queryKey: ['admin', 'guide-counts', { moduleF, search }],
+    queryFn: () => fetchAdminGuideCounts({
+      module: moduleF === 'all' ? undefined : moduleF,
+      search: search.trim() || undefined,
+    }),
+    staleTime: 30 * 1000,
   })
 
   const hasFilter = status !== 'all' || moduleF !== 'all' || Boolean(search.trim())
@@ -292,16 +303,18 @@ export default function AdminGuidesPage() {
         <Card className="ag-card" padding={0}>
           {/* 툴바: 상태 세그먼트 + 모듈 필터 + 검색 */}
           <div className="ag-toolbar">
-            <div className="ag-seg" role="group" aria-label="상태 필터">
-              {STATUS_TABS.map((t) => (
-                <Button
-                  key={t.value}
-                  label={t.label}
-                  size="sm"
-                  variant={status === t.value ? 'primary' : 'ghost'}
-                  onClick={() => setStatus(t.value)}
-                />
-              ))}
+            {/* 상담 화면과 같은 이유로 SegmentedControl. 건수는 서버에서 상태별로 따로 센다
+                (화면이 든 guides 는 이미 상태로 걸러진 결과라 그걸 세면 값이 틀린다). */}
+            <div className="ag-seg">
+              <SegmentedControl value={status} onChange={setStatus} label="상태 필터" size="sm">
+                {STATUS_TABS.map((t) => (
+                  <SegmentedControlItem
+                    key={t.value}
+                    value={t.value}
+                    label={counts ? `${t.label} ${counts[t.value] ?? 0}` : t.label}
+                  />
+                ))}
+              </SegmentedControl>
             </div>
 
             <div className="ag-module">
@@ -317,6 +330,7 @@ export default function AdminGuidesPage() {
 
             <div className="ag-search">
               <TextInput
+                size="sm"
                 label="가이드 검색"
                 isLabelHidden
                 placeholder="제목/TL;DR 검색"
