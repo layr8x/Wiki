@@ -97,11 +97,20 @@ const AUDIT_FN = () => {
       out.tinyText.push({ el: label(el), px: fs })
     }
   })
-  // 누르는 요소가 44px 미만이면 모바일에서 누르기 어렵다(WCAG 2.2 Target Size 참고)
+  // 누르기 어려운 크기 판정. 기준은 WCAG 2.2 Target Size (Minimum) 의 24x24 CSS px.
+  // ⚠️ 요소 자체 상자로만 재면 안 된다 — 아이콘 span 이 작아도 실제로 클릭을 받는 건
+  //    부모 버튼인 경우가 많아 오탐이 쏟아진다(수정 전 27건 중 26건이 오탐이었다).
+  //    가장 바깥의 클릭 대상(button/a/role=button)을 기준으로 잰다.
+  const TAP_MIN = 24
   document.querySelectorAll('button, a[href], [role="button"]').forEach((el) => {
     if (isVisuallyHidden(el)) return
+    // 이 요소가 다른 클릭 대상 안에 들어 있으면 바깥쪽이 실제 대상이다 → 건너뛴다.
+    if (el.parentElement?.closest('button, a[href], [role="button"]')) return
+    // WCAG 2.2 는 "문장 안에 흐르는 링크"(inline)는 이 기준에서 제외한다. 표 안 제목 링크나
+    // 브레드크럼처럼 글자 높이 그대로인 것들을 경고하면 실제 문제가 묻힌다.
+    if (getComputedStyle(el).display.startsWith('inline')) return
     const r = el.getBoundingClientRect()
-    if (r.height < 32 || r.width < 32) {
+    if (r.height < TAP_MIN || r.width < TAP_MIN) {
       out.tapTargets.push({ el: label(el), w: Math.round(r.width), h: Math.round(r.height) })
     }
   })
@@ -153,6 +162,11 @@ const AUDIT_FN = () => {
   }
 
   if (doAudit) {
+    // ⚠️ 언제·어느 커밋을 잰 결과인지 남긴다. 낡은 audit.json 을 근거로 판단하는 사고를 막는다
+    //    (CLAUDE.md 15장: "죽은 노드와 비교한 '맞췄다'는 무의미").
+    let commit = '(unknown)'
+    try { commit = require('node:child_process').execSync('git rev-parse --short HEAD', { cwd: path.join(HERE, '../../..') }).toString().trim() } catch { /* 무시 */ }
+    audit._meta = { measuredAt: new Date().toISOString(), commit, widths: WIDTHS, modes: MODES, state }
     fs.writeFileSync(path.join(OUT, 'audit.json'), JSON.stringify(audit, null, 1))
     console.log(`\n상세: ${path.relative(process.cwd(), path.join(OUT, 'audit.json'))}`)
   }

@@ -30,8 +30,12 @@ const params = new URLSearchParams(location.search)
 const route = params.get('route') || '/admin/consults'
 const mode = params.get('mode') || 'dark'
 
-// 다크/라이트의 진실의 원천은 <html>.dark 클래스다(src/lib/astryxMode.js).
-// AdminLayout 의 useAstryxMode 가 이 클래스를 관찰하므로, 렌더 전에 먼저 맞춰 둔다.
+// ⚠️ 클래스만 미리 붙이면 안 된다(2026-08-13 감사가 잡아낸 하네스 결함).
+//    useDarkMode() 가 마운트 시 localStorage 의 'ams-wiki:theme' 를 읽어 클래스를 다시 쓰기 때문에,
+//    저장값이 없으면 light 로 덮어써 버린다. 그래서 ?mode=dark 로 찍은 스크린샷 50장이
+//    전부 실은 라이트였다(실측: 두 모드의 카드 배경이 똑같이 rgb(255,255,255)).
+//    → 진실의 원천은 저장값이다. 앱이 뜨기 전에 저장값을 먼저 심고, 클래스도 같이 맞춘다.
+try { localStorage.setItem('ams-wiki:theme', mode) } catch { /* 무시 */ }
 document.documentElement.classList.toggle('dark', mode === 'dark')
 
 const queryClient = new QueryClient({
