@@ -12,6 +12,9 @@
 }
 @media (min-width: 640px)  { .ov-shell { padding: 24px; } }
 @media (min-width: 1024px) { .ov-shell { padding: 32px; } }
+/* 넓은 화면에서 폭 상한 확대 — 카드 2열이 제 폭을 갖도록. */
+@media (min-width: 1440px) { .ov-shell { max-width: 88rem; } }
+@media (min-width: 1800px) { .ov-shell { max-width: 104rem; } }
 
 /* ─── 유틸 ───────────────────────────────────────────────────── */
 .ov-row-between { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

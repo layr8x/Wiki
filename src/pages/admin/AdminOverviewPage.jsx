@@ -196,7 +196,11 @@ export default function AdminOverviewPage() {
           </Card>
         </Grid>
 
-        {/* ─── 카카오 상담 응답시간 분포 (최근 90일) ────────────── */}
+        {/* ─── 카카오 상담 분석 3종 ─────────────────────────────
+            세로로만 쌓여 있어 1440px 화면에서 오른쪽이 비는데도 스크롤이 2.5화면이었다
+            (실측 2,100px). 가로 공간을 써서 접힌 곳 아래로 밀리는 양을 줄인다.
+            좁은 화면(720px 미만)에서는 자동으로 1열로 돌아간다. */}
+        <Grid columns={{ minWidth: 360, max: 2 }} gap={6}>
         {(rtLoading || (rtDist && rtDist.length > 0)) && (
           <Card padding={0}>
             <div className="ov-cardhead">
@@ -327,6 +331,7 @@ export default function AdminOverviewPage() {
             </div>
           </Card>
         )}
+        </Grid>
 
       </VStack>
     </div>

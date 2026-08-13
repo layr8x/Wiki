@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
+import { fetchAllByCursor } from '@/lib/csvExport'
 import { maskBody } from '@/lib/maskPII'
 import {
   MagnifyingGlass as Search,
@@ -200,48 +201,26 @@ function ChannelKpi({ ch }) {
   )
 }
 
-// ⚠️ 건너뛰기(offset) 방식은 방이 커지면 뒤 페이지로 갈수록 급격히 느려져 결국 타임아웃난다
-//    (카카오 상담 화면에서 LIVE 채널 102만 건이 실제로 그렇게 실패했다, 2026-08-13).
-//    잔디도 같은 코드였어서 함께 커서(keyset) 방식으로 바꿨다. 몇 번째 페이지든 속도가 같다.
-//    같은 시각에 걸친 메시지가 페이지 경계에서 잘리지 않도록 lte 로 겹쳐 받고 link_id 로 중복 제거.
-const CSV_PAGE = 5000
-
-export async function fetchAllForCsv({ roomId, query, year, month, onProgress }) {
-  const out = []
-  const seen = new Set()
+// 페이지 넘김은 @/lib/csvExport 의 커서 방식을 쓴다(카카오 LIVE 102만 건에서 예전 건너뛰기
+// 방식이 타임아웃났던 문제 — 잔디도 같은 코드였다. 그 파일 주석 참고).
+async function fetchAllForCsv({ roomId, query, year, month, onProgress }) {
   const range = periodRange(year, month)
-  let cursor = null
-
-  for (let guard = 0; guard < 1000; guard++) {
-    let q = supabase
-      .from('jandi_messages')
-      .select('link_id, writer_id, writer_name, content_type, message, created_at')
-      .eq('room_id', roomId)
-      .order('created_at', { ascending: false })
-      .limit(CSV_PAGE)
-    if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
-    if (range) q = q.gte('created_at', range.gte).lt('created_at', range.lt)
-    if (cursor) q = q.lte('created_at', cursor)
-
-    const { data, error } = await q
-    if (error) throw error
-    if (!data || !data.length) break
-
-    let added = 0
-    for (const row of data) {
-      const id = String(row.link_id)
-      if (seen.has(id)) continue
-      seen.add(id)
-      out.push(row)
-      added++
-    }
-    onProgress?.(out.length)
-
-    if (added === 0) break
-    if (data.length < CSV_PAGE) break
-    cursor = data[data.length - 1].created_at
-  }
-  return out
+  return fetchAllByCursor({
+    timeColumn: 'created_at',
+    idColumn: 'link_id',
+    onProgress,
+    buildQuery: (limit) => {
+      let q = supabase
+        .from('jandi_messages')
+        .select('link_id, writer_id, writer_name, content_type, message, created_at')
+        .eq('room_id', roomId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
+      if (range) q = q.gte('created_at', range.gte).lt('created_at', range.lt)
+      return q
+    },
+  })
 }
 
 function buildCsv(rows, channelLabel) {

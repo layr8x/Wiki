@@ -47,7 +47,17 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
-const { fetchAllForCsv } = await import('../AdminConsultsPage.jsx')
+const { fetchAllByCursor, CSV_PAGE } = await import('@/lib/csvExport')
+
+// 카카오 상담 화면이 쓰는 것과 동일한 호출 형태
+const { supabase } = await import('@/lib/supabase')
+const fetchAllForCsv = ({ onProgress }) => fetchAllByCursor({
+  timeColumn: 'sent_at',
+  idColumn: 'log_id',
+  onProgress,
+  buildQuery: (limit) => supabase.from('kakao_partner_messages')
+    .select('*').eq('profile_id', '_rcpPG').order('sent_at', { ascending: false }).limit(limit),
+})
 
 // n건 생성. tie 만큼 같은 시각을 공유하게 만들어 동률 처리까지 검증한다.
 function makeRows(n, tie = 1) {

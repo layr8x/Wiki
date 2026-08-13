@@ -12,6 +12,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { maskBody, maskName } from '@/lib/maskPII'
+import { fetchAllByCursor } from '@/lib/csvExport'
 import {
   MagnifyingGlass as Search,
   ChatText as MessageSquare,
@@ -202,58 +203,26 @@ function ChannelKpi({ ch }) {
 }
 
 // 현재 필터의 메시지를 전부 받아 CSV 빌드.
-//
-// ⚠️ 예전에는 range(from, from+999) 로 건너뛰기(offset) 방식을 썼는데, LIVE 채널에서 아예 안 됐다
-//    (2026-08-13 사용자 신고 → 원인 규명).
-//    LIVE 는 메시지가 102만 건이라 1,000건씩이면 1,024번을 요청해야 하는데, 건너뛰기 방식은
-//    뒤로 갈수록 앞의 행을 전부 세고 지나가야 해서 급격히 느려진다.
-//    실측: 50만 번째 페이지 한 장이 60초를 넘겨 타임아웃. 그런 페이지가 1,024장 필요했다.
-//    (다른 채널은 5만 건 이하라 티가 안 나서 LIVE 에서만 문제로 보였다.)
-//
-//    → 커서(keyset) 방식으로 바꿨다. "마지막으로 받은 시각보다 이전 것"만 인덱스로 바로 찾으므로
-//      몇 번째 페이지든 속도가 같다. 실측: 5,000건 255ms, 깊이와 무관.
-//      같은 시각(sent_at)에 걸친 메시지가 페이지 경계에서 잘리지 않도록 lte 로 겹쳐 받고
-//      log_id 로 중복을 걸러낸다.
-const CSV_PAGE = 5000
-
-export async function fetchAllForCsv({ profileId, query, year, month, onProgress }) {
-  const out = []
-  const seen = new Set()
+// 페이지 넘김은 @/lib/csvExport 의 커서 방식을 쓴다(LIVE 102만 건에서 예전 건너뛰기 방식이
+// 타임아웃났던 문제 — 그 파일 주석 참고).
+async function fetchAllForCsv({ profileId, query, year, month, onProgress }) {
   const range = periodRange(year, month)
-  let cursor = null   // 마지막으로 받은 sent_at
-
-  for (let guard = 0; guard < 1000; guard++) {
-    let q = supabase
-      .from('kakao_partner_messages')
-      .select('log_id, chat_id, sender_type, message, message_type, sent_at, manager_name:raw->manager->>name')
-      .eq('profile_id', profileId)
-      .order('sent_at', { ascending: false })
-      .limit(CSV_PAGE)
-    if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
-    if (range) q = q.gte('sent_at', range.gte).lt('sent_at', range.lt)
-    // 같은 시각 동률을 놓치지 않으려 lte 로 겹쳐 받는다(중복은 아래에서 제거).
-    if (cursor) q = q.lte('sent_at', cursor)
-
-    const { data, error } = await q
-    if (error) throw error
-    if (!data || !data.length) break
-
-    let added = 0
-    for (const row of data) {
-      const id = String(row.log_id)
-      if (seen.has(id)) continue
-      seen.add(id)
-      out.push(row)
-      added++
-    }
-    onProgress?.(out.length)
-
-    // 겹쳐 받은 것이 전부 중복이면 같은 시각에 CSV_PAGE 건 이상 몰린 것 — 더 진행할 수 없으니 멈춘다.
-    if (added === 0) break
-    if (data.length < CSV_PAGE) break
-    cursor = data[data.length - 1].sent_at
-  }
-  return out
+  return fetchAllByCursor({
+    timeColumn: 'sent_at',
+    idColumn: 'log_id',
+    onProgress,
+    buildQuery: (limit) => {
+      let q = supabase
+        .from('kakao_partner_messages')
+        .select('log_id, chat_id, sender_type, message, message_type, sent_at, manager_name:raw->manager->>name')
+        .eq('profile_id', profileId)
+        .order('sent_at', { ascending: false })
+        .limit(limit)
+      if (query.trim()) q = q.ilike('message', '%' + query.trim() + '%')
+      if (range) q = q.gte('sent_at', range.gte).lt('sent_at', range.lt)
+      return q
+    },
+  })
 }
 
 function buildCsv(rows, nickMap, channelLabel) {
@@ -382,25 +351,33 @@ export default function AdminConsultsPage() {
           </Card>
         )}
 
-        {/* ─── 실시간 운영 현황 (North Star: 지금 밀린 상담) ─────── */}
-        <KakaoConsultStatus />
+        {/* ─── 상단 분석 영역 ────────────────────────────────────
+            예전엔 실시간 위젯 · 문의량 추세 · 채널 KPI 가 세로로만 쌓여, 정작 목적인
+            상담 스레드에 닿기까지 1,266px(1.5화면)을 지나야 했다. 1440px 화면에서는
+            오른쪽이 비어 있었는데도 그랬다(실측). 넓은 화면에서만 2열로 나눠 그 높이를 줄인다.
+            좁은 화면에서는 자동으로 예전처럼 세로로 쌓인다. */}
+        <div className="ac-analysis">
+          {/* 실시간 운영 현황 (North Star: 지금 밀린 상담) */}
+          <KakaoConsultStatus />
 
-        {/* ─── 분석 요약 (방법론 기반 상단 통계 영역) ───────────── */}
-        <AnalyticsHeader
-          analyticsKey="kakao-consults"
-          table="kakao_partner_messages"
-          dateColumn="sent_at"
-          filters={{ profile_id: channel }}
-          title={channelLabel + ' 문의량'}
-        />
+          <div className="ac-analysis-side">
+            {/* 분석 요약 (방법론 기반 상단 통계 영역) */}
+            <AnalyticsHeader
+              analyticsKey="kakao-consults"
+              table="kakao_partner_messages"
+              dateColumn="sent_at"
+              filters={{ profile_id: channel }}
+              title={channelLabel + ' 문의량'}
+            />
 
-        {/* ─── 채널별 건수 KPI ──────────────────────────────────── */}
-        {/* max 캡은 좁은 화면에서 트랙 최대폭이 최소폭보다 작아져(minmax(200px, 61px))
-            200px 고정 1열로 깨진다(모바일 실측). 캡 없이 auto-fit — 콘텐츠 폭 상한(72rem)이
-            데스크탑에서 자연히 5열을 만들고, 모바일(~390px)에선 2열로 흐른다. */}
-        <Grid columns={{ minWidth: 160, repeat: 'fit' }} gap={4}>
-          {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
-        </Grid>
+            {/* 채널별 건수 KPI */}
+            {/* max 캡은 좁은 화면에서 트랙 최대폭이 최소폭보다 작아져(minmax(200px, 61px))
+                200px 고정 1열로 깨진다(모바일 실측). 캡 없이 auto-fit. */}
+            <Grid columns={{ minWidth: 120, repeat: 'fit' }} gap={3}>
+              {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
+            </Grid>
+          </div>
+        </div>
 
         {/* ─── 툴바: 채널 + 기간 + 검색 ─────────────────────────── */}
         <div className="ac-toolbar">

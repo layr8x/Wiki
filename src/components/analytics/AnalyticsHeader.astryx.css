@@ -2,7 +2,11 @@
  * 분석 요약 헤더 — Astryx 표면. 색·간격·라운드는 전부 Astryx 토큰(var)만 사용.
  * primitive로 표현 못하는 것(3열 그리드, 스파크라인 SVG 스타일, 각주)만 여기서 처리한다. */
 
-.anh-card { overflow: hidden; }
+/* ⚠️ 이 카드는 전체 폭에 놓일 수도, 좁은 칸에 놓일 수도 있다(2026-08-13 상담 화면 2열 배치).
+   아래 반응형을 화면 폭(@media)으로만 판단하면, 화면은 넓은데 카드만 좁은 경우를 못 잡아
+   3열이 그대로 유지되고 배지가 겹친다(실측: 1440px 화면의 540px 칸에서 발생).
+   → 카드 자기 폭에 반응하도록 컨테이너 쿼리를 쓴다. */
+.anh-card { overflow: hidden; container-type: inline-size; }
 
 .anh-truncated-warning { display: inline-flex; margin-bottom: 16px; }
 
@@ -15,6 +19,9 @@
 @media (max-width: 860px) {
   .anh-grid { grid-template-columns: 1fr; }
 }
+@container (max-width: 720px) {
+  .anh-grid { grid-template-columns: 1fr; gap: 16px; }
+}
 
 .anh-headline { min-width: 0; }
 .anh-sub {
@@ -23,6 +30,9 @@
   border-left: 1px solid var(--color-border);
 }
 @media (max-width: 860px) {
+  .anh-sub { padding-left: 0; border-left: none; }
+}
+@container (max-width: 720px) {
   .anh-sub { padding-left: 0; border-left: none; }
 }
 .anh-trend { min-width: 0; }

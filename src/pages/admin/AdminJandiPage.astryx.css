@@ -12,6 +12,9 @@
 }
 @media (min-width: 640px) { .aj-shell { padding: 24px; } }
 @media (min-width: 1024px) { .aj-shell { padding: 32px; } }
+/* 넓은 화면에서 폭 상한 확대 — 로그 표라 본문 기준(72rem)을 지킬 이유가 없다. */
+@media (min-width: 1440px) { .aj-shell { max-width: 88rem; } }
+@media (min-width: 1800px) { .aj-shell { max-width: 104rem; } }
 
 /* Supabase 미설정 안내 — Card(variant="muted") 안쪽 Text만 감싸므로 별도 레이아웃 불필요 */
 
@@ -59,7 +62,7 @@
 }
 .aj-thread-head {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
-  padding: 12px 16px;
+  padding: 8px 16px;
   background: var(--color-background-muted);
   border-bottom: 1px solid var(--color-border);
 }
@@ -73,10 +76,12 @@
 }
 
 /* ─── 메시지 리스트 ───────────────────────────────────────────── */
-.aj-msglist { list-style: none; margin: 0; padding: 4px 12px; }
+/* 밀도 — 카카오 상담 화면과 동일 기준(동종 페이지 동일 스펙, CLAUDE.md 18장).
+   행 수만큼 곱해지는 자리라 4px 을 줄이면 화면 전체가 눈에 띄게 줄어든다. */
+.aj-msglist { list-style: none; margin: 0; padding: 2px 12px; }
 .aj-msg {
   display: flex; align-items: flex-start; gap: 12px;
-  padding: 8px 4px;
+  padding: 4px 4px;
 }
 .aj-msg + .aj-msg { border-top: 1px solid color-mix(in oklab, var(--color-border) 60%, transparent); }
 .aj-msg-reply {
