@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  카카오 파트너센터 쿠키 선제 갱신 (6시간마다). Chrome 로컬 쿠키 → .env.local + Supabase(kakao_partner_secrets).
+  카카오 파트너센터 쿠키 선제 갱신 (30분마다). Chrome 로컬 쿠키 → .env.local + Supabase(kakao_partner_secrets).
 
   ⚠️ 2026-08-13 정정 2건:
     1) WorkingDirectory 가 `.../MacStudio-MJ/ams-wiki` 로 적혀 있었다. 그 폴더는 무관한 다른
        저장소이고 이 스크립트가 없다 — 그대로 설치하면 즉시 실패한다. 정답은 `.../local`.
        (맥 스튜디오에서는 설치할 때 손으로 고쳐 넣어 굴러갔고, 저장소 원본만 틀린 채 남아 있었다.)
     2) "Edge Function 이 이 쿠키를 읽어 상시 수집한다"고 적혀 있었으나 그 pg_cron 은
-       2026-08-12 에 비활성화됐다. 지금은 같은 기기의 com.amswiki.kakao-collect 가 수집한다.
+       2026-08-12 에 비활성화됐었다. → **2026-08-13 다시 켰다(5분 주기).** 클라우드 IP 차단이라는
+       판단이 틀렸음을 재측정으로 확인했기 때문이다. 즉 지금은 이 주석이 다시 맞다:
+       수집은 클라우드가 하고, 이 잡은 그 쿠키를 최신으로 유지하는 역할이다.
+       → 이 기기의 역할 = 쿠키 공급. 기기가 자면 쿠키만 안 갱신될 뿐, 수집은 계속 돈다.
 
   전제: Chrome 으로 business.kakao.com 에 파트너센터 권한 계정 로그인 유지(가급적 탭을 열어두기)
         + 최초 1회 "Chrome Safe Storage" 키체인 허용.
@@ -39,8 +42,12 @@
   <key>RunAtLoad</key>
   <true/>
 
+  <!-- 30분. 옛 6시간에서 줄였다 — 수집이 클라우드로 옮겨가면서 보관함 쿠키의 신선도가
+       곧 수집 생존시간이 됐다. 카카오는 응답마다 세션 토큰을 굴리므로(브라우저가 로그인을
+       유지하는 원리) 스냅샷은 시간이 지날수록 무효가 된다. 2026-08-12 의 "클라우드 401" 이
+       바로 이것이었다(IP 차단이 아니었음 — 8-13 재측정으로 확정). -->
   <key>StartInterval</key>
-  <integer>21600</integer>
+  <integer>1800</integer>
 
   <key>StandardOutPath</key>
   <string>/Users/layr8x/Library/Logs/ams-wiki/kakao-cookie-refresh.log</string>
