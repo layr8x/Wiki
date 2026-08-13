@@ -61,11 +61,20 @@ for job in "${JOBS[@]}"; do
     continue
   fi
 
-  # node 경로와 WorkingDirectory 를 이 기기 값으로 치환해서 설치한다.
+  # node 경로·env 파일 경로·WorkingDirectory 를 이 기기 값으로 치환해서 설치한다.
   # PlistBuddy 를 쓰는 이유: 경로에 공백이 있어(iCloud "Mobile Documents") sed 치환이 위험하다.
   cp "$src" "$dst"
   /usr/libexec/PlistBuddy -c "Set :ProgramArguments:0 $NODE_BIN" "$dst"
   /usr/libexec/PlistBuddy -c "Set :WorkingDirectory $REPO" "$dst"
+
+  # ⚠️ --env-file 은 반드시 절대경로로 박는다.
+  # plist 원본에는 `--env-file=.env.local` 로 상대경로가 적혀 있는데, launchd 로 돌리면
+  # 이게 해석되지 않아 `node: .env.local: invalid format` 으로 시작하자마자 죽는다
+  # (2026-08-13 맥북 에어 실측 — 같은 명령을 터미널에서 직접 치면 정상 동작해서
+  #  파일 내용 문제로 오인하기 쉽다. 차이는 실행 시점의 현재 폴더뿐이다).
+  if /usr/libexec/PlistBuddy -c "Print :ProgramArguments:1" "$dst" 2>/dev/null | grep -q -- '--env-file'; then
+    /usr/libexec/PlistBuddy -c "Set :ProgramArguments:1 --env-file=$REPO/.env.local" "$dst"
+  fi
 
   launchctl unload "$dst" 2>/dev/null || true
   launchctl load "$dst"
@@ -73,10 +82,35 @@ for job in "${JOBS[@]}"; do
 done
 
 echo
-echo "확인:"
+echo "등록 확인:"
 launchctl list | grep -i amswiki || echo "  (등록 실패 — 위 오류를 확인하세요)"
+
+# ── 등록됐다고 도는 게 아니다 ─────────────────────────────────────────────────
+# 2026-08-13 실측: 등록은 성공했는데 두 잡 다 시작하자마자 죽어(위 --env-file 문제)
+# 수집이 계속 0건이었다. 그때 이 스크립트는 "설치 완료"만 찍고 끝나 한참 뒤에야 알았다.
+# → 오류 로그를 직접 읽어 보고한다. "검증 전 완료 금지"를 스크립트로 강제하는 것이다.
 echo
-echo "로그 보기:  tail -f $LOGDIR/kakao-collect.log"
+echo "동작 확인 (15초 대기)..."
+sleep 15
+fail=0
+for job in "${JOBS[@]}"; do
+  short="${job#com.amswiki.}"
+  err="$LOGDIR/$short.err.log"
+  if [[ -s "$err" ]] && tail -5 "$err" | grep -qiE 'invalid format|cannot find|not found|ENOENT|Error'; then
+    echo "  ❌ $short — 오류로 죽었습니다:"
+    tail -3 "$err" | sed 's/^/       /'
+    fail=1
+  else
+    echo "  ✅ $short — 오류 없음"
+  fi
+done
+
+echo
+if [[ $fail -eq 1 ]]; then
+  echo "⚠️ 위 오류를 먼저 해결해야 수집이 시작됩니다."
+else
+  echo "로그 보기:  tail -f $LOGDIR/kakao-collect.log"
+fi
 echo
 echo "⚠️ 노트북이면 뚜껑을 닫는 동안 수집이 멈춥니다."
 echo "   책상에 두고 상시 수집하려면: sudo pmset -c sleep 0 disablesleep 1"
