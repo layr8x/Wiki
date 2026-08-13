@@ -4,6 +4,7 @@
 // 감시 항목 5가지 (2026-08-12 기준)
 //   [운영] 오래 기다리는 상담   checkWaitingSla        영업시간에만 · 영업 6시간 이상 미응답
 //   [수집] 수집 중단·지연       checkCollectionHealth  로그인 만료 / heartbeat 정체 · 즉시
+//   [수집] 쿠키 만료 예고        checkCookieExpiry      _kawlt 6h 미만 / _karmt 3일 미만 · 즉시
 //   [운영] 문의량 급증          checkCategorySpike     야간 보류 · 카테고리 통합 1건
 //   [파이프] 감정분류·일일요약  checkAnalysisFreshness 뒤 단계가 조용히 멈춘 것 탐지
 //   [파이프] 대시보드 RPC       checkRpcHealth         8초 타임아웃 전에 미리 경보
@@ -431,6 +432,61 @@ async function checkWaitingSla(): Promise<string[]> {
   return [SLA_KEY];
 }
 
+// ── [수집] 쿠키 만료 예고 감시 (2026-08-13 신규) ───────────────────────────────
+// 왜 필요한가: 지금까지 쿠키는 **만료된 뒤 401 이 나야** 알아챘다(감시 0건 — 실측).
+//   수집이 클라우드로 옮겨가면서 보관함 쿠키의 잔여 수명이 곧 수집 생존시간이 됐으므로,
+//   "이미 죽었다"가 아니라 "곧 죽는다"를 알려야 한다.
+// 쿠키 2단 구조(2026-08-13 실측): _kawlt 로그인 토큰 약 24시간 / _karmt 자동로그인 약 29일.
+//   _kawlt 는 담당자 기기가 다시 공급하면 회복되므로 기기가 꺼져 있을 때만 문제가 된다.
+//   _karmt 가 마르면 사람이 직접 로그인하는 것 말고는 방법이 없다 — 이쪽이 더 급하다.
+const COOKIE_KEY = 'cookie_expiry';
+const KAWLT_WARN_H = 6;   // 로그인 토큰 6시간 미만
+const KARMT_WARN_D = 3;   // 자동로그인 토큰 3일 미만
+
+async function checkCookieExpiry(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('kakao_partner_secrets').select('value').eq('key', 'kakao_partner_cookie').maybeSingle();
+  if (error || !(data as any)?.value) {
+    log('[alert] cookie read fail:', error?.message ?? 'no row');
+    return [];
+  }
+  // 만료 epoch 만 읽는다. 쿠키 값 자체는 로그·알림 어디에도 남기지 않는다.
+  const jar = new Map<string, string>();
+  for (const part of String((data as any).value).split(';')) {
+    const s = part.trim();
+    const i = s.indexOf('=');
+    if (i > 0) jar.set(s.slice(0, i), s.slice(i + 1));
+  }
+  const now = Date.now();
+  const kawltH = Number(jar.get('_kawltea') || 0) ? (Number(jar.get('_kawltea')) * 1000 - now) / 3600000 : null;
+  const karmtD = Number(jar.get('_karmtea') || 0) ? (Number(jar.get('_karmtea')) * 1000 - now) / 86400000 : null;
+
+  const karmtBad = karmtD !== null && karmtD < KARMT_WARN_D;
+  const kawltBad = kawltH !== null && kawltH < KAWLT_WARN_H;
+  const bad = karmtBad || kawltBad;
+
+  const prev = await getState(COOKIE_KEY);
+  if (!bad) {
+    if (prev?.status === 'alerting') await upsertState(COOKIE_KEY, 'ok', null, null); // 회복은 조용히
+    return [];
+  }
+  if (!shouldNotify(prev, true)) return [];
+
+  // 자동로그인 토큰이 마르는 쪽이 훨씬 심각하다 — 사람이 로그인하는 것 외에 복구 수단이 없다.
+  const msg = karmtBad
+    ? `🔴 카카오 자동 로그인이 곧 풀려요 (남은 기간 ${karmtD!.toFixed(1)}일)\n` +
+      `이게 끝나면 수집이 멈추고, 서버가 스스로 되살릴 방법이 없어요.\n` +
+      `👉 수집 기기 Chrome 에서 business.kakao.com 에 다시 로그인해 주세요("로그인 유지" 체크).`
+    : `🟠 카카오 로그인 토큰이 ${kawltH!.toFixed(1)}시간 뒤 만료돼요\n` +
+      `수집 기기가 켜져 있으면 자동으로 갱신되니 대개 조치가 필요 없어요.\n` +
+      `👉 기기를 오래 꺼두실 예정이면 켜 두시거나, 미리 한 번 로그인해 주세요.`;
+
+  const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+  notify(karmtBad ? 'red' : 'orange', msg);
+  await upsertState(COOKIE_KEY, 'alerting', { kawlt_h: kawltH, karmt_d: karmtD }, firstAt);
+  return [COOKIE_KEY];
+}
+
 // 대시보드 실시간 RPC 지연/실패 감시(2026-07-10 신규).
 // 배경: kakao_sla_status·kakao_action_chats 가 last_msg 조회에 색인이 안 맞아 각각
 //   20.2초·11.2초까지 걸려 8초 role statement_timeout 을 넘기고 /admin/consults 에
@@ -572,6 +628,7 @@ Deno.serve(async (req: Request) => {
   // 검사는 각자 outbox 에 담기만 하고, 발송은 아래에서 한 통으로 묶어 한 번만 한다.
   resetOutbox();
   const health = await checkCollectionHealth();
+  const cookie = await checkCookieExpiry();
   const waiting = await checkWaitingSla();
   const spike = await checkCategorySpike();
   const analysis = await checkAnalysisFreshness();
@@ -582,7 +639,7 @@ Deno.serve(async (req: Request) => {
     slack_configured: !!SLACK_WEBHOOK_URL,
     business_hours: isBusinessHours(),
     slack_messages_sent: messages ? 1 : 0,
-    notified: [...health, ...waiting, ...spike, ...analysis, ...rpcHealth],
+    notified: [...health, ...cookie, ...waiting, ...spike, ...analysis, ...rpcHealth],
   };
   log('done', JSON.stringify(result));
   return json(result);

@@ -1,0 +1,38 @@
+{
+  "version": "3",
+  "remote": {
+    "https://esm.sh/@supabase/supabase-js@2.45.0": "36ae57c3f2dc3f94fd122a846b40a87114d29bb2f47e910cb46bee5575febf2e"
+  },
+  "workspace": {
+    "packageJson": {
+      "dependencies": [
+        "npm:@astryxdesign/cli@^0.1.3",
+        "npm:@astryxdesign/core@^0.1.3",
+        "npm:@astryxdesign/theme-neutral@^0.1.3",
+        "npm:@eslint/js@^10.0.1",
+        "npm:@phosphor-icons/react@^2.1.10",
+        "npm:@playwright/test@^1.61.1",
+        "npm:@supabase/supabase-js@^2.110.0",
+        "npm:@tanstack/react-query@^5.101.2",
+        "npm:@testing-library/dom@^10.4.1",
+        "npm:@testing-library/react@^16.3.2",
+        "npm:@types/react-dom@^19.2.3",
+        "npm:@types/react@^19.2.17",
+        "npm:@vercel/analytics@^2.0.1",
+        "npm:@vercel/speed-insights@^2.0.0",
+        "npm:@vitejs/plugin-react@^6.0.3",
+        "npm:esbuild@^0.28.1",
+        "npm:eslint-plugin-react-hooks@^7.1.1",
+        "npm:eslint-plugin-react-refresh@^0.5.3",
+        "npm:eslint@^10.6.0",
+        "npm:globals@^17.7.0",
+        "npm:jsdom@^29.1.1",
+        "npm:react-dom@^19.2.7",
+        "npm:react-router-dom@^7.18.1",
+        "npm:react@^19.2.7",
+        "npm:vite@^8.1.3",
+        "npm:vitest@^4.1.9"
+      ]
+    }
+  }
+}
