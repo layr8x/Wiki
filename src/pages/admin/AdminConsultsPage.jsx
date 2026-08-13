@@ -369,15 +369,16 @@ export default function AdminConsultsPage() {
               filters={{ profile_id: channel }}
               title={channelLabel + ' 문의량'}
             />
-
-            {/* 채널별 건수 KPI */}
-            {/* max 캡은 좁은 화면에서 트랙 최대폭이 최소폭보다 작아져(minmax(200px, 61px))
-                200px 고정 1열로 깨진다(모바일 실측). 캡 없이 auto-fit. */}
-            <Grid columns={{ minWidth: 120, repeat: 'fit' }} gap={3}>
-              {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
-            </Grid>
           </div>
         </div>
+
+        {/* ─── 채널별 건수 KPI ────────────────────────────────────
+            5개를 한 줄로 둔다. 좁은 칸(오른쪽 열)에 넣었더니 4+1 로 접혀 두 줄이 되면서
+            오히려 세로로 더 길어졌다(약 250px). 전체 폭에 한 줄로 두면 111px 이면 된다.
+            좁은 화면에서는 자동으로 접힌다. */}
+        <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>
+          {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
+        </Grid>
 
         {/* ─── 툴바: 채널 + 기간 + 검색 ─────────────────────────── */}
         <div className="ac-toolbar">
