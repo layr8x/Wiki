@@ -9,6 +9,7 @@
 // 색·간격·라운드는 전부 Astryx 토큰/prop — raw hex/px 없음.
 import { Card } from '@astryxdesign/core/Card'
 import { Text } from '@astryxdesign/core/Text'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { HStack } from '@astryxdesign/core/HStack'
 import { VStack } from '@astryxdesign/core/VStack'
 import { Divider } from '@astryxdesign/core/Divider'
@@ -19,12 +20,19 @@ import {
 } from '@/hooks/useGuides'
 import './JandiStatus.astryx.css'
 
-function StatBlock({ label, value, suffix, isLoading }) {
+// 조회가 실패했을 때 0을 단언하지 않기 위한 표기. 카카오 위젯의 ErrorNote 와 같은 톤.
+function ErrorNote({ label }) {
+  return <Text type="supporting" size="sm" className="js-error">{label} 불러오기 실패 — 새로고침해 주세요</Text>
+}
+
+function StatBlock({ label, value, suffix, isLoading, isError }) {
   return (
     <VStack gap={1} className="js-stat">
       <Text type="supporting" size="sm">{label}</Text>
       {isLoading ? (
-        <div className="js-skel" />
+        <Skeleton width={80} height={32} />
+      ) : isError ? (
+        <ErrorNote label={label} />
       ) : (
         <HStack gap={2} vAlign="baseline">
           <Text as="span" type="display-3" weight="bold" hasTabularNumbers>{value}</Text>
@@ -36,16 +44,20 @@ function StatBlock({ label, value, suffix, isLoading }) {
 }
 
 export function JandiStatus() {
-  const { data: todayCount, isLoading: todayLoading } = useJandiTodayCount()
-  const { data: activeWriters, isLoading: writersLoading } = useJandiActiveWriters(7)
-  const { data: replyStats, isLoading: replyLoading } = useJandiReplyRate(30)
+  // ⚠️ isError 를 받는다. 예전에는 안 받아서 조회 실패가 "오늘 0건"으로 보였다 —
+  //    내부 팀 채팅이 조용한 날과 수집이 죽은 날을 구분할 수 없었다.
+  const { data: todayCount, isLoading: todayLoading, isError: todayError } = useJandiTodayCount()
+  const { data: activeWriters, isLoading: writersLoading, isError: writersError } = useJandiActiveWriters(7)
+  const { data: replyStats, isLoading: replyLoading, isError: replyError } = useJandiReplyRate(30)
 
   return (
     <Card padding={5} className="js-card">
       <VStack gap={1} className="js-headline">
         <Text type="supporting" size="sm">오늘 대화량 (North Star · 5개 방 합산, 실시간)</Text>
         {todayLoading ? (
-          <div className="js-skel js-skel-headline" />
+          <Skeleton width={160} height={44} />
+        ) : todayError ? (
+          <ErrorNote label="오늘 대화량" />
         ) : (
           <HStack gap={3} vAlign="baseline">
             <Text as="span" type="display-2" weight="bold" hasTabularNumbers>
@@ -64,12 +76,14 @@ export function JandiStatus() {
           value={(activeWriters ?? 0).toLocaleString('ko-KR')}
           suffix="명"
           isLoading={writersLoading}
+          isError={writersError}
         />
         <StatBlock
           label="최근 30일 스레드(댓글) 참여율"
           value={replyStats ? replyStats.rate.toFixed(1) : '—'}
           suffix="%"
           isLoading={replyLoading}
+          isError={replyError}
         />
       </div>
 

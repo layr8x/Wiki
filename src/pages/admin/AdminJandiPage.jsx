@@ -25,10 +25,14 @@ import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
+import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { JandiStatus } from '@/components/analytics/JandiStatus'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 
 import './AdminJandiPage.astryx.css'
 
@@ -192,7 +196,7 @@ function ChannelKpi({ ch }) {
           ⚠️ 여기 숫자는 "메시지 수"다(카카오 상담 화면의 같은 자리는 "대화방 수"). 상담 화면 주석 참고. */}
       <Text type="supporting" size="sm">전체 누적 메시지</Text>
       {isLoading ? (
-        <div className="aj-skel aj-skel-kpi" />
+        <Skeleton width={96} height={32} />
       ) : (
         <div className="aj-kpi-value">
           <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
@@ -263,9 +267,11 @@ export default function AdminJandiPage() {
   const [csvCount, setCsvCount] = useState(0)
 
   const qc = useQueryClient()
-  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
+  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt, refetch } = useMessages(channel, query, year, month, limit)
 
   const reset = () => setLimit(PAGE_SIZE)
+  const hasFilter = Boolean(query) || year !== 'all' || month !== 'all'
+  const clearFilters = () => { setInput(''); setQuery(''); setYear('all'); setMonth('all'); reset() }
   const onChannel = (id) => { setChannel(id); reset() }
   const onSearch = () => { setQuery(input); reset() }
 
@@ -298,7 +304,7 @@ export default function AdminJandiPage() {
   }
 
   return (
-    <div className="aj-shell">
+    <div className="admin-shell">
       <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
@@ -315,35 +321,40 @@ export default function AdminJandiPage() {
           </Card>
         )}
 
-        {/* ─── 실시간 현황 (North Star: 오늘 대화량) ─────────────── */}
-        <JandiStatus />
+        {/* ─── 상단 분석 영역 (카카오 상담 화면과 같은 2열 구조) ──────────────────
+            실시간 현황과 분석 요약이 세로로만 쌓여, 정작 목적인 대화 목록에 닿기까지
+            965px 을 지나야 했다(1440x900 실측 — 첫 화면에 대화가 한 줄도 없었다).
+            넓은 화면에서만 2열로 나눈다. 좁은 화면에서는 예전처럼 세로로 쌓인다.
+            ⚠️ 상담 화면을 이쪽에 맞추지 말고 이쪽을 상담 화면에 맞춘다(그쪽이 먼저 정리됐다). */}
+        <div className="aj-analysis">
+          <JandiStatus />
+          <div className="aj-analysis-side">
+            <AnalyticsHeader
+              analyticsKey="jandi"
+              table="jandi_messages"
+              dateColumn="created_at"
+              filters={{ room_id: channel }}
+              title={channelLabel + ' 대화량'}
+            />
+          </div>
+        </div>
 
-        {/* ─── 분석 요약 (방법론 기반 상단 통계 영역, 카카오 상담 페이지와 동일 스펙) ── */}
-        <AnalyticsHeader
-          analyticsKey="jandi"
-          table="jandi_messages"
-          dateColumn="created_at"
-          filters={{ room_id: channel }}
-          title={channelLabel + ' 대화량'}
-        />
-
-        {/* ─── 채널별 메시지 수 (KPI) ───────────────────────────── */}
-        <Grid columns={{ minWidth: 200, max: 5 }} gap={4}>
+        {/* ─── 채널별 메시지 수 (KPI) ─────────────────────────────
+            5개를 한 줄로 둔다. 상담 화면과 같은 기준(minWidth 200 이면 좁은 칸에서 4+1 로 접혀
+            오히려 세로로 길어진다). */}
+        <Grid columns={{ minWidth: 160, max: 5 }} gap={4}>
           {CHANNELS.map((ch) => <ChannelKpi key={ch.id} ch={ch} />)}
         </Grid>
 
         {/* ─── 툴바: 채널 탭 + 기간 + 검색 ───────────────────────── */}
         <div className="aj-toolbar">
-          <div className="aj-tabs" role="group" aria-label="채널 선택">
-            {CHANNELS.map((ch) => (
-              <Button
-                key={ch.id}
-                label={ch.label}
-                size="sm"
-                variant={channel === ch.id ? 'primary' : 'secondary'}
-                onClick={() => onChannel(ch.id)}
-              />
-            ))}
+          {/* 카카오 상담 화면과 같은 이유·같은 컴포넌트. 그쪽 주석 참고. */}
+          <div className="aj-tabs">
+            <SegmentedControl value={channel} onChange={onChannel} label="방 선택" size="sm">
+              {CHANNELS.map((ch) => (
+                <SegmentedControlItem key={ch.id} value={ch.id} label={ch.label} />
+              ))}
+            </SegmentedControl>
           </div>
 
           <div className="aj-selects">
@@ -368,6 +379,7 @@ export default function AdminJandiPage() {
 
           <div className="aj-search">
             <TextInput
+              size="sm"
               label="메시지 검색"
               isLabelHidden
               placeholder="메시지 검색 후 Enter"
@@ -383,7 +395,7 @@ export default function AdminJandiPage() {
 
         {/* ─── 결과 카드 ─────────────────────────────────────────── */}
         <Card padding={0} className="aj-main">
-          <div className="aj-main-head">
+          <div className="admin-cardhead admin-row-between aj-main-head">
             <div className="aj-main-title">
               <Text weight="semibold">
                 {channelLabel}{year !== 'all' ? ' · ' + year + '년' + (month !== 'all' ? ' ' + Number(month) + '월' : '') : ''}{query ? ' · "' + query + '"' : ''}
@@ -411,15 +423,26 @@ export default function AdminJandiPage() {
             </div>
           </div>
 
-          <div className="aj-main-body">
+          <Divider />
+
+          <div className="admin-cardbody">
             {isError ? (
-              <Text as="p" className="aj-state aj-error">불러오기 실패: {error?.message || '오류'}</Text>
+              <QueryError label="대화 메시지" error={error} onRetry={refetch} />
             ) : isLoading ? (
-              <div className="aj-skel-list">
-                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="aj-skel aj-skel-thread" />)}
-              </div>
+              <VStack gap={2} hAlign="stretch">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} width="100%" height={80} index={i} />
+                ))}
+              </VStack>
             ) : threads.length === 0 ? (
-              <Text as="p" type="supporting" className="aj-state">조건에 맞는 메시지가 없습니다.</Text>
+              // 카카오 상담 화면과 같은 규칙 — 설명에 검색어 원문을 넣지 않는다.
+              <QueryEmpty
+                title="조건에 맞는 메시지가 없습니다"
+                description={`${channelLabel} 방${year === 'all' ? ' 전체 기간' : ' ' + year + '년' + (month === 'all' ? '' : ' ' + Number(month) + '월')} 기준입니다.`}
+                actions={hasFilter ? (
+                  <Button label="검색어·기간 지우기" variant="secondary" size="sm" onClick={clearFilters} />
+                ) : undefined}
+              />
             ) : (
               <VStack gap={4} hAlign="stretch">
                 {threads.map((t) => (

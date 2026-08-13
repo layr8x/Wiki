@@ -19,6 +19,7 @@ import { Table, proportional } from '@astryxdesign/core/Table'
 import { List } from '@astryxdesign/core/List'
 import { Item } from '@astryxdesign/core/Item'
 import { Collapsible } from '@astryxdesign/core/Collapsible'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { TrendUp as TrendUpIcon, CheckCircle as CheckIcon } from '@phosphor-icons/react'
 import {
   useKakaoSlaStatus,
@@ -123,7 +124,13 @@ function ErrorNote({ label }) {
   return <Text type="supporting" size="sm" className="kcs-error">{label} 불러오기 실패 — 새로고침해 주세요</Text>
 }
 
-export function KakaoConsultStatus() {
+/**
+ * @param {object}   props
+ * @param {Function} [props.onSelectChat] 목록의 한 행을 눌렀을 때 호출. `{ chatId, profileId }` 를 받는다.
+ *   주면 행이 눌리는 요소가 되고, 안 주면 예전처럼 정적 목록으로 남는다(대시보드처럼 이동할 목적지가
+ *   없는 자리에서 헛클릭을 만들지 않기 위해서다).
+ */
+export function KakaoConsultStatus({ onSelectChat }) {
   const { data: sla, isLoading: slaLoading, isError: slaError } = useKakaoSlaStatus()
   const { data: actionChats, isLoading: actionLoading, isError: actionError } = useKakaoActionChats(6)
   const { data: spikes, isLoading: spikeLoading, isError: spikeError } = useKakaoCategorySpike()
@@ -153,7 +160,7 @@ export function KakaoConsultStatus() {
             "밀린"·"North Star"는 이 화면을 처음 보는 직원에게 설명이 필요한 표현이었다. */}
         <Text type="supporting" size="sm">지금 답을 기다리는 상담 (5채널 합산, 실시간)</Text>
         {slaLoading ? (
-          <div className="kcs-skel kcs-skel-headline" />
+          <Skeleton width={160} height={44} />
         ) : slaError ? (
           <ErrorNote label="대기 건수" />
         ) : (
@@ -210,15 +217,27 @@ export function KakaoConsultStatus() {
           kakao_action_chats 기반 — 오래 기다린 순 상위 6건. */}
       <Text weight="semibold" size="sm" className="kcs-section-title">지금 처리할 대화</Text>
       {actionLoading ? (
-        <div className="kcs-skel kcs-skel-list" />
+        <VStack gap={2} hAlign="stretch">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} width="100%" height={40} index={i} />
+          ))}
+        </VStack>
       ) : actionError ? (
         <ErrorNote label="지금 처리할 대화" />
       ) : actionChats && actionChats.length > 0 ? (
         <List hasDividers density="compact" className="kcs-action-list">
           {actionChats.map((c, i) => (
             <Item
-              key={`${c.channel}-${i}`}
+              key={c.chatId || `${c.channel}-${i}`}
               density="compact"
+              // 이 위젯은 화면에서 유일하게 "지금 뭘 해야 하는지"를 말하는 자리인데, 정작 그리로 갈
+              // 방법이 없어 눈으로만 읽고 아래 목록에서 다시 찾아야 했다.
+              // Astryx Item 지침이 "Item 으로 화면 간 이동 금지"라 새 주소로 보내지 않고, 같은 화면의
+              // 채널 필터를 바꾸고 그 대화로 스크롤하는 방식으로 처리한다.
+              // 지침대로 행 안에 버튼을 따로 넣지 않는다(행 자체가 눌리는 요소).
+              onClick={onSelectChat && c.chatId
+                ? () => onSelectChat({ chatId: c.chatId, profileId: c.profileId })
+                : undefined}
               startContent={
                 <div className="kcs-action-badge">
                   <Badge variant={CHANNEL_BADGE[c.channel] || 'neutral'} label={c.channel} />
@@ -253,7 +272,11 @@ export function KakaoConsultStatus() {
       {slaLoading ? (
         <>
           <Text weight="semibold" size="sm" className="kcs-section-title">채널별 응답 현황 (응답 목표 시간 기준)</Text>
-          <div className="kcs-skel kcs-skel-table" />
+          <VStack gap={2} hAlign="stretch">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} width="100%" height={32} index={i} />
+            ))}
+          </VStack>
         </>
       ) : slaError ? (
         <>
@@ -288,7 +311,11 @@ export function KakaoConsultStatus() {
       {healthLoading ? (
         <>
           <Text weight="semibold" size="sm" className="kcs-section-title">수집 파이프라인 상태</Text>
-          <div className="kcs-skel kcs-skel-table" />
+          <VStack gap={2} hAlign="stretch">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} width="100%" height={32} index={i} />
+            ))}
+          </VStack>
         </>
       ) : healthError ? (
         <>

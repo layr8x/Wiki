@@ -3,52 +3,35 @@
  * Astryx primitive(VStack/HStack/Grid/Card/Badge/Button/Heading/Text/Divider/TextInput)로
  * 표현 못하는 레이아웃(컨테이너·KPI·필터바·기간 select·마스터/디테일 스레드·말풍선 틴트·스켈레톤)만 여기서 처리한다. */
 
-/* 콘텐츠 컨테이너 — 기존 max-w-6xl + 반응형 패딩 재현 */
-.ac-shell {
-  margin-inline: auto;
-  width: 100%;
-  max-width: 72rem;
-  padding: 24px 16px;
-}
-@media (min-width: 640px) { .ac-shell { padding: 24px; } }
-@media (min-width: 1024px) { .ac-shell { padding: 32px; } }
-/* 폭 상한 72rem(1152px)은 읽기 좋은 본문 기준인데, 이 화면은 본문이 아니라 로그 표다.
-   1920px 모니터에서 770px 이 그냥 비어 있었다(실측) → 넓은 화면에서만 상한을 올려
-   같은 내용이 더 적은 줄에 들어가게 한다. */
-@media (min-width: 1440px) { .ac-shell { max-width: 88rem; } }
-@media (min-width: 1800px) { .ac-shell { max-width: 104rem; } }
+/* 콘텐츠 컨테이너는 공용 .admin-shell (src/App.astryx.css) 를 쓴다. */
 
 /* ─── 채널 KPI 카드 ──────────────────────────────────────────── */
 .ac-kpi {
-  display: flex; flex-direction: column; gap: 12px;
+  display: flex; flex-direction: column; gap: var(--spacing-3);
 }
 .ac-kpi-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2);
 }
 .ac-kpi-icon { color: var(--color-icon-secondary); flex: none; }
-.ac-kpi-value { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; }
+.ac-kpi-value { display: flex; align-items: baseline; gap: var(--spacing-1); font-variant-numeric: tabular-nums; }
 
 /* ─── 툴바: 채널칩 + 기간 Selector + 검색 (잔디 대화 페이지와 동일 스펙) ── */
 .ac-toolbar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--spacing-3);
 }
-.ac-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.ac-selects { display: flex; align-items: center; gap: 6px; }
+.ac-chips { display: flex; flex-wrap: wrap; gap: var(--spacing-1-5); }
+.ac-selects { display: flex; align-items: center; gap: var(--spacing-1-5); }
 .ac-search { flex: 1 1 240px; min-width: 200px; margin-left: auto; }
 /* 기간 드롭다운은 Astryx Selector(디자인시스템)로 렌더 — 네이티브 select CSS 제거됨. */
 
-/* ─── 결과 패널 (마스터: 스레드 목록) ────────────────────────── */
+/* ─── 결과 패널 (마스터: 스레드 목록) ──────────────────────────
+   여백·정렬은 공용 .admin-cardhead / .admin-cardbody / .admin-row-between 가 담당한다.
+   여기는 이 화면 고유의 것(줄바꿈 허용, 제목 묶음)만 남긴다. */
 .ac-panel { overflow: hidden; }
-.ac-panel-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  flex-wrap: wrap;
-  padding: 16px 20px;
-}
-.ac-panel-titlewrap { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; }
-.ac-panel-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.ac-panel-body { padding: 16px 20px; }
+.ac-panel-head { flex-wrap: wrap; align-items: center; }
+.ac-panel-titlewrap { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--spacing-1) var(--spacing-2); min-width: 0; }
+.ac-panel-actions { display: flex; align-items: center; gap: var(--spacing-2); flex-wrap: wrap; }
 
-.ac-state { text-align: center; padding: 40px 0; }
 .ac-error { color: var(--color-text-red); }
 
 /* ─── 스레드 (디테일: 채팅별 그룹) ───────────────────────────── */
@@ -58,13 +41,17 @@
   overflow: hidden;
   background: var(--color-background-body);
 }
+/* ⚠️ 다크에서 이 면은 --color-background-muted 를 쓰면 안 된다.
+   neutral 테마는 다크에서 body·card·muted 를 전부 #1b1b1b 로 정의한다(실측) — 즉 카드 위에
+   muted 를 얹으면 대비 1.00 이라 면이 통째로 사라진다. 카드 위에 얹히는 면은 surface(#262626).
+   라이트에서는 둘 다 흰색 계열이라 보이는 결과가 거의 같다. */
 .ac-thread-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 8px 16px;
-  background: var(--color-background-muted);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-4);
+  background: var(--color-background-surface);
   border-bottom: 1px solid var(--color-border);
 }
-.ac-thread-id { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ac-thread-id { display: flex; align-items: center; gap: var(--spacing-2); min-width: 0; }
 .ac-thread-nick { min-width: 0; }
 .ac-thread-hash {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -72,7 +59,7 @@
 }
 @media (max-width: 640px) { .ac-thread-hash { display: none; } }
 .ac-thread-meta {
-  display: flex; align-items: center; gap: 12px; flex: none;
+  display: flex; align-items: center; gap: var(--spacing-3); flex: none;
 }
 
 /* ─── 메시지 목록 (시각 | 보낸이 배지 | 말풍선) ──────────────── */
@@ -80,18 +67,18 @@
    실측: 한 줄짜리 메시지 한 행이 57px 인데 글자는 22px 뿐이었다. 60%가 여백이었고
    28개면 1,596px, 화면 1.8장을 여백에 쓰고 있었다. 행 수만큼 곱해지는 자리라
    여기 4px 을 줄이면 화면 전체가 눈에 띄게 줄어든다. 구분선이 있어 붙어 보이지 않는다. */
-.ac-msgs { list-style: none; margin: 0; padding: 2px 16px; }
+.ac-msgs { list-style: none; margin: 0; padding: var(--spacing-0-5) var(--spacing-4); }
 .ac-msg {
-  display: flex; align-items: flex-start; gap: 12px;
-  padding: 4px 0;
+  display: flex; align-items: flex-start; gap: var(--spacing-3);
+  padding: var(--spacing-1) 0;
 }
 .ac-msg + .ac-msg { border-top: 1px solid var(--color-border); }
 .ac-msg-time {
-  width: 80px; flex: none; padding-top: 2px;
+  width: 80px; flex: none; padding-top: var(--spacing-0-5);
   font-size: 12px; font-variant-numeric: tabular-nums;
   color: var(--color-text-secondary);
 }
-.ac-msg-sender { flex: none; margin-top: 2px; max-width: 150px; }
+.ac-msg-sender { flex: none; margin-top: var(--spacing-0-5); max-width: 150px; }
 
 /* 좁은 화면: 한 줄에 안 들어가면 말풍선이 아랫줄로 내려가 폭을 통째로 쓴다.
    (2026-08-13 실측 — 390px 에서 시각 칸 80px + 배지 + 여백을 빼면 말풍선에 49~71px 밖에
@@ -106,7 +93,7 @@
       실측: 7자 메시지는 그대로 한 줄(32px), 53자만 아랫줄로 내려간다.
       100% 를 강제했을 때는 짧은 메시지까지 두 줄이 돼 잔디 목록이 오히려 76% 늘었다. */
 @media (max-width: 640px) {
-  .ac-msg { flex-wrap: wrap; gap: 4px 8px; }
+  .ac-msg { flex-wrap: wrap; gap: var(--spacing-1) var(--spacing-2); }
   .ac-msg-time { width: auto; padding-top: 0; }
   .ac-msg-sender { margin-top: 0; }
 }
@@ -114,7 +101,7 @@
 /* 말풍선 — 방향별 틴트(고객=inbound 파랑 / 상담원·시스템=outbound 뉴트럴) */
 .ac-msg-bubble {
   flex: 1 1 auto; min-width: 0;
-  padding: 6px 12px;
+  padding: var(--spacing-1-5) var(--spacing-3);
   border-radius: var(--radius-chat);
   font-size: 14px; line-height: 1.5;
   white-space: pre-wrap; word-break: break-word;
@@ -124,24 +111,17 @@
   background: var(--color-background-blue);
   border: 1px solid var(--color-border-blue);
 }
+/* 상담원·시스템 말풍선. 위 주석과 같은 이유로 surface 를 쓴다 — muted 로 두면 다크에서
+   상담원 말풍선이 배경에 녹아 누가 말했는지 구분이 안 됐다.
+   고객 말풍선(background-blue)은 그대로 둔다. 2자 대화의 방향 구분이 이 색 차이다. */
 .ac-msg[data-dir="out"] .ac-msg-bubble {
-  background: var(--color-background-muted);
+  background: var(--color-background-surface);
   border: 1px solid var(--color-border);
 }
 .ac-msg-empty { color: var(--color-text-secondary); }
 
 /* "더 보기" 버튼 여백 */
-.ac-more { margin-top: 16px; }
-
-/* ─── 스켈레톤 ───────────────────────────────────────────────── */
-.ac-skel {
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: ac-pulse 1.4s ease-in-out infinite;
-}
-.ac-skel-kpi { height: 32px; width: 96px; }
-.ac-skel-thread { height: 80px; width: 100%; }
-@keyframes ac-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.ac-more { margin-top: var(--spacing-4); }
 
 /* ─── 상단 분석 영역 2열 (2026-08-13) ────────────────────────────────────────
    사용자 요청: "스크롤을 많이 하지 않아도 내용 대부분을 확인할 수 있도록".
@@ -149,8 +129,8 @@
    지나야 했다. 1440px 화면에서는 오른쪽이 비어 있었는데도 그랬다.
    1100px 이상에서만 2열로 나눈다(왼쪽 실시간 위젯이 정보량이 많아 조금 더 넓게).
    그 아래 폭에서는 규칙이 아예 적용되지 않아 예전처럼 세로로 쌓인다. */
-.ac-analysis { display: flex; flex-direction: column; gap: 24px; }
-.ac-analysis-side { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.ac-analysis { display: flex; flex-direction: column; gap: var(--spacing-6); }
+.ac-analysis-side { display: flex; flex-direction: column; gap: var(--spacing-6); min-width: 0; }
 
 @media (min-width: 1100px) {
   .ac-analysis {
@@ -160,4 +140,16 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
   }
+}
+
+/* ─── "지금 처리할 대화"에서 눌러 들어온 대화 (2026-08-13) ──────────────────
+   위젯이 "지금 뭘 해야 하는지"를 말해 주면서도 정작 그리로 갈 방법이 없었다.
+   이제 행을 누르면 채널이 바뀌고 그 대화로 스크롤한다. 스크롤만 하면 어느 것이 눌린 건지
+   알 수 없으므로, 도착한 대화에 테두리로 표시를 남긴다(다음 조작을 하면 사라진다). */
+.ac-jump-note { margin-bottom: var(--spacing-4); }
+.ac-thread[data-jumped="true"] {
+  border-color: var(--color-border-blue);
+  box-shadow: 0 0 0 2px var(--color-background-blue);
+  /* 스크롤이 헤더 밑으로 파고들지 않도록 도착 지점에 여유를 준다. */
+  scroll-margin-top: var(--spacing-4);
 }

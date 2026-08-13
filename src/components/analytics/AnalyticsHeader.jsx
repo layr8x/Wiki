@@ -7,6 +7,7 @@
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
 import { Text } from '@astryxdesign/core/Text'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { HStack } from '@astryxdesign/core/HStack'
 import { VStack } from '@astryxdesign/core/VStack'
 import {
@@ -96,7 +97,7 @@ export function AnalyticsHeader({ analyticsKey, table, dateColumn, filters, titl
   if (isLoading) {
     return (
       <Card padding={5} className="anh-card">
-        <div className="anh-skel" />
+        <Skeleton width="100%" height={96} />
       </Card>
     )
   }

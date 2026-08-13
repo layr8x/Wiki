@@ -26,3 +26,59 @@
   text-overflow: clip !important;
   word-break: keep-all;
 }
+
+/* ─── 관리자 툴바의 필터(SegmentedControl) — 좁은 화면 (2026-08-13) ─────────────
+   SegmentedControl 은 항목을 한 줄에 붙여 렌더하고 줄바꿈을 하지 않는다. 그래서 폭이 모자라면
+   항목이 좁아지며 **라벨이 두 줄로 쪼개진다**(실측 390px: "마이클래 / 스", "LIVE 기술지 / 원").
+   글자를 쪼개느니 옆으로 미는 편이 낫다 → 좁은 화면에서만 가로 스크롤.
+
+   ⚠️ 이 상자에 세로 overflow 를 만들지 말 것. 한 축이 auto 면 나머지 축의 visible 도 auto 로
+   계산돼(CSS 규격) 세로 스크롤이 생기고 컨트롤 위아래가 잘린다(CLAUDE.md 23-A 와 같은 함정).
+   그래서 세로는 건드리지 않고, 안쪽 컨트롤이 줄어들지 않도록 자연폭만 지켜 준다. */
+@media (max-width: 640px) {
+  .ac-chips, .aj-tabs, .ag-seg, .af-seg {
+    overflow-x: auto;
+    /* 스크롤 상자 자신이 줄어들 수 있어야 부모 flex 안에서 넘치지 않는다. */
+    min-width: 0;
+    max-width: 100%;
+  }
+  .ac-chips > *, .aj-tabs > *, .ag-seg > *, .af-seg > * {
+    width: max-content;
+    flex: none;
+  }
+}
+
+/* ─── 관리자 화면 공통 껍데기 (2026-08-13) ─────────────────────────────────────
+   다섯 화면이 각자 `.ov-shell`·`.ac-shell`·`.aj-shell`·`.ag-shell`·`.af-shell` 를 손으로
+   똑같이 정의하고 있었다. 값 자체의 차이는 크지 않았지만 **한 곳을 고쳐도 나머지 넷이 안 따라오는
+   구조**가 문제였다 — 실제로 가이드·피드백 화면만 넓은 화면 확대 규칙이 빠져 있어, 좌측 메뉴에서
+   화면을 옮길 때 본문 폭이 튀었다(1440px 이상에서 최대 384px 차이).
+
+   ⚠️ 새 관리자 화면을 만들 때 shell 규칙을 다시 쓰지 말고 이 클래스를 쓸 것. */
+.admin-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding: var(--spacing-6) var(--spacing-4);
+}
+@media (min-width: 640px)  { .admin-shell { padding: var(--spacing-6); } }
+@media (min-width: 1024px) { .admin-shell { padding: var(--spacing-8); } }
+/* 폭 상한 72rem(1152px)은 읽기 좋은 "본문" 기준인데 관리자 화면은 본문이 아니라 표·로그다.
+   1920px 모니터에서 770px 이 그냥 비어 있었다(실측) → 넓은 화면에서만 상한을 올린다. */
+@media (min-width: 1440px) { .admin-shell { max-width: 88rem; } }
+@media (min-width: 1800px) { .admin-shell { max-width: 104rem; } }
+
+/* 제목 좌 · 액션 우 (여러 화면이 각자 .ov-row-between / .af-row-between 로 갖고 있던 것) */
+.admin-row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); }
+.admin-page-header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--spacing-4); }
+
+/* 카드 안 머리말/본문 구획. 상담·잔디의 결과 패널과 대시보드 카드가 같은 값을 쓴다. */
+.admin-cardhead { padding: var(--spacing-4) var(--spacing-5); }
+.admin-cardbody { padding: var(--spacing-4) var(--spacing-5); }
+
+/* 카드 머리말에 액션 버튼이 함께 오는 경우: 부제가 두세 줄인 카드에서 가운데 정렬이면
+   버튼이 문단 한가운데 떠 보인다 → 위쪽 정렬 + 버튼은 줄어들지 않게. */
+.admin-cardhead.admin-row-between { align-items: flex-start; gap: var(--spacing-3); }
+.admin-cardhead.admin-row-between > button { flex: none; }
+/* ⚠️ 머리말 아래 구분선은 CSS border 로 긋지 말 것. 화면마다 <Divider /> 를 쓰는 곳과 border 를
+   쓰는 곳이 갈려 있었고, 둘이 겹치면 선이 두 줄로 나온다. 전부 <Divider /> 로 통일했다. */

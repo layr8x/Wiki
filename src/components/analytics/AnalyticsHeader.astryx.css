@@ -8,25 +8,25 @@
    → 카드 자기 폭에 반응하도록 컨테이너 쿼리를 쓴다. */
 .anh-card { overflow: hidden; container-type: inline-size; }
 
-.anh-truncated-warning { display: inline-flex; margin-bottom: 16px; }
+.anh-truncated-warning { display: inline-flex; margin-bottom: var(--spacing-4); }
 
 .anh-grid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr 1.4fr;
-  gap: 24px;
+  gap: var(--spacing-6);
   align-items: start;
 }
 @media (max-width: 860px) {
   .anh-grid { grid-template-columns: 1fr; }
 }
 @container (max-width: 720px) {
-  .anh-grid { grid-template-columns: 1fr; gap: 16px; }
+  .anh-grid { grid-template-columns: 1fr; gap: var(--spacing-4); }
 }
 
 .anh-headline { min-width: 0; }
 .anh-sub {
   min-width: 0;
-  padding-left: 24px;
+  padding-left: var(--spacing-6);
   border-left: 1px solid var(--color-border);
 }
 @media (max-width: 860px) {
@@ -39,20 +39,12 @@
 
 .anh-footnote {
   display: block;
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-3);
   border-top: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
-
-.anh-skel {
-  height: 96px;
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: anh-pulse 1.4s ease-in-out infinite;
-}
-@keyframes anh-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 
 /* 스파크라인 SVG — 색은 Astryx 아이콘/보더 토큰만 사용 */
 .anh-spark { display: block; }

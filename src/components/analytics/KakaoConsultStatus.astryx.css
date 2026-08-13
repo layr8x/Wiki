@@ -25,19 +25,19 @@
 .kcs-wait-warning { color: var(--color-text-orange); }
 .kcs-wait-critical { color: var(--color-text-red); font-weight: var(--font-weight-semibold); }
 
-.kcs-spike-banner { margin-top: 16px; }
+.kcs-spike-banner { margin-top: var(--spacing-4); }
 
-.kcs-divider { margin-block: 16px; }
+.kcs-divider { margin-block: var(--spacing-4); }
 
 /* display:block 이 필요한 이유 — Astryx Text 는 기본이 인라인이라 아래 내용과 같은 줄에 붙는다.
    조회 실패일 때 "채널별 응답 현황 (응답 목표 시간 기준)SLA 표 불러오기 실패"처럼 한 덩어리로
    읽혔고, margin-bottom 도 인라인 요소라 세로 방향으로는 먹지 않아 무효였다. */
-.kcs-section-title { display: block; margin-bottom: 8px; }
+.kcs-section-title { display: block; margin-bottom: var(--spacing-2); }
 
 .kcs-footnote {
   display: block;
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-3);
   border-top: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   line-height: 1.5;
@@ -64,7 +64,7 @@
 /* Collapsible 트리거↔콘텐츠 기본 간격이 4px로 매우 좁아(라이브러리 기본은 "펼치기" 같은
    한 줄짜리 트리거 전제) 표 헤더 행이 바로 붙어 보인다 — 표를 담는 두 군데만 여유를 더 준다.
    (콘텐츠 div는 트리거 button 다음의 직계 자식 div 하나뿐이라 이 선택자로 안전하게 특정 가능) */
-.kcs-collapsible > div { padding-block-start: 12px; }
+.kcs-collapsible > div { padding-block-start: var(--spacing-3); }
 
 /* Astryx 표 래퍼는 카드 안쪽 여백만큼 위아래로 **음수 바깥여백**(실측 -20px)을 써서 카드 끝까지
    번지려 한다. 카드 맨 위/맨 아래에 표만 있는 화면을 전제한 동작인데, 여기서는 접기 트리거
@@ -73,13 +73,3 @@
    (가로는 표가 카드 폭을 꽉 채워 구분선과 맞아떨어져야 해서 그대로 두는 게 맞다).
    !important 는 Astryx 명시도(:not(#\#) 4회) 때문에 불가피. */
 .kcs-collapsible .astryx-table-scroll-wrapper { margin-block: 0 !important; }
-
-.kcs-skel {
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: kcs-pulse 1.4s ease-in-out infinite;
-}
-.kcs-skel-headline { height: 56px; }
-.kcs-skel-table { height: 120px; }
-.kcs-skel-list { height: 168px; }
-@keyframes kcs-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }

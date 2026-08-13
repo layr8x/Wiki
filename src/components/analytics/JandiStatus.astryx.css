@@ -5,12 +5,12 @@
 
 .js-headline { min-width: 0; }
 
-.js-divider { margin-block: 16px; }
+.js-divider { margin-block: var(--spacing-4); }
 
 .js-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: var(--spacing-6);
 }
 @media (max-width: 560px) {
   .js-grid { grid-template-columns: 1fr; }
@@ -20,18 +20,12 @@
 
 .js-footnote {
   display: block;
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-3);
   border-top: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
-.js-skel {
-  height: 32px;
-  border-radius: var(--radius-element);
-  background: var(--color-background-muted);
-  animation: js-pulse 1.4s ease-in-out infinite;
-}
-.js-skel-headline { height: 56px; }
-@keyframes js-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+/* 조회 실패 문구 — 카카오 위젯의 .kcs-error 와 같은 톤(같은 성격의 표시는 같은 모양으로). */
+.js-error { color: var(--color-text-red); }

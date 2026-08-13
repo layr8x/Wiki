@@ -8,7 +8,7 @@
 //   - 시각 요소만 Astryx primitive(VStack/HStack/Grid/Card/Badge/Button/Heading/Text/Divider/TextInput)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
 //   - primitive 로 표현 못하는 레이아웃(마스터/디테일·필터바·말풍선 틴트·테이블)만 co-located CSS(토큰 only)
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { supabase, isSupabaseEnabled } from '@/lib/supabase'
 import { maskBody, maskName } from '@/lib/maskPII'
@@ -28,14 +28,18 @@ import { HStack } from '@astryxdesign/core/HStack'
 import { Grid } from '@astryxdesign/core/Grid'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
+import { Banner } from '@astryxdesign/core/Banner'
 import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { Divider } from '@astryxdesign/core/Divider'
 import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
+import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
+import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { KakaoConsultStatus } from '@/components/analytics/KakaoConsultStatus'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 import './AdminConsultsPage.astryx.css'
 
 const CHANNELS = [
@@ -191,7 +195,7 @@ function ChannelKpi({ ch }) {
           서로 다른 것을 같은 단위로 세는 것처럼 보였다 → 세는 대상을 라벨에 적는다. */}
       <Text type="supporting" size="sm">전체 누적 대화</Text>
       {isLoading ? (
-        <div className="ac-skel ac-skel-kpi" />
+        <Skeleton width={96} height={32} />
       ) : (
         <div className="ac-kpi-value">
           <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
@@ -274,14 +278,30 @@ export default function AdminConsultsPage() {
   // LIVE 는 102만 건이라 CSV 만드는 데 1~3분이 걸린다. 진행 건수를 보여주지 않으면
   // 멈춘 것처럼 보여 사용자가 창을 닫아버린다.
   const [csvCount, setCsvCount] = useState(0)
+  // "지금 처리할 대화"에서 고른 대화. 채널 전환 -> 목록 갱신 -> 스크롤 순서라 한 박자 늦게
+  // 처리해야 해서 상태로 들고 있는다. 다른 조작(채널·검색)을 하면 지워진다.
+  const [jumpChatId, setJumpChatId] = useState(null)
 
   const qc = useQueryClient()
   const { data: nickMap = new Map() } = useNicknames(channel)
-  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
+  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt, refetch } = useMessages(channel, query, year, month, limit)
 
-  const reset = () => setLimit(PAGE_SIZE)
+  const reset = () => { setLimit(PAGE_SIZE); setJumpChatId(null) }
+  const hasFilter = Boolean(query) || year !== 'all' || month !== 'all'
+  const clearFilters = () => { setInput(''); setQuery(''); setYear('all'); setMonth('all'); reset() }
   const onChannel = (id) => { setChannel(id); reset() }
   const onSearch = () => { setQuery(input); reset() }
+
+  // "지금 처리할 대화"에서 한 행을 눌렀을 때.
+  // 그 대화가 확실히 목록에 들어오도록 검색어·기간 필터도 함께 푼다(검색어가 걸린 채로 채널만
+  // 바꾸면 대상 대화가 안 나와 "눌렀는데 아무 일도 안 일어난다"로 보인다).
+  const onSelectChat = ({ chatId, profileId }) => {
+    if (profileId) setChannel(profileId)
+    setInput(''); setQuery('')
+    setYear('all'); setMonth('all')
+    reset()
+    setJumpChatId(chatId)
+  }
 
   // 채팅별 스레드 그룹: 같은 chat_id 의 메시지를 시간 오름차순으로 묶고, 그룹은 최근 활동 기준 내림차순.
   const grouped = useMemo(() => {
@@ -305,6 +325,18 @@ export default function AdminConsultsPage() {
     groups.sort((a, b) => (b.latestAt || '').localeCompare(a.latestAt || ''))
     return groups
   }, [rows, nickMap])
+
+  // 고른 대화를 찾았는지는 목록에서 바로 계산한다(상태로 또 들고 있으면 목록이 바뀔 때마다
+  // 어긋난다). 못 찾는 경우 = 오래된 대화라 이번 50건에 안 들어온 경우이고, 조용히 넘어가지 않고
+  // 안내를 띄운다. 눌렀는데 아무 일도 안 일어나는 게 가장 나쁜 결과다.
+  const jumpFound = jumpChatId ? grouped.some((g) => g.chatId === jumpChatId) : false
+  const jumpMissed = Boolean(jumpChatId) && !isLoading && !jumpFound
+
+  useEffect(() => {
+    if (!jumpChatId || !jumpFound) return
+    document.getElementById('ac-thread-' + jumpChatId)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [jumpChatId, jumpFound])
 
   const channelLabel = CHANNELS.find((c) => c.id === channel)?.label || channel
 
@@ -336,7 +368,7 @@ export default function AdminConsultsPage() {
     + (query ? ' · "' + query + '"' : '')
 
   return (
-    <div className="ac-shell">
+    <div className="admin-shell">
       <VStack gap={6} hAlign="stretch">
 
         {/* ─── 헤더 ─────────────────────────────────────────────── */}
@@ -360,7 +392,7 @@ export default function AdminConsultsPage() {
             좁은 화면에서는 자동으로 예전처럼 세로로 쌓인다. */}
         <div className="ac-analysis">
           {/* 실시간 운영 현황 (North Star: 지금 밀린 상담) */}
-          <KakaoConsultStatus />
+          <KakaoConsultStatus onSelectChat={onSelectChat} />
 
           <div className="ac-analysis-side">
             {/* 분석 요약 (방법론 기반 상단 통계 영역) */}
@@ -384,16 +416,16 @@ export default function AdminConsultsPage() {
 
         {/* ─── 툴바: 채널 + 기간 + 검색 ─────────────────────────── */}
         <div className="ac-toolbar">
-          <div className="ac-chips" role="group" aria-label="채널 선택">
-            {CHANNELS.map((ch) => (
-              <Button
-                key={ch.id}
-                label={ch.label}
-                size="sm"
-                variant={channel === ch.id ? 'primary' : 'secondary'}
-                onClick={() => onChannel(ch.id)}
-              />
-            ))}
+          {/* 수제 div[role=group] + Button 조합이었다. 어느 것이 켜졌는지 알리는 속성이
+              하나도 없어(aria-pressed·selected·current 전부 없음), 화면 전체가 이 필터의
+              결과인데 읽어주는 기능은 그 사실을 말하지 못했다.
+              값 선택이지 화면 이동이 아니므로 TabList 가 아니라 SegmentedControl 이 맞다(문서 기준). */}
+          <div className="ac-chips">
+            <SegmentedControl value={channel} onChange={onChannel} label="채널 선택" size="sm">
+              {CHANNELS.map((ch) => (
+                <SegmentedControlItem key={ch.id} value={ch.id} label={ch.label} />
+              ))}
+            </SegmentedControl>
           </div>
 
           <div className="ac-selects">
@@ -418,6 +450,7 @@ export default function AdminConsultsPage() {
 
           <div className="ac-search">
             <TextInput
+              size="sm"
               label="메시지 검색"
               isLabelHidden
               placeholder="메시지 검색 후 Enter"
@@ -433,7 +466,7 @@ export default function AdminConsultsPage() {
 
         {/* ─── 결과 패널 ────────────────────────────────────────── */}
         <Card className="ac-panel" padding={0}>
-          <div className="ac-panel-head">
+          <div className="admin-cardhead admin-row-between ac-panel-head">
             <div className="ac-panel-titlewrap">
               <Text weight="semibold">상담 스레드{titleSuffix}</Text>
               {grouped.length > 0 && (
@@ -464,19 +497,42 @@ export default function AdminConsultsPage() {
 
           <Divider />
 
-          <div className="ac-panel-body">
+          <div className="admin-cardbody">
+            {jumpMissed && (
+              <Banner
+                status="info"
+                title="고른 대화가 이 목록에 아직 없습니다"
+                description={`${channelLabel} 채널의 최근 ${limit}건만 불러온 상태입니다. 아래 "더 보기"를 눌러 범위를 넓혀 주세요.`}
+                className="ac-jump-note"
+              />
+            )}
             {isError ? (
-              <Text as="p" className="ac-state ac-error">불러오기 실패: {error?.message || '오류'}</Text>
+              <QueryError label="상담 메시지" error={error} onRetry={refetch} />
             ) : isLoading ? (
               <VStack gap={2} hAlign="stretch">
-                {Array.from({ length: 6 }).map((_, i) => <div key={i} className="ac-skel ac-skel-thread" />)}
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} width="100%" height={80} index={i} />
+                ))}
               </VStack>
             ) : grouped.length === 0 ? (
-              <Text as="p" type="supporting" className="ac-state">조건에 맞는 메시지가 없습니다.</Text>
+              // ⚠️ 설명에 검색어 원문을 넣지 않는다 — 상담 검색어에는 이름·전화번호가 들어갈 수 있다.
+              //    채널과 기간까지만 적고, 걸린 필터를 풀 수 있는 버튼을 준다.
+              <QueryEmpty
+                title="조건에 맞는 메시지가 없습니다"
+                description={`${channelLabel} 채널${year === 'all' ? ' 전체 기간' : ' ' + year + '년' + (month === 'all' ? '' : ' ' + Number(month) + '월')} 기준입니다.`}
+                actions={hasFilter ? (
+                  <Button label="검색어·기간 지우기" variant="secondary" size="sm" onClick={clearFilters} />
+                ) : undefined}
+              />
             ) : (
               <VStack gap={4} hAlign="stretch">
                 {grouped.map((g) => (
-                  <div key={g.chatId} className="ac-thread">
+                  <div
+                    key={g.chatId}
+                    id={'ac-thread-' + g.chatId}
+                    className="ac-thread"
+                    data-jumped={g.chatId === jumpChatId ? 'true' : undefined}
+                  >
                     <div className="ac-thread-head">
                       <div className="ac-thread-id">
                         <Badge label="고객" variant="neutral" icon={<User size={12} />} />

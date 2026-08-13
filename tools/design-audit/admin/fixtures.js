@@ -7,6 +7,14 @@
 //    (실데이터 형태 참고: 채널 5개 · 하루 165건 규모 · 응답 중앙값 19~32분)
 
 const CHANNELS = ['마이클래스', 'LIVE', 'LIVE 기술지원', '콘텐츠', '통합로그인']
+// 채널 라벨과 짝이 되는 profile_id (CLAUDE.md 16장 정본과 같은 순서).
+// ⚠️ 라벨만 있고 id 가 없으면 "채널을 눌러 필터가 바뀌는지"를 검증할 수 없다.
+const PROFILE_IDS = ['_VGAQn', '_rcpPG', '_TkpPG', '_xfxilXn', '_rkbcn']
+const CHAT_COUNT = 12
+// 대화 12묶음 중 앞 6개는 기본 채널(마이클래스)에 몰아 둔다. 기본으로 열리는 화면이 넉넉해야
+// 목록 레이아웃을 제대로 보고, 나머지 6개는 다른 채널에 흩어 놔야 채널 전환이 의미를 갖는다.
+const chatProfile = (c) => (c < 6 ? '_VGAQn' : PROFILE_IDS[(c - 5) % 5])
+const chatIdOf = (c) => String(4980000000000000 + c * 137)
 
 // 긴 값·짧은 값을 섞어 "글자가 길어지면 깨지는가"를 같이 본다.
 const NICKS = ['별빛사탕', '수학이좋아요', '학부모A', '가나다라마바사아자차카', 'jin', '민들레홀씨', '연구실지킴이']
@@ -19,21 +27,25 @@ const PREVIEWS = [
   '보강 신청 방법 알려주세요',
 ]
 
+// 잔디 방 id (AdminJandiPage 의 CHANNELS 와 같은 순서). 앞쪽 메시지는 기본으로 열리는
+// 첫 번째 방에 몰아 둬야 기본 화면이 비어 보이지 않는다.
+const JANDI_ROOMS = ['31495011', '31962045', '33385655', '31495551', '29522222']
+
 const iso = (minutesAgo) => new Date(Date.UTC(2026, 7, 13, 4, 0, 0) - minutesAgo * 60000).toISOString()
 
 // ─── 상담 메시지(카카오 상담 로그 화면) ────────────────────────────────────
-// 대화 6묶음 × 메시지 3~7개. 고객(in)/매니저(out)/시스템을 섞는다.
+// 대화 12묶음 × 메시지 3~7개. 고객(in)/매니저(out)/시스템을 섞는다.
 const messages = []
 let logId = 4900000000000000
-for (let c = 0; c < 6; c++) {
-  const chatId = String(4980000000000000 + c * 137)
+for (let c = 0; c < CHAT_COUNT; c++) {
+  const chatId = chatIdOf(c)
   const n = 3 + (c % 5)
   for (let i = 0; i < n; i++) {
     const isUser = i % 2 === 0
     messages.push({
       log_id: String(logId++),
       chat_id: chatId,
-      profile_id: '_VGAQn',
+      profile_id: chatProfile(c),
       sender_type: i === n - 1 && c % 4 === 3 ? 'system' : isUser ? 'user' : 'manager',
       message:
         i === 0
@@ -50,9 +62,9 @@ for (let c = 0; c < 6; c++) {
 }
 
 // ─── 채팅 메타 ─────────────────────────────────────────────────────────────
-const chats = Array.from({ length: 6 }, (_, c) => ({
-  chat_id: String(4980000000000000 + c * 137),
-  profile_id: '_VGAQn',
+const chats = Array.from({ length: CHAT_COUNT }, (_, c) => ({
+  chat_id: chatIdOf(c),
+  profile_id: chatProfile(c),
   nickname: NICKS[c % NICKS.length],
   last_log_send_at: iso(c * 90),
   category: ['환불', '교재·배송', '라이브', '계정·로그인·앱', '입반·등록', '기타'][c % 6],
@@ -65,6 +77,9 @@ export const FIXTURES = {
   //    모든 메시지가 "(본문 없음)"·"(내용 없음)"으로 렌더돼, 이 화면의 글자 길이·줄바꿈을
   //    한 번도 제대로 검증하지 못하고 있었다.
   //    link_id 는 화면이 스레드 묶음 키로 쓴다. 길이가 제각각이어야 줄바꿈을 확인할 수 있다.
+  // ⚠️ room_id 는 AdminJandiPage 의 CHANNELS id 와 같아야 한다. 예전 대역은 'room0'·'room1'
+  //    같은 임의 값이라, 방 필터가 실제로 동작하기 시작하자 목록이 통째로 비었다.
+  //    (필터를 no-op 으로 두던 시절에는 이 어긋남이 드러나지 않았다.)
   jandi_messages: [
     '이번 주 배포 일정 공유드립니다. 확인 부탁드려요.',
     '넵 확인했습니다.',
@@ -77,8 +92,8 @@ export const FIXTURES = {
   ].map((message, i) => ({
     link_id: String(9000 + i),
     message_id: String(9000 + i),
-    room_id: 'room' + (i % 3),
-    room_name: ['플랫폼서비스팀', '캠퍼스파트', 'TECH 공지'][i % 3],
+    room_id: JANDI_ROOMS[i < 5 ? 0 : (i % JANDI_ROOMS.length)],
+    room_name: ['시대 APP 기획/문의', '시대 APP 실험실', '재종통합행정 + 플랫폼서비스실', '재종 데스크 업무', '전체공지'][i < 5 ? 0 : (i % 5)],
     writer_id: String(10 + (i % 3)),
     writer_name: ['김명준', '박미혜', '김수민'][i % 3],
     content_type: 'text',
@@ -106,16 +121,43 @@ export const FIXTURES = {
     id: 'g' + i,
     title,
     module,
+    // ⚠️ type·tldr 이 빠져 있어 화면의 타입 배지가 빈 알약으로, TL;DR 줄이 아예 안 보였다.
+    //    실제 조회(fetchAdminGuides)가 읽는 컬럼은 전부 채워 둬야 화면을 제대로 검증할 수 있다.
+    type: ['SOP', 'DECISION', 'REFERENCE', 'TROUBLE', 'RESPONSE', 'POLICY'][i % 6],
+    tldr: [
+      '출결 상태를 바꾸기 전에 결석 사유부터 확인합니다.',
+      '보강은 같은 과목 다른 반에 자리가 있을 때만 배정합니다.',
+      '시간표 변경은 개강 후 2주까지만 가능합니다.',
+      '결석 신고가 없으면 무단으로 처리하고 학부모에게 안내합니다.',
+      '환불 금액은 수강 경과 회차 기준으로 계산합니다.',
+      '가상계좌는 발급 후 3일간 유효합니다.',
+      '부분 환불은 팀장 승인 후 처리합니다.',
+      '교재는 입반 확정 다음 영업일에 발송합니다.',
+      '강좌 개설 전 강의실·교재·정원을 함께 확인합니다.',
+      '라이브 끊김은 먼저 접속 인원과 회선을 확인합니다.',
+      '신규 입반은 대기번호 순서를 반드시 지킵니다.',
+      '전체 공지는 발송 전 팀장 확인을 받습니다.',
+    ][i],
     status: i % 4 === 0 ? 'draft' : 'published',
     updated_at: iso(i * 600),
     views: 1200 - i * 87,
   })),
+  // ⚠️ 컬럼 이름은 실제 조회(db.js fetchAdminFeedback)가 읽는 것과 같아야 한다:
+  //    vote(rating 아님) · session_id. 예전 대역은 `rating` 이라 vote 가 undefined 가 되어
+  //    유형 배지가 전부 "기타"로, 탭 건수가 전부 0으로 나왔다(실제 화면과 다른 그림).
   guide_feedback: Array.from({ length: 4 }, (_, i) => ({
     id: 'f' + i,
     guide_id: 'g' + i,
-    guide_title: ['출결 처리 매뉴얼', '수납·환불 가이드', '교재 배송 프로세스', '라이브 장애 대응'][i],
-    rating: i % 2 === 0 ? 'helpful' : 'unhelpful',
-    comment: '화면 캡처가 예전 버전이라 지금이랑 달라요.',
+    session_id: 'sess-' + i,
+    vote: ['error', 'missing', 'improvement', 'helpful'][i],
+    // ⚠️ 실제 저장 포맷은 `[유형] 제목\n\n본문` 이다(FeedbackPage.jsx). 예전 대역은 한 줄짜리
+    //    평문이라 화면의 제목/본문 분리와 접두 제거를 한 번도 검증할 수 없었다.
+    comment: [
+      '[error] 화면 캡처가 예전 버전이라 지금이랑 달라요\n\n출결 처리 매뉴얼 3단계 캡처가 개편 전 화면입니다. 실제 버튼 위치가 달라 그대로 따라가면 막힙니다.',
+      '[missing] 부분 환불 절차가 빠져 있어요\n\n전액 환불만 적혀 있고 수강 중 환불은 안 나옵니다.',
+      '[improvement] 검색으로 잘 안 찾아집니다\n\n"보강"으로 검색하면 관련 없는 문서가 먼저 나옵니다.',
+      '[helpful] 덕분에 바로 처리했습니다',
+    ][i],
     created_at: iso(i * 300),
   })),
   search_logs: [],
@@ -140,13 +182,23 @@ export function rpcFixture(name) {
         { channel: '통합로그인', waiting: 0, answered_n: 0, oldest_wait_h: 0, median_first_response_min: 0 },
         { channel: 'LIVE 기술지원', waiting: 0, answered_n: 7, oldest_wait_h: 0, median_first_response_min: 0 },
       ]
+    // ⚠️ chat_id·profile_id 는 실제 대화 목록과 짝이 맞아야 한다. 목록의 한 행을 누르면
+    //    그 채널로 필터가 바뀌고 그 대화로 스크롤하는데, 짝이 안 맞으면 늘 "목록에 없음"만 나와
+    //    정작 성공 경로를 한 번도 못 본다. 마지막 한 건은 일부러 없는 대화를 가리켜
+    //    "못 찾았을 때" 안내도 확인할 수 있게 둔다.
     case 'kakao_action_chats':
-      return Array.from({ length: 6 }, (_, i) => ({
-        channel: CHANNELS[i % CHANNELS.length],
-        nickname: NICKS[i % NICKS.length],
-        waited_h: [40.0, 18.6, 10.0, 3.2, 0.8, 0.2][i],
-        preview: PREVIEWS[i % PREVIEWS.length],
-      }))
+      return Array.from({ length: 6 }, (_, i) => {
+        const c = [0, 6, 7, 8, 2, 99][i]
+        const pid = c === 99 ? '_VGAQn' : chatProfile(c)
+        return {
+          chat_id: c === 99 ? '4980000000009999' : chatIdOf(c),
+          profile_id: pid,
+          channel: CHANNELS[PROFILE_IDS.indexOf(pid)],
+          nickname: NICKS[i % NICKS.length],
+          waited_h: [40.0, 18.6, 10.0, 3.2, 0.8, 0.2][i],
+          preview: PREVIEWS[i % PREVIEWS.length],
+        }
+      })
     case 'kakao_category_spike':
       return [
         {
@@ -193,9 +245,11 @@ export function rpcFixture(name) {
         { category: '출결·보강', cnt: 41, negative_rate: 7.3 }, { category: '대기', cnt: 33, negative_rate: 30.3 },
         { category: '시간표·수업', cnt: 22, negative_rate: 4.5 }, { category: '퇴원·취소', cnt: 12, negative_rate: 58.3 },
       ])
+    // ⚠️ 날짜는 하루씩 이어져야 한다. 예전 대역은 `15 + (i % 17)` 이라 07/15~07/31 을 반복해
+    //    가로축이 뒤로 갔다 앞으로 오는 값이 됐다(눈금을 붙이자마자 드러났다).
     case 'get_sentiment_trend':
       return Array.from({ length: 30 }, (_, i) => ({
-        day: `2026-07-${String(15 + (i % 17)).padStart(2, '0')}`,
+        day: new Date(Date.UTC(2026, 6, 15) + i * 86400000).toISOString().slice(0, 10),
         positive: 20 + ((i * 7) % 18),
         neutral: 45 + ((i * 3) % 20),
         negative: 6 + ((i * 5) % 11),

@@ -275,6 +275,13 @@ export async function fetchDashboardStats() {
       supabase.from('guide_feedback').select('id', { count: 'exact', head: true }),
       supabase.from('search_logs').select('id', { count: 'exact', head: true }),
     ])
+    // ⚠️ 조회가 실패했을 때 `|| []` · `|| 0` 으로 넘어가면 화면이 "0개"라고 단언한다.
+    //    카카오 수집이 18일간 멈춘 걸 아무도 못 알아챈 것과 같은 유형의 사고다 —
+    //    "값이 0"과 "값을 못 읽음"은 다른 사실이고, 섞으면 판단이 틀어진다.
+    //    실패는 실패로 올려보내고, 화면이 다시 시도 버튼과 함께 알린다.
+    for (const res of [guidesRes, helpfulRes, feedbackRes, searchRes]) {
+      if (res.error) throw res.error
+    }
     const guides  = guidesRes.data  || []
     const totalGuides = guides.length
     const totalViews  = guides.reduce((s, g) => s + (g.views || 0), 0)
@@ -384,10 +391,13 @@ export async function fetchKakaoActionChats(limitN = 6) {
   const { data, error } = await supabase.rpc('kakao_action_chats', { limit_n: limitN })
   if (error) throw error
   return (data || []).map(row => ({
-    channel:  row.channel,
-    nickname: row.nickname,
-    waitedH:  Number(row.waited_h),
-    preview:  row.preview,
+    // chatId·profileId 는 목록에서 그 대화로 바로 갈 때 쓴다(20260813 마이그레이션에서 추가).
+    chatId:    row.chat_id,
+    profileId: row.profile_id,
+    channel:   row.channel,
+    nickname:  row.nickname,
+    waitedH:   Number(row.waited_h),
+    preview:   row.preview,
   }))
 }
 
@@ -544,6 +554,35 @@ export async function fetchAdminGuides({ status = 'all', module: mod, search } =
     )
   }
   return list
+}
+
+/**
+ * 상태 탭에 붙일 건수. 상태만 빼고 나머지 필터(모듈·검색)는 그대로 적용한다.
+ *
+ * ⚠️ 화면이 이미 갖고 있는 `guides` 배열을 세면 안 된다 — 그건 **이미 상태로 걸러진 결과**라
+ *   "발행됨" 탭에서는 임시저장 건수가 0으로 보인다(2026-08-13 감사에서 지적된 지점).
+ *   행 데이터를 상태별로 또 끌어오는 것도 낭비라, 개수만 세는 질의(head:true)를 쓴다.
+ */
+export async function fetchAdminGuideCounts({ module: mod, search } = {}) {
+  if (!isSupabaseEnabled) {
+    const list = await fetchAdminGuides({ status: 'all', module: mod, search })
+    const by = { all: list.length, published: 0, draft: 0, archived: 0 }
+    for (const g of list) by[g.status] = (by[g.status] || 0) + 1
+    return by
+  }
+  const countFor = async (status) => {
+    let q = supabase.from('guides').select('id', { count: 'exact', head: true })
+    if (status !== 'all') q = q.eq('status', status)
+    if (mod)              q = q.eq('module', mod)
+    if (search)           q = q.or(`title.ilike.%${search}%,tldr.ilike.%${search}%`)
+    const { count, error } = await q
+    if (error) throw error
+    return count ?? 0
+  }
+  const [all, published, draft, archived] = await Promise.all(
+    ['all', 'published', 'draft', 'archived'].map(countFor)
+  )
+  return { all, published, draft, archived }
 }
 
 /** 가이드 status 변경 (발행/해제/보관) — 어드민 전용 */
