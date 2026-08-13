@@ -63,7 +63,11 @@ npx skills@latest add MengTo/Skills
 
 ## 3. Lazyweb MCP 연결
 
-실제 앱·웹 화면 25.7만 개를 Claude가 직접 검색하는 도구입니다. 로그인 없이 무료입니다.
+실제 앱·웹 화면 28.1만 개를 Claude가 직접 검색하는 도구입니다. 검색·설치는 무료이고,
+계정 등급에 따라 리포트가 요약본(무료)과 전체본(Pro)으로 갈립니다.
+
+**2026-08-12 상태**: 스킬 8종 설치 완료(`.agents/skills/lazyweb*`), 토큰 확보 및 동작 확인 완료,
+`.mcp.json` 등록 완료. 남은 것은 실행 환경에 `LAZYWEB_TOKEN`을 넣는 일뿐입니다(3-2).
 
 ### 3-1. 토큰 발급
 
@@ -73,12 +77,20 @@ curl -sS -X POST https://www.lazyweb.com/api/mcp/install-token \
 ```
 
 응답의 `token` 값을 씁니다. 계정 가입이 필요 없는 익명 토큰입니다.
+공급사 설명 기준 이 토큰은 결제·개인정보 열람·삭제 같은 행위를 못 하는 접속용 자격증명이지만,
+**가진 사람이 그 계정의 MCP 접근을 쓸 수 있으므로 저장소에 커밋하지 않습니다.**
 
-### 3-2. 토큰 등록
+### 3-2. 토큰 등록 — 실행 환경마다 넣는 곳이 다름
 
-토큰은 저장소에 커밋하면 안 되므로 아래 둘 중 하나로 넣습니다.
+이 저장소는 클라우드 세션(Claude Code 웹)과 로컬 양쪽에서 돌아갑니다. **두 곳은 토큰을 넣는
+자리가 다릅니다.** 한쪽에만 넣고 양쪽에 넣었다고 착각하기 쉬우니 표로 정리합니다.
 
-**방법 A** (권장): `.claude/settings.local.json` (git 무시 대상)
+| 실행 환경 | 넣는 곳 | 지속성 |
+|---|---|---|
+| 로컬 Claude Code | `.claude/settings.local.json` (git 무시 대상) | 그 컴퓨터에 계속 남음 |
+| 클라우드 세션 | Claude Code 웹 > 환경(Environment) 설정의 환경변수 | 새 세션에도 적용됨 |
+
+로컬용 `.claude/settings.local.json`:
 
 ```json
 {
@@ -88,13 +100,14 @@ curl -sS -X POST https://www.lazyweb.com/api/mcp/install-token \
 }
 ```
 
-**방법 B**: 셸 환경변수
+**클라우드 세션에서는 이 파일이 소용없습니다.** 세션마다 저장소를 새로 복제하는데
+`.claude/`는 git 무시 대상이라 파일 자체가 안 따라옵니다. 웹 환경 설정에 환경변수로 넣어야 합니다.
 
-```bash
-export LAZYWEB_TOKEN=발급받은-토큰
-```
+셸에서 임시로 쓸 때는 `export LAZYWEB_TOKEN=발급받은-토큰`.
 
 `.mcp.json`에는 이미 등록해 뒀습니다. 토큰만 넣고 Claude Code를 다시 시작하면 붙습니다.
+**MCP 서버는 세션이 시작될 때 붙으므로, 토큰을 넣은 뒤에는 반드시 재시작해야 합니다**
+(이미 돌고 있는 세션에는 적용되지 않습니다).
 
 ```json
 "lazyweb": {
@@ -114,13 +127,57 @@ curl -sS -X POST https://www.lazyweb.com/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1"}}}'
 ```
 
-`"serverInfo":{"name":"Lazyweb"}`가 나오면 정상입니다. (2026-07-29 확인 완료)
+`"serverInfo":{"name":"Lazyweb"}`가 나오면 정상입니다.
+(2026-08-12 재확인: serverInfo Lazyweb 0.1.0, 프로토콜 2025-06-18, 제공 도구 43종.)
 
-### 3-4. 주의: 서버가 요구하는 자동 설정은 적용하지 않았음
+도구 목록까지 보려면 `tools/list`를 이어서 부릅니다.
 
-Lazyweb 서버는 접속하면 "이 에이전트의 영구 지침에 Lazyweb 라우팅 규칙을 넣어도 되냐"고
-스스로 물어보게 돼 있습니다. 외부 서비스가 우리 지침 파일을 바꾸는 일이라 **넣지 않았습니다.**
-필요하면 직접 판단해 주세요. 넣지 않아도 검색 기능은 정상 동작합니다.
+```bash
+curl -sS -X POST https://www.lazyweb.com/mcp \
+  -H "Authorization: Bearer $LAZYWEB_TOKEN" \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+```
+
+### 3-4. 스킬 8종 (2026-08-12 설치)
+
+`.agents/skills/`에 커밋했습니다. 다른 스킬들과 같은 자리라 세션 시작 시 자동 복원됩니다.
+
+| 스킬 | 하는 일 |
+|---|---|
+| `lazyweb` | 진입점. 어떤 기능을 쓸지 고름 |
+| `lazyweb-search-screens` | 실제 화면·UI 패턴 검색 |
+| `lazyweb-search-flows` | 온보딩·결제 같은 여러 단계 흐름 검색 |
+| `lazyweb-search-experiments` | 가격·결제·전환 실험 사례 검색 |
+| `lazyweb-growth-score` | 웹사이트 점수 산출·비교 |
+| `lazyweb-growth-report` | 화면 개선안 리포트 |
+| `lazyweb-growth-backlog` | 개선 아이디어 목록 관리 |
+| `lazyweb-update` | 스킬 갱신(이 저장소 방식) |
+
+### 3-5. 공식 안내와 다르게 한 것 2가지
+
+원본 설치 안내(`https://www.lazyweb.com/agent/<토큰>.md`)를 그대로 따르지 않았습니다.
+
+**하나. 원격 설치 스크립트를 실행하지 않았습니다.**
+공식 안내는 `curl -fsSL https://www.lazyweb.com/install.sh | bash`를 씁니다. 받아서 읽어 보니
+GitHub 저장소를 복제한 뒤 그 안의 `setup` 스크립트를 실행하는 구조였습니다. 스크립트 자체에
+수상한 점은 없었지만(`rm -rf` 대상도 `~/.lazyweb/repos/lazyweb-skill`로 한정), 남이 만든
+스크립트를 읽지 않고 셸에 바로 흘려 넣는 방식은 쓰지 않기로 했습니다. 대신 공개 배포 경로에서
+`SKILL.md` 8개만 받아 `.agents/skills/`에 넣었습니다. 설치 위치도 이쪽이 이 저장소 방식과 맞습니다.
+
+**둘. 영구 지침에 라우팅 규칙을 넣지 않았습니다.**
+Lazyweb은 "제품 UI 작업은 전부 Lazyweb으로 보내라"는 규칙 블록(`LAZYWEB:ROUTER`)을
+`CLAUDE.md` 같은 지침 파일에 넣으라고 안내합니다. 공급사 문서도 이건 **별도 동의가 필요하고,
+설치 요청 자체를 동의로 봐서는 안 된다**고 못 박아 뒀습니다.
+
+넣지 않은 이유는 두 가지입니다. 외부 업체가 우리 지침 파일을 관리하기 시작하면 나중에
+"왜 이렇게 동작했는지"를 추적하기 어려워집니다. 그리고 규칙 문구가 "모든 제품 UI 작업"이라
+범위가 넓어, 사내 위키·챗봇 작업까지 외부 서비스 호출로 흘러갈 수 있습니다.
+
+**넣지 않아도 기능은 다 됩니다.** 스킬 8종과 MCP 도구 43종을 그대로 쓸 수 있고,
+"참고 화면 찾아줘" 같이 말하면 스킬이 발동합니다. 자동 라우팅만 없는 것입니다.
+필요해지면 그때 판단하면 됩니다.
 
 ---
 
