@@ -351,56 +351,63 @@
 
 ---
 
-# 22. ★★ 카카오 수집이 멈추면 = 쿠키가 아니라 "어디서·언제 호출하나"를 먼저 의심
+# 22. ★★ 카카오 수집이 멈추면 = 쿠키 만료를 단정하지 말고 "누가 언제 호출하나"부터 볼 것
 
 > 배경: 2026-07-25부터 18일간 5채널 수집이 전면 중단. 겉지표는 전부 정상(크론 72회 성공,
 > 쿠키 6h마다 갱신, 함수 HTTP 200, 알림도 정상 발송)인데 실제 수집만 0건이었다.
 > "쿠키 만료"로 오진해 사용자에게 반복 로그인을 요구한 게 가장 큰 실수.
 
-## 22-1. 원인 후보 — 클라우드 IP 차단 vs 쿠키 회전 (★ 아직 확정 아님)
+## 22-1. ★ 결론 정정 — 클라우드 IP 차단이 **아니었다** (2026-08-13 재측정으로 확정)
 
-**동일 쿠키·동일 헤더로 호출 위치만 바꾼 실측**:
+2026-08-12 에 "맥 200 / 클라우드 401"을 보고 **카카오가 클라우드 IP 를 막는다**고 결론냈다.
+**그 결론은 틀렸다.** 두 호출 사이 4분을 변수로 세지 않았다 — 그 사이 기기 Chrome 이 세션
+토큰을 굴려(브라우저가 로그인을 유지하는 원리) 보관함 스냅샷이 이미 무효였던 것이다.
+
+**재측정** (`scripts/kakao-cloud-ip-test.mjs` — 갓 뽑은 쿠키를 기기·클라우드에서 거의 동시에 사용):
 
 | 호출 위치 | 결과 |
 |---|---|
-| 담당자 기기 (2026-08-12 02:16) | **200 정상** |
-| Supabase Edge Function (02:20) | **401 거부** |
+| 기기 (호출 전) | me=200 chats=200 |
+| **클라우드 (Supabase)** | **me=200 · 마이클래스 200 · LIVE 200** |
+| 기기 (호출 후) | me=200 chats=200 |
 
-당시 "변수는 IP뿐"으로 결론냈으나, **두 호출 사이 4분이 또 하나의 변수**다. 카카오는 응답마다
-`Set-Cookie`로 세션 토큰을 굴리므로(브라우저가 로그인을 유지하는 원리), 맥 Chrome이 토큰을
-굴려 보관함 스냅샷이 이미 무효였을 수도 있다. 거부 형태도 WAF 차단이 아니라 평범한
-`401 {"message":"Unauthorized"}` JSON이었다 `[추정]`. 22-3의 v12 수정(Set-Cookie 흡수)이
-겨냥한 게 바로 이 회전이다 — 즉 회전은 이미 한 번 실재한다고 본 원인이다.
+이어서 `kakao-collect` Edge Function 을 실제로 호출해 **LIVE 채널 101건 적재까지 확인**했다.
+→ 막힌 것은 IP 가 아니라 **쿠키 신선도**였다.
 
-**가르는 법**: `node --env-file=.env.local scripts/kakao-cloud-ip-test.mjs`
-갓 뽑은 쿠키(수 초 이내)를 기기·클라우드에서 거의 동시에 써 본다. 클라우드도 200이면 **IP 차단
-아님 = 클라우드 수집 가능**, 클라우드만 401이면 IP 차단 확정. **묵은 쿠키로 잰 401은 근거가 안 된다**
-(2026-08-13 07:11 UTC 재확인 401은 20시간 묵은 쿠키라 무효).
+**교훈**: 시간차가 있는 두 관찰로 변수를 하나라고 단정하지 말 것. 결론이 정반대로 갈리는
+질문(클라우드 가능/불가)은 **변수를 하나로 좁힌 실험**을 설계해서 재라. 나는 그 실험 없이
+단정했고, 그 결론으로 사용자가 기기 운영을 계속하게 만들었다.
+
+**묵은 쿠키로 잰 401 은 근거가 안 된다**(8-13 07:11 UTC 의 401 은 20시간 묵은 쿠키였다).
 
 **진단 순서(다음에 멈추면 이대로)**:
-1. `kakao_partner_stream_state.last_error` 확인 → `auth 401`이면 인증 문제.
-2. `last_error`가 **null인데 hb_age_min만 큼** → 인증이 아니라 **수집기가 안 도는 것**.
-   → 22-2의 기기 이전(launchd 미설치)·절전을 먼저 의심. `launchctl list | grep amswiki`.
-3. `kakao_partner_secrets.updated_at` 확인 → 최근이면 쿠키 배달은 정상. "쿠키 만료"로 단정 금지.
-4. 위 `kakao-cloud-ip-test.mjs`로 IP인지 회전인지 가른다.
+1. `kakao_partner_stream_state.last_error` → `auth 401` 이면 인증 문제.
+2. `last_error` 가 **null 인데 hb_age_min 만 큼** → 인증이 아니라 **수집기가 안 도는 것**.
+   → 22-2 의 기기 이전(launchd 미설치)·절전·크론 비활성을 먼저 의심.
+3. `kakao_partner_secrets.updated_at` → 오래됐으면 쿠키 공급이 끊긴 것(기기가 꺼져 있음).
+4. 쿠키를 갓 뽑아 `kakao-cloud-ip-test.mjs` 로 기기·클라우드를 동시에 재본다.
 
-## 22-2. 현재 구조 — 담당자 기기(맥북 에어) launchd (조작 0)
+## 22-2. 현재 구조 — 수집은 클라우드, 기기는 쿠키 공급만 (2026-08-13 개편)
 
-| launchd 잡 | 주기 | 역할 |
+| 무엇 | 어디서 | 주기 |
 |---|---|---|
-| `com.amswiki.kakao-cookie-refresh` | 6시간 | 쿠키 추출·**검증**·배달 |
-| `com.amswiki.kakao-collect` | 5분 | **수집 본체** |
+| **수집 본체** | **클라우드** (Supabase pg_cron → `kakao-collect`, jobid 1) | 5분 |
+| 쿠키 갱신 | 담당자 기기 launchd (`com.amswiki.kakao-cookie-refresh`) | 30분 |
 
-- ⚠️ **기기를 바꾸면 반드시 `bash scripts/install-launchd.sh` 1회.** `~/Library/LaunchAgents`는
+- **기기가 자도 수집은 계속 돈다.** 뚜껑을 닫으면 쿠키만 안 갱신될 뿐이다.
+- ⚠️ **완전한 기기 독립은 아니다.** 기기를 오래 꺼두면 쿠키가 결국 만료돼 수집이 멈춘다.
+  쿠키가 갱신 없이 얼마나 버티는지는 **미측정**. 알럿봇이 만료를 잡아 알린다.
+- 기기에서도 수집을 돌리려면(클라우드 장애 대비) `bash scripts/install-launchd.sh --with-local-collect`.
+  기본 설치는 기기 수집 잡을 **내린다**(클라우드와 중복 호출 방지).
+- ⚠️ **기기를 바꾸면 반드시 `bash scripts/install-launchd.sh` 1회.** `~/Library/LaunchAgents` 는
   iCloud 동기화 대상이 아니라 예약이 새 기기로 따라오지 않는다. 2026-08-13 맥 스튜디오 → 맥북 에어
-  이전 때 이걸 놓쳐 5시간 넘게 0건이었다(오류·알림 없이 조용히). 손으로 `cp` 하면 plist의
-  `/usr/local/bin/node`가 애플 실리콘 경로(`/opt/homebrew/bin/node`)와 달라 조용히 실패한다.
-- ⚠️ **노트북이라 뚜껑을 닫으면 수집이 멈춘다.** 상시 수집: 전원 연결 + `sudo pmset -c sleep 0 disablesleep 1`.
-- Supabase `kakao-collect-dispatch` 크론은 **비활성화**(jobid 1). 되살리기: `select cron.alter_job(1, active := true);`
-- 실제 저장소 경로는 `~/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/**local**`
-  (폴더명이 MacStudio지만 iCloud 폴더 이름일 뿐, 기기와 무관).
-  같은 iCloud 아래 `ams-wiki` 폴더는 **무관한 다른 저장소**다. 저장소의 plist 3개가 `ams-wiki`를
-  가리키고 있었고(2026-08-13 발견) `local`로 교정했다 — **plist를 근거로 삼지 말고 스크립트 실재 여부로 확인.**
+  이전 때 이걸 놓쳐 5시간 넘게 0건이었다(오류·알림 없이 조용히).
+- ⚠️ plist 의 `--env-file` 은 **절대경로**여야 한다. 상대경로면 launchd 에서
+  `node: .env.local: invalid format` 으로 시작하자마자 죽는다 — 터미널에서 직접 치면 멀쩡해서
+  파일 내용 문제로 오인하기 쉽다. 설치 스크립트가 자동 치환한다.
+- 저장소 경로는 `~/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/**local**`
+  (폴더명이 MacStudio 지만 iCloud 폴더 이름일 뿐). 같은 아래 `ams-wiki` 는 **무관한 다른 저장소**다.
+  저장소의 plist 3개가 `ams-wiki` 를 가리키고 있었고(8-13 발견) `local` 로 교정했다.
 
 ## 22-3. 함께 고친 재발 방지 3가지
 

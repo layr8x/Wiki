@@ -12,13 +12,15 @@
 # 하는 일
 #   1) node 실제 경로를 찾아 plist 에 박아 넣는다(애플 실리콘은 /opt/homebrew/bin/node 라
 #      /usr/local/bin/node 로 적힌 원본을 그대로 쓰면 조용히 실패한다).
-#   2) WorkingDirectory 를 지금 이 저장소 경로로 바꾼다.
+#   2) WorkingDirectory 와 --env-file 을 지금 이 저장소 절대경로로 바꾼다.
 #   3) ~/Library/LaunchAgents 에 복사하고 불러온다(이미 있으면 먼저 내린다).
+#   4) 15초 기다렸다가 오류 로그를 읽어 "실제로 도는지"까지 보고한다.
 #
 # 실행:
-#   bash scripts/install-launchd.sh            # 카카오 수집 + 쿠키 갱신 (기본)
-#   bash scripts/install-launchd.sh --all      # 잔디 토큰·시트 동기화까지 전부
-#   bash scripts/install-launchd.sh --list     # 지금 이 기기에 뭐가 걸려 있는지만 보기
+#   bash scripts/install-launchd.sh                       # 쿠키 갱신 (기본 — 수집은 클라우드)
+#   bash scripts/install-launchd.sh --with-local-collect   # 기기에서도 수집 (클라우드 장애 대비)
+#   bash scripts/install-launchd.sh --all                  # 잔디 토큰·시트 동기화까지 전부
+#   bash scripts/install-launchd.sh --list                 # 지금 이 기기에 뭐가 걸려 있는지만 보기
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,8 +32,12 @@ LOGDIR="$HOME/Library/Logs/ams-wiki"
 #    (개발 환경 bash 5.x 에서는 통과하고 실제 맥에서만 깨진다.) 인덱스 배열로 간다.
 ERR_OFFSETS=()
 
-DEFAULT_JOBS=(com.amswiki.kakao-collect com.amswiki.kakao-cookie-refresh)
-ALL_JOBS=("${DEFAULT_JOBS[@]}" com.amswiki.jandi-token-refresh com.amswiki.kakao-sheets-sync)
+# 기본은 쿠키 갱신만. 수집 본체는 2026-08-13 부터 클라우드(Supabase pg_cron 5분)가 한다
+# — 클라우드 IP 차단이라는 이전 판단이 재측정으로 뒤집혔다. 이 기기의 역할은 "Chrome 로그인
+# 세션에서 쿠키를 꺼내 보관함에 넣는 것" 하나뿐이라, 기기가 자도 수집은 계속 돈다.
+# 기기에서도 수집을 돌리려면(클라우드 장애 대비) --with-local-collect.
+DEFAULT_JOBS=(com.amswiki.kakao-cookie-refresh)
+ALL_JOBS=("${DEFAULT_JOBS[@]}" com.amswiki.kakao-collect com.amswiki.jandi-token-refresh com.amswiki.kakao-sheets-sync)
 
 if [[ "${1:-}" == "--list" ]]; then
   echo "이 기기에 걸린 ams-wiki 예약:"
@@ -40,7 +46,20 @@ if [[ "${1:-}" == "--list" ]]; then
 fi
 
 JOBS=("${DEFAULT_JOBS[@]}")
-[[ "${1:-}" == "--all" ]] && JOBS=("${ALL_JOBS[@]}")
+case "${1:-}" in
+  --all)                JOBS=("${ALL_JOBS[@]}") ;;
+  --with-local-collect) JOBS=("${DEFAULT_JOBS[@]}" com.amswiki.kakao-collect) ;;
+esac
+
+# 기본 설치로 돌아왔는데 예전 수집 잡이 남아 있으면 내린다(클라우드와 중복 호출 방지).
+if [[ "${1:-}" != "--all" && "${1:-}" != "--with-local-collect" ]]; then
+  old="$AGENTS/com.amswiki.kakao-collect.plist"
+  if [[ -f "$old" ]]; then
+    launchctl unload "$old" 2>/dev/null || true
+    rm -f "$old"
+    echo "정리: com.amswiki.kakao-collect 내림 (수집은 이제 클라우드가 합니다)"
+  fi
+fi
 
 NODE_BIN="$(command -v node || true)"
 if [[ -z "$NODE_BIN" ]]; then
@@ -130,8 +149,9 @@ echo
 if [[ $fail -eq 1 ]]; then
   echo "⚠️ 위 오류를 먼저 해결해야 수집이 시작됩니다."
 else
-  echo "로그 보기:  tail -f $LOGDIR/kakao-collect.log"
+  echo "로그 보기:  tail -f $LOGDIR/kakao-cookie-refresh.log"
 fi
 echo
-echo "⚠️ 노트북이면 뚜껑을 닫는 동안 수집이 멈춥니다."
-echo "   책상에 두고 상시 수집하려면: sudo pmset -c sleep 0 disablesleep 1"
+echo "수집은 클라우드(Supabase, 5분)가 합니다 — 이 기기가 자도 계속 돕니다."
+echo "다만 쿠키 갱신은 이 기기에서만 되므로, 오래 꺼두면 결국 쿠키가 만료됩니다."
+echo "상시 켜두려면: sudo pmset -c sleep 0 disablesleep 1"

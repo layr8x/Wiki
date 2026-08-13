@@ -40,6 +40,12 @@ async function resolveCookie() {
 }
 
 // 메시지가 하나도 없는 대화방 목록 (RPC — kakao_backfill_empty 에 기록된 "원래 빈 방"은 제외됨).
+//
+// ⚠️ 조회가 실패하면 반드시 던진다. 예전에는 실패해도 break 로 빠져나가 빈 배열을 돌려줬고,
+//    호출부가 그걸 "복구 대상 0개"로 찍어 정상 완료처럼 보였다(2026-08-13 실측 —
+//    LIVE 채널이 statement timeout 으로 실패했는데 로그는 "0개 복구 시작 / 총 +0건 복구").
+//    실제로 복구할 게 있는 상황에서 같은 일이 나면 조용히 건너뛴다. 겉지표가 아니라 최종
+//    산출물을 봐야 한다는 22-4 교훈과 같은 함정이다.
 async function listMissing(profileId) {
   const out = [];
   let after = null;
@@ -47,7 +53,12 @@ async function listMissing(profileId) {
     const { data, error } = await supabase.rpc('kakao_chats_missing_messages', {
       p_pid: profileId, p_lim: Math.min(500, MAX_CHATS - out.length), p_after: after,
     });
-    if (error) { log(`[${profileId}] 목록 조회 실패:`, error.message); break; }
+    if (error) {
+      const hint = /timeout/i.test(error.message)
+        ? ' (대화방이 많아 조회가 8초 제한을 넘김 — p_after 커서를 이어 쓰거나 인덱스 점검 필요)'
+        : '';
+      throw new Error(`목록 조회 실패: ${error.message}${hint}`);
+    }
     if (!data?.length) break;
     for (const r of data) out.push(String(r.chat_id));
     after = out[out.length - 1];
@@ -89,6 +100,7 @@ if (!cookie) { console.log('[skip] 사용할 쿠키 없음.'); process.exit(0); 
 
 let grandTotal = 0;
 let authExpired = false;
+const listFailed = [];   // 목록 조회 자체가 실패한 채널 — "0개"와 구분해서 끝에 알린다
 
 for (const profileId of IDS) {
   if (authExpired) break;
@@ -101,7 +113,16 @@ for (const profileId of IDS) {
     log(`[${profileId}] auth 확인 실패:`, e.message); continue;
   }
 
-  const chats = await listMissing(profileId);
+  let chats;
+  try {
+    chats = await listMissing(profileId);
+  } catch (e) {
+    // 조회 실패는 "복구할 게 없음"이 아니다 — 채널을 실패로 표시하고 계속한 뒤, 끝에서
+    // 0 이 아닌 종료 코드로 알린다(예약 실행에서도 실패가 드러나도록).
+    console.error(`[${profileId}] ${e.message}`);
+    listFailed.push(profileId);
+    continue;
+  }
   log(`[${profileId}] 메시지 0건 대화방 ${chats.length}개 복구 시작`);
   if (!chats.length) continue;
 
@@ -140,4 +161,11 @@ for (const profileId of IDS) {
 }
 
 log(`[done] 총 +${grandTotal}건 복구`);
-process.exit(authExpired ? 1 : 0);
+
+if (listFailed.length) {
+  console.error(
+    `❌ 목록 조회 실패 채널 ${listFailed.length}개: ${listFailed.join(', ')}\n` +
+    '   이 채널들은 "복구 대상 0개"가 아니라 "확인하지 못함"입니다. 위 +0건을 정상으로 읽지 마세요.',
+  );
+}
+process.exit(authExpired || listFailed.length ? 1 : 0);
