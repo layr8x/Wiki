@@ -61,21 +61,54 @@ const chats = Array.from({ length: 6 }, (_, c) => ({
 export const FIXTURES = {
   kakao_partner_messages: messages,
   kakao_partner_chats: chats,
-  jandi_messages: Array.from({ length: 8 }, (_, i) => ({
+  // ⚠️ 본문 컬럼 이름은 `message` 다(화면이 m.message 를 읽는다). 예전 대역은 `text` 로 넣어
+  //    모든 메시지가 "(본문 없음)"·"(내용 없음)"으로 렌더돼, 이 화면의 글자 길이·줄바꿈을
+  //    한 번도 제대로 검증하지 못하고 있었다.
+  //    link_id 는 화면이 스레드 묶음 키로 쓴다. 길이가 제각각이어야 줄바꿈을 확인할 수 있다.
+  jandi_messages: [
+    '이번 주 배포 일정 공유드립니다. 확인 부탁드려요.',
+    '넵 확인했습니다.',
+    '카카오 상담 수집이 어제 새벽부터 멈춰 있었는데, 원인 파악해서 오늘 오전에 복구했습니다. 원인은 클라우드 IP 차단이었고 수집 위치를 사내 기기로 옮겼습니다.',
+    '고생하셨습니다 🙏',
+    '대시보드 응답시간 분포 카드에서 1위 항목 막대가 항상 꽉 차 보이는 문제가 있어 보입니다.',
+    '그건 분모를 1위 값으로 잡고 있어서 그렇습니다. 전체 대비로 바꾸겠습니다.',
+    '감사합니다.',
+    '내일 오전 10시에 짧게 싱크 가능하실까요?',
+  ].map((message, i) => ({
+    link_id: String(9000 + i),
     message_id: String(9000 + i),
     room_id: 'room' + (i % 3),
     room_name: ['플랫폼서비스팀', '캠퍼스파트', 'TECH 공지'][i % 3],
+    writer_id: String(10 + (i % 3)),
     writer_name: ['김명준', '박미혜', '김수민'][i % 3],
-    text: '이번 주 배포 일정 공유드립니다. 확인 부탁드려요.',
+    content_type: 'text',
+    message,
+    reply_to_message_id: i % 4 === 3 ? String(9000 + i - 1) : null,
     created_at: iso(i * 45),
   })),
-  guides: Array.from({ length: 5 }, (_, i) => ({
+  // ⚠️ module 값은 MODULE_TREE 의 label 과 글자까지 같아야 한다. 대시보드의 모듈별 분포가
+  //    label 로 맞춰 세기 때문에, 임의 이름("출결"·"수납")을 쓰면 전 모듈이 0으로 보인다.
+  //    개수도 모듈마다 다르게 둬야 막대 길이 차이를 눈으로 확인할 수 있다.
+  guides: [
+    ['출결 처리 매뉴얼', '수업운영관리'],
+    ['보강 배정 절차', '수업운영관리'],
+    ['시간표 변경 처리', '수업운영관리'],
+    ['결석 사후 처리', '수업운영관리'],
+    ['수납·환불 가이드', '청구/수납/결제/환불'],
+    ['가상계좌 발급 안내', '청구/수납/결제/환불'],
+    ['부분 환불 처리', '청구/수납/결제/환불'],
+    ['교재 배송 프로세스', '강좌/교재 관리'],
+    ['강좌 개설 체크리스트', '강좌/교재 관리'],
+    ['라이브 장애 대응', '영상/VOD 관리'],
+    ['신규 입반 등록', '모집/접수 관리'],
+    ['공지 발송 규칙', '메시지발송 관리'],
+  ].map(([title, module], i) => ({
     id: 'g' + i,
-    title: ['출결 처리 매뉴얼', '수납·환불 가이드', '교재 배송 프로세스', '라이브 장애 대응', '신규 입반 등록'][i],
-    module: ['출결', '수납', '교재', '라이브', '입반'][i],
-    status: i % 3 === 0 ? 'draft' : 'published',
+    title,
+    module,
+    status: i % 4 === 0 ? 'draft' : 'published',
     updated_at: iso(i * 600),
-    views: 1200 - i * 137,
+    views: 1200 - i * 87,
   })),
   guide_feedback: Array.from({ length: 4 }, (_, i) => ({
     id: 'f' + i,
@@ -90,6 +123,13 @@ export const FIXTURES = {
 }
 
 // ─── RPC 응답 ──────────────────────────────────────────────────────────────
+// 분포 RPC 는 개수(cnt)와 함께 전체 대비 비율(pct)을 돌려준다. 대역 데이터에서도 같은 방식으로
+// 계산해 둬야 화면의 막대 길이·비율 표기를 실제와 같게 검증할 수 있다.
+const withPct = (rows) => {
+  const total = rows.reduce((s, r) => s + r.cnt, 0) || 1
+  return rows.map((r) => ({ ...r, pct: Math.round((r.cnt / total) * 1000) / 10 }))
+}
+
 export function rpcFixture(name) {
   switch (name) {
     case 'kakao_sla_status':
@@ -131,20 +171,25 @@ export function rpcFixture(name) {
         health: 'ok',
         health_reason: 'ok',
       }))
+    // ⚠️ 버킷 이름은 실제 RPC 가 돌려주는 형태 그대로여야 한다("00. 0-5분" 처럼 정렬용 번호가 붙어
+    //    나오고, db.js 가 앞의 번호를 떼어낸다). 예전 대역은 "5분 이내" 같은 임의 이름이라
+    //    화면의 색 매핑(BUCKET_VARIANT)에 하나도 안 걸렸다.
+    //    pct 도 실제 RPC 가 함께 주는 값인데 빠져 있어 화면에 "NaN%" 가 찍히고 있었다.
     case 'get_response_time_distribution':
-      return [
-        { bucket: '5분 이내', cnt: 412 }, { bucket: '30분 이내', cnt: 388 },
-        { bucket: '1시간 이내', cnt: 176 }, { bucket: '3시간 이내', cnt: 94 },
-        { bucket: '3시간 초과', cnt: 61 },
-      ]
+      return withPct([
+        { bucket: '00. 0-5분', cnt: 412 }, { bucket: '01. 5-30분', cnt: 388 },
+        { bucket: '02. 30-60분', cnt: 176 }, { bucket: '03. 1-3시간', cnt: 94 },
+        { bucket: '04. 3-24시간', cnt: 61 }, { bucket: '05. 24시간+', cnt: 24 },
+      ])
     case 'get_chat_category_distribution':
-      return [
-        { category: '라이브', cnt: 486 }, { category: '기타', cnt: 402 }, { category: '환불', cnt: 231 },
-        { category: '교재·배송', cnt: 188 }, { category: '계정·로그인·앱', cnt: 174 },
-        { category: '미납·결제', cnt: 151 }, { category: '입반·등록', cnt: 96 },
-        { category: '모의고사·서바이벌', cnt: 74 }, { category: '출결·보강', cnt: 41 },
-        { category: '대기', cnt: 33 }, { category: '시간표·수업', cnt: 22 }, { category: '퇴원·취소', cnt: 12 },
-      ]
+      return withPct([
+        { category: '라이브', cnt: 486, negative_rate: 12.4 }, { category: '기타', cnt: 402, negative_rate: 8.1 },
+        { category: '환불', cnt: 231, negative_rate: 41.6 }, { category: '교재·배송', cnt: 188, negative_rate: 19.7 },
+        { category: '계정·로그인·앱', cnt: 174, negative_rate: 22.4 }, { category: '미납·결제', cnt: 151, negative_rate: 33.8 },
+        { category: '입반·등록', cnt: 96, negative_rate: 9.4 }, { category: '모의고사·서바이벌', cnt: 74, negative_rate: 5.4 },
+        { category: '출결·보강', cnt: 41, negative_rate: 7.3 }, { category: '대기', cnt: 33, negative_rate: 30.3 },
+        { category: '시간표·수업', cnt: 22, negative_rate: 4.5 }, { category: '퇴원·취소', cnt: 12, negative_rate: 58.3 },
+      ])
     case 'get_sentiment_trend':
       return Array.from({ length: 30 }, (_, i) => ({
         day: `2026-07-${String(15 + (i % 17)).padStart(2, '0')}`,

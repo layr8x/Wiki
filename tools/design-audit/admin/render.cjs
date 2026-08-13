@@ -6,6 +6,7 @@
 //   node tools/design-audit/admin/render.cjs                    # 전 화면 × 폭 × 라이트/다크
 //   node tools/design-audit/admin/render.cjs --screen consults --width 1440 --mode dark
 //   node tools/design-audit/admin/render.cjs --state empty      # 빈 목록 상태
+//   node tools/design-audit/admin/render.cjs --screen overview --height 2600   # 아래쪽 카드까지 한 장에
 //   node tools/design-audit/admin/render.cjs --audit            # 스크린샷 + 잘림/대비 자동 점검
 //
 // 산출물: tools/design-audit/admin/out/<screen>_<mode>_<width>[_<state>].png
@@ -44,6 +45,10 @@ const onlyMode = arg('mode', null)
 const state = arg('state', 'ok')
 const doAudit = process.argv.includes('--audit')
 const fullPage = !process.argv.includes('--viewport')
+// ⚠️ 관리자 화면 껍데기(AppShell)는 본문에 자체 스크롤 상자를 쓴다. 그래서 문서 높이가 늘 창 높이와
+//    같고, fullPage 스크린샷을 찍어도 창 높이(1000px)에서 잘린다. 아래쪽 카드까지 한 장에 담으려면
+//    창 자체를 키워야 한다 → --height 로 창 높이를 지정한다(기본 1000).
+const viewportH = Number(arg('height', 1000))
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png' }
 
@@ -138,7 +143,7 @@ const AUDIT_FN = () => {
     if (!route) { console.error(`알 수 없는 화면: ${name}`); continue }
     for (const mode of modes) {
       for (const width of widths) {
-        const page = await browser.newPage({ viewport: { width, height: 1000 }, deviceScaleFactor: 1 })
+        const page = await browser.newPage({ viewport: { width, height: viewportH }, deviceScaleFactor: 1 })
         const errors = []
         page.on('pageerror', (e) => errors.push(String(e.message).slice(0, 200)))
         const url = `http://127.0.0.1:8901/harness.html?route=${encodeURIComponent(route)}&mode=${mode}&state=${state}`

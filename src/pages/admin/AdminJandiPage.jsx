@@ -182,7 +182,9 @@ function ChannelKpi({ ch }) {
   return (
     <Card className="aj-kpi">
       <div className="aj-kpi-head">
-        <Text type="supporting" maxLines={1}>{ch.label}</Text>
+        {/* 방 이름은 두 줄까지 — "재종통합행정 + 플랫폼서비스실"이 한 줄 고정이면 1920px 을 뺀
+            모든 폭에서 끝이 잘려 어느 방인지 알 수 없었다(실측 필요 170px / 배정 150px). */}
+        <Text type="supporting" maxLines={2}>{ch.label}</Text>
         <MessageSquare size={16} className="aj-kpi-icon" />
       </div>
       {/* 위 AnalyticsHeader의 "최근 7일" 헤드라인과 혼동되지 않도록 스코프 명시(기준2) */}
@@ -423,7 +425,10 @@ export default function AdminJandiPage() {
                     <div className="aj-thread-head">
                       <div className="aj-thread-head-l">
                         <Badge variant="neutral" label={writerLabel(t.root)} icon={<User size={12} />} className="aj-thread-who" />
-                        <Text weight="medium" maxLines={1} className="aj-thread-title">{threadTitle(t.root)}</Text>
+                        {/* 두 줄까지 허용 — 넉넉한 폭에서는 어차피 한 줄에 들어가고(1024px 이상 실측),
+                            좁아졌을 때만 둘째 줄이 생겨 제목이 더 보인다. 한 줄 고정이면 390px 에서
+                            60자 제목의 39%만 남는다. */}
+                        <Text weight="medium" maxLines={2} className="aj-thread-title">{threadTitle(t.root)}</Text>
                       </div>
                       <div className="aj-thread-meta">
                         <Text as="span" type="supporting" hasTabularNumbers>{t.count}건</Text>

@@ -28,6 +28,7 @@ import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
 import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
+import { ProgressBar } from '@astryxdesign/core/ProgressBar'
 
 import './AdminOverviewPage.astryx.css'
 
@@ -43,27 +44,30 @@ function formatNumber(n) {
   return n.toLocaleString('ko-KR')
 }
 
-// 응답시간 버킷별 톤 (빠를수록 안전, 느릴수록 위험). Astryx 아이콘 색 토큰으로 매핑.
-const BUCKET_TONE = {
-  '0-5분':    'green',
-  '5-30분':   'green',
-  '30-60분':  'yellow',
-  '1-3시간':  'yellow',
-  '3-24시간': 'orange',
-  '24시간+':  'red',
+// 응답시간 버킷별 색 (빠를수록 안전, 느릴수록 위험). Astryx ProgressBar 의 variant 로 매핑.
+// 쓸 수 있는 값은 accent·success·warning·error·neutral 다섯 가지라, 예전 수제 막대의
+// 노랑·주황 두 단계는 warning 하나로 합쳐진다(둘의 색 차이가 크지 않아 실사용 손실은 없다).
+const BUCKET_VARIANT = {
+  '0-5분':    'success',
+  '5-30분':   'success',
+  '30-60분':  'warning',
+  '1-3시간':  'warning',
+  '3-24시간': 'warning',
+  '24시간+':  'error',
 }
 
-/* 분포 바 한 줄 — 라벨 + 우측 메타 + 토큰 트랙/필 */
-function StatBar({ label, right, pct, tone = 'primary' }) {
+/* 분포 바 한 줄 — 라벨 + 우측 메타 + Astryx ProgressBar.
+   막대는 디자인시스템 컴포넌트를 쓴다(CLAUDE.md 18장 — 수제 div 로 흉내내지 않는다).
+   label 은 필수 prop 이고, 왼쪽에 이미 같은 글자가 보이므로 isLabelHidden 으로 감춘다
+   (읽어주는 기능에는 남는다). */
+function StatBar({ label, right, value, max = 100, variant = 'accent' }) {
   return (
     <div className="ov-bar">
       <div className="ov-bar-head">
         <Text type="body" weight="medium">{label}</Text>
         <Text type="supporting" hasTabularNumbers as="span">{right}</Text>
       </div>
-      <div className="ov-bar-track">
-        <div className="ov-bar-fill" data-tone={tone} style={{ width: `${pct}%` }} />
-      </div>
+      <ProgressBar label={label} isLabelHidden value={value} max={max} variant={variant} />
     </div>
   )
 }
@@ -128,7 +132,10 @@ export default function AdminOverviewPage() {
           {/* 모듈별 가이드 분포 */}
           <Card padding={0}>
             <div className="ov-cardhead">
-              <Heading level={4}>모듈별 가이드 분포</Heading>
+              <VStack gap={1}>
+                <Heading level={4}>모듈별 가이드 분포</Heading>
+                <Text type="supporting">막대 길이는 가장 많은 모듈을 기준으로 한 상대 길이입니다.</Text>
+              </VStack>
             </div>
             <div className="ov-cardbody">
               <VStack gap={3} hAlign="stretch">
@@ -140,10 +147,11 @@ export default function AdminOverviewPage() {
                   getModuleTree().map((mod) => {
                     // moduleStats는 Supabase guides.module 컬럼(한글 라벨) 기준으로 집계됨 — mod.id(영문 슬러그) 아님
                     const count = moduleStats[mod.label] || 0
+                    // 여기는 비율이 아니라 개수라 합이 100이 되지 않는다 → 가장 많은 모듈을
+                    // 기준으로 한 상대 길이를 그대로 쓴다(카드 부제에 그 기준을 적어 뒀다).
                     const max = Math.max(...Object.values(moduleStats), 1)
-                    const pct = Math.round((count / max) * 100)
                     return (
-                      <StatBar key={mod.id} label={mod.label} right={count} pct={pct} />
+                      <StatBar key={mod.id} label={mod.label} right={count} value={count} max={max} />
                     )
                   })
                 )}
@@ -218,20 +226,18 @@ export default function AdminOverviewPage() {
                     <div key={i} className="ov-skel ov-skel-bar" />
                   ))
                 ) : (
-                  rtDist.map((row) => {
-                    const maxPct = Math.max(...rtDist.map(r => r.pct), 1)
-                    const widthPct = (row.pct / maxPct) * 100
-                    const tone = BUCKET_TONE[row.bucket] || 'primary'
-                    return (
-                      <StatBar
-                        key={row.bucket}
-                        label={row.bucket}
-                        right={`${formatNumber(row.cnt)}건 · ${row.pct}%`}
-                        pct={widthPct}
-                        tone={tone}
-                      />
-                    )
-                  })
+                  rtDist.map((row) => (
+                    // 막대 길이 = 전체 대비 비율 그대로. 예전에는 1위 값을 분모로 써서
+                    // 라벨이 44%인 행도 막대는 늘 꽉 찼다(2026-08-13 감사).
+                    <StatBar
+                      key={row.bucket}
+                      label={row.bucket}
+                      right={`${formatNumber(row.cnt)}건 · ${row.pct}%`}
+                      value={row.pct}
+                      max={100}
+                      variant={BUCKET_VARIANT[row.bucket] || 'accent'}
+                    />
+                  ))
                 )}
               </VStack>
             </div>
@@ -257,17 +263,17 @@ export default function AdminOverviewPage() {
                   ))
                 ) : (
                   catDist.map((row) => {
-                    const maxPct = Math.max(...catDist.map(r => r.pct), 1)
-                    const widthPct = (row.pct / maxPct) * 100
                     // category 컬럼 값이 이미 한글 라벨(카카오 AI 분류 결과)이라 별도 매핑 불필요.
                     const label = row.category
                     const isHot = row.negativeRate >= 30
                     return (
+                      // 막대 길이 = 전체 대비 비율 그대로(응답시간 분포와 같은 기준).
                       <StatBar
                         key={row.category}
                         label={label}
-                        pct={widthPct}
-                        tone={isHot ? 'red' : 'primary'}
+                        value={row.pct}
+                        max={100}
+                        variant={isHot ? 'error' : 'accent'}
                         right={
                           <>
                             {formatNumber(row.cnt)}건 · {row.pct}%
