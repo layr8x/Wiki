@@ -26,19 +26,27 @@
 //
 // 인증: verify_jwt=false. kakao_partner_secrets.key='kakao_collect_token' 을 ?token= 으로 비교.
 //
-// ⚠️⚠️ 현재 상태: **미완성 — 크론에 걸지 말 것.** 자동로그인을 실제로 일으키는 호출을 아직 못 찾았다.
+// ⚠️⚠️ 현재 상태: **폐기 예정 — 크론에 걸지 말 것.** 순수 서버측 조용한 갱신은 불가능으로 결론.
 //
-// 2026-08-13 probe 실측(값은 안 남기고 상태·쿠키이름만 기록):
-//   ① https://business.kakao.com/{pid}/chats
-//        → 200, Set-Cookie 없음, 리다이렉트 없음.
-//          로그인 여부와 무관하게 SPA 껍데기를 돌려준다. 인증은 화면이 뜬 뒤 XHR 에서 일어나므로
-//          이 페이지를 긁는 것으로는 자동로그인 흐름이 시작되지 않는다.
-//   ② https://accounts.kakao.com/login/?continue=...
-//        → 200, Set-Cookie = [_maldive_oauth_webapp_session_key, _kau]. **_kawlt 안 옴.**
-//          즉 "로그인 페이지를 그렸을" 뿐이고, 자동로그인이 자동으로 수행되지는 않았다.
-//   ③ https://accounts.kakao.com/weblogin/create_session?continue=...
-//        → 404. 그런 엔드포인트 없음(추측이었음).
+// 2026-08-13 카카오 계정 로그인 웹앱(accounts.kakaocdn.net/_next/*, 공개 CDN) 정적 분석 결과:
+//   로그인 웹앱이 가진 인증 엔드포인트는 다음뿐이다(값 유출 없이 코드만 읽음).
+//     · /api/v2/login/authenticate.json          ← **비밀번호 필수**
+//     · /api/v2/login/web_talk/create_token.json ← 카카오톡 앱 푸시 승인 필요
+//     · /api/v2/qr_login/*                        ← 카카오톡 앱으로 QR 스캔 필요
+//     · /api/v2/simple_login/{change_cookie,delete} ← 저장된 계정 "표시"용. 인증은 여전히 위 경유
+//   즉 **비밀번호 없이 무인으로 되는 로그인은 QR·카톡앱 승인뿐**(둘 다 사람+휴대폰 필요).
+//   `_karmt` 로 새 `_kawlt` 를 조용히 받는 "리프레시 토큰" 스타일 엔드포인트는 존재하지 않는다.
+//   (probe 실측도 일치: accounts.kakao.com/login/?continue 는 200 이지만 _kawlt 를 주지 않는다.)
 //
+// 게다가 카카오에는 /api/v2/action_penalty_verification/*, block_tms 등 **자동화 탐지·차단**
+//   엔드포인트가 촘촘하다. 살아 있는 29일 토큰(_karmt)을 추측 엔드포인트에 던지면 계정이 잠겨
+//   담당자의 정상 로그인까지 막힐 수 있다 → 시도 자체가 지금 잘 도는 시스템을 망가뜨리는 도박.
+//
+// 결론: **완전한 기기 독립은 쿠키 재현 방식으로는 불가능하다.** jandi 는 refresh_token 을 주는
+//   표준 OAuth 였지만 카카오 계정 웹로그인에는 그 상당물이 없다. 대안은 22-9 참고
+//   (상시 켠 저가 기기 / 비밀번호 봇=보안승인 필요 / ~29일마다 사람 1회 로그인).
+//
+// 이 함수는 kawlt_left_h / karmt_left_d 계산만 남겨 알럿봇 감시에 재활용한다(kakao-alert v15).
 // 남은 일: 자동로그인은 로그인 페이지가 뜬 뒤 **JS 가 별도로 호출**하는 것으로 보인다.
 //   엔드포인트를 더 찍어보며 찾지 말 것 — 남의 인증 서버를 무작정 두드리는 셈이다.
 //   잔디 때와 같은 방법으로 확보한다: 담당자 기기 Chrome DevTools 네트워크 탭에서
