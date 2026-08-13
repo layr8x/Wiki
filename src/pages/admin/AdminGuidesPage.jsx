@@ -4,7 +4,7 @@
 //   - 시각 요소만 Astryx primitive(Card/Badge/Button/Heading/Text/VStack/HStack/Selector/Table/AlertDialog)로 교체
 //   - 전역 <Theme>(AdminLayout)에서 토큰/모드를 상속하므로 이 페이지는 Theme/astryx.css 를 감싸지 않음
 //   - 표현 못하는 레이아웃(툴바·세그먼트·hover·스켈레톤)은 co-located CSS(토큰 only)
-import { useState, useMemo } from 'react'
+import { useCallback, useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -29,11 +29,13 @@ import { TextInput } from '@astryxdesign/core/TextInput'
 import { Selector } from '@astryxdesign/core/Selector'
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { MoreMenu } from '@astryxdesign/core/MoreMenu'
 import { Table, useTablePagination, paginateData, proportional, pixel } from '@astryxdesign/core/Table'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { useToast } from '@astryxdesign/core/Toast'
 import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 
+import { useIsNarrow } from '@/hooks/use-mobile'
 import { useAuth } from '@/store/authStore'
 import './AdminGuidesPage.astryx.css'
 
@@ -79,6 +81,10 @@ export default function AdminGuidesPage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const toast = useToast()
+  // 여섯 열이 다 들어가려면 콘텐츠 폭이 약 770px 필요하다(열 최소폭 합 실측).
+  // 좌측 메뉴 260px + 좌우 여백을 더하면 창 기준 약 1,100px 이다 → 그 아래에서는 열을 줄인다.
+  // (1024px 창의 콘텐츠 폭은 688px 라 여섯 열로는 모듈 라벨 "청구/수납/결제/환불"이 잘렸다.)
+  const isNarrow = useIsNarrow(1100)
   const { hasPermission } = useAuth()
   const moduleTree = getModuleTree()
   const moduleLabelById = useMemo(
@@ -167,42 +173,80 @@ export default function AdminGuidesPage() {
   })
   const pageItems = useMemo(() => paginateData(guides, page, PAGE_SIZE), [guides, page])
 
-  const columns = useMemo(() => [
-    {
+  // 이 행에서 할 수 있는 일 목록. 넓은 폭에서는 아이콘 버튼으로 펼치고, 좁은 폭에서는
+  // MoreMenu 하나로 접는다. 접으면 발행·보관이 한 단계 깊어지지만, 열 폭이 168px 에서 48px 로
+  // 줄어 표가 잘리지 않는 쪽이 낫다.
+  const rowActions = useCallback((g) => {
+    const acts = []
+    if (canEdit) acts.push({ label: '편집', icon: <Pencil size={16} />, onClick: () => navigate(`/editor?id=${g.id}`) })
+    if (canPublish && g.status !== 'published' && g.status !== 'archived') {
+      acts.push({ label: '발행하기', icon: <PaperPlaneTilt size={16} />, onClick: () => statusMutation.mutate({ id: g.id, nextStatus: 'published' }) })
+    }
+    if (canPublish && g.status === 'published') {
+      acts.push({ label: '발행 해제', icon: <EyeSlash size={16} />, onClick: () => statusMutation.mutate({ id: g.id, nextStatus: 'draft' }) })
+    }
+    if (canEdit && g.status === 'archived') {
+      acts.push({ label: '복원 (임시저장으로)', icon: <ArrowCounterClockwise size={16} />, onClick: () => statusMutation.mutate({ id: g.id, nextStatus: 'draft' }) })
+    }
+    if (canPublish && g.status === 'archived') {
+      acts.push({ label: '바로 재발행', icon: <PaperPlaneTilt size={16} />, onClick: () => statusMutation.mutate({ id: g.id, nextStatus: 'published' }) })
+    }
+    if (canDelete && g.status !== 'archived') {
+      acts.push({ label: '보관함으로 이동', icon: <Archive size={16} />, variant: 'destructive', onClick: () => setDeleteTarget(g) })
+    }
+    return acts
+  }, [canEdit, canPublish, canDelete, navigate, statusMutation])
+
+  // 열 폭 합이 1,058px 고정인데 콘텐츠 폭은 1024px 창에서 688px, 768px 창에서 708px 다.
+  // 상태 배지가 '임시저'로 잘린 채 오른쪽 끝에 걸려 "스크롤하면 더 있다"가 아니라 "깨졌다"로 읽혔다.
+  // Astryx Table 에 열 자동 숨김이 없으므로 **폭에 따라 열 정의 배열 자체를 바꾼다.**
+  const columns = useMemo(() => {
+    const title = {
       key: 'title',
       header: '제목',
-      width: proportional(3),
+      width: proportional(3, { minWidth: 200 }),
       renderCell: (g) => (
         <VStack gap={0.5}>
           <Link to={`/guides/${g.id}`} className="ag-title">{g.title}</Link>
-          <Text type="supporting" maxLines={1} className="ag-tldr">{g.tldr}</Text>
+          {/* 좁은 폭에서는 모듈·타입·수정일을 여기 한 줄로 합친다(열을 지우는 게 아니라 옮긴 것). */}
+          {isNarrow
+            ? (
+              <Text type="supporting" maxLines={1}>
+                {[moduleLabelById.get(g.module) || g.module, typeLabel(g.type), g.updated || g.updated_at?.slice(0, 10)]
+                  .filter(Boolean).join(' · ')}
+              </Text>
+            )
+            : <Text type="supporting" maxLines={1} className="ag-tldr">{g.tldr}</Text>}
         </VStack>
       ),
-    },
-    {
+    }
+    const module = {
       key: 'module',
       header: '모듈',
-      width: proportional(1.5),
-      renderCell: (g) => <Text>{moduleLabelById.get(g.module) || g.module}</Text>,
-    },
-    {
+      // 실제 내용 폭(80~90px)에 맞춰 최소폭을 낮춘다. 예전에는 기본값(열당 120px)이라
+      // 여섯 열이 무조건 720px 를 넘겼다.
+      // 124px — 가장 긴 모듈 이름 "청구/수납/결제/환불"의 실제 폭이다. 이보다 낮추면 잘린다.
+      width: proportional(1.5, { minWidth: 124 }),
+      renderCell: (g) => <Text maxLines={1}>{moduleLabelById.get(g.module) || g.module}</Text>,
+    }
+    const type = {
       key: 'type',
       header: '타입',
-      width: proportional(1),
+      width: proportional(1, { minWidth: 80 }),
       renderCell: (g) => <Badge label={typeLabel(g.type)} variant={toTypeVariant(g.type)} />,
-    },
-    {
+    }
+    const statusCol = {
       key: 'status',
       header: '상태',
-      width: proportional(1),
+      width: proportional(1, { minWidth: 88 }),
       renderCell: (g) => (
         <Badge
           label={STATUS_LABEL[g.status] || g.status}
           variant={STATUS_BADGE_VARIANT[g.status] ?? 'neutral'}
         />
       ),
-    },
-    {
+    }
+    const updated = {
       key: 'updated',
       header: '수정일',
       width: pixel(110),
@@ -211,68 +255,40 @@ export default function AdminGuidesPage() {
           {g.updated || g.updated_at?.slice(0, 10) || '—'}
         </Text>
       ),
-    },
-    {
+    }
+    const actionsWide = {
       key: 'actions',
       header: '액션',
       width: pixel(168),
       align: 'end',
       renderCell: (g) => (
         <HStack gap={1} vAlign="center" hAlign="end">
-          {canEdit && (
+          {rowActions(g).map((a) => (
             <Button
-              isIconOnly size="sm" variant="ghost"
-              label="편집"
-              icon={<Pencil size={16} />}
-              onClick={() => navigate(`/editor?id=${g.id}`)}
+              key={a.label}
+              isIconOnly size="sm"
+              variant={a.variant || 'ghost'}
+              label={a.label}
+              // 아이콘만 있는 버튼은 눌러 보기 전에는 뜻을 모른다(종이비행기·눈가림·되돌리기 구분 불가).
+              tooltip={a.label}
+              icon={a.icon}
+              onClick={a.onClick}
             />
-          )}
-          {canPublish && g.status !== 'published' && g.status !== 'archived' && (
-            <Button
-              isIconOnly size="sm" variant="ghost"
-              label="발행하기"
-              icon={<PaperPlaneTilt size={16} />}
-              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
-            />
-          )}
-          {canPublish && g.status === 'published' && (
-            <Button
-              isIconOnly size="sm" variant="ghost"
-              label="발행 해제"
-              icon={<EyeSlash size={16} />}
-              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
-            />
-          )}
-          {/* 보관 상태 → 복원 (임시저장으로 되돌림) */}
-          {canEdit && g.status === 'archived' && (
-            <Button
-              isIconOnly size="sm" variant="ghost"
-              label="복원 (임시저장으로)"
-              icon={<ArrowCounterClockwise size={16} />}
-              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'draft' })}
-            />
-          )}
-          {/* 보관 상태 → 바로 재발행 */}
-          {canPublish && g.status === 'archived' && (
-            <Button
-              isIconOnly size="sm" variant="ghost"
-              label="바로 재발행"
-              icon={<PaperPlaneTilt size={16} />}
-              onClick={() => statusMutation.mutate({ id: g.id, nextStatus: 'published' })}
-            />
-          )}
-          {canDelete && g.status !== 'archived' && (
-            <Button
-              isIconOnly size="sm" variant="destructive"
-              label="보관함으로 이동"
-              icon={<Archive size={16} />}
-              onClick={() => setDeleteTarget(g)}
-            />
-          )}
+          ))}
         </HStack>
       ),
-    },
-  ], [moduleLabelById, canEdit, canPublish, canDelete, navigate, statusMutation])
+    }
+    const actionsNarrow = {
+      key: 'actions',
+      header: '액션',
+      width: pixel(56),
+      align: 'end',
+      renderCell: (g) => <MoreMenu label="이 가이드 작업" size="sm" items={rowActions(g)} />,
+    }
+    return isNarrow
+      ? [title, statusCol, actionsNarrow]
+      : [title, module, type, statusCol, updated, actionsWide]
+  }, [isNarrow, moduleLabelById, rowActions])
 
   return (
     <div className="ag-shell">

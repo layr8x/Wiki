@@ -238,7 +238,9 @@ export default function AdminOverviewPage() {
                   <li key={g.id} className="ov-li">
                     <Link to={`/editor?id=${g.id}`} className="link ov-listrow">
                       <div className="ov-grow">
-                        <Text className="ov-listrow-title" weight="medium" maxLines={1}>{g.title}</Text>
+                        {/* 두 줄까지 — 390px 에서 "교재 배송 프로세스" 같은 제목이 5px 모자라 끝이 잘렸다.
+                            넉넉한 폭에서는 어차피 한 줄에 들어가 높이 변화가 없다. */}
+                        <Text className="ov-listrow-title" weight="medium" maxLines={2}>{g.title}</Text>
                       </div>
                       <div className="ov-listrow-meta">
                         <Badge label={g.type} variant="neutral" />
