@@ -100,3 +100,8 @@
   margin-top: 6px;
 }
 .ov-sent-note { margin-top: 8px; }
+
+/* 카드 헤더에 "상담 로그에서 보기" 버튼이 들어오면서, 부제가 두세 줄이 되는 카드에서는
+   가운데 정렬이 어색해졌다(버튼이 문단 한가운데 떠 보인다) → 위쪽 정렬 + 버튼은 줄어들지 않게. */
+.ov-cardhead.ov-row-between { align-items: flex-start; gap: 12px; }
+.ov-cardhead.ov-row-between > button { flex: none; }

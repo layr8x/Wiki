@@ -135,7 +135,10 @@ export default function AdminOverviewPage() {
         {statsError && <QueryError label="대시보드 통계" error={statsErr} onRetry={statsRefetch} />}
 
         {/* ─── KPI 카드 (4) ─────────────────────────────────────── */}
-        <Grid columns={{ minWidth: 200, max: 4 }} gap={4}>
+        {/* minWidth 200 이면 768px 에서 3+1 로 접혀 넷째 카드만 혼자 줄을 차지한다.
+            160 으로 낮추면 4열이 유지된다(390px 에서 2열이 됐을 때 "4,630회" 같은 값이
+            줄바꿈되지 않는 것까지 실측 확인). */}
+        <Grid columns={{ minWidth: 160, max: 4 }} gap={4}>
           {KPI_ITEMS.map((item) => {
             const Icon = item.icon
             const value = stats?.[item.key]
@@ -260,13 +263,22 @@ export default function AdminOverviewPage() {
             카드는 항상 두고 안쪽에서 로딩·실패·없음을 구분한다. */}
         {(
           <Card padding={0}>
-            <div className="ov-cardhead">
+            <div className="ov-cardhead ov-row-between">
               <VStack gap={1}>
                 <Heading level={4}>카카오 상담 응답시간 분포 (최근 90일)</Heading>
                 <Text type="supporting">
                   학부모 메시지 후 직원 첫 응답까지 걸린 시간을 6개 구간으로 집계.
+                  90일 누적이라 오늘 상황은 카카오 상담 화면에서 확인합니다.
                 </Text>
               </VStack>
+            {/* 이 대시보드 본문의 링크는 전부 /editor?id= 였고 상담 화면으로 가는 링크가 하나도
+                없었다. 여기서 이상을 발견해도 어디서 자세히 보는지 알 수 없었다. */}
+            <Button
+              label="상담 로그에서 보기"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/consults')}
+            />
             </div>
             <div className="ov-cardbody">
               <VStack gap={3} hAlign="stretch">
@@ -300,13 +312,22 @@ export default function AdminOverviewPage() {
         {/* ─── 카카오 상담 카테고리 분포 (AI 분류) ──────────────── */}
         {(
           <Card padding={0}>
-            <div className="ov-cardhead">
+            <div className="ov-cardhead ov-row-between">
               <VStack gap={1}>
                 <Heading level={4}>카카오 상담 카테고리 분포 (최근 90일, AI 분류)</Heading>
                 <Text type="supporting">
                   채팅방을 Claude AI 가 12개 카테고리로 자동 분류. 부정 감정 비율도 함께 표시.
+                  오늘 갑자기 늘어난 유형은 카카오 상담 화면에서 확인합니다.
                 </Text>
               </VStack>
+            {/* 이 대시보드 본문의 링크는 전부 /editor?id= 였고 상담 화면으로 가는 링크가 하나도
+                없었다. 여기서 이상을 발견해도 어디서 자세히 보는지 알 수 없었다. */}
+            <Button
+              label="상담 로그에서 보기"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/consults')}
+            />
             </div>
             <div className="ov-cardbody">
               <VStack gap={3} hAlign="stretch">
@@ -353,13 +374,22 @@ export default function AdminOverviewPage() {
         {/* ─── 학부모 감정 추세 (일별) ──────────────────────────── */}
         {(
           <Card padding={0}>
-            <div className="ov-cardhead">
+            <div className="ov-cardhead ov-row-between">
               <VStack gap={1}>
                 <Heading level={4}>학부모 감정 추세 (최근 30일)</Heading>
                 <Text type="supporting">
                   일별 학부모 메시지의 긍정·중립·부정 비율. 부정이 갑자기 늘어나면 위험 신호.
+                  어느 채널인지는 카카오 상담 화면에서 확인합니다.
                 </Text>
               </VStack>
+            {/* 이 대시보드 본문의 링크는 전부 /editor?id= 였고 상담 화면으로 가는 링크가 하나도
+                없었다. 여기서 이상을 발견해도 어디서 자세히 보는지 알 수 없었다. */}
+            <Button
+              label="상담 로그에서 보기"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/admin/consults')}
+            />
             </div>
             <div className="ov-cardbody">
               {sentLoading ? (
