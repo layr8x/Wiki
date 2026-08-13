@@ -210,7 +210,7 @@ export function KakaoConsultStatus() {
               }
               label={maskName(c.nickname) || '(닉네임 없음)'}
               description={maskBody(c.preview) || '(내용 없음)'}
-              descriptionLines={1}
+              descriptionLines={2}
               endContent={
                 <Text
                   as="span"
