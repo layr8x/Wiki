@@ -218,9 +218,11 @@ export function rpcFixture(name) {
         { category: '출결·보강', cnt: 41, negative_rate: 7.3 }, { category: '대기', cnt: 33, negative_rate: 30.3 },
         { category: '시간표·수업', cnt: 22, negative_rate: 4.5 }, { category: '퇴원·취소', cnt: 12, negative_rate: 58.3 },
       ])
+    // ⚠️ 날짜는 하루씩 이어져야 한다. 예전 대역은 `15 + (i % 17)` 이라 07/15~07/31 을 반복해
+    //    가로축이 뒤로 갔다 앞으로 오는 값이 됐다(눈금을 붙이자마자 드러났다).
     case 'get_sentiment_trend':
       return Array.from({ length: 30 }, (_, i) => ({
-        day: `2026-07-${String(15 + (i % 17)).padStart(2, '0')}`,
+        day: new Date(Date.UTC(2026, 6, 15) + i * 86400000).toISOString().slice(0, 10),
         positive: 20 + ((i * 7) % 18),
         neutral: 45 + ((i * 3) % 20),
         negative: 6 + ((i * 5) % 11),

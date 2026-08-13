@@ -41,6 +41,33 @@ const KPI_ITEMS = [
   { key: 'searchCount', label: '검색 수',   icon: Search,   suffix: '회' },
 ]
 
+// 감정 추세 카드에 필요한 요약값. 그림만으로는 "부정이 늘었나"를 알 수 없어 글로도 둔다.
+// 마지막 7일과 그 앞 7일의 부정 비율을 비교한다(알럿봇의 감정 추세 판정과 같은 기준).
+function summarizeSentiment(trend) {
+  const empty = { last7: '—', prev7: '—', delta: null, ticks: [], aria: '감정 추세 데이터 없음' }
+  if (!trend || trend.length === 0) return empty
+  const rate = (rows) => {
+    const t = rows.reduce((s, d) => s + d.positive + d.neutral + d.negative, 0)
+    const n = rows.reduce((s, d) => s + d.negative, 0)
+    return t > 0 ? Math.round((n / t) * 1000) / 10 : null
+  }
+  const last = trend.slice(-7)
+  const prev = trend.slice(-14, -7)
+  const l = rate(last)
+  const p = rate(prev)
+  const days = trend.map((d) => d.day)
+  const tick = (iso) => (iso || '').slice(5).replace('-', '/')
+  return {
+    last7: l ?? '—',
+    prev7: p ?? '—',
+    delta: l !== null && p !== null ? Math.round((l - p) * 10) / 10 : null,
+    ticks: days.length >= 3 ? [tick(days[0]), tick(days[Math.floor(days.length / 2)]), tick(days[days.length - 1])] : days.map(tick),
+    aria: l !== null && p !== null
+      ? `최근 ${trend.length}일 학부모 감정 추세. 부정 비율이 그 앞 7일 ${p}%에서 최근 7일 ${l}%로 바뀌었습니다.`
+      : `최근 ${trend.length}일 학부모 감정 추세.`,
+  }
+}
+
 function formatNumber(n) {
   if (typeof n !== 'number') return '—'
   return n.toLocaleString('ko-KR')
@@ -84,6 +111,7 @@ export default function AdminOverviewPage() {
   const { data: rtDist, isLoading: rtLoading, isError: rtError, error: rtErr, refetch: rtRefetch } = useResponseTimeDistribution(90)
   const { data: catDist, isLoading: catLoading, isError: catError, error: catErr, refetch: catRefetch } = useChatCategoryDistribution(90)
   const { data: sentTrend, isLoading: sentLoading, isError: sentError, error: sentErr, refetch: sentRefetch } = useSentimentTrend(30)
+  const sentSummary = summarizeSentiment(sentTrend)
 
   return (
     <div className="ov-shell">
@@ -341,26 +369,48 @@ export default function AdminOverviewPage() {
               ) : !sentTrend || sentTrend.length === 0 ? (
                 <QueryEmpty title="최근 30일 감정 분석 결과가 없습니다" description="학부모 메시지가 분류되면 여기에 나타납니다." />
               ) : (
-                <div className="ov-sent">
-                  {sentTrend.map((d) => {
-                    const total = d.positive + d.neutral + d.negative
-                    if (total === 0) return <div key={d.day} className="ov-sent-col" />
-                    const posH = (d.positive / total) * 100
-                    const neuH = (d.neutral / total) * 100
-                    const negH = (d.negative / total) * 100
-                    return (
-                      <div
-                        key={d.day}
-                        className="ov-sent-col ov-sent-stack"
-                        title={`${d.day} · 긍정 ${d.positive} / 중립 ${d.neutral} / 부정 ${d.negative}`}
-                      >
-                        <div className="ov-sent-seg" data-tone="neg" style={{ height: `${negH}%` }} />
-                        <div className="ov-sent-seg" data-tone="neu" style={{ height: `${neuH}%` }} />
-                        <div className="ov-sent-seg" data-tone="pos" style={{ height: `${posH}%` }} />
-                      </div>
-                    )
-                  })}
-                </div>
+                <>
+                  {/* 막대 30개에 눈금이 하나도 없고 수치는 브라우저 기본 말풍선(title)뿐이라,
+                      터치·키보드로는 값에 닿을 방법이 없었다(1440px 에서 막대 하나가 13px,
+                      390px 에서 6px). 차트 전체를 하나의 그림으로 읽히게 하고, 이 카드의 목적
+                      (부정 증가 감지)에 필요한 숫자는 아래 한 줄로 항상 보이게 둔다.
+                      막대 30개를 각각 포커스 대상으로 만들지 않는다 — 정지점 30개는 오히려 손해다. */}
+                  <div className="ov-sent" role="img" aria-label={sentSummary.aria}>
+                    {sentTrend.map((d) => {
+                      const total = d.positive + d.neutral + d.negative
+                      if (total === 0) return <div key={d.day} className="ov-sent-col" />
+                      const posH = (d.positive / total) * 100
+                      const neuH = (d.neutral / total) * 100
+                      const negH = (d.negative / total) * 100
+                      return (
+                        <div
+                          key={d.day}
+                          className="ov-sent-col ov-sent-stack"
+                          title={`${d.day} · 긍정 ${d.positive} / 중립 ${d.neutral} / 부정 ${d.negative}`}
+                        >
+                          <div className="ov-sent-seg" data-tone="neg" style={{ height: `${negH}%` }} />
+                          <div className="ov-sent-seg" data-tone="neu" style={{ height: `${neuH}%` }} />
+                          <div className="ov-sent-seg" data-tone="pos" style={{ height: `${posH}%` }} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {/* 날짜 눈금 3개(시작·중간·끝). 30개를 다 넣을 자리가 없다. */}
+                  <div className="ov-sent-axis">
+                    {sentSummary.ticks.map((t, i) => (
+                      <Text key={i} type="supporting" as="span" hasTabularNumbers>{t}</Text>
+                    ))}
+                  </div>
+                  {/* 이 카드의 목적은 "부정이 늘고 있는가" 하나다. 그 답을 그림에 기대지 않고 글로 둔다. */}
+                  <Text type="supporting" as="p" className="ov-sent-note">
+                    최근 7일 부정 비율 {sentSummary.last7}% · 그 앞 7일 {sentSummary.prev7}%
+                    {sentSummary.delta !== null && (
+                      <span className={sentSummary.delta > 0 ? 'ov-neg-hot' : undefined}>
+                        {' '}({sentSummary.delta > 0 ? '+' : ''}{sentSummary.delta}%p)
+                      </span>
+                    )}
+                  </Text>
+                </>
               )}
               <div className="ov-legend">
                 <span className="ov-legend-item"><span className="ov-dot" data-tone="pos" /> 긍정</span>
