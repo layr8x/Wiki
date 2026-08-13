@@ -384,10 +384,13 @@ export async function fetchKakaoActionChats(limitN = 6) {
   const { data, error } = await supabase.rpc('kakao_action_chats', { limit_n: limitN })
   if (error) throw error
   return (data || []).map(row => ({
-    channel:  row.channel,
-    nickname: row.nickname,
-    waitedH:  Number(row.waited_h),
-    preview:  row.preview,
+    // chatId·profileId 는 목록에서 그 대화로 바로 갈 때 쓴다(20260813 마이그레이션에서 추가).
+    chatId:    row.chat_id,
+    profileId: row.profile_id,
+    channel:   row.channel,
+    nickname:  row.nickname,
+    waitedH:   Number(row.waited_h),
+    preview:   row.preview,
   }))
 }
 

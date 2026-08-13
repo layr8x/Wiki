@@ -7,6 +7,14 @@
 //    (실데이터 형태 참고: 채널 5개 · 하루 165건 규모 · 응답 중앙값 19~32분)
 
 const CHANNELS = ['마이클래스', 'LIVE', 'LIVE 기술지원', '콘텐츠', '통합로그인']
+// 채널 라벨과 짝이 되는 profile_id (CLAUDE.md 16장 정본과 같은 순서).
+// ⚠️ 라벨만 있고 id 가 없으면 "채널을 눌러 필터가 바뀌는지"를 검증할 수 없다.
+const PROFILE_IDS = ['_VGAQn', '_rcpPG', '_TkpPG', '_xfxilXn', '_rkbcn']
+const CHAT_COUNT = 12
+// 대화 12묶음 중 앞 6개는 기본 채널(마이클래스)에 몰아 둔다. 기본으로 열리는 화면이 넉넉해야
+// 목록 레이아웃을 제대로 보고, 나머지 6개는 다른 채널에 흩어 놔야 채널 전환이 의미를 갖는다.
+const chatProfile = (c) => (c < 6 ? '_VGAQn' : PROFILE_IDS[(c - 5) % 5])
+const chatIdOf = (c) => String(4980000000000000 + c * 137)
 
 // 긴 값·짧은 값을 섞어 "글자가 길어지면 깨지는가"를 같이 본다.
 const NICKS = ['별빛사탕', '수학이좋아요', '학부모A', '가나다라마바사아자차카', 'jin', '민들레홀씨', '연구실지킴이']
@@ -22,18 +30,18 @@ const PREVIEWS = [
 const iso = (minutesAgo) => new Date(Date.UTC(2026, 7, 13, 4, 0, 0) - minutesAgo * 60000).toISOString()
 
 // ─── 상담 메시지(카카오 상담 로그 화면) ────────────────────────────────────
-// 대화 6묶음 × 메시지 3~7개. 고객(in)/매니저(out)/시스템을 섞는다.
+// 대화 12묶음 × 메시지 3~7개. 고객(in)/매니저(out)/시스템을 섞는다.
 const messages = []
 let logId = 4900000000000000
-for (let c = 0; c < 6; c++) {
-  const chatId = String(4980000000000000 + c * 137)
+for (let c = 0; c < CHAT_COUNT; c++) {
+  const chatId = chatIdOf(c)
   const n = 3 + (c % 5)
   for (let i = 0; i < n; i++) {
     const isUser = i % 2 === 0
     messages.push({
       log_id: String(logId++),
       chat_id: chatId,
-      profile_id: '_VGAQn',
+      profile_id: chatProfile(c),
       sender_type: i === n - 1 && c % 4 === 3 ? 'system' : isUser ? 'user' : 'manager',
       message:
         i === 0
@@ -50,9 +58,9 @@ for (let c = 0; c < 6; c++) {
 }
 
 // ─── 채팅 메타 ─────────────────────────────────────────────────────────────
-const chats = Array.from({ length: 6 }, (_, c) => ({
-  chat_id: String(4980000000000000 + c * 137),
-  profile_id: '_VGAQn',
+const chats = Array.from({ length: CHAT_COUNT }, (_, c) => ({
+  chat_id: chatIdOf(c),
+  profile_id: chatProfile(c),
   nickname: NICKS[c % NICKS.length],
   last_log_send_at: iso(c * 90),
   category: ['환불', '교재·배송', '라이브', '계정·로그인·앱', '입반·등록', '기타'][c % 6],
@@ -140,13 +148,23 @@ export function rpcFixture(name) {
         { channel: '통합로그인', waiting: 0, answered_n: 0, oldest_wait_h: 0, median_first_response_min: 0 },
         { channel: 'LIVE 기술지원', waiting: 0, answered_n: 7, oldest_wait_h: 0, median_first_response_min: 0 },
       ]
+    // ⚠️ chat_id·profile_id 는 실제 대화 목록과 짝이 맞아야 한다. 목록의 한 행을 누르면
+    //    그 채널로 필터가 바뀌고 그 대화로 스크롤하는데, 짝이 안 맞으면 늘 "목록에 없음"만 나와
+    //    정작 성공 경로를 한 번도 못 본다. 마지막 한 건은 일부러 없는 대화를 가리켜
+    //    "못 찾았을 때" 안내도 확인할 수 있게 둔다.
     case 'kakao_action_chats':
-      return Array.from({ length: 6 }, (_, i) => ({
-        channel: CHANNELS[i % CHANNELS.length],
-        nickname: NICKS[i % NICKS.length],
-        waited_h: [40.0, 18.6, 10.0, 3.2, 0.8, 0.2][i],
-        preview: PREVIEWS[i % PREVIEWS.length],
-      }))
+      return Array.from({ length: 6 }, (_, i) => {
+        const c = [0, 6, 7, 8, 2, 99][i]
+        const pid = c === 99 ? '_VGAQn' : chatProfile(c)
+        return {
+          chat_id: c === 99 ? '4980000000009999' : chatIdOf(c),
+          profile_id: pid,
+          channel: CHANNELS[PROFILE_IDS.indexOf(pid)],
+          nickname: NICKS[i % NICKS.length],
+          waited_h: [40.0, 18.6, 10.0, 3.2, 0.8, 0.2][i],
+          preview: PREVIEWS[i % PREVIEWS.length],
+        }
+      })
     case 'kakao_category_spike':
       return [
         {

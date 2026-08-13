@@ -24,18 +24,45 @@ function settle(rows) {
   return Promise.resolve({ data: rows, error: null, count: Array.isArray(rows) ? rows.length : 0 })
 }
 
-// PostgREST 체이닝을 흉내낸다. 모든 필터는 no-op — 어떤 조건이 와도 고정 픽스처를 돌려준다.
-// (레이아웃·상태를 보는 게 목적이라 필터 정확도는 필요 없다.)
+// PostgREST 체이닝을 흉내낸다.
+// ⚠️ 예전에는 모든 필터가 no-op 이었다("레이아웃만 보면 된다"). 그래서 채널을 바꿔도 목록이
+//    그대로였고, **필터가 실제로 동작하는지는 이 도구로 한 번도 확인할 수 없었다**(2026-08-13
+//    "지금 처리할 대화" 클릭 검증에서 드러남). 값을 걸러내는 필터만 실제로 구현한다.
+//    나머지(not/or/filter 등)는 여전히 통과시킨다 — 화면이 안 쓰는 것들이다.
 function builder(table) {
   const rows = FIXTURES[table] ?? []
   const self = {
     _rows: rows,
     then(resolve, reject) { return settle(self._rows).then(resolve, reject) },
   }
-  const passthrough = [
-    'select', 'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike', 'is', 'in',
-    'not', 'or', 'filter', 'order', 'range', 'limit', 'match', 'contains',
-  ]
+  const keep = (fn) => { self._rows = self._rows.filter(fn); return self }
+  const val = (r, col) => r?.[col]
+
+  self.eq = (col, v) => keep((r) => String(val(r, col)) === String(v))
+  self.neq = (col, v) => keep((r) => String(val(r, col)) !== String(v))
+  self.gte = (col, v) => keep((r) => val(r, col) >= v)
+  self.gt = (col, v) => keep((r) => val(r, col) > v)
+  self.lte = (col, v) => keep((r) => val(r, col) <= v)
+  self.lt = (col, v) => keep((r) => val(r, col) < v)
+  self.in = (col, vs) => keep((r) => vs.map(String).includes(String(val(r, col))))
+  // PostgREST 의 like/ilike 는 % 를 임의 문자열로 본다.
+  const likeRe = (pat, flags) => new RegExp('^' + String(pat).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/%/g, '.*') + '$', flags)
+  self.like = (col, pat) => keep((r) => likeRe(pat, '').test(String(val(r, col) ?? '')))
+  self.ilike = (col, pat) => keep((r) => likeRe(pat, 'i').test(String(val(r, col) ?? '')))
+  self.is = (col, v) => keep((r) => (v === null ? val(r, col) == null : val(r, col) === v))
+  self.order = (col, opts) => {
+    const asc = opts?.ascending !== false
+    self._rows = [...self._rows].sort((a, b) => {
+      const x = val(a, col), y = val(b, col)
+      if (x === y) return 0
+      return (x < y ? -1 : 1) * (asc ? 1 : -1)
+    })
+    return self
+  }
+  self.limit = (n) => { self._rows = self._rows.slice(0, n); return self }
+  self.range = (from, to) => { self._rows = self._rows.slice(from, to + 1); return self }
+
+  const passthrough = ['select', 'not', 'or', 'filter', 'match', 'contains']
   for (const m of passthrough) self[m] = () => self
   self.single = () => settle(self._rows[0] ?? null)
   self.maybeSingle = () => settle(self._rows[0] ?? null)
