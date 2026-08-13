@@ -25,6 +25,11 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AGENTS="$HOME/Library/LaunchAgents"
 LOGDIR="$HOME/Library/Logs/ams-wiki"
 
+# 불러오기 직전 오류 로그 크기(바이트)를 잡 순서대로 담는다.
+# ⚠️ 연관 배열(declare -A)을 쓰지 말 것 — macOS 기본 bash 는 3.2 라 지원하지 않는다.
+#    (개발 환경 bash 5.x 에서는 통과하고 실제 맥에서만 깨진다.) 인덱스 배열로 간다.
+ERR_OFFSETS=()
+
 DEFAULT_JOBS=(com.amswiki.kakao-collect com.amswiki.kakao-cookie-refresh)
 ALL_JOBS=("${DEFAULT_JOBS[@]}" com.amswiki.jandi-token-refresh com.amswiki.kakao-sheets-sync)
 
@@ -53,11 +58,13 @@ echo "저장소:  $REPO"
 echo "node:    $NODE_BIN"
 echo
 
-for job in "${JOBS[@]}"; do
+for i in "${!JOBS[@]}"; do
+  job="${JOBS[$i]}"
   src="$REPO/scripts/launchd/$job.plist"
   dst="$AGENTS/$job.plist"
   if [[ ! -f "$src" ]]; then
     echo "건너뜀: $job (원본 없음)"
+    ERR_OFFSETS[$i]=-1   # 건너뛴 잡은 아래 확인에서도 건너뛴다
     continue
   fi
 
@@ -76,6 +83,14 @@ for job in "${JOBS[@]}"; do
     /usr/libexec/PlistBuddy -c "Set :ProgramArguments:1 --env-file=$REPO/.env.local" "$dst"
   fi
 
+  # 불러오기 직전의 오류 로그 크기를 기억해 둔다. 아래 동작 확인에서 "이 지점 이후에
+  # 새로 쓰인 것"만 보기 위해서다 — 로그는 계속 쌓이므로 그냥 tail 하면 몇 시간 전 오류를
+  # 지금 오류로 오인한다(2026-08-13 실측: 수집이 멀쩡히 도는데 ❌ 로 보고했다).
+  short="${job#com.amswiki.}"
+  errfile="$LOGDIR/$short.err.log"
+  [[ -f "$errfile" ]] || : > "$errfile"
+  ERR_OFFSETS[$i]=$(wc -c < "$errfile" | tr -d ' ')
+
   launchctl unload "$dst" 2>/dev/null || true
   launchctl load "$dst"
   echo "설치: $job"
@@ -89,19 +104,25 @@ launchctl list | grep -i amswiki || echo "  (등록 실패 — 위 오류를 확
 # 2026-08-13 실측: 등록은 성공했는데 두 잡 다 시작하자마자 죽어(위 --env-file 문제)
 # 수집이 계속 0건이었다. 그때 이 스크립트는 "설치 완료"만 찍고 끝나 한참 뒤에야 알았다.
 # → 오류 로그를 직접 읽어 보고한다. "검증 전 완료 금지"를 스크립트로 강제하는 것이다.
+#
+# ⚠️ 반드시 "이번 실행에서 새로 쓰인 부분"만 본다. 로그는 계속 쌓이므로 그냥 tail 하면
+#    몇 시간 전에 끝난 사건을 지금 오류로 오인한다(같은 날 실측 — 수집이 정상인데 ❌ 로 보고).
 echo
 echo "동작 확인 (15초 대기)..."
 sleep 15
 fail=0
-for job in "${JOBS[@]}"; do
-  short="${job#com.amswiki.}"
+for i in "${!JOBS[@]}"; do
+  off="${ERR_OFFSETS[$i]:--1}"
+  [[ "$off" == "-1" ]] && continue
+  short="${JOBS[$i]#com.amswiki.}"
   err="$LOGDIR/$short.err.log"
-  if [[ -s "$err" ]] && tail -5 "$err" | grep -qiE 'invalid format|cannot find|not found|ENOENT|Error'; then
+  fresh="$(tail -c "+$((off + 1))" "$err" 2>/dev/null || true)"
+  if [[ -n "$fresh" ]] && printf '%s' "$fresh" | grep -qiE 'invalid format|cannot find|ENOENT|쿠키 만료|Error'; then
     echo "  ❌ $short — 오류로 죽었습니다:"
-    tail -3 "$err" | sed 's/^/       /'
+    printf '%s\n' "$fresh" | tail -3 | sed 's/^/       /'
     fail=1
   else
-    echo "  ✅ $short — 오류 없음"
+    echo "  ✅ $short — 새 오류 없음"
   fi
 done
 
