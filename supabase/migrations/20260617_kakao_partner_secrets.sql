@@ -1,6 +1,6 @@
 -- 20260617_kakao_partner_secrets.sql
 -- 카카오 파트너 쿠키 자동 배달용 비밀 저장소.
--- 회사 자산 맥 스튜디오의 Chrome 이 6시간마다 최신 세션 쿠키를 여기에 upsert → GitHub Actions 수집기가
+-- 담당자 기기(맥북 에어)의 Chrome 이 6시간마다 최신 세션 쿠키를 여기에 upsert → GitHub Actions 수집기가
 -- 매 실행 시 최신 쿠키를 읽어감(쿠키 만료 수동 갱신 제거). service_role 전용.
 --
 -- 보안: 세션 쿠키는 계정 로그인 권한과 동등 → anon/authenticated 모두 접근 불가.

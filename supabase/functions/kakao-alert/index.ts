@@ -128,7 +128,7 @@ function healthMessage(row: any, persistedH: string | null): string {
     return (
       `🔴 *${ch}* 상담 수집이 멈췄어요\n` +
       `카카오 로그인이 풀려서 새 상담을 못 가져오고 있어요.\n` +
-      `👉 맥 스튜디오 Chrome에서 business.kakao.com에 다시 로그인해 주세요. 로그인하면 자동으로 다시 수집돼요.${persist}`
+      `👉 수집 기기(맥북 에어) Chrome에서 business.kakao.com에 다시 로그인해 주세요. 로그인하면 자동으로 다시 수집돼요.${persist}`
     );
   }
   if (row.health_reason === 'heartbeat') {
@@ -153,7 +153,7 @@ function globalHealthMessage(reason: 'auth' | 'stall', badRows: any[], persisted
     return (
       `🔴 카카오 로그인 만료 — 상담 수집이 멈췄어요\n` +
       `로그인이 풀려서 전 채널이 새 상담을 못 가져오고 있어요(영향: ${chs}).\n` +
-      `👉 맥 스튜디오 Chrome에서 business.kakao.com에 다시 로그인해 주세요. 로그인하면 자동으로 다시 수집돼요.${persist}`
+      `👉 수집 기기(맥북 에어) Chrome에서 business.kakao.com에 다시 로그인해 주세요. 로그인하면 자동으로 다시 수집돼요.${persist}`
     );
   }
   return (

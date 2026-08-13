@@ -27,7 +27,7 @@
 //             JANDI_TEAM_URL(기본 flytofreedom.jandi.com), JANDI_HEADLESS(기본 true),
 //             JANDI_REFRESH_TIMEOUT_MS(기본 60000; 최초 수동 로그인용은 아래 LOGIN_WAIT_MS)
 //
-// ⚠️ 보안: 자격증명·프로필은 사내 신뢰 PC(맥 스튜디오) .env.local 에만. 절대 커밋 금지.
+// ⚠️ 보안: 자격증명·프로필은 사내 신뢰 PC(담당자 기기(맥북 에어)) .env.local 에만. 절대 커밋 금지.
 
 import { getAdminClient } from './lib/supabase-admin.mjs';
 

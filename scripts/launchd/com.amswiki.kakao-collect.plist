@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  카카오 파트너센터 상시 수집 (5분마다) — 회사 자산 맥 스튜디오에서 직접 실행.
+  카카오 파트너센터 상시 수집 (5분마다) — 담당자 기기(2026-08-13 부터 맥북 에어)에서 직접 실행.
 
-  왜 클라우드가 아니라 이 기기인가 (2026-08-12 실측으로 확정):
+  ⚠️ 노트북으로 바뀐 뒤의 전제: 이 예약은 기기가 깨어 있을 때만 돈다. 뚜껑을 닫으면 수집이
+     멈춘다. 데스크탑처럼 쓰려면 전원 연결 + `sudo pmset -c sleep 0 disablesleep 1` 로
+     시스템 절전을 끄고 뚜껑을 열어 둔다. 자는 동안 생긴 공백은 다음 실행에서 이어받는다
+     (증분 수집이라 유실은 없다). 다만 25분 넘게 멈추면 알럿봇이 "지연"으로 알린다.
+
+  왜 클라우드가 아니라 이 기기인가 (2026-08-12 실측 — 단 확정 아님):
     Supabase Edge Function(pg_cron 20분)으로 수집하던 구조가 2026-07-25부터 401 로 전면 중단됐다.
-    원인은 쿠키 만료가 아니었다. 동일 쿠키·동일 헤더로
-      · 맥 스튜디오에서 호출 → 200 정상
+    쿠키 만료는 아니었다. 동일 쿠키·동일 헤더로
+      · 담당자 기기에서 호출 → 200 정상
       · Supabase(클라우드 IP)에서 호출 → 401 거부
-    즉 카카오가 클라우드 IP 요청을 막는다. 쿠키를 아무리 잘 갱신해도 클라우드에선 통과할 수 없다.
-    → 수집 자체를 쿠키가 살아 있는 이 기기에서 돌린다. 네트워크로 쿠키를 옮길 필요도 없어진다.
+    당시 "카카오가 클라우드 IP 를 막는다"고 결론냈으나, 두 호출 사이 4분 동안 카카오가
+    Set-Cookie 로 세션 토큰을 굴렸을 가능성이 남아 있다(그러면 IP 가 아니라 쿠키 신선도 문제).
+    → 가르는 법: node --env-file=.env.local scripts/kakao-cloud-ip-test.mjs
+       (갓 뽑은 쿠키로 기기·클라우드를 거의 동시에 호출). 그때까지는 이 기기에서 돌린다.
 
   전제:
     · Chrome 으로 business.kakao.com 에 파트너센터 권한 계정 로그인 유지
     · .env.local 에 KAKAO_PARTNER_COOKIE / SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY
       (쿠키는 com.amswiki.kakao-cookie-refresh 가 6시간마다 검증 후 자동 갱신)
 
-  설치 (한 번만):
+  설치 (기기를 바꿀 때마다 — 이 예약은 ~/Library/LaunchAgents 에 저장돼 iCloud 로 따라오지 않는다):
+    node 경로부터 확인할 것. 애플 실리콘 맥은 보통 /opt/homebrew/bin/node 라
+    아래 ProgramArguments 의 /usr/local/bin/node 와 다르다(다르면 조용히 실패).
     cp scripts/launchd/com.amswiki.kakao-collect.plist ~/Library/LaunchAgents/
     launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-collect.plist
     tail -f ~/Library/Logs/ams-wiki/kakao-collect.log
