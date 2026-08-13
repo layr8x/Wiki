@@ -150,7 +150,7 @@ export function KakaoConsultStatus() {
           <ErrorNote label="대기 건수" />
         ) : (
           <HStack gap={3} vAlign="baseline">
-            <Text as="span" size="3xl" weight="bold" hasTabularNumbers>
+            <Text as="span" type="display-2" weight="bold" hasTabularNumbers>
               {(totalWaiting ?? 0).toLocaleString('ko-KR')}
             </Text>
             <Text as="span" type="supporting">건 대기 중</Text>

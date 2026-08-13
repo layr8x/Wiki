@@ -192,7 +192,7 @@ function ChannelKpi({ ch }) {
         <div className="ac-skel ac-skel-kpi" />
       ) : (
         <div className="ac-kpi-value">
-          <Text as="span" size="2xl" weight="semibold" hasTabularNumbers>
+          <Text as="span" type="display-3" weight="semibold" hasTabularNumbers>
             {isError ? '—' : (data ?? 0).toLocaleString('ko-KR')}
           </Text>
           <Text as="span" type="supporting">개</Text>
