@@ -2,11 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
   카카오 파트너센터 쿠키 선제 갱신 (6시간마다). Chrome 로컬 쿠키 → .env.local + Supabase(kakao_partner_secrets).
-  Supabase 의 kakao-collect Edge Function(pg_cron, 5분마다)이 이 쿠키를 읽어 실제 상시 수집을 수행하므로,
-  이 launchd 는 그 쿠키를 최신으로 유지하는 역할만 한다(이 기기 상태와 무관하게 도는 건 Edge Function 쪽).
-  전제: Chrome 으로 business.kakao.com 에 로그인 유지(가급적 탭을 열어두기) + 최초 1회 "Chrome Safe Storage" 키체인 허용.
+
+  ⚠️ 2026-08-13 정정 2건:
+    1) WorkingDirectory 가 `.../MacStudio-MJ/ams-wiki` 로 적혀 있었다. 그 폴더는 무관한 다른
+       저장소이고 이 스크립트가 없다 — 그대로 설치하면 즉시 실패한다. 정답은 `.../local`.
+       (맥 스튜디오에서는 설치할 때 손으로 고쳐 넣어 굴러갔고, 저장소 원본만 틀린 채 남아 있었다.)
+    2) "Edge Function 이 이 쿠키를 읽어 상시 수집한다"고 적혀 있었으나 그 pg_cron 은
+       2026-08-12 에 비활성화됐다. 지금은 같은 기기의 com.amswiki.kakao-collect 가 수집한다.
+
+  전제: Chrome 으로 business.kakao.com 에 파트너센터 권한 계정 로그인 유지(가급적 탭을 열어두기)
+        + 최초 1회 "Chrome Safe Storage" 키체인 허용.
   설치:
-    1) WorkingDirectory / node 경로 / 로그 경로를 본인 머신에 맞게 수정
+    1) node 경로 확인 — 애플 실리콘 맥은 보통 /opt/homebrew/bin/node 다(`which node` 로 확인).
+       이 파일의 /usr/local/bin/node 와 다르면 예약이 조용히 실패한다.
     2) cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
     3) launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
     4) tail -f ~/Library/Logs/ams-wiki/kakao-cookie-refresh.log
@@ -26,7 +34,7 @@
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/ams-wiki</string>
+  <string>/Users/layr8x/Library/Mobile Documents/com~apple~CloudDocs/MacStudio-MJ/local</string>
 
   <key>RunAtLoad</key>
   <true/>

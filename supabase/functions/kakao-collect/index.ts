@@ -7,7 +7,7 @@
 //
 // 인증: verify_jwt=false. 대신 DB(kakao_partner_secrets.key='kakao_collect_token')에 저장된
 //   토큰을 ?token= 으로 받아 비교(레거시 anon 키 비활성 환경 대응 + 추가 시크릿 설정 0).
-// 쿠키: kakao_partner_secrets.key='kakao_partner_cookie' (회사 자산 맥 스튜디오의 Chrome 이 6h마다 자동 배달).
+// 쿠키: kakao_partner_secrets.key='kakao_partner_cookie' (담당자 기기(맥북 에어)의 Chrome 이 6h마다 자동 배달).
 // DB 자격증명: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 는 Edge 런타임이 자동 주입.
 //
 // 동작(채널마다, scripts/kakao-partner-collect-once.mjs 이식):

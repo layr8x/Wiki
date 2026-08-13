@@ -1,9 +1,9 @@
 // supabase/functions/jandi-refresh/index.ts
 // 잔디(JANDI) access token 서버측 무중단 자동 갱신 — Supabase Edge Function (pg_cron 주기 호출).
 //
-// 배경: 기존 갱신(scripts/jandi-refresh-token.mjs)은 맥 스튜디오의 브라우저 로그인 세션에 의존해,
+// 배경: 기존 갱신(scripts/jandi-refresh-token.mjs)은 담당자 기기의 브라우저 로그인 세션에 의존해,
 //   그 세션이 풀리면(=단일 장애점) 수집이 통째로 멈췄다(2026-07-09 실측 장애).
-//   이 함수는 브라우저·맥 스튜디오 없이, 잔디 웹앱의 실제 갱신 호출을 서버에서 그대로 재현한다.
+//   이 함수는 브라우저·담당자 기기 없이, 잔디 웹앱의 실제 갱신 호출을 서버에서 그대로 재현한다.
 //
 // 확보 경위: jandi-refresh-token.mjs(브라우저) 실행 시 로그인 세션의 지속 쿠키를 캡처해
 //   jandi_secrets.jandi_session_cookie 에 저장했고, 그중 `_jd_.refresh_token` 값을 꺼내

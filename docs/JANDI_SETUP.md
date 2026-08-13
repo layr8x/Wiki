@@ -148,7 +148,7 @@ npm run jandi:collect-once
 - **모드 B — 이메일/비밀번호 (폴백):** `JANDI_EMAIL`/`JANDI_PASSWORD` 로 매번 새로 로그인.
   ⚠️ 회사 SSO/MFA 면 막힐 수 있다.
 
-#### 맥 스튜디오 launchd 설정 (6시간마다 자동 — 카카오 쿠키 배달과 동일)
+#### 담당자 기기 launchd 설정 (6시간마다 자동 — 카카오 쿠키 배달과 동일)
 
 ```bash
 # 0) 준비(최초 1회)
@@ -172,7 +172,7 @@ tail -f ~/Library/Logs/ams-wiki/jandi-token-refresh.log   # 동작 확인
 
 - **CI 자동 갱신(비권장):** `.github/workflows/jandi-refresh-token.yml` 의 `schedule` 주석을
   풀면 되지만, 회사 계정을 클라우드에서 로그인하면 보안 경고·SSO/MFA 로 막힐 수 있다. 위
-  맥 스튜디오 방식을 권장한다.
+  담당자 기기 방식을 권장한다.
 
 ### 4-D. 전체 백필 — 이전 모든 대화 (최초 1회)
 
@@ -248,7 +248,7 @@ select * from jandi_stream_state;
    `supabase/migrations/20260708_jandi_alert.sql`(상태 테이블·`jandi_alert_token`) +
    `20260708_jandi_alert_dispatch.sql`(cron).
 
-3. **권장 갱신 주기**: 토큰 수명이 ~12h 이므로 맥 스튜디오 갱신은 **4~6시간마다**(launchd)
+3. **권장 갱신 주기**: 토큰 수명이 ~12h 이므로 담당자 기기 갱신은 **4~6시간마다**(launchd)
    돌려 만료 전 최소 2번의 갱신 기회를 둔다. 워치독이 2h 전에 경고하므로, 경고를 보면 즉시
    재로그인하면 끊김 없이 이어진다.
 

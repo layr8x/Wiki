@@ -10,7 +10,7 @@
 //   수집기 자체는 고쳤으므로(collect-once 의 pre-upsert), 이 스크립트는 그때 유실된
 //   과거분을 되메우는 1회성 복구용이다. 여러 번 돌려도 안전(멱등).
 //
-// 실행 (맥 스튜디오):
+// 실행 (담당자 기기(맥북 에어)):
 //   node --env-file=.env.local scripts/kakao-partner-backfill-missing.mjs
 //   환경변수: KAKAO_PARTNER_PROFILE_IDS(또는 _ID), SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //            (쿠키는 collect-once 와 동일하게 Supabase 보관함 우선, 없으면 KAKAO_PARTNER_COOKIE)
@@ -32,7 +32,7 @@ const log = (...a) => console.log(`[${new Date().toISOString()}]`, ...a);
 
 if (!IDS.length) { console.log('[skip] KAKAO_PARTNER_PROFILE_IDS 미설정.'); process.exit(0); }
 
-// 쿠키는 수집기와 동일 출처(보관함 우선) — 맥 스튜디오 Chrome 이 6시간마다 검증 후 배달한다.
+// 쿠키는 수집기와 동일 출처(보관함 우선) — 담당자 기기(맥북 에어) Chrome 이 6시간마다 검증 후 배달한다.
 async function resolveCookie() {
   const { data } = await supabase.from('kakao_partner_secrets')
     .select('value').eq('key', 'kakao_partner_cookie').maybeSingle();

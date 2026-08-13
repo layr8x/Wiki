@@ -3,9 +3,9 @@
 // 1회성 카카오 파트너센터 증분 수집 — 현재 운영 경로.
 //
 // 어디서 도는가 (2026-08-12 확정):
-//   회사 자산 맥 스튜디오의 launchd(scripts/launchd/com.amswiki.kakao-collect.plist)가
+//   회사 자산 담당자 기기(맥북 에어)의 launchd(scripts/launchd/com.amswiki.kakao-collect.plist)가
 //   5분마다 이 스크립트를 실행한다.
-//   왜 클라우드가 아닌가: 동일 쿠키·동일 헤더로 A/B 한 결과 맥 스튜디오=200, 클라우드(Supabase
+//   왜 클라우드가 아닌가: 동일 쿠키·동일 헤더로 A/B 한 결과 담당자 기기(맥북 에어)=200, 클라우드(Supabase
 //   Edge Function)=401 이었다. 카카오가 클라우드 IP 를 막는다 — 쿠키를 아무리 잘 갱신해도
 //   클라우드에선 통과할 수 없다(2026-07-25~08-12 수집 전면 중단의 진짜 원인).
 //   ※ 예전 주석의 "항상 켜진 클라우드에서 5분마다" 전제는 폐기됨.
@@ -59,7 +59,7 @@ if (IDS.length === 0) {
 
 const supabase = getAdminClient();
 
-// 쿠키 출처: ① Supabase 보관함(맥 스튜디오 Chrome 이 6시간마다 자동 배달) 우선 → ② GitHub Secret 폴백.
+// 쿠키 출처: ① Supabase 보관함(담당자 기기(맥북 에어) Chrome 이 6시간마다 자동 배달) 우선 → ② GitHub Secret 폴백.
 // 보관함 쿠키가 항상 최신이라 만료 수동 갱신이 사라진다.
 async function resolveCookie() {
   try {
@@ -191,7 +191,7 @@ async function collectChannel(profileId, session) {
       // 참조하는 외래키(FK = 부모 행이 먼저 있어야 자식 행을 넣을 수 있는 규칙)다.
       // 처음 보는 대화방은 부모 행(chats)이 아직 없어, 메시지부터 저장하면
       // "violates foreign key constraint kakao_partner_messages_chat_id_fkey" 로 통째 실패한다
-      // (= 새 대화의 첫 메시지 묶음이 영구 유실). 맥 스튜디오 첫 복구 실행에서 전 채널 실측.
+      // (= 새 대화의 첫 메시지 묶음이 영구 유실). 담당자 기기(맥북 에어) 첫 복구 실행에서 전 채널 실측.
       // → 메시지 저장 전에 부모 행부터 upsert 한다.
       //
       // ※ 단, 이때 last_log_id(= 변경감지 커서)는 "예전 값 그대로" 넣는다.
@@ -244,7 +244,7 @@ for (const pid of IDS) {
 if (session.rotated) await persistRotatedCookie(session.cookie);
 
 if (authExpired) {
-  console.error('❌ 카카오 쿠키 만료 — 맥 스튜디오 Chrome 재로그인(자동 배달, 다음 6h 주기 픽업) 또는 GitHub Secrets 의 KAKAO_PARTNER_COOKIE 수동 갱신 필요.');
+  console.error('❌ 카카오 쿠키 만료 — 담당자 기기(맥북 에어) Chrome 재로그인(자동 배달, 다음 6h 주기 픽업) 또는 GitHub Secrets 의 KAKAO_PARTNER_COOKIE 수동 갱신 필요.');
   process.exit(1);
 }
 process.exit(0);

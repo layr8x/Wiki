@@ -4,10 +4,35 @@
 
 ---
 
-## ★★ 현재 구조 (2026-08-12 확정) — 클라우드 수집 불가, 맥 스튜디오에서 수집
+## ★★ 현재 구조 — 담당자 기기(2026-08-13 부터 맥북 에어)에서 수집
 
-> **아래 §5·§10·§11 의 "클라우드(Supabase Edge Function / GitHub Actions)에서 수집" 방식은 더 이상 동작하지 않는다.**
+> **아래 5장·10장·11장의 "클라우드(Supabase Edge Function / GitHub Actions)에서 수집" 방식은 현재 동작하지 않는다.**
 > 이 절이 최신이며, 아래 옛 절들은 이력 참고용이다.
+
+### ⚠️ "클라우드 IP 차단" 결론은 재검증 대상이다 (2026-08-13)
+
+아래 2026-08-12 실측(맥 200 / 클라우드 401)은 사실이지만, **두 가지로 설명될 수 있고 아직 갈라서 재보지 않았다.**
+
+| 가설 | 내용 | 맞다면 |
+|---|---|---|
+| (A) 클라우드 IP 차단 | 카카오가 호출 IP 를 보고 막는다 | 클라우드 수집 불가 — 기기에서 돌려야 한다 |
+| (B) 쿠키 신선도 | 카카오가 응답마다 `Set-Cookie` 로 세션 토큰을 굴린다(그래서 브라우저는 로그인이 유지된다). 맥 Chrome 이 토큰을 굴려버려, 보관함에 저장된 스냅샷은 이미 무효였다 | **클라우드 수집 가능** — 쿠키를 자주 갱신하거나 회전을 흡수하면 된다 |
+
+- 그 실측은 두 호출 사이에 **4분** 간격이 있었다. 회전이 일어나기에 충분한 시간이다.
+- 거부 형태가 WAF 차단 페이지나 403 이 아니라 **평범한 `401 {"message":"Unauthorized"}` JSON** 이었다.
+  IP 를 막는다면 요청이 애플리케이션까지 도달하기 전에 끊기는 것이 보통이다. `[추정]`
+- 11장의 v12 수정("응답의 Set-Cookie 를 흡수해 보관함에 되돌려 저장")은 (B)를 겨냥한 것이었다.
+  즉 (B)는 이미 한 번 실재한다고 판단했던 원인이다.
+
+**가르는 법 — `scripts/kakao-cloud-ip-test.mjs`.** 갓 뽑은 쿠키(수 초 이내)를 맥과 클라우드에서
+거의 동시에 써 본다. 클라우드도 200 이면 (B), 클라우드만 401 이면 (A) 확정이다.
+
+```bash
+node --env-file=.env.local scripts/kakao-cloud-ip-test.mjs
+```
+
+`[측정]` 2026-08-13 07:11 UTC 재확인: 클라우드 401. 단 그때 보관함 쿠키는 20시간 묵은 것이라
+**판별 근거가 되지 않는다**(수집·쿠키 갱신이 함께 멈춰 있었다). 위 스크립트로 다시 잴 것.
 
 ### 무슨 일이 있었나
 
@@ -27,11 +52,11 @@
 
 | 호출 위치 | 결과 |
 |---|---|
-| 맥 스튜디오 (2026-08-12 02:16) | **200 정상** |
+| 맥 스튜디오 (2026-08-12 02:16) | **200 정상** |  <!-- 당시 기기. 2026-08-13 부터 맥북 에어 -->
 | Supabase Edge Function (02:20) | **401 거부** |
 
-4분 간격, 같은 쿠키, 같은 User-Agent. 변수는 호출 IP 뿐이었다.
-→ **쿠키를 아무리 잘 갱신해도 클라우드에서는 통과할 수 없다.**
+같은 쿠키, 같은 User-Agent. 당시에는 "변수는 호출 IP 뿐"이라고 봤다.
+→ **다만 4분이라는 간격이 변수로 남아 있다. 위 재검증 절 참고 — 아직 확정이 아니다.**
 
 ### 그래서 이렇게 바꿨다
 
@@ -45,7 +70,7 @@ Chrome (business.kakao.com 로그인 유지)
         ▼
    Supabase 테이블 (kakao_partner_chats / _messages / _stream_state)
 
-   전부 회사 자산 맥 스튜디오의 launchd 에서 실행 — 사람 조작 0
+   전부 담당자 기기의 launchd 에서 실행 — 사람 조작 0
 ```
 
 | launchd 잡 | 주기 | 하는 일 |
@@ -53,12 +78,18 @@ Chrome (business.kakao.com 로그인 유지)
 | `com.amswiki.kakao-cookie-refresh` | 6시간 | 쿠키 추출·검증·배달 |
 | `com.amswiki.kakao-collect` | 5분 | **수집 본체** |
 
-설치(각각 1회):
+설치 — **기기를 바꿀 때마다 다시** 해야 한다:
+
 ```bash
-mkdir -p ~/Library/Logs/ams-wiki
-cp scripts/launchd/com.amswiki.kakao-collect.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-collect.plist
+bash scripts/install-launchd.sh
 ```
+
+`~/Library/LaunchAgents` 는 iCloud 동기화 대상이 아니라, 소스코드 폴더가 새 기기에 보여도
+예약은 따라오지 않는다. 이 스크립트가 node 실제 경로(애플 실리콘은 `/opt/homebrew/bin/node`)와
+저장소 위치를 이 기기 값으로 맞춰 설치한다. 손으로 `cp` 하면 node 경로가 어긋나 조용히 실패한다.
+
+노트북이면 뚜껑을 닫는 동안 수집이 멈춘다. 상시 수집하려면 전원 연결 후
+`sudo pmset -c sleep 0 disablesleep 1`.
 
 Supabase 쪽 수집 크론은 비활성화했다(무한 401·오탐 알림 방지).
 되살리려면: `select cron.alter_job(1, active := true);`
@@ -76,7 +107,7 @@ Supabase 쪽 수집 크론은 비활성화했다(무한 401·오탐 알림 방�
 2. **토큰 회전 흡수** (`supabase/functions/kakao-collect/index.ts` v12, `scripts/lib/kakao-partner-client.mjs`)
    카카오 응답의 `Set-Cookie`(갱신 토큰)를 전부 버리고 있었다. 브라우저가 로그인을 유지하는
    원리가 이 회전인데 받지 않으니 세션이 갱신되지 않았다. → 이제 흡수해 보관함에 되돌려 저장.
-   (맥 스튜디오 수집기도 동일 — 회전이 있으면 그 실행 끝에 보관함을 갱신한다.)
+   (기기 수집기도 동일 — 회전이 있으면 그 실행 끝에 보관함을 갱신한다.)
 
 3. **인증 실패를 드러나게**
    401 을 HTTP 200 으로 응답해 로그상 18일간 "정상"으로 보였다. → 502 로 응답.
@@ -97,7 +128,7 @@ Supabase 쪽 수집 크론은 비활성화했다(무한 401·오탐 알림 방�
 따라잡는다(5분 주기라 자동). 대화당 200건을 넘게 쌓인 경우만 유실 가능.
 
 **단, 위 4번(외래키)으로 이미 유실된 646개 대화방은 자동으로 안 메워진다** — 커서가 이미
-최신이라 "변경 없음" 으로 판정되기 때문이다. 맥 스튜디오에서 한 번 돌려 복구한다.
+최신이라 "변경 없음" 으로 판정되기 때문이다. 담당자 기기에서 한 번 돌려 복구한다.
 
 ```bash
 cd ~/Library/Mobile\ Documents/com~apple~CloudDocs/MacStudio-MJ/local
@@ -230,10 +261,10 @@ select count(*), max(last_log_send_at) from kakao_partner_chats;
 
 > ⚠️ 이 섹션이 설명하던 `scripts/kakao-partner-stream.mjs`(단일 채널) /
 > `kakao-partner-multi-stream.mjs`(멀티채널 supervisor) / `com.amswiki.kakao-stream.plist`
-> launchd 데몬은 **삭제됨**. 회사 자산 맥 스튜디오(데스크탑)가 켜져 있을 때만 도는
+> launchd 데몬은 **삭제됨**. 담당자 기기가 켜져 있을 때만 도는
 > 구조라 절전 모드가 되거나 종료되면 수집이 멈추는 근본 한계가 있었고, 지금은
 > **Supabase Edge Function `kakao-collect`가 pg_cron으로 5분마다 자동 실행**되며
-> 이 역할을 대체한다(맥 스튜디오 상태와 완전히 무관, CLAUDE.md §16 참고). 남겨야
+> 이 역할을 대체한다(기기 상태와 완전히 무관, CLAUDE.md §16 참고). 남겨야
 > 할 것은 **§7의 쿠키 자동 갱신(6시간마다)
 > 뿐**이다 — `kakao-collect`가 Supabase에 저장된 쿠키를 읽어 쓰므로, 그 쿠키를
 > 최신으로 유지하는 이 갱신 작업은 계속 필요하다.
@@ -318,10 +349,10 @@ npm run kakao:status   # ✅ok / ⚠️STALE + heartbeat + last_error 표시
 > 전담**하므로, 아래 GitHub Actions 경로는 실제로는 안 쓰인다. 쿠키 출처·배달
 > 메커니즘(§10-3, §11) 설명은 지금도 유효해 남겨둔다.
 
-launchd 데몬은 맥 스튜디오가 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
+launchd 데몬은 담당자 기기가 켜져 있을 때만 돌아 매일 수집이 끊긴다. 실측상 실제 수집은
 **100% REST 증분 폴링** 으로만 이뤄지므로(WS push 적재 0건), 그 폴링 1사이클을 떼어낸
 `scripts/kakao-partner-collect-once.mjs` 를 **항상 켜진 GitHub Actions 가 5분마다 호출**하면
-맥 스튜디오 상태와 무관하게 끊김 없이 수집된다. (public 저장소라 Actions 무료·무제한)
+기기 상태와 무관하게 끊김 없이 수집된다. (public 저장소라 Actions 무료·무제한)
 
 워크플로: `.github/workflows/kakao-collect.yml`
 
@@ -346,12 +377,12 @@ GitHub → 저장소 → **Settings → Secrets and variables → Actions → Ne
 
 ### 10-3. 쿠키 출처 & 만료 대응
 
-수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 맥 스튜디오 Chrome 이
+수집기의 쿠키 출처는 ① **Supabase 보관함**(`kakao_partner_secrets`, 담당자 기기 Chrome 이
 자동 배달 — **§11**) 우선, 없으면 ② **GitHub Secret `KAKAO_PARTNER_COOKIE`**(폴백) 순이다.
 
 - **§11 자동 배달을 켜두면** 보관함 쿠키가 항상 최신이라 **수동 갱신이 사실상 사라진다.**
 - 둘 다 만료된 경우에만 수집기가 `me()` 에서 401/403 → **워크플로 "실패" → 알림 메일**.
-  그때 Chrome 으로 재로그인하면(맥 스튜디오) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
+  그때 Chrome 으로 재로그인하면(담당자 기기) §11 배달이 다음 주기에 자동 픽업하거나, 급하면
   **Settings → Secrets → `KAKAO_PARTNER_COOKIE`** 를 수동 갱신한다.
 
 ### 10-4. launchd 데몬 정리
@@ -379,12 +410,12 @@ launchctl unload ~/Library/LaunchAgents/com.amswiki.kakao-stream.plist
 ## 11. ✅ 쿠키 자동 배달 (만료 수동 갱신 제거)
 
 **문제**: GitHub Secret 의 쿠키는 1~4주면 만료 → 수동 교체가 번거롭다.
-**해결**: 맥 스튜디오 Chrome 은 로그인이 살아있는 한 항상 유효한 쿠키를 갖는다. 이를 6시간마다
+**해결**: 담당자 기기 Chrome 은 로그인이 살아있는 한 항상 유효한 쿠키를 갖는다. 이를 6시간마다
 꺼내 **Supabase 보관함(`kakao_partner_secrets`)에 자동 배달**하고, GitHub 수집기가 매 실행 시
 거기서 최신 쿠키를 읽는다. → 쿠키 복사 작업이 사라진다.
 
 ```
-맥 스튜디오 Chrome(로그인 유지) ──6h──▶ kakao-partner-refresh-cookie.mjs
+담당자 기기 Chrome(로그인 유지) ──6h──▶ kakao-partner-refresh-cookie.mjs
                                   ├─ .env.local 갱신 (로컬 데몬용)
                                   └─ Supabase kakao_partner_secrets 로 upsert   ← 자동 배달
                                                    │
@@ -395,7 +426,7 @@ GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신
 
 1. **마이그레이션 적용**(1회): `supabase/migrations/20260617_kakao_partner_secrets.sql`
    (Supabase Dashboard → SQL Editor 붙여넣고 RUN). RLS 활성 + 정책 0 → **service_role 전용**(외부 접근 차단).
-2. **맥 스튜디오에 6시간 쿠키 잡 설치/유지**:
+2. **담당자 기기에 6시간 쿠키 잡 설치/유지**:
    ```bash
    cp scripts/launchd/com.amswiki.kakao-cookie-refresh.plist ~/Library/LaunchAgents/
    launchctl load ~/Library/LaunchAgents/com.amswiki.kakao-cookie-refresh.plist
@@ -407,10 +438,10 @@ GitHub Actions 수집기 ──5분──▶ kakao_partner_secrets 에서 최신
 
 ### 동작 보장
 
-- 맥 스튜디오는 회사 자산 데스크탑으로 상시 켜두는 게 원칙이지만, 재부팅 등으로
+- 수집 기기는 상시 켜두는 게 원칙이지만(2026-08-13 부터 맥북 에어라 뚜껑을 닫으면 잠든다), 재부팅 등으로
   잠깐 꺼졌다 켜져도 쿠키 수명(1~4주) 안에 6시간 잡이 한 번만 돌면 보관함 쿠키가
   갱신된다. 수집 자체는 그 상태와 무관하게 GitHub 에서 계속된다.
-- 맥 스튜디오가 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
+- 수집 기기가 오래 꺼져 보관함·Secret 둘 다 만료되면 → §10-3 알림 메일로 감지된다.
 - 배달되는 쿠키는 계정 로그인 권한과 동등 → 테이블은 RLS 로 service_role 외 접근 차단(위 1번).
 
 ---
