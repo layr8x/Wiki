@@ -69,3 +69,7 @@ public/cs-stats.json
 .agents/skills/**/*.mp4
 .agents/skills/**/*.mov
 .agents/skills/**/*.webm
+
+# 관리자 화면 렌더 하네스 산출물(빌드·스크린샷) — 언제든 재생성 가능해 커밋하지 않는다
+tools/design-audit/admin/dist/
+tools/design-audit/admin/out/
