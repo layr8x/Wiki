@@ -275,6 +275,13 @@ export async function fetchDashboardStats() {
       supabase.from('guide_feedback').select('id', { count: 'exact', head: true }),
       supabase.from('search_logs').select('id', { count: 'exact', head: true }),
     ])
+    // ⚠️ 조회가 실패했을 때 `|| []` · `|| 0` 으로 넘어가면 화면이 "0개"라고 단언한다.
+    //    카카오 수집이 18일간 멈춘 걸 아무도 못 알아챈 것과 같은 유형의 사고다 —
+    //    "값이 0"과 "값을 못 읽음"은 다른 사실이고, 섞으면 판단이 틀어진다.
+    //    실패는 실패로 올려보내고, 화면이 다시 시도 버튼과 함께 알린다.
+    for (const res of [guidesRes, helpfulRes, feedbackRes, searchRes]) {
+      if (res.error) throw res.error
+    }
     const guides  = guidesRes.data  || []
     const totalGuides = guides.length
     const totalViews  = guides.reduce((s, g) => s + (g.views || 0), 0)

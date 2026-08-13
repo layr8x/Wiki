@@ -6,13 +6,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Trash } from '@phosphor-icons/react'
+import { Trash, ArrowsClockwise as RefreshIcon } from '@phosphor-icons/react'
 
 import { fetchAdminFeedback } from '@/lib/db'
 import { useToast } from '@astryxdesign/core/Toast'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 import { STORAGE_KEYS } from '@/lib/storageKeys'
 
 import { VStack } from '@astryxdesign/core/VStack'
+import { HStack } from '@astryxdesign/core/HStack'
 import { Card } from '@astryxdesign/core/Card'
 import { Badge } from '@astryxdesign/core/Badge'
 import { Button } from '@astryxdesign/core/Button'
@@ -94,7 +96,7 @@ export default function AdminFeedbackPage() {
     setPage(1)
   }
 
-  const { data: remote = [], isLoading } = useQuery({
+  const { data: remote = [], isLoading, isError, error, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['admin', 'feedback'],
     queryFn:  () => fetchAdminFeedback({ limit: 200 }),
     staleTime: 60 * 1000,
@@ -213,18 +215,37 @@ export default function AdminFeedbackPage() {
           <VStack gap={1.5}>
             <Heading level={1}>피드백 수신함</Heading>
             <Text type="supporting">
-              로컬 큐 {localItems.length}건 · 서버 {remote.length}건
+              {/* 로딩·실패일 때 "서버 0건"이라고 단언하지 않는다. */}
+              이 브라우저에 임시 저장 {localItems.length}건 · 서버{' '}
+              {isLoading ? '불러오는 중…' : isError ? '확인 필요' : `${remote.length}건`}
             </Text>
           </VStack>
-          {localItems.length > 0 && (
+          {/* 상담·잔디 화면과 같은 배치: 마지막 갱신 시각 + 새로고침.
+              언제 기준 숫자인지 안 보이면, 멈춘 화면을 최신으로 착각한다. */}
+          <HStack gap={2} vAlign="center">
+            {dataUpdatedAt > 0 && !isError && (
+              <Text type="supporting" hasTabularNumbers>
+                마지막 갱신 {new Date(dataUpdatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            )}
             <Button
-              label="로컬 큐 비우기"
+              label="새로고침"
               variant="secondary"
               size="sm"
-              icon={<Trash size={14} />}
-              onClick={clearLocal}
+              icon={<RefreshIcon size={16} />}
+              onClick={() => refetch()}
+              isDisabled={isLoading}
             />
-          )}
+            {localItems.length > 0 && (
+              <Button
+                label="이 브라우저 임시 저장 비우기"
+                variant="secondary"
+                size="sm"
+                icon={<Trash size={14} />}
+                onClick={clearLocal}
+              />
+            )}
+          </HStack>
         </div>
 
         {/* ─── 유형 필터(세그먼트) ───────────────────────────────── */}
@@ -251,14 +272,16 @@ export default function AdminFeedbackPage() {
               </VStack>
             </div>
           </Card>
+        ) : isError ? (
+          <QueryError label="피드백 목록" error={error} onRetry={refetch} />
         ) : filtered.length === 0 ? (
-          <div className="af-empty">
-            <span className="af-empty-icon"><Trash size={18} /></span>
-            <Text weight="medium">접수된 피드백이 없습니다</Text>
-            <Text type="supporting">
-              사용자가 남긴 피드백이 접수되면 이곳에 유형별로 쌓입니다.
-            </Text>
-          </div>
+          <QueryEmpty
+            title="접수된 피드백이 없습니다"
+            description={tab === 'all'
+              ? '사용자가 남긴 피드백이 접수되면 이곳에 유형별로 쌓입니다.'
+              : '고른 유형에 해당하는 피드백이 없습니다.'}
+            actions={tab !== 'all' ? <Button label="전체 보기" variant="secondary" size="sm" onClick={() => setTab('all')} /> : undefined}
+          />
         ) : (
           <Card padding={0}>
             <Table

@@ -31,6 +31,7 @@ import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { Table, useTablePagination, paginateData, proportional, pixel } from '@astryxdesign/core/Table'
 import { AlertDialog } from '@astryxdesign/core/AlertDialog'
 import { useToast } from '@astryxdesign/core/Toast'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 
 import { useAuth } from '@/store/authStore'
 import './AdminGuidesPage.astryx.css'
@@ -102,7 +103,8 @@ export default function AdminGuidesPage() {
     setPage(1)
   }
 
-  const { data: guides = [], isLoading } = useQuery({
+  // isError·refetch 를 받는다. 예전에는 안 받아서 조회 실패가 "가이드 0개"로 보였다.
+  const { data: guides = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin', 'guides', { status, moduleF, search }],
     queryFn:  () => fetchAdminGuides({
       status,
@@ -132,6 +134,9 @@ export default function AdminGuidesPage() {
     },
     onError: (err) => toast({ body: `삭제 실패 — ${String(err?.message || err)}`, type: 'error' }),
   })
+
+  const hasFilter = status !== 'all' || moduleF !== 'all' || Boolean(search.trim())
+  const clearFilters = () => { setStatus('all'); setModuleF('all'); setSearch('') }
 
   const canEdit    = hasPermission('edit')
   const canPublish = hasPermission('publish')
@@ -267,7 +272,10 @@ export default function AdminGuidesPage() {
           <VStack gap={1.5}>
             <Heading level={1}>가이드 관리</Heading>
             <Text type="supporting">
-              {stats.all.toLocaleString('ko-KR')}개의 가이드가 관리 범위에 있습니다.
+              {/* 로딩·실패일 때 0을 단언하지 않는다. */}
+              {isLoading ? '불러오는 중…'
+                : isError ? '가이드 수를 확인할 수 없습니다.'
+                : `${stats.all.toLocaleString('ko-KR')}개의 가이드가 관리 범위에 있습니다.`}
             </Text>
           </VStack>
           {/* 대시보드의 같은 버튼과 스펙을 맞춘다(그쪽은 주요 스타일 + 연필 아이콘 + sm). */}
@@ -330,9 +338,20 @@ export default function AdminGuidesPage() {
                 ))}
               </VStack>
             </div>
+          ) : isError ? (
+            <div className="ag-empty-cell">
+              <QueryError label="가이드 목록" error={error} onRetry={refetch} />
+            </div>
           ) : guides.length === 0 ? (
             <div className="ag-empty-cell">
-              <Text type="supporting">조건에 해당하는 가이드가 없습니다.</Text>
+              {/* 검색어 원문은 넣지 않는다(다른 화면과 같은 규칙). 어떤 필터가 걸렸는지만 알린다. */}
+              <QueryEmpty
+                title="조건에 해당하는 가이드가 없습니다"
+                description={hasFilter ? '상태·모듈·검색 조건을 좁혀 놓은 상태입니다.' : '가이드를 새로 쓰면 여기에 나타납니다.'}
+                actions={hasFilter
+                  ? <Button label="조건 지우기" variant="secondary" size="sm" onClick={clearFilters} />
+                  : <Button label="새 가이드 작성" variant="secondary" size="sm" onClick={() => navigate('/editor')} />}
+              />
             </div>
           ) : (
             <Table

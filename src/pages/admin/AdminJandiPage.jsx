@@ -30,6 +30,7 @@ import { Selector } from '@astryxdesign/core/Selector'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { JandiStatus } from '@/components/analytics/JandiStatus'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 
 import './AdminJandiPage.astryx.css'
 
@@ -264,9 +265,11 @@ export default function AdminJandiPage() {
   const [csvCount, setCsvCount] = useState(0)
 
   const qc = useQueryClient()
-  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
+  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt, refetch } = useMessages(channel, query, year, month, limit)
 
   const reset = () => setLimit(PAGE_SIZE)
+  const hasFilter = Boolean(query) || year !== 'all' || month !== 'all'
+  const clearFilters = () => { setInput(''); setQuery(''); setYear('all'); setMonth('all'); reset() }
   const onChannel = (id) => { setChannel(id); reset() }
   const onSearch = () => { setQuery(input); reset() }
 
@@ -414,7 +417,7 @@ export default function AdminJandiPage() {
 
           <div className="aj-main-body">
             {isError ? (
-              <Text as="p" className="aj-state aj-error">불러오기 실패: {error?.message || '오류'}</Text>
+              <QueryError label="대화 메시지" error={error} onRetry={refetch} />
             ) : isLoading ? (
               <VStack gap={2} hAlign="stretch">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -422,7 +425,14 @@ export default function AdminJandiPage() {
                 ))}
               </VStack>
             ) : threads.length === 0 ? (
-              <Text as="p" type="supporting" className="aj-state">조건에 맞는 메시지가 없습니다.</Text>
+              // 카카오 상담 화면과 같은 규칙 — 설명에 검색어 원문을 넣지 않는다.
+              <QueryEmpty
+                title="조건에 맞는 메시지가 없습니다"
+                description={`${channelLabel} 방${year === 'all' ? ' 전체 기간' : ' ' + year + '년' + (month === 'all' ? '' : ' ' + Number(month) + '월')} 기준입니다.`}
+                actions={hasFilter ? (
+                  <Button label="검색어·기간 지우기" variant="secondary" size="sm" onClick={clearFilters} />
+                ) : undefined}
+              />
             ) : (
               <VStack gap={4} hAlign="stretch">
                 {threads.map((t) => (

@@ -30,6 +30,7 @@ import { Heading } from '@astryxdesign/core/Heading'
 import { Text } from '@astryxdesign/core/Text'
 import { ProgressBar } from '@astryxdesign/core/ProgressBar'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 
 import './AdminOverviewPage.astryx.css'
 
@@ -75,12 +76,14 @@ function StatBar({ label, right, value, max = 100, variant = 'accent' }) {
 
 export default function AdminOverviewPage() {
   const navigate = useNavigate()
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
-  const { data: moduleStats = {}, isLoading: modsLoading } = useModuleStats()
-  const { data: recents = [], isLoading: recentsLoading } = useRecentGuides(8)
-  const { data: rtDist, isLoading: rtLoading } = useResponseTimeDistribution(90)
-  const { data: catDist, isLoading: catLoading } = useChatCategoryDistribution(90)
-  const { data: sentTrend, isLoading: sentLoading } = useSentimentTrend(30)
+  // ⚠️ isError·refetch 를 반드시 받는다. 예전에는 넷 다 안 받아서, 조회가 실패해도 화면이
+  //    "가이드 0개 · 조회 0회"라고 단언했다(오류 화면과 빈 화면의 픽셀이 완전히 같았다).
+  const { data: stats, isLoading: statsLoading, isError: statsError, error: statsErr, refetch: statsRefetch } = useDashboardStats()
+  const { data: moduleStats = {}, isLoading: modsLoading, isError: modsError, error: modsErr, refetch: modsRefetch } = useModuleStats()
+  const { data: recents = [], isLoading: recentsLoading, isError: recentsError, error: recentsErr, refetch: recentsRefetch } = useRecentGuides(8)
+  const { data: rtDist, isLoading: rtLoading, isError: rtError, error: rtErr, refetch: rtRefetch } = useResponseTimeDistribution(90)
+  const { data: catDist, isLoading: catLoading, isError: catError, error: catErr, refetch: catRefetch } = useChatCategoryDistribution(90)
+  const { data: sentTrend, isLoading: sentLoading, isError: sentError, error: sentErr, refetch: sentRefetch } = useSentimentTrend(30)
 
   return (
     <div className="ov-shell">
@@ -101,6 +104,8 @@ export default function AdminOverviewPage() {
           />
         </div>
 
+        {statsError && <QueryError label="대시보드 통계" error={statsErr} onRetry={statsRefetch} />}
+
         {/* ─── KPI 카드 (4) ─────────────────────────────────────── */}
         <Grid columns={{ minWidth: 200, max: 4 }} gap={4}>
           {KPI_ITEMS.map((item) => {
@@ -115,6 +120,9 @@ export default function AdminOverviewPage() {
                   </div>
                   {statsLoading ? (
                     <Skeleton width={96} height={32} />
+                  ) : statsError ? (
+                    // 실패를 0으로 바꾸지 않는다 — 아래 배너가 원인과 다시 시도를 알린다.
+                    <Text type="supporting">확인 필요</Text>
                   ) : (
                     <div className="ov-kpi-value">
                       <Heading level={3}>{formatNumber(value)}</Heading>
@@ -144,6 +152,8 @@ export default function AdminOverviewPage() {
                   Array.from({ length: 5 }).map((_, i) => (
                     <Skeleton key={i} width="100%" height={32} index={i} />
                   ))
+                ) : modsError ? (
+                  <QueryError label="모듈별 분포" error={modsErr} onRetry={modsRefetch} />
                 ) : (
                   getModuleTree().map((mod) => {
                     // moduleStats는 Supabase guides.module 컬럼(한글 라벨) 기준으로 집계됨 — mod.id(영문 슬러그) 아님
@@ -179,9 +189,17 @@ export default function AdminOverviewPage() {
                   ))}
                 </VStack>
               </div>
+            ) : recentsError ? (
+              <div className="ov-cardbody">
+                <QueryError label="최근 업데이트" error={recentsErr} onRetry={recentsRefetch} />
+              </div>
             ) : recents.length === 0 ? (
-              <div className="ov-cardbody ov-empty">
-                <Text type="supporting">최근 업데이트된 가이드가 없습니다.</Text>
+              <div className="ov-cardbody">
+                <QueryEmpty
+                  title="최근 업데이트된 가이드가 없습니다"
+                  description="가이드를 새로 쓰거나 고치면 여기에 나타납니다."
+                  actions={<Button label="새 가이드 작성" variant="secondary" size="sm" onClick={() => navigate('/editor')} />}
+                />
               </div>
             ) : (
               <ul className="ov-list">
@@ -210,7 +228,9 @@ export default function AdminOverviewPage() {
             (실측 2,100px). 가로 공간을 써서 접힌 곳 아래로 밀리는 양을 줄인다.
             좁은 화면(720px 미만)에서는 자동으로 1열로 돌아간다. */}
         <Grid columns={{ minWidth: 360, max: 2 }} gap={6}>
-        {(rtLoading || (rtDist && rtDist.length > 0)) && (
+        {/* 예전에는 데이터가 없으면 카드가 통째로 사라져, 조회 실패인지 원래 없는지 알 수 없었다.
+            카드는 항상 두고 안쪽에서 로딩·실패·없음을 구분한다. */}
+        {(
           <Card padding={0}>
             <div className="ov-cardhead">
               <VStack gap={1}>
@@ -226,6 +246,10 @@ export default function AdminOverviewPage() {
                   Array.from({ length: 6 }).map((_, i) => (
                     <Skeleton key={i} width="100%" height={32} index={i} />
                   ))
+                ) : rtError ? (
+                  <QueryError label="응답시간 분포" error={rtErr} onRetry={rtRefetch} />
+                ) : !rtDist || rtDist.length === 0 ? (
+                  <QueryEmpty title="최근 90일 응답 기록이 없습니다" description="학부모 메시지에 직원이 답한 기록이 모이면 여기에 나타납니다." />
                 ) : (
                   rtDist.map((row) => (
                     // 막대 길이 = 전체 대비 비율 그대로. 예전에는 1위 값을 분모로 써서
@@ -246,7 +270,7 @@ export default function AdminOverviewPage() {
         )}
 
         {/* ─── 카카오 상담 카테고리 분포 (AI 분류) ──────────────── */}
-        {(catLoading || (catDist && catDist.length > 0)) && (
+        {(
           <Card padding={0}>
             <div className="ov-cardhead">
               <VStack gap={1}>
@@ -262,6 +286,10 @@ export default function AdminOverviewPage() {
                   Array.from({ length: 6 }).map((_, i) => (
                     <Skeleton key={i} width="100%" height={32} index={i} />
                   ))
+                ) : catError ? (
+                  <QueryError label="카테고리 분포" error={catErr} onRetry={catRefetch} />
+                ) : !catDist || catDist.length === 0 ? (
+                  <QueryEmpty title="최근 90일 분류 결과가 없습니다" description="AI 분류가 돌면 여기에 나타납니다." />
                 ) : (
                   catDist.map((row) => {
                     // category 컬럼 값이 이미 한글 라벨(카카오 AI 분류 결과)이라 별도 매핑 불필요.
@@ -295,7 +323,7 @@ export default function AdminOverviewPage() {
         )}
 
         {/* ─── 학부모 감정 추세 (일별) ──────────────────────────── */}
-        {(sentLoading || (sentTrend && sentTrend.length > 0)) && (
+        {(
           <Card padding={0}>
             <div className="ov-cardhead">
               <VStack gap={1}>
@@ -308,6 +336,10 @@ export default function AdminOverviewPage() {
             <div className="ov-cardbody">
               {sentLoading ? (
                 <Skeleton width="100%" height={128} />
+              ) : sentError ? (
+                <QueryError label="감정 추세" error={sentErr} onRetry={sentRefetch} />
+              ) : !sentTrend || sentTrend.length === 0 ? (
+                <QueryEmpty title="최근 30일 감정 분석 결과가 없습니다" description="학부모 메시지가 분류되면 여기에 나타납니다." />
               ) : (
                 <div className="ov-sent">
                   {sentTrend.map((d) => {

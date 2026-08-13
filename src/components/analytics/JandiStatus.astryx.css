@@ -26,3 +26,6 @@
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
+
+/* 조회 실패 문구 — 카카오 위젯의 .kcs-error 와 같은 톤(같은 성격의 표시는 같은 모양으로). */
+.js-error { color: var(--color-text-red); }

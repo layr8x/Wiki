@@ -38,6 +38,7 @@ import { Selector } from '@astryxdesign/core/Selector'
 import { Skeleton } from '@astryxdesign/core/Skeleton'
 import { AnalyticsHeader } from '@/components/analytics/AnalyticsHeader'
 import { KakaoConsultStatus } from '@/components/analytics/KakaoConsultStatus'
+import { QueryError, QueryEmpty } from '@/components/admin/QueryStates'
 import './AdminConsultsPage.astryx.css'
 
 const CHANNELS = [
@@ -282,9 +283,11 @@ export default function AdminConsultsPage() {
 
   const qc = useQueryClient()
   const { data: nickMap = new Map() } = useNicknames(channel)
-  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt } = useMessages(channel, query, year, month, limit)
+  const { data: rows = [], isLoading, isFetching, isError, error, dataUpdatedAt, refetch } = useMessages(channel, query, year, month, limit)
 
   const reset = () => { setLimit(PAGE_SIZE); setJumpChatId(null) }
+  const hasFilter = Boolean(query) || year !== 'all' || month !== 'all'
+  const clearFilters = () => { setInput(''); setQuery(''); setYear('all'); setMonth('all'); reset() }
   const onChannel = (id) => { setChannel(id); reset() }
   const onSearch = () => { setQuery(input); reset() }
 
@@ -502,7 +505,7 @@ export default function AdminConsultsPage() {
               />
             )}
             {isError ? (
-              <Text as="p" className="ac-state ac-error">불러오기 실패: {error?.message || '오류'}</Text>
+              <QueryError label="상담 메시지" error={error} onRetry={refetch} />
             ) : isLoading ? (
               <VStack gap={2} hAlign="stretch">
                 {Array.from({ length: 6 }).map((_, i) => (
@@ -510,7 +513,15 @@ export default function AdminConsultsPage() {
                 ))}
               </VStack>
             ) : grouped.length === 0 ? (
-              <Text as="p" type="supporting" className="ac-state">조건에 맞는 메시지가 없습니다.</Text>
+              // ⚠️ 설명에 검색어 원문을 넣지 않는다 — 상담 검색어에는 이름·전화번호가 들어갈 수 있다.
+              //    채널과 기간까지만 적고, 걸린 필터를 풀 수 있는 버튼을 준다.
+              <QueryEmpty
+                title="조건에 맞는 메시지가 없습니다"
+                description={`${channelLabel} 채널${year === 'all' ? ' 전체 기간' : ' ' + year + '년' + (month === 'all' ? '' : ' ' + Number(month) + '월')} 기준입니다.`}
+                actions={hasFilter ? (
+                  <Button label="검색어·기간 지우기" variant="secondary" size="sm" onClick={clearFilters} />
+                ) : undefined}
+              />
             ) : (
               <VStack gap={4} hAlign="stretch">
                 {grouped.map((g) => (
