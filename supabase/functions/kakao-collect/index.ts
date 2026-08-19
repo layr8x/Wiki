@@ -271,8 +271,16 @@ async function collectChannel(profileId: string, session: { cookie: string; rota
     log(`[${profileId}] auth ok: ${me.email || me.id || 'unknown'}`);
   } catch (e: any) {
     if (isAuthError(e)) {
-      await persistHeartbeat(profileId, null, `auth ${e.status}`.slice(0, 300));
-      const err: any = new Error('cookie expired'); err.authExpired = true; throw err;
+      // ⚠️ 예전에는 `auth 401` 만 남기고 카카오가 준 응답 본문을 통째로 버렸다. 그래서
+      //   "왜 거부됐는지"(쿠키 만료인지, 자동화 차단인지, 권한 없는 계정인지)를 구분할 방법이
+      //   없었고, 2026-08-14~19 수집 중단 때 5일 내내 원인을 못 좁혔다.
+      //   e.message 에는 `HTTP 401 /api/users/me :: <본문 앞 200자>` 가 들어 있다 — 그대로 남긴다.
+      const detail = String(e?.message ?? '').slice(0, 250);
+      await persistHeartbeat(profileId, null, `auth ${e.status} :: ${detail}`.slice(0, 300));
+      const err: any = new Error('cookie expired');
+      err.authExpired = true;
+      err.detail = detail;          // 응답(JSON)에도 실어 보내 호출 즉시 눈으로 확인 가능하게
+      throw err;
     }
     throw e;
   }
@@ -340,7 +348,7 @@ Deno.serve(async (req: Request) => {
     try {
       channels.push(await collectChannel(pid, session));
     } catch (e: any) {
-      if (e.authExpired) { authExpired = true; channels.push({ profile_id: pid, error: 'cookie expired' }); break; }
+      if (e.authExpired) { authExpired = true; channels.push({ profile_id: pid, error: 'cookie expired', detail: e.detail }); break; }
       log(`[${pid}] channel error:`, e.message);
       channels.push({ profile_id: pid, error: String(e.message || e) });
     }
