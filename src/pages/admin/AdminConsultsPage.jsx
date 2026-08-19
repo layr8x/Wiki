@@ -231,6 +231,73 @@ async function fetchAllForCsv({ profileId, query, year, month, onProgress }) {
   })
 }
 
+// 90일 지난 메시지는 kakao-archive(자동 백업+정리 파이프라인, 2026-08-19)가 DB에서 지우고
+// Storage에 압축 백업해 둔다. "전체 다운로드"가 그 옛날 대화까지 빠짐없이 담으려면 여기서
+// 백업분도 같이 모아야 한다 — kakao_archive_log(어느 채널의 무엇이 어디 저장됐는지 기록)로
+// 이 채널·기간에 걸리는 백업 파일을 찾고, kakao-archive-read 함수로 하나씩 읽어 압축을 푼다.
+//
+// ⚠️ 백업 원본(select('*') 덤프)은 raw(jsonb) 컬럼 그대로다 — 실시간 조회와 같은 모양으로
+// 맞추려면 manager_name 을 raw.manager.name 에서 직접 꺼내야 한다(실시간 조회는 이 추출을
+// PostgREST 임베딩(raw->manager->>name)이 대신 해준다).
+function normalizeArchivedRow(r) {
+  return {
+    log_id: r.log_id,
+    chat_id: r.chat_id,
+    sender_type: r.sender_type,
+    message: r.message,
+    message_type: r.message_type,
+    sent_at: r.sent_at,
+    manager_name: r.raw?.manager?.name ?? null,
+  }
+}
+
+// 여러 백업 파일을 동시에 몇 개씩만 읽는다(전부 한꺼번에 열면 브라우저·엣지 함수 양쪽에
+// 부담 — LIVE 채널은 백업 파일이 수백 개다). 순서는 상관없다(CSV 조립 전에 정렬함).
+async function mapWithConcurrency(items, limit, fn) {
+  const out = new Array(items.length)
+  let next = 0
+  async function worker() {
+    for (;;) {
+      const i = next++
+      if (i >= items.length) return
+      out[i] = await fn(items[i], i)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return out
+}
+
+async function fetchArchivedForCsv({ profileId, query, year, month, onProgress }) {
+  const range = periodRange(year, month)
+  let logQuery = supabase
+    .from('kakao_archive_log')
+    .select('object_path, row_count')
+    .eq('profile_id', profileId)
+  if (range) {
+    // 백업 배치의 [min_sent_at, max_sent_at] 구간이 요청 기간 [gte, lt) 와 겹치는 것만.
+    logQuery = logQuery.lt('min_sent_at', range.lt).gte('max_sent_at', range.gte)
+  }
+  const { data: files, error } = await logQuery
+  if (error) throw error
+  if (!files || !files.length) return []
+
+  const q = query.trim().toLowerCase()
+  const results = await mapWithConcurrency(files, 6, async (f) => {
+    const { data, error: fnErr } = await supabase.functions.invoke('kakao-archive-read', {
+      body: { object_path: f.object_path, query: q },
+    })
+    if (fnErr) {
+      // 백업 파일 하나를 못 읽어도 나머지는 계속 — 다운로드 전체를 막지 않는다.
+      console.error('archive read fail:', f.object_path, fnErr.message)
+      return []
+    }
+    const rows = (data?.rows || []).map(normalizeArchivedRow)
+    onProgress?.(rows.length) // 증분(이번 파일에서 새로 얻은 건수) — 호출 쪽에서 누적한다.
+    return rows
+  })
+  return results.flat()
+}
+
 function buildCsv(rows, nickMap, channelLabel) {
   const head = ['채널', '시각(KST)', '채팅ID', '고객', '보낸이', '메시지유형', '메시지']
   const esc = (v) => {
@@ -348,7 +415,18 @@ export default function AdminConsultsPage() {
     setCsvLoading(true)
     setCsvCount(0)
     try {
-      const all = await fetchAllForCsv({ profileId: channel, query, year, month, onProgress: setCsvCount })
+      // "전체 다운로드"는 최근(DB에 남은) 데이터와 kakao-archive 가 백업해 둔 90일 이전
+      // 데이터를 합쳐야 진짜 전체다 — 하나만 받으면 오래된 대화가 조용히 빠진다.
+      let total = 0
+      const live = await fetchAllForCsv({
+        profileId: channel, query, year, month,
+        onProgress: (n) => { total = n; setCsvCount(total) }, // 누적값 그대로 반영
+      })
+      const archived = await fetchArchivedForCsv({
+        profileId: channel, query, year, month,
+        onProgress: (n) => { total += n; setCsvCount(total) }, // 증분을 누적에 더함
+      })
+      const all = [...live, ...archived].sort((a, b) => (b.sent_at || '').localeCompare(a.sent_at || ''))
       if (!all.length) {
         alert('내려받을 메시지가 없습니다. 채널·기간·검색어를 확인해 주세요.')
         return
