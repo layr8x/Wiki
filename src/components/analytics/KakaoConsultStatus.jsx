@@ -177,7 +177,7 @@ export function KakaoConsultStatus({ onSelectChat }) {
         <Banner
           status="error"
           title="카카오 로그인 만료 — 수집이 중단되었습니다"
-          description="맥 스튜디오 Chrome에서 business.kakao.com에 다시 로그인해야 재개됩니다. 아래 대기·응답 수치는 마지막 수집 시점 기준이라 실제와 다를 수 있습니다."
+          description="맥북 에어 Chrome에서 business.kakao.com에 다시 로그인해야 재개됩니다. 아래 대기·응답 수치는 마지막 수집 시점 기준이라 실제와 다를 수 있습니다."
           className="kcs-spike-banner"
         />
       )}
