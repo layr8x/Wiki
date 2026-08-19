@@ -104,35 +104,79 @@ export function listCookieCandidates() {
   return out;
 }
 
-/** 수집기(kakao-collect)와 똑같은 두 호출을 흉내낸다 — 통과하면 수집도 통과한다. */
+// 카카오가 응답으로 내려주는 갱신 토큰(Set-Cookie)을 흡수한다. kakao-collect(Edge Function)의
+// KakaoPartnerClient._absorbSetCookie 와 동일한 로직 — 카카오가 호출마다 세션 토큰을 굴리므로
+// (브라우저가 로그인을 유지하는 원리), 검증 호출 자체가 이 함수로 넘겨받은 스냅샷을 한 걸음
+// 앞질러 버린다. 회전분을 안 받으면 "검증은 통과했는데 그 값을 보관함에 올리면 이미 무효"가
+// 된다(2026-08-19 실측 — 로컬 검증 직후 클라우드 수집이 즉시 401).
+function absorbSetCookie(cookie, res) {
+  let list = [];
+  try { list = res.headers.getSetCookie?.() ?? []; } catch { /* 구버전 런타임 */ }
+  if (!list.length) { const one = res.headers.get('set-cookie'); if (one) list = [one]; }
+  if (!list.length) return cookie;
+  const jar = new Map();
+  for (const part of cookie.split(';')) {
+    const s = part.trim(); if (!s) continue;
+    const i = s.indexOf('=');
+    if (i > 0) jar.set(s.slice(0, i), s.slice(i + 1));
+  }
+  let changed = false;
+  for (const sc of list) {
+    const first = String(sc).split(';')[0].trim();
+    const i = first.indexOf('=');
+    if (i <= 0) continue;
+    const name = first.slice(0, i);
+    const val = first.slice(i + 1);
+    if (!val || val === 'deleted') continue;
+    if (jar.get(name) !== val) { jar.set(name, val); changed = true; }
+  }
+  return changed ? [...jar.entries()].map(([k, v]) => `${k}=${v}`).join('; ') : cookie;
+}
+
+/** 수집기(kakao-collect)와 똑같은 두 호출을 흉내낸다 — 통과하면 수집도 통과한다.
+ *  각 호출의 Set-Cookie 회전분을 흡수해 최종 cookie 를 함께 돌려준다(그래야 이 검증
+ *  때문에 회전된 값이 아니라 검증 "후" 최신 값이 보관함에 올라간다). */
 export async function verifyCookie(cookie, profileId = process.env.KAKAO_VERIFY_PROFILE_ID || '_VGAQn') {
-  const headers = {
-    'user-agent': UA,
-    accept: 'application/json, text/plain, */*',
-    'accept-language': 'ko-KR,ko;q=0.9,en;q=0.8',
-    cookie,
-  };
-  const me = await fetch(`${BASE}/api/users/me`, { headers });
-  if (!me.ok) return { ok: false, why: `me ${me.status}`, meStatus: me.status, chatsStatus: null };
+  let cur = cookie;
+  const me = await fetch(`${BASE}/api/users/me`, {
+    headers: {
+      'user-agent': UA,
+      accept: 'application/json, text/plain, */*',
+      'accept-language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      cookie: cur,
+    },
+  });
+  if (me.ok) cur = absorbSetCookie(cur, me);
+  if (!me.ok) return { ok: false, why: `me ${me.status}`, meStatus: me.status, chatsStatus: null, cookie: cur };
   const chats = await fetch(`${BASE}/api/profiles/${profileId}/chats/search?size=1`, {
     method: 'POST',
-    headers: { ...headers, 'content-type': 'application/json', referer: `${BASE}/${profileId}/chats` },
+    headers: {
+      'user-agent': UA,
+      accept: 'application/json, text/plain, */*',
+      'accept-language': 'ko-KR,ko;q=0.9,en;q=0.8',
+      cookie: cur,
+      'content-type': 'application/json',
+      referer: `${BASE}/${profileId}/chats`,
+    },
     body: '{}',
   });
+  if (chats.ok) cur = absorbSetCookie(cur, chats);
   return {
     ok: chats.ok,
     why: chats.ok ? '' : `chats ${chats.status}`,
     meStatus: me.status,
     chatsStatus: chats.status,
+    cookie: cur,
   };
 }
 
-/** 후보를 순서대로 검증해 처음 통과하는 것을 돌려준다. 없으면 null. */
+/** 후보를 순서대로 검증해 처음 통과하는 것을 돌려준다. 없으면 null.
+ *  반환하는 cookie 는 검증 호출들이 회전시킨 "이후" 값 — 원본 스냅샷이 아니다. */
 export async function pickWorkingCookie(candidates, onTry) {
   for (const c of candidates) {
     const r = await verifyCookie(c.cookie);
     onTry?.(c, r);
-    if (r.ok) return { ...c, verify: r };
+    if (r.ok) return { ...c, cookie: r.cookie, verify: r };
   }
   return null;
 }
