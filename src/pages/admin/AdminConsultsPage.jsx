@@ -287,11 +287,20 @@ async function fetchArchivedForCsv({ profileId, query, year, month, onProgress }
     // 파일은 요청 기간과 "겹치기만" 하면 골라오므로(위 lt/gte는 파일 선택용), 한 배치가
     // 월 경계를 넘나들 때 2월 말 같은 기간 밖 행이 섞여 들어온다 — 실제 필터는 여기서
     // gte/lt 를 같이 보내 kakao-archive-read 가 sent_at 기준으로 한 번 더 걸러야 한다.
-    const { data, error: fnErr } = await supabase.functions.invoke('kakao-archive-read', {
-      body: { object_path: f.object_path, query: q, gte: range?.gte ?? null, lt: range?.lt ?? null },
-    })
+    //
+    // 파일 하나가 수백KB 압축본이라 다운로드+해제에 1~2초 걸린다 — 모바일 등 불안정한
+    // 네트워크에서는 여러 파일을 동시에 받다 몇 개가 끊길 수 있다(2026-08-19 실측: 모바일
+    // 약한 신호에서 16개 전부 실패, 같은 요청을 서버에서 재현하면 16개 전부 정상). 진짜
+    // 서버 오류와 구분 없이 곧장 실패 처리하지 않고, 한 번 더 시도해 본다.
+    let data, fnErr
+    for (let attempt = 0; attempt < 2; attempt++) {
+      ({ data, error: fnErr } = await supabase.functions.invoke('kakao-archive-read', {
+        body: { object_path: f.object_path, query: q, gte: range?.gte ?? null, lt: range?.lt ?? null },
+      }))
+      if (!fnErr) break
+    }
     if (fnErr) {
-      // 백업 파일 하나를 못 읽어도 나머지는 계속(다운로드 전체를 막지 않음) — 단 조용히
+      // 재시도까지 실패 — 나머지 파일은 계속 진행(다운로드 전체를 막지 않음). 단 조용히
       // 넘어가면 "완전한 CSV"인 척 불완전한 파일이 나간다(이번에 겪은 CORS 버그와 같은
       // 종류의 실패). failed 에 모아뒀다가 다운로드 끝에 사용자에게 몇 건 빠졌는지 알린다.
       console.error('archive read fail:', f.object_path, fnErr.message)
