@@ -1,13 +1,14 @@
 // supabase/functions/kakao-alert/index.ts
 // 상담 알럿봇 — 상담 운영 + 수집 파이프라인 감시. Supabase Edge Function (pg_cron 10분).
 //
-// 감시 항목 5가지 (2026-08-12 기준)
+// 감시 항목 7가지 (2026-08-19 기준)
 //   [운영] 오래 기다리는 상담   checkWaitingSla        영업시간에만 · 영업 6시간 이상 미응답
 //   [수집] 수집 중단·지연       checkCollectionHealth  로그인 만료 / heartbeat 정체 · 즉시
 //   [수집] 쿠키 만료 예고        checkCookieExpiry      _kawlt 6h 미만 / _karmt 3일 미만 · 즉시
 //   [운영] 문의량 급증          checkCategorySpike     야간 보류 · 카테고리 통합 1건
 //   [파이프] 감정분류·일일요약  checkAnalysisFreshness 뒤 단계가 조용히 멈춘 것 탐지
 //   [파이프] 대시보드 RPC       checkRpcHealth         8초 타임아웃 전에 미리 경보
+//   [파이프] 백업 고아 파일     checkArchiveOrphans    Storage 파일 수 vs kakao_archive_log 기록 수 대조
 //
 // 발송 원칙
 //   · 한 번 실행에서 나가는 Slack 메시지는 **최대 1통**(flushOutbox 가 묶어 보냄, 🔴 먼저).
@@ -615,6 +616,57 @@ async function checkAnalysisFreshness(): Promise<string[]> {
   return notified;
 }
 
+// ── [수집] 백업 고아 파일 감시 (2026-08-19 신규) ──────────────────────────────
+// 왜 필요한가: kakao-archive 는 Storage 업로드 + DB 원본 삭제까지 끝낸 뒤 마지막으로
+//   kakao_archive_log 에 "이 파일이 어디 있다"는 기록을 남긴다. 이 마지막 기록만 실패하면
+//   파일은 Storage에 멀쩡히 있는데 "전체 다운로드"가 찾을 방법이 없는 고아가 된다 — 데이터
+//   유실은 아니지만 발견 불가능은 유실과 같은 결과다. kakao-archive 자체는 이 실패를
+//   hadFailure 로만 보고하고 아무도 그 응답을 상시로 보지 않으므로, 여기서 Storage 파일 수와
+//   기록 수를 직접 대조한다.
+const ARCHIVE_ORPHAN_KEY = 'archive:orphans';
+const ARCHIVE_CHANNELS = ['_VGAQn', '_rcpPG', '_TkpPG', '_xfxilXn', '_rkbcn'];
+
+async function countArchiveFiles(profileId: string): Promise<number> {
+  let total = 0;
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.storage.from('kakao-archive').list(profileId, { limit: 1000, offset });
+    if (error) { log('[alert] archive storage list fail:', profileId, error.message); return -1; }
+    total += data?.length ?? 0;
+    if (!data || data.length < 1000) break;
+  }
+  return total;
+}
+
+async function checkArchiveOrphans(): Promise<string[]> {
+  const bad: { channel: string; orphans: number }[] = [];
+  for (const profileId of ARCHIVE_CHANNELS) {
+    const filesN = await countArchiveFiles(profileId);
+    if (filesN < 0) continue; // 목록 조회 자체가 실패 — 이번엔 판단 보류(다음 실행에서 재시도)
+    const { count: logN, error } = await supabase
+      .from('kakao_archive_log').select('*', { count: 'exact', head: true }).eq('profile_id', profileId);
+    if (error) { log('[alert] archive_log count fail:', profileId, error.message); continue; }
+    const orphans = filesN - (logN ?? 0);
+    if (orphans > 0) bad.push({ channel: profileId, orphans });
+  }
+
+  const prev = await getState(ARCHIVE_ORPHAN_KEY);
+  if (!bad.length) {
+    if (prev?.status === 'alerting') await upsertState(ARCHIVE_ORPHAN_KEY, 'ok', null, null); // 회복은 조용히
+    return [];
+  }
+  if (!shouldNotify(prev, true)) return [];
+
+  const detail = bad.map((b) => `${b.channel} ${b.orphans}개`).join(' · ');
+  const firstAt = prev?.status === 'alerting' && prev.first_alert_at ? prev.first_alert_at : new Date().toISOString();
+  notify('orange',
+    `🟠 백업 파일 중 일부가 기록에서 빠졌어요\n` +
+    `${detail} — Storage 에는 저장돼 있지만 "전체 다운로드"가 못 찾아요(데이터 유실은 아니에요).\n` +
+    `👉 개발 담당에게 kakao_archive_log 누락분 확인을 요청해 주세요.`,
+  );
+  await upsertState(ARCHIVE_ORPHAN_KEY, 'alerting', { channels: bad }, firstAt);
+  return [ARCHIVE_ORPHAN_KEY];
+}
+
 Deno.serve(async (req: Request) => {
   const url = new URL(req.url);
   const token = url.searchParams.get('token') || (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
@@ -633,13 +685,14 @@ Deno.serve(async (req: Request) => {
   const spike = await checkCategorySpike();
   const analysis = await checkAnalysisFreshness();
   const rpcHealth = await checkRpcHealth();
+  const archiveOrphans = await checkArchiveOrphans();
   const messages = await flushOutbox();
   const result = {
     at: new Date().toISOString(),
     slack_configured: !!SLACK_WEBHOOK_URL,
     business_hours: isBusinessHours(),
     slack_messages_sent: messages ? 1 : 0,
-    notified: [...health, ...cookie, ...waiting, ...spike, ...analysis, ...rpcHealth],
+    notified: [...health, ...cookie, ...waiting, ...spike, ...analysis, ...rpcHealth, ...archiveOrphans],
   };
   log('done', JSON.stringify(result));
   return json(result);
