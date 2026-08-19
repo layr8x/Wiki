@@ -30,8 +30,20 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+// 브라우저에서 supabase.functions.invoke() 로 직접 부르는 유일한 함수 — 이 저장소의 다른
+// 모든 함수는 cron/서버 간 호출이라 CORS 가 필요 없었다. 이게 없으면 브라우저가 preflight
+// (OPTIONS) 단계에서 조용히 막아버려 서버 로그·인증·데이터가 전부 멀쩡해도 프런트만 실패한다
+// (2026-08-19 실측 — "전체 다운로드"가 최근 데이터만 받고 백업분은 계속 빠짐).
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': 'authorization, x-client-info, apikey, content-type',
+  'access-control-allow-methods': 'POST, OPTIONS',
+};
 const json = (o: unknown, status = 200) =>
-  new Response(JSON.stringify(o), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
+  new Response(JSON.stringify(o), {
+    status,
+    headers: { 'content-type': 'application/json; charset=utf-8', ...CORS_HEADERS },
+  });
 
 function getJwtClaims(req: Request): Record<string, unknown> | null {
   const auth = req.headers.get('authorization') || '';
@@ -67,6 +79,7 @@ async function gunzip(bytes: Uint8Array): Promise<string> {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
   try {
     if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405);
 
