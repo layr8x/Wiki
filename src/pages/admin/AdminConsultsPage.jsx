@@ -282,20 +282,27 @@ async function fetchArchivedForCsv({ profileId, query, year, month, onProgress }
   if (!files || !files.length) return []
 
   const q = query.trim().toLowerCase()
+  const failed = []
   const results = await mapWithConcurrency(files, 6, async (f) => {
+    // 파일은 요청 기간과 "겹치기만" 하면 골라오므로(위 lt/gte는 파일 선택용), 한 배치가
+    // 월 경계를 넘나들 때 2월 말 같은 기간 밖 행이 섞여 들어온다 — 실제 필터는 여기서
+    // gte/lt 를 같이 보내 kakao-archive-read 가 sent_at 기준으로 한 번 더 걸러야 한다.
     const { data, error: fnErr } = await supabase.functions.invoke('kakao-archive-read', {
-      body: { object_path: f.object_path, query: q },
+      body: { object_path: f.object_path, query: q, gte: range?.gte ?? null, lt: range?.lt ?? null },
     })
     if (fnErr) {
-      // 백업 파일 하나를 못 읽어도 나머지는 계속 — 다운로드 전체를 막지 않는다.
+      // 백업 파일 하나를 못 읽어도 나머지는 계속(다운로드 전체를 막지 않음) — 단 조용히
+      // 넘어가면 "완전한 CSV"인 척 불완전한 파일이 나간다(이번에 겪은 CORS 버그와 같은
+      // 종류의 실패). failed 에 모아뒀다가 다운로드 끝에 사용자에게 몇 건 빠졌는지 알린다.
       console.error('archive read fail:', f.object_path, fnErr.message)
+      failed.push(f.object_path)
       return []
     }
     const rows = (data?.rows || []).map(normalizeArchivedRow)
     onProgress?.(rows.length) // 증분(이번 파일에서 새로 얻은 건수) — 호출 쪽에서 누적한다.
     return rows
   })
-  return results.flat()
+  return { rows: results.flat(), failed }
 }
 
 function buildCsv(rows, nickMap, channelLabel) {
@@ -422,7 +429,7 @@ export default function AdminConsultsPage() {
         profileId: channel, query, year, month,
         onProgress: (n) => { total = n; setCsvCount(total) }, // 누적값 그대로 반영
       })
-      const archived = await fetchArchivedForCsv({
+      const { rows: archived, failed } = await fetchArchivedForCsv({
         profileId: channel, query, year, month,
         onProgress: (n) => { total += n; setCsvCount(total) }, // 증분을 누적에 더함
       })
@@ -435,6 +442,11 @@ export default function AdminConsultsPage() {
       const today = new Date().toISOString().slice(0, 10)
       const tag = year === 'all' ? '전체기간' : (year + (month === 'all' ? '' : '-' + String(month).padStart(2, '0')))
       downloadBlob(csv, `kakao_${channelLabel}_${tag}_${today}.csv`)
+      // 백업 파일 일부를 못 읽었으면 "전체"라는 이름으로 불완전한 CSV가 조용히 나가는
+      // 걸 막는다 — 다운로드는 그대로 진행하되(받은 것까지는 유효), 몇 건 빠졌는지 알린다.
+      if (failed.length) {
+        alert(`백업 파일 ${failed.length}개를 못 읽어 그만큼 빠진 채로 받아졌습니다. 잠시 후 다시 시도해 주세요.`)
+      }
     } catch (e) {
       alert('CSV 다운로드 실패: ' + (e?.message || e))
     } finally {

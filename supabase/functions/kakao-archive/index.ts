@@ -96,15 +96,30 @@ async function archiveOneBatch(profileId: string, cutoffIso: string): Promise<nu
     return -1;
   }
 
-  const { error: logErr } = await supabase.from('kakao_archive_log').insert({
-    profile_id: profileId,
-    object_path: path,
-    row_count: rows.length,
-    min_sent_at: minAt,
-    max_sent_at: maxAt,
-    bytes: gz.length,
-  });
-  if (logErr) log('archive_log insert fail(백업·삭제는 이미 끝남, 기록만 실패)', profileId, logErr.message);
+  // 백업 파일은 이미 존재하고 원본 행은 이미 지워졌다 — 이 기록(archive_log)이 없으면
+  // "전체 다운로드"가 이 배치를 영영 못 찾는다(파일 목록을 이 표에서 찾으므로). 삽입 자체가
+  // 멱등(같은 object_path는 한 번만 생김)이라 재시도가 안전하다 — 순간적인 오류로 이 자체가
+  // 유실 사유가 되지 않도록 몇 번 더 시도한다.
+  let logErr: { message: string } | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { error } = await supabase.from('kakao_archive_log').insert({
+      profile_id: profileId,
+      object_path: path,
+      row_count: rows.length,
+      min_sent_at: minAt,
+      max_sent_at: maxAt,
+      bytes: gz.length,
+    });
+    logErr = error;
+    if (!error) break;
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+  }
+  if (logErr) {
+    // 재시도까지 다 실패 — 백업 파일은 Storage에 살아있지만 발견할 방법이 없는 상태(고아 파일).
+    // 데이터 유실은 아니지만(원본을 못 찾을 뿐) 알럿봇이 잡도록 실패로 보고한다.
+    log('archive_log insert 재시도 실패 — 고아 백업 파일(수동 확인 필요)', profileId, path, logErr.message);
+    return -1;
+  }
 
   return rows.length;
 }

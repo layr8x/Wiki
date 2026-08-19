@@ -91,6 +91,12 @@ Deno.serve(async (req: Request) => {
     const body = await req.json().catch(() => ({}));
     const objectPath = String(body?.object_path || '');
     const query = String(body?.query || '').trim().toLowerCase();
+    // 기간 필터(선택) — 한 백업 배치는 "오래된 메시지 N개씩"으로 묶이므로 요청한 월/년 경계를
+    // 넘나들 수 있다(예: 2월 말~3월 초가 한 파일에 섞임). 파일은 겹치기만 하면 통째로 골라
+    // 오므로, 여기서 실제 sent_at 기준으로 한 번 더 걸러야 "3월만" 요청에 2월 말 데이터가
+    // 안 섞인다(실시간 조회의 .gte/.lt 와 같은 기준을 백업분에도 맞춤).
+    const gte = body?.gte ? String(body.gte) : null;
+    const lt = body?.lt ? String(body.lt) : null;
     if (!objectPath) return json({ error: 'object_path required' }, 400);
     // 다른 버킷 경로로 못 벗어나게(경로 조작 방지) — 항상 CHANNEL/파일명 형태여야 한다.
     if (objectPath.includes('..') || objectPath.startsWith('/')) return json({ error: 'invalid path' }, 400);
@@ -100,7 +106,9 @@ Deno.serve(async (req: Request) => {
 
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const text = await gunzip(bytes);
-    const rows = text.split('\n').filter(Boolean).map((line) => JSON.parse(line));
+    let rows = text.split('\n').filter(Boolean).map((line) => JSON.parse(line));
+    if (gte) rows = rows.filter((r: Record<string, unknown>) => String(r.sent_at || '') >= gte);
+    if (lt) rows = rows.filter((r: Record<string, unknown>) => String(r.sent_at || '') < lt);
     const filtered = query
       ? rows.filter((r: Record<string, unknown>) => String(r.message || '').toLowerCase().includes(query))
       : rows;
