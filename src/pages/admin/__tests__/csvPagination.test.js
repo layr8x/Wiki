@@ -13,10 +13,16 @@
 //   2. 같은 시각(sent_at) 이 여러 건이어도 중복 없이 정확히 한 번씩 받는다.
 //      (겹쳐 받는 lte 커서라 중복 제거가 반드시 동작해야 한다 — 실데이터 최대 동률 20건)
 //   3. 요청 횟수가 건수에 비례한다(건너뛰기 방식처럼 폭증하지 않는다).
+//   4. 서버가 요청한 pageSize 보다 적게 돌려줘도(Supabase 프로젝트 API 설정의 Max Rows) 전부 받는다
+//      (2026-08-19 실장님 신고 "CSV가 액셀에서 1001개만 보인다" 재현·재발 방지 — 이 대역이
+//      옛날엔 `.limit()` 요청을 그대로 다 들어주기만 해서, 서버가 실제로는 그보다 적게 돌려주는
+//      실제 운영 상황을 흉내내지 못했다. 그래서 이 버그가 테스트를 통과한 채로 배포됐었다.)
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ── supabase 대역: order/limit/lte/eq/ilike/gte/lt 체이닝을 흉내내고 고정 데이터에서 잘라준다.
-const state = { rows: [], calls: 0 }
+// state.cap 을 두면 실제 Supabase 처럼 `.limit()` 이 얼마든 요청보다 적게 돌려줄 수 있는
+// 상황(프로젝트 API 설정의 Max Rows)을 재현한다.
+const state = { rows: [], calls: 0, cap: null }
 
 vi.mock('@/lib/supabase', () => ({
   isSupabaseEnabled: true,
@@ -34,11 +40,13 @@ vi.mock('@/lib/supabase', () => ({
         lte: (_col, v) => { f.lte = v; return self },
         then(resolve) {
           state.calls++
-          // 최신순 정렬 + 커서(lte) 적용 + limit
+          // 최신순 정렬 + 커서(lte) 적용 + limit — 서버 Max Rows(state.cap)가 있으면
+          // 클라이언트가 요청한 limit 보다 우선한다(실제 PostgREST 동작 재현).
+          const effectiveLimit = state.cap ? Math.min(f.limit, state.cap) : f.limit
           const rows = state.rows
             .filter((r) => (f.lte ? r.sent_at <= f.lte : true))
             .sort((a, b) => (a.sent_at < b.sent_at ? 1 : a.sent_at > b.sent_at ? -1 : 0))
-            .slice(0, f.limit)
+            .slice(0, effectiveLimit)
           return Promise.resolve({ data: rows, error: null }).then(resolve)
         },
       }
@@ -73,14 +81,17 @@ function makeRows(n, tie = 1) {
   }))
 }
 
-beforeEach(() => { state.calls = 0 })
+beforeEach(() => { state.calls = 0; state.cap = null })
 
 describe('CSV 전체 내려받기 페이지 넘김', () => {
   it('페이지 크기보다 적으면 한 번에 다 받는다', async () => {
     state.rows = makeRows(120)
     const out = await fetchAllForCsv({ profileId: '_VGAQn', query: '', year: 'all', month: 'all' })
     expect(out).toHaveLength(120)
-    expect(state.calls).toBe(1)
+    // 1번으로 데이터를 다 받은 뒤, "더 없다"를 실제로 확인하는 빈 페이지 1번이 더 나간다
+    // (2026-08-19 수정 — "받은 개수 < 요청 개수"만으로 끝났다고 단정하지 않는다. 아래
+    // "서버가 적게 돌려줘도" 테스트가 그 이유다).
+    expect(state.calls).toBe(2)
   })
 
   it('페이지 크기를 넘겨도 누락·중복 없이 전부 받는다', async () => {
@@ -119,5 +130,19 @@ describe('CSV 전체 내려받기 페이지 넘김', () => {
     state.rows = []
     const out = await fetchAllForCsv({ profileId: '_rkbcn', query: '', year: 'all', month: 'all' })
     expect(out).toEqual([])
+  })
+
+  it('서버가 Max Rows 설정으로 요청보다 적게 돌려줘도 전부 받는다 (2026-08-19 실장님 신고 재현)', async () => {
+    // 코드는 pageSize=5000(CSV_PAGE)으로 요청하지만, 서버(Supabase 프로젝트 API 설정의
+    // Max Rows)가 매번 최대 1000건까지만 돌려준다고 가정한다 — 실제 운영에서 벌어진 상황.
+    // 고치기 전 코드는 "1000 < 5000이니 끝났다"고 오판해 첫 페이지(1000건 + CSV 머리글 1줄
+    // = 액셀에서 "1001개")에서 멈췄다.
+    state.cap = 1000
+    state.rows = makeRows(12_345)
+    const out = await fetchAllForCsv({ profileId: '_rcpPG', query: '', year: 'all', month: 'all' })
+    expect(out).toHaveLength(12_345)
+    expect(new Set(out.map((r) => r.log_id)).size).toBe(12_345)
+    // 캡(1000)보다 훨씬 많은 요청을 했다는 뜻 — 첫 페이지에서 멈추지 않았다는 증거.
+    expect(state.calls).toBeGreaterThan(12)
   })
 })
