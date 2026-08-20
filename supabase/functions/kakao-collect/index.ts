@@ -308,7 +308,15 @@ async function collectChannel(profileId: string, session: { cookie: string; rota
       // "violates foreign key constraint kakao_partner_messages_chat_id_fkey" 로 매번 실패했다
       // (전 채널 실측 — 새 대화의 첫 메시지 묶음이 영구 유실). 메시지 저장 전에 먼저 부모 행부터
       // upsert 해 참조 무결성을 만족시킨다(끝의 배치 upsert 는 그대로 유지 — 최신값으로 덮어써 idempotent).
-      const { error: preErr } = await supabase.from('kakao_partner_chats').upsert(chatRow, { onConflict: 'chat_id' });
+      //
+      // ★★ 추가 수정(2026-08-20): 이 선(先) upsert 에는 커서를 "예전 값 그대로" 넣어야 한다.
+      // 여기에 최신 last_log_id 를 넣으면, 바로 아래 메시지 가져오기가 실패했을 때(n < 0)
+      // 커서만 최신이 되어 다음 실행이 "변경 없음"으로 판단하고 그 상담을 영영 안 가져온다.
+      // 646개 대화방을 날린 사고와 정확히 같은 구조다. 314줄의 "실패 → 커서 보존" 주석은
+      // 이 수정이 있어야 실제로 성립한다. (메시지가 성공하면 317줄에서 최신값이 담긴
+      // chatRow 가 metaRows 에 들어가 끝의 배치 upsert 로 정상 전진한다.)
+      const preRow = { ...chatRow, last_log_id: cursors.get(cid) ?? null };
+      const { error: preErr } = await supabase.from('kakao_partner_chats').upsert(preRow, { onConflict: 'chat_id' });
       if (preErr) { log(`[${profileId}] pre-upsert chat ${cid} fail:`, preErr.message); if (errors.length < 5) errors.push(`${cid}: pre-upsert:${preErr.message}`); continue; }
       const { n, err } = await fetchRecent(client, profileId, cid);
       if (n < 0) { if (err && errors.length < 5) errors.push(`${cid}: ${err}`); continue; } // 실패 → 커서 보존

@@ -446,7 +446,8 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
 - **뜻**: `kakao_partner_messages.chat_id`는 `kakao_partner_chats`를 가리키는 외래키(FK = 부모 행이 먼저 있어야 자식 행을 넣을 수 있는 규칙). **처음 보는 대화방**은 부모 행이 아직 없어, 메시지부터 저장하면 그 묶음이 통째로 실패한다.
 - **왜 영구 유실인가**: 실행 끝에서 채팅 메타는 저장되므로 그 대화방은 "메시지 0건 + 커서는 최신"으로 굳는다 → 증분 수집기가 "변경 없음"으로 판단해 **다시는 안 가져온다**. 실측 피해 646개 대화방(LIVE 635 · 마이클래스 6 · 통합로그인 3 · LIVE 기술지원 2).
 - **고친 곳**: `scripts/kakao-partner-collect-once.mjs` — 메시지 저장 **전에** 부모 행부터 upsert.
-  이때 **`last_log_id`(변경감지 커서)는 예전 값 그대로** 넣는다. 여기서 최신값으로 올리면 메시지 저장이 실패했을 때 위와 똑같이 영구 유실된다. (엣지 함수 v12의 2026-07-09 수정본은 이 부분이 빠져 있으니 되살릴 땐 같이 고칠 것.)
+  이때 **`last_log_id`(변경감지 커서)는 예전 값 그대로** 넣는다. 여기서 최신값으로 올리면 메시지 저장이 실패했을 때 위와 똑같이 영구 유실된다.
+  **2026-08-20: 엣지 함수 `kakao-collect` 도 같은 결함이 남아 있던 것을 확인해 고치고 v14 로 배포함**(선 upsert 에 `cursors.get(cid) ?? null` 사용). 회귀 테스트 `supabase/functions/kakao-collect/test/cursor_safety_test.ts` 가 이 규칙을 지킨다 - 수정을 되돌리면 실제로 실패하는 것까지 확인했다. Deno 로 실행: `deno test --allow-env --allow-net --no-check <경로>`.
 - **복구 도구**: `node --env-file=.env.local scripts/kakao-partner-backfill-missing.mjs` — 메시지 0건 대화방만 골라 과거분을 되메운다(전 채널·멱등). 목록은 RPC `kakao_chats_missing_messages(p_pid,p_lim,p_after)`로 가져오고, 카카오에도 로그가 없는 방은 `kakao_backfill_empty`에 기록해 다음 실행에서 제외한다.
   ⚠️ 예전 이 스크립트는 자체 매핑을 써서 **PII 마스킹을 건너뛰고 원문을 적재**했다 → 수집기와 같은 `logToRow`+`sanitizeMessageRow` 경로로 교체 완료. 새 백필 코드를 쓸 땐 반드시 이 경로를 쓸 것.
 - **교훈**: "복구 성공(4,474건)" 같은 총계만 보고 끝내지 말 것. **로그 본문의 에러 줄**을 읽어야 한다. 이 버그는 총계 뒤에 묻혀 있었다.
