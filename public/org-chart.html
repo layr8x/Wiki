@@ -4,7 +4,8 @@
 <title>desk 조직도</title>
 <meta name="description" content="김명준의 개인 편집국. 만드는 부서와 막는 검사역.">
 <style>
-@font-face{font-family:'PretendardLocal';src:url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');font-weight:45 920;font-display:swap}
+@font-face{font-family:'PretendardLocal';src:url('/fonts/PretendardVariable.woff2') format('woff2-variations'),
+    url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');font-weight:45 920;font-display:swap}
 :root{
   --paper:#faf7f2; --sheet:#fffdfa; --ink:#14120f;
   --dim:rgba(20,18,15,.66); --faint:rgba(20,18,15,.40); --ghost:rgba(20,18,15,.20);
@@ -203,7 +204,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
         <div class="col"><h3 class="name">편집장<span class="slug">chief</span></h3>
         <p class="meta">스킬 2</p>
         <p class="desc">착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다.</p>
-        <button class="cmd" data-copy="/plugin install chief@desk">/plugin install chief@desk</button></div><ol class="skills"><li><a href="../plugins/chief/skills/brief/SKILL.md">brief</a><p>산출물 작업을 시작할 때 가장 먼저 쓴다.</p></li><li><a href="../plugins/chief/skills/weave/SKILL.md">weave</a><p>콘텐츠·분석·디자인 두 축 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.</p></li></ol>
+        <button class="cmd" data-copy="/plugin install chief@desk">/plugin install chief@desk</button></div><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/brief/SKILL.md">brief</a><p>산출물 작업을 시작할 때 가장 먼저 쓴다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/weave/SKILL.md">weave</a><p>콘텐츠·분석·디자인 두 축 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.</p></li></ol>
       </article></div>
 </section>
 <section class="band">
@@ -215,7 +216,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
         <h3 class="name">콘텐츠<span class="slug">persuade</span></h3>
         <p class="meta">스킬 4</p>
         <p class="desc">보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다.</p>
-        <button class="cmd" data-copy="/plugin install persuade@desk">/plugin install persuade@desk</button><ol class="skills"><li><a href="../plugins/persuade/skills/number-tags/SKILL.md">number-tags</a><p>문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다.</p></li><li><a href="../plugins/persuade/skills/objection-first/SKILL.md">objection-first</a><p>승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다.</p></li><li><a href="../plugins/persuade/skills/report-blueprint/SKILL.md">report-blueprint</a><p>보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다.</p></li><li><a href="../plugins/persuade/skills/slack-notice/SKILL.md">slack-notice</a><p>슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.</p></li></ol>
+        <button class="cmd" data-copy="/plugin install persuade@desk">/plugin install persuade@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/number-tags/SKILL.md">number-tags</a><p>문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/objection-first/SKILL.md">objection-first</a><p>승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/report-blueprint/SKILL.md">report-blueprint</a><p>보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/slack-notice/SKILL.md">slack-notice</a><p>슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.</p></li></ol>
       </article>
       <article class="dept pending" data-find="numbers 분석 상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.">
         <span class="folio">03</span>
@@ -241,7 +242,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
         <h3 class="name">말 검사역<span class="slug">plain</span></h3>
         <p class="meta">스킬 2 · 막을 권한</p>
         <p class="desc">안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다.</p>
-        <button class="cmd" data-copy="/plugin install plain@desk">/plugin install plain@desk</button><ol class="skills"><li><a href="../plugins/plain/skills/jargon-gate/SKILL.md">jargon-gate</a><p>개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다.</p></li><li><a href="../plugins/plain/skills/no-translationese/SKILL.md">no-translationese</a><p>한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 AI 티를 검사한다.</p></li></ol>
+        <button class="cmd" data-copy="/plugin install plain@desk">/plugin install plain@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/plain/skills/jargon-gate/SKILL.md">jargon-gate</a><p>개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/plain/skills/no-translationese/SKILL.md">no-translationese</a><p>한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 AI 티를 검사한다.</p></li></ol>
       </article>
       <article class="dept blocker pending" data-find="verify 검사역 완료 보고 전 실제 검증. 눈대중과 죽은 참조를 막는다.">
         <span class="folio">06</span>

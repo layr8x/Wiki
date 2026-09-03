@@ -553,7 +553,7 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
 > 집행하는 구조. 참고 사례는 cbrock84/headcount(부서 16 · 스킬 172).
 
 - **정본 위치**: `.claude-plugin/marketplace.json` + `plugins/<부서>/`. 조직도는
-  `docs/org-chart.html`(자동 생성, 직접 고치지 말 것. 생성기 `scripts/build-org-chart.py`).
+  `public/org-chart.html`(자동 생성·배포 경로 `/org-chart.html`, 직접 고치지 말 것. 생성기 `scripts/build-org-chart.py`).
 - **부서 7개**: 묶는 층 `chief`(편집장) / 세 축 `persuade`(콘텐츠)·`numbers`(분석)·`screens`(디자인)
   / 막는 쪽 `plain`(말 검사역)·`verify`(검사역) / 운영 `keepalive`(유지).
 - **세 축은 따로 돌지 않는다**(사용자 지시): 콘텐츠 작성·빅데이터 분석·프로덕트 UIUX 디자인이

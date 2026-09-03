@@ -3,6 +3,7 @@
 
 저장소를 훑어 docs/org-chart.html 을 다시 쓴다. 손으로 고치지 않는다.
 읽는 곳: .claude-plugin/marketplace.json (부서 목록) / plugins/*/skills/*/SKILL.md (스킬 이름과 설명)
+내보내는 곳: public/org-chart.html (Vercel이 서빙하는 정적 폴더. docs/는 안 열린다)
 
 디자인 방향: 신문 편집국 조판. 크림색 지면, 세리프 제호, 헤어라인 괘선, 검사역은 붉은 인장.
 사용: python3 scripts/build-org-chart.py
@@ -12,7 +13,7 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'docs' / 'org-chart.html'
+OUT = ROOT / 'public' / 'org-chart.html'
 BLOCKERS = {'plain', 'verify'}   # 막을 권한이 있는 부서
 
 # 조직도의 단 구성. 세 축(콘텐츠·분석·디자인)이 가운데, 위에 묶는 층, 아래에 검사역
@@ -34,7 +35,8 @@ PLANNED = {
 }
 
 CSS = """
-@font-face{font-family:'PretendardLocal';src:url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');font-weight:45 920;font-display:swap}
+@font-face{font-family:'PretendardLocal';src:url('/fonts/PretendardVariable.woff2') format('woff2-variations'),
+    url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2') format('woff2-variations');font-weight:45 920;font-display:swap}
 :root{
   --paper:#faf7f2; --sheet:#fffdfa; --ink:#14120f;
   --dim:rgba(20,18,15,.66); --faint:rgba(20,18,15,.40); --ghost:rgba(20,18,15,.20);
@@ -223,6 +225,9 @@ document.querySelectorAll('.cmd').forEach(b=>b.addEventListener('click',()=>{
 """
 
 
+BLOB = 'https://github.com/layr8x/Wiki/blob/main/'
+
+
 def read_skills(slug):
     out = []
     for md in sorted((ROOT / 'plugins' / slug / 'skills').glob('*/SKILL.md')):
@@ -243,7 +248,7 @@ def card(d, folio, wide=False):
     e = html.escape
     if d['skills']:
         body = '<ol class="skills">' + ''.join(
-            f'<li><a href="../{e(path)}">{e(name)}</a><p>{e(desc)}</p></li>'
+            f'<li><a href="{BLOB}{e(path)}">{e(name)}</a><p>{e(desc)}</p></li>'
             for name, desc, path in d['skills']) + '</ol>'
     else:
         rows = ''.join(f'<li><b>{e(ch)}</b>{e(t)}</li>' for ch, t in PLANNED.get(d['name'], []))
