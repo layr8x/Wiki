@@ -16,23 +16,27 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'public' / 'org-chart.html'
 BLOCKERS = {'plain', 'verify'}   # 막을 권한이 있는 부서
 
-# 조직도의 단 구성. 세 축(콘텐츠·분석·디자인)이 가운데, 위에 묶는 층, 아래에 검사역
+SWAPPABLE = {'site'}   # 직장이 바뀌면 갈아끼우는 부서
+
+# 조직도의 단 구성. 다섯 분야가 가운데, 위에 묶는 층, 아래에 검사역과 현장
 GROUPS = [
-    ('편집장', 'chief desk', ['chief'], '의도를 고정하고 세 축을 묶는다'),
-    ('세 축', 'three axes', ['persuade', 'numbers', 'screens'], '병행해서 만든다'),
+    ('편집장', 'chief desk', ['chief'], '의도를 고정하고 분야를 묶는다'),
+    ('다섯 분야', 'five fields', ['persuade', 'product', 'screens', 'numbers', 'build'],
+     '필요한 것만 불러 병행한다'),
     ('검사역', 'gatekeepers', ['plain', 'verify'], '통과 못 하면 산출물이 나가지 않는다'),
-    ('운영', 'ops', ['keepalive'], '멈추면 곤란한 것'),
+    ('현장', 'site', ['site'], '직장이 바뀌면 이 부서만 갈아끼운다'),
 ]
 
-# 아직 안 옮긴 부서에 들어갈 CLAUDE.md 장. 카드의 빈 자리를 이걸로 채운다
-PLANNED = {
-    'numbers':   [('16장', '카카오 상담 5채널 정본'), ('1장', '분석 방법론과 측정·추정 구분')],
-    'screens':   [('13장', '챗봇 디자인시스템 토큰'), ('18장', 'Astryx 컴포넌트 규칙'),
-                  ('23장', '관리자 표가 잘리는 두 원인'), ('8장', '텍스트 넘침 함정')],
-    'verify':    [('15장', '화면 정합 실패의 근본 원인'), ('14장', '디자인 대조 툴킷'),
-                  ('9장', '실제 웹 화면 재현')],
-    'keepalive': [('22장', '수집이 멈췄을 때 진단 순서'), ('17장', '수집 기기와 인프라')],
-}
+
+def load_local():
+    """저장소마다 다른 값(설치 주소, 이전 예정 목록). 없으면 빈 값으로 돈다."""
+    f = ROOT / '.claude-plugin' / 'desk.local.json'
+    if not f.exists():
+        return {}
+    try:
+        return json.loads(f.read_text(encoding='utf-8'))
+    except Exception:
+        return {}
 
 CSS = """
 @font-face{font-family:'PretendardLocal';src:url('/fonts/PretendardVariable.woff2') format('woff2-variations'),
@@ -131,11 +135,18 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 .grid.one{grid-template-columns:1fr}
 .grid.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid.four{grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+.grid.five{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+@media(min-width:1000px){.grid.five{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.grid.five .dept{padding:24px 18px 22px}
+.grid.five .name{font-size:19px}
+.grid.five .folio{font-size:28px;top:18px;right:16px}
 .dept{position:relative;background:var(--sheet);padding:26px 24px 24px;
   border-top:1px solid var(--ink);border-right:1px solid var(--rule);
   border-bottom:1px solid var(--rule)}
 .grid .dept:last-child{border-right:0}
 .dept.blocker{border-top:3px solid var(--stamp)}
+.dept.swap{border-top:1px dashed var(--rule2)}
+.dept.swap .meta{color:var(--faint)}
 .folio{position:absolute;top:20px;right:20px;font-family:var(--serif);font-size:34px;
   line-height:1;color:var(--ghost);letter-spacing:-.02em}
 .dept .name{margin:0;font-size:21px;font-weight:700;letter-spacing:-.012em}
@@ -225,7 +236,7 @@ document.querySelectorAll('.cmd').forEach(b=>b.addEventListener('click',()=>{
 """
 
 
-BLOB = 'https://github.com/layr8x/Wiki/blob/main/'
+BLOB = 'https://github.com/layr8x/Wiki/blob/main/'   # desk.local.json 의 install_source 로 갈아낀다
 
 
 def read_skills(slug):
@@ -251,14 +262,15 @@ def card(d, folio, wide=False):
             f'<li><a href="{BLOB}{e(path)}">{e(name)}</a><p>{e(desc)}</p></li>'
             for name, desc, path in d['skills']) + '</ol>'
     else:
-        rows = ''.join(f'<li><b>{e(ch)}</b>{e(t)}</li>' for ch, t in PLANNED.get(d['name'], []))
+        rows = ''.join(f'<li><b>{e(ch)}</b>{e(t)}</li>' for ch, t in d.get('planned', []))
         body = ('<ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li>'
                 + rows + '</ul>') if rows else ''
     find = ' '.join([d['name'], d['displayName'], d['description']] +
                     [n + ' ' + s for n, s, _ in d['skills']]).lower()
-    meta = f"스킬 {len(d['skills'])}" + (' · 막을 권한' if d['blocker'] else '')
+    meta = (f"스킬 {len(d['skills'])}" + (' · 막을 권한' if d['blocker'] else '')
+            + (' · 교체 대상' if d['swap'] else ''))
     cls = ('dept' + (' blocker' if d['blocker'] else '') + ('' if d['skills'] else ' pending')
-           + (' wide' if wide else ''))
+           + (' wide' if wide else '') + (' swap' if d['swap'] else ''))
     head = (f'''<h3 class="name">{e(d['displayName'])}<span class="slug">{e(d['name'])}</span></h3>
         <p class="meta">{e(meta)}</p>
         <p class="desc">{e(d['description'])}</p>
@@ -273,11 +285,18 @@ def card(d, folio, wide=False):
 
 
 def build():
+    global BLOB
     mk = json.loads((ROOT / '.claude-plugin' / 'marketplace.json').read_text(encoding='utf-8'))
     depts = []
+    local = load_local()
+    planned = local.get('planned', {})
+    if local.get('install_source'):
+        BLOB = f"https://github.com/{local['install_source']}/blob/main/"
     for p in mk['plugins']:
         s = read_skills(p['name'])
-        depts.append({**p, 'skills': s, 'blocker': p['name'] in BLOCKERS})
+        depts.append({**p, 'skills': s, 'blocker': p['name'] in BLOCKERS,
+                      'swap': p['name'] in SWAPPABLE,
+                      'planned': [tuple(x) for x in planned.get(p['name'], [])]})
     total = sum(len(d['skills']) for d in depts)
 
     by = {d['name']: d for d in depts}
@@ -293,7 +312,7 @@ def build():
         got = [by[nm] for nm in names if nm in by]
         if not got:
             continue
-        cols = {1: 'one', 2: 'two'}.get(len(got), 'four')
+        cols = {1: 'one', 2: 'two', 5: 'five'}.get(len(got), 'four')
         cards_html = ''.join(card(d, folio[d['name']], wide=len(got) == 1) for d in got)
         bands.append(f'''
 <section class="band">
@@ -304,6 +323,7 @@ def build():
     bands_html = ''.join(bands)
     blockers = [d for d in depts if d['blocker']]
     ver = mk.get('version', '0.1.0')
+    src = html.escape(local.get('install_source', '<저장소>'))
 
     page = f'''<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
@@ -329,7 +349,7 @@ def build():
 
 <div class="flow" aria-label="산출물이 만들어지는 순서">
   <div class="st"><b>의도 고정</b><span>brief</span></div><div class="arm"></div>
-  <div class="st trio"><b>콘텐츠 · 분석 · 디자인</b><span>병행</span></div><div class="arm"></div>
+  <div class="st trio"><b>필요한 분야만 병행</b><span>콘텐츠 기획 디자인 분석 개발</span></div><div class="arm"></div>
   <div class="st"><b>하나로 묶기</b><span>weave</span></div><div class="arm"></div>
   <div class="st gate"><b>검사역 통과</b><span>2</span></div>
 </div>
@@ -345,7 +365,7 @@ def build():
 
 <footer class="colophon">
   <span><code>scripts/build-org-chart.py</code> 가 저장소를 읽어 자동 생성합니다. 직접 고치지 마세요.</span>
-  <span>설치 <code>/plugin marketplace add layr8x/Wiki</code></span>
+  <span>설치 <code>/plugin marketplace add {src}</code></span>
   <span>참고 사례 cbrock84/headcount</span>
 </footer>
 </div>

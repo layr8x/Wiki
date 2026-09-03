@@ -13,8 +13,8 @@ fail=""
 msg=""
 
 # 1. 문서 검사 — 바뀐 마크다운이 있으면 말 검사역을 돌린다
-if [ -f scripts/hooks/check-writing.py ]; then
-  if ! writing=$(python3 scripts/hooks/check-writing.py 2>&1); then
+if [ -f plugins/plain/scripts/check-writing.py ]; then
+  if ! writing=$(python3 plugins/plain/scripts/check-writing.py 2>&1); then
     fail="문서"
     msg="$writing"
   fi

@@ -1,27 +1,38 @@
 #!/usr/bin/env python3
 """말 검사역 - 산출물 문서를 내보내기 전에 두 가지를 검사한다.
 
-  1. 안 풀어쓴 전문용어  (plugins/plain/skills/jargon-gate/용어사전.md 기준)
-  2. 번역투와 AI 티      (tools/writing/ko_ai_score.py --mj)
+  1. 안 풀어쓴 전문용어  (같은 부서의 skills/jargon-gate/용어사전.md 기준)
+  2. 번역투와 AI 티      (같은 부서의 scripts/ko_ai_score.py --mj)
+
+부서 안에서 자립해 돈다. 어느 저장소에 설치하든 경로를 고칠 일이 없다.
 
 사용:
-  python3 scripts/hooks/check-writing.py            # 바뀐 .md 자동 검사
-  python3 scripts/hooks/check-writing.py 파일.md    # 특정 파일 검사
+  python3 <부서>/scripts/check-writing.py            # 바뀐 .md 자동 검사
+  python3 <부서>/scripts/check-writing.py 파일.md    # 특정 파일 검사
+  python3 <부서>/scripts/check-writing.py --hook     # Stop 훅용. 막을 땐 종료코드 2
 
-위험이 하나라도 있으면 종료코드 1. Stop 훅이 이걸 보고 작업을 막는다.
+위험이 있으면 종료코드 1(직접 실행) 또는 2(--hook). Stop 훅이 이걸 보고 작업을 막는다.
 """
-import re, subprocess, sys, os
+import json, os, re, subprocess, sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-GLOSSARY = ROOT / 'plugins/plain/skills/jargon-gate/용어사전.md'
-SCORER = ROOT / 'tools/writing/ko_ai_score.py'
+PLUGIN = Path(__file__).resolve().parents[1]          # 부서 폴더
+GLOSSARY = PLUGIN / 'skills/jargon-gate/용어사전.md'
+SCORER = PLUGIN / 'scripts/ko_ai_score.py'
+ROOT = Path(os.environ.get('CLAUDE_PROJECT_DIR') or Path.cwd())  # 검사 대상 저장소
 
 # 검사에서 빼는 곳: 남이 만든 스킬, 용어를 정의하는 문서, 금지 패턴을 예시로 싣는 문서
-SKIP = ('.agents/', 'node_modules/', '.claude/skills/',
-        'plugins/plain/skills/jargon-gate/용어사전.md',
-        'plugins/plain/skills/no-translationese/SKILL.md',
-        'analysis/글쓰기_가이드', 'analysis/문체지문_', 'CLAUDE.md')
+# 검사에서 빼는 곳. 남이 만든 스킬, 용어를 정의하는 문서, 금지 패턴을 예시로 싣는 문서.
+# 저장소마다 다른 예외는 desk.local.json 의 skip 배열에 적는다
+SKIP = ['.agents/', 'node_modules/', '.claude/skills/', '.claude/plugins/',
+        'skills/jargon-gate/용어사전.md', 'skills/no-translationese/SKILL.md',
+        'CLAUDE.md', 'AGENTS.md']
+_cfg = ROOT / '.claude-plugin' / 'desk.local.json'
+if _cfg.exists():
+    try:
+        SKIP += json.loads(_cfg.read_text(encoding='utf-8')).get('skip', [])
+    except Exception:
+        pass
 
 WINDOW = 150  # 용어 뒤 이 글자 수 안에 풀이가 있으면 통과
 
@@ -52,6 +63,18 @@ def _pattern(t):
     if re.fullmatch(r'[A-Za-z0-9 .+-]+', t):
         return r'(?<![A-Za-z])' + re.escape(t) + r'(?![A-Za-z])'
     return r'(?<![가-힣])' + re.escape(t) + r'(?![가-힣])'
+
+
+def strip_noncontent(text):
+    """사람이 읽는 본문만 남긴다.
+
+    앞머리 이름표(스킬 이름 local-context 등), 코드 덩어리, 홑따옴표 코드는 용어가 아니라
+    식별자다. 여기서 잡으면 오탐만 늘어난다.
+    """
+    t = re.sub(r'\A---\n.*?\n---\n', '', text, flags=re.S)
+    t = re.sub(r'```.*?```', ' ', t, flags=re.S)
+    t = re.sub(r'`[^`\n]*`', ' ', t)
+    return t
 
 
 def check_jargon(text, terms):
@@ -89,7 +112,9 @@ def changed_docs():
 
 
 def main():
-    targets = sys.argv[1:] or changed_docs()
+    args = [a for a in sys.argv[1:] if a != '--hook']
+    hook = '--hook' in sys.argv[1:]
+    targets = args or changed_docs()
     if not targets:
         return 0
     terms = load_terms()
@@ -99,7 +124,8 @@ def main():
         if not p.exists() or any(s in str(f) for s in SKIP):
             continue
         text = p.read_text(encoding='utf-8')
-        jargon = check_jargon(text, terms)
+        body = strip_noncontent(text)
+        jargon = check_jargon(body, terms)
         verdict, _ = check_style(p)
         lines = []
         if jargon:
@@ -107,7 +133,7 @@ def main():
             danger_total += 1
         if verdict and verdict[0] > 0:
             lines.append(f'   문체 위험 {verdict[0]}건 (주의 {verdict[1]}건)'
-                         f' - python3 tools/writing/ko_ai_score.py {f} --mj 로 확인')
+                         f' - python3 {SCORER} {f} --mj 로 확인')
             danger_total += 1
         if lines:
             print(f'[막힘] {f}')
@@ -115,8 +141,9 @@ def main():
         else:
             print(f'[통과] {f}')
     if danger_total:
-        print(f'\n말 검사역: 위험 {danger_total}건. 고치고 다시 내보낼 것.')
-        return 1
+        out = sys.stderr if hook else sys.stdout
+        print(f'\n말 검사역: 위험 {danger_total}건. 고치고 다시 내보낼 것.', file=out)
+        return 2 if hook else 1
     return 0
 
 

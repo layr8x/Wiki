@@ -100,11 +100,18 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 .grid.one{grid-template-columns:1fr}
 .grid.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid.four{grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+.grid.five{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+@media(min-width:1000px){.grid.five{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.grid.five .dept{padding:24px 18px 22px}
+.grid.five .name{font-size:19px}
+.grid.five .folio{font-size:28px;top:18px;right:16px}
 .dept{position:relative;background:var(--sheet);padding:26px 24px 24px;
   border-top:1px solid var(--ink);border-right:1px solid var(--rule);
   border-bottom:1px solid var(--rule)}
 .grid .dept:last-child{border-right:0}
 .dept.blocker{border-top:3px solid var(--stamp)}
+.dept.swap{border-top:1px dashed var(--rule2)}
+.dept.swap .meta{color:var(--faint)}
 .folio{position:absolute;top:20px;right:20px;font-family:var(--serif);font-size:34px;
   line-height:1;color:var(--ghost);letter-spacing:-.02em}
 .dept .name{margin:0;font-size:21px;font-weight:700;letter-spacing:-.012em}
@@ -172,7 +179,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
   <p class="kicker">개인 편집국 · personal desk</p>
   <h1>desk</h1>
   <div class="rule-double"></div>
-  <p class="edition"><span>제0.1.0판</span><span>부서 7</span><span>스킬 8</span>
+  <p class="edition"><span>제0.1.0판</span><span>부서 9</span><span>스킬 15</span>
     <span>막을 권한 2</span><span>2026-09-03</span></p>
 </header>
 
@@ -184,7 +191,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 
 <div class="flow" aria-label="산출물이 만들어지는 순서">
   <div class="st"><b>의도 고정</b><span>brief</span></div><div class="arm"></div>
-  <div class="st trio"><b>콘텐츠 · 분석 · 디자인</b><span>병행</span></div><div class="arm"></div>
+  <div class="st trio"><b>필요한 분야만 병행</b><span>콘텐츠 기획 디자인 분석 개발</span></div><div class="arm"></div>
   <div class="st"><b>하나로 묶기</b><span>weave</span></div><div class="arm"></div>
   <div class="st gate"><b>검사역 통과</b><span>2</span></div>
 </div>
@@ -197,40 +204,54 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 
 <section class="band">
   <h2 class="band-title"><span>편집장</span><em>chief desk</em>
-    <span class="tick">의도를 고정하고 세 축을 묶는다</span></h2>
+    <span class="tick">의도를 고정하고 분야를 묶는다</span></h2>
   <div class="grid one">
-      <article class="dept wide" data-find="chief 편집장 착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다. brief 산출물 작업을 시작할 때 가장 먼저 쓴다. weave 콘텐츠·분석·디자인 두 축 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.">
+      <article class="dept wide" data-find="chief 편집장 착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다. brief 산출물 작업을 시작할 때 가장 먼저 쓴다. decision-methods 문제를 쪼개거나 결정을 내려야 할 때 쓸 방법론을 고른다. weave 콘텐츠, 기획, 디자인, 분석, 개발 중 둘 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.">
         <span class="folio">01</span>
         <div class="col"><h3 class="name">편집장<span class="slug">chief</span></h3>
-        <p class="meta">스킬 2</p>
+        <p class="meta">스킬 3</p>
         <p class="desc">착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다.</p>
-        <button class="cmd" data-copy="/plugin install chief@desk">/plugin install chief@desk</button></div><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/brief/SKILL.md">brief</a><p>산출물 작업을 시작할 때 가장 먼저 쓴다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/weave/SKILL.md">weave</a><p>콘텐츠·분석·디자인 두 축 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.</p></li></ol>
+        <button class="cmd" data-copy="/plugin install chief@desk">/plugin install chief@desk</button></div><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/brief/SKILL.md">brief</a><p>산출물 작업을 시작할 때 가장 먼저 쓴다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/decision-methods/SKILL.md">decision-methods</a><p>문제를 쪼개거나 결정을 내려야 할 때 쓸 방법론을 고른다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/chief/skills/weave/SKILL.md">weave</a><p>콘텐츠, 기획, 디자인, 분석, 개발 중 둘 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.</p></li></ol>
       </article></div>
 </section>
 <section class="band">
-  <h2 class="band-title"><span>세 축</span><em>three axes</em>
-    <span class="tick">병행해서 만든다</span></h2>
-  <div class="grid four">
-      <article class="dept" data-find="persuade 콘텐츠 보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다. number-tags 문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다. objection-first 승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다. report-blueprint 보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다. slack-notice 슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.">
+  <h2 class="band-title"><span>다섯 분야</span><em>five fields</em>
+    <span class="tick">필요한 것만 불러 병행한다</span></h2>
+  <div class="grid five">
+      <article class="dept" data-find="persuade 콘텐츠 보고서, 기획서, 공지의 뼈대와 문체. 결정을 받아내는 글을 만든다. number-tags 문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다. objection-first 승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다. report-blueprint 보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다. slack-notice 슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다. writing-methods 글의 구조나 논증을 어떻게 짤지 정할 때 쓸 방법론을 고른다.">
         <span class="folio">02</span>
         <h3 class="name">콘텐츠<span class="slug">persuade</span></h3>
-        <p class="meta">스킬 4</p>
-        <p class="desc">보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다.</p>
-        <button class="cmd" data-copy="/plugin install persuade@desk">/plugin install persuade@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/number-tags/SKILL.md">number-tags</a><p>문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/objection-first/SKILL.md">objection-first</a><p>승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/report-blueprint/SKILL.md">report-blueprint</a><p>보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/slack-notice/SKILL.md">slack-notice</a><p>슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.</p></li></ol>
+        <p class="meta">스킬 5</p>
+        <p class="desc">보고서, 기획서, 공지의 뼈대와 문체. 결정을 받아내는 글을 만든다.</p>
+        <button class="cmd" data-copy="/plugin install persuade@desk">/plugin install persuade@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/number-tags/SKILL.md">number-tags</a><p>문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/objection-first/SKILL.md">objection-first</a><p>승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/report-blueprint/SKILL.md">report-blueprint</a><p>보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/slack-notice/SKILL.md">slack-notice</a><p>슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/persuade/skills/writing-methods/SKILL.md">writing-methods</a><p>글의 구조나 논증을 어떻게 짤지 정할 때 쓸 방법론을 고른다.</p></li></ol>
       </article>
-      <article class="dept pending" data-find="numbers 분석 상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.">
+      <article class="dept" data-find="product 기획 무엇을 만들지 정하고 우선순위를 매기며 범위를 자른다. product-methods 무엇을 만들지 정하거나 우선순위를 매길 때 쓸 방법론을 고른다.">
         <span class="folio">03</span>
-        <h3 class="name">분석<span class="slug">numbers</span></h3>
-        <p class="meta">스킬 0</p>
-        <p class="desc">상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.</p>
-        <button class="cmd" data-copy="/plugin install numbers@desk">/plugin install numbers@desk</button><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>16장</b>카카오 상담 5채널 정본</li><li><b>1장</b>분석 방법론과 측정·추정 구분</li></ul>
+        <h3 class="name">기획<span class="slug">product</span></h3>
+        <p class="meta">스킬 1</p>
+        <p class="desc">무엇을 만들지 정하고 우선순위를 매기며 범위를 자른다.</p>
+        <button class="cmd" data-copy="/plugin install product@desk">/plugin install product@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/product/skills/product-methods/SKILL.md">product-methods</a><p>무엇을 만들지 정하거나 우선순위를 매길 때 쓸 방법론을 고른다.</p></li></ol>
       </article>
-      <article class="dept pending" data-find="screens 디자인 디자인시스템 토큰, 챗봇과 관리자 화면, figma 작업 규칙.">
+      <article class="dept" data-find="screens 디자인 디자인시스템, 화면 설계, 접근성. 보이는 것을 만든다. design-methods 화면이나 디자인시스템을 설계하고 평가할 때 쓸 방법론을 고른다.">
         <span class="folio">04</span>
         <h3 class="name">디자인<span class="slug">screens</span></h3>
-        <p class="meta">스킬 0</p>
-        <p class="desc">디자인시스템 토큰, 챗봇과 관리자 화면, Figma 작업 규칙.</p>
-        <button class="cmd" data-copy="/plugin install screens@desk">/plugin install screens@desk</button><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>13장</b>챗봇 디자인시스템 토큰</li><li><b>18장</b>Astryx 컴포넌트 규칙</li><li><b>23장</b>관리자 표가 잘리는 두 원인</li><li><b>8장</b>텍스트 넘침 함정</li></ul>
+        <p class="meta">스킬 1</p>
+        <p class="desc">디자인시스템, 화면 설계, 접근성. 보이는 것을 만든다.</p>
+        <button class="cmd" data-copy="/plugin install screens@desk">/plugin install screens@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/screens/skills/design-methods/SKILL.md">design-methods</a><p>화면이나 디자인시스템을 설계하고 평가할 때 쓸 방법론을 고른다.</p></li></ol>
+      </article>
+      <article class="dept" data-find="numbers 분석 지표를 정의하고 데이터로 근거를 만든다. 분석 방법론과 측정·추정 구분. analysis-methods 데이터로 뭔가를 주장하거나 효과를 재야 할 때 쓸 방법론을 고른다.">
+        <span class="folio">05</span>
+        <h3 class="name">분석<span class="slug">numbers</span></h3>
+        <p class="meta">스킬 1</p>
+        <p class="desc">지표를 정의하고 데이터로 근거를 만든다. 분석 방법론과 측정·추정 구분.</p>
+        <button class="cmd" data-copy="/plugin install numbers@desk">/plugin install numbers@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/numbers/skills/analysis-methods/SKILL.md">analysis-methods</a><p>데이터로 뭔가를 주장하거나 효과를 재야 할 때 쓸 방법론을 고른다.</p></li></ol>
+      </article>
+      <article class="dept" data-find="build 개발 구현 판단과 품질 기준. 개발 지식 없이도 요구하고 확인할 수 있는 형태로. engineering-methods 구현 방식이나 품질 기준을 판단할 때 쓸 방법론을 고른다.">
+        <span class="folio">06</span>
+        <h3 class="name">개발<span class="slug">build</span></h3>
+        <p class="meta">스킬 1</p>
+        <p class="desc">구현 판단과 품질 기준. 개발 지식 없이도 요구하고 확인할 수 있는 형태로.</p>
+        <button class="cmd" data-copy="/plugin install build@desk">/plugin install build@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/build/skills/engineering-methods/SKILL.md">engineering-methods</a><p>구현 방식이나 품질 기준을 판단할 때 쓸 방법론을 고른다.</p></li></ol>
       </article></div>
 </section>
 <section class="band">
@@ -238,14 +259,14 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
     <span class="tick">통과 못 하면 산출물이 나가지 않는다</span></h2>
   <div class="grid two">
       <article class="dept blocker" data-find="plain 말 검사역 안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다. jargon-gate 개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다. no-translationese 한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 ai 티를 검사한다.">
-        <span class="folio">05</span>
+        <span class="folio">07</span>
         <h3 class="name">말 검사역<span class="slug">plain</span></h3>
         <p class="meta">스킬 2 · 막을 권한</p>
         <p class="desc">안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다.</p>
         <button class="cmd" data-copy="/plugin install plain@desk">/plugin install plain@desk</button><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/plain/skills/jargon-gate/SKILL.md">jargon-gate</a><p>개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다.</p></li><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/plain/skills/no-translationese/SKILL.md">no-translationese</a><p>한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 AI 티를 검사한다.</p></li></ol>
       </article>
       <article class="dept blocker pending" data-find="verify 검사역 완료 보고 전 실제 검증. 눈대중과 죽은 참조를 막는다.">
-        <span class="folio">06</span>
+        <span class="folio">08</span>
         <h3 class="name">검사역<span class="slug">verify</span></h3>
         <p class="meta">스킬 0 · 막을 권한</p>
         <p class="desc">완료 보고 전 실제 검증. 눈대중과 죽은 참조를 막는다.</p>
@@ -253,15 +274,15 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
       </article></div>
 </section>
 <section class="band">
-  <h2 class="band-title"><span>운영</span><em>ops</em>
-    <span class="tick">멈추면 곤란한 것</span></h2>
+  <h2 class="band-title"><span>현장</span><em>site</em>
+    <span class="tick">직장이 바뀌면 이 부서만 갈아끼운다</span></h2>
   <div class="grid one">
-      <article class="dept pending wide" data-find="keepalive 유지 수집이 멈췄을 때 원인을 찾는 순서. 겉지표가 초록이어도 산출물부터 본다.">
-        <span class="folio">07</span>
-        <div class="col"><h3 class="name">유지<span class="slug">keepalive</span></h3>
-        <p class="meta">스킬 0</p>
-        <p class="desc">수집이 멈췄을 때 원인을 찾는 순서. 겉지표가 초록이어도 산출물부터 본다.</p>
-        <button class="cmd" data-copy="/plugin install keepalive@desk">/plugin install keepalive@desk</button></div><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>22장</b>수집이 멈췄을 때 진단 순서</li><li><b>17장</b>수집 기기와 인프라</li></ul>
+      <article class="dept wide swap" data-find="site 현장 지금 일하는 곳의 고유 값. 제품, 저장소, 도구, 채널, 사람. 직장이 바뀌면 이 부서만 갈아끼운다. local-context 지금 일하는 곳의 고유 정보를 찾을 때 사용한다.">
+        <span class="folio">09</span>
+        <div class="col"><h3 class="name">현장<span class="slug">site</span></h3>
+        <p class="meta">스킬 1 · 교체 대상</p>
+        <p class="desc">지금 일하는 곳의 고유 값. 제품, 저장소, 도구, 채널, 사람. 직장이 바뀌면 이 부서만 갈아끼운다.</p>
+        <button class="cmd" data-copy="/plugin install site@desk">/plugin install site@desk</button></div><ol class="skills"><li><a href="https://github.com/layr8x/Wiki/blob/main/plugins/site/skills/local-context/SKILL.md">local-context</a><p>지금 일하는 곳의 고유 정보를 찾을 때 사용한다.</p></li></ol>
       </article></div>
 </section>
 

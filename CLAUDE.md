@@ -547,27 +547,29 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
 
 ---
 
-# 24. ★★ desk = 개인 편집국 (부서 6개 · 2026-09 착수)
+# 24. ★★ desk = 개인 편집국, 부서 9개 (2026-09 착수)
 
-> 배경: CLAUDE.md 546줄이 세션마다 통째로 로드돼 왔다. 21장의 "절차는 스킬로"를 실제로
-> 집행하는 구조. 참고 사례는 cbrock84/headcount(부서 16 · 스킬 172).
+> CLAUDE.md 546줄이 세션마다 통째로 로드되던 걸 부서 단위 스킬로 나눈다. 21장 "절차는 스킬로"를
+> 실제로 집행하는 구조. 참고 사례 cbrock84/headcount(부서 16 · 스킬 172).
 
-- **정본 위치**: `.claude-plugin/marketplace.json` + `plugins/<부서>/`. 조직도는
-  `public/org-chart.html`(자동 생성·배포 경로 `/org-chart.html`, 직접 고치지 말 것. 생성기 `scripts/build-org-chart.py`).
-- **부서 7개**: 묶는 층 `chief`(편집장) / 세 축 `persuade`(콘텐츠)·`numbers`(분석)·`screens`(디자인)
-  / 막는 쪽 `plain`(말 검사역)·`verify`(검사역) / 운영 `keepalive`(유지).
-- **세 축은 따로 돌지 않는다**(사용자 지시): 콘텐츠 작성·빅데이터 분석·프로덕트 UIUX 디자인이
-  유기적으로 연동돼 하나의 산출물이 돼야 한다. 묶는 방법은 `chief` 부서 2스킬.
-  `brief`=착수 전 의도 6칸을 `brief.md` 한 장으로 고정(결정권자·받아낼 결정·성공 기준·아는 것·
-  모르는 것·안 할 것). `weave`=순서와 접합(콘텐츠가 뼈대만 먼저, 분석·디자인 병행, 콘텐츠가 재작성,
-  검사역 통과). 세 축 결과가 어긋나면 한쪽을 지우지 말고 둘 다 적어 판단을 올린다.
-- **설치**: `/plugin marketplace add layr8x/Wiki` 후 `/plugin install persuade@desk` 형태.
-  hiconsy·portfolio_mj 등 다른 저장소에서도 같은 규칙을 쓰려고 부서로 뺐다.
-- **말 검사역이 실제로 막는다**: Stop 훅이 `scripts/hooks/check-writing.py`를 돌려
-  ①용어사전에 있는 말이 풀이 없이 쓰였는지 ②`ko_ai_score --mj` 위험 판정을 검사한다.
-  실측 확인: `analysis/2026-06_월간보고_wiki챗봇.md`가 줄표 13개로 막힘(종료코드 1).
-- **용어사전**: `plugins/plain/skills/jargon-gate/용어사전.md` 83개. 낯선 말을 쓰게 되면
-  여기 먼저 추가하고 풀이한다.
-- **진행**: 완료=chief(2스킬)·persuade(4스킬)·plain(2스킬). 남음=numbers·screens·verify·keepalive.
-  ⚠️ **CLAUDE.md 장을 지우는 건 그 스킬이 실제로 발동하는 걸 확인한 뒤**. 지우고 안 뜨면
-  그 지식은 사라진 것처럼 동작한다.
+- **정본**: `.claude-plugin/marketplace.json` + `plugins/<부서>/`. 사용법 `plugins/README.md`.
+  조직도는 `public/org-chart.html`(자동 생성·배포 경로 `/org-chart.html`, 직접 고치지 말 것.
+  생성기 `scripts/build-org-chart.py`).
+- **부서 9개**: 묶는 층 `chief`(편집장) / 다섯 분야 `persuade`(콘텐츠)·`product`(기획)·
+  `screens`(디자인)·`numbers`(분석)·`build`(개발) / 막는 쪽 `plain`(말 검사역)·`verify`(검사역)
+  / 교체 `site`(현장).
+- **★ 어디서든 돈다(사용자 지시)**: 다른 회사·다른 환경에서도 쓸 것이므로 `site`를 뺀 여덟 부서에
+  회사명·제품명·파일 식별자를 넣지 않는다. 회사를 옮기면 틀리게 되는 것은 전부 `site`로.
+  저장소별 값(설치 주소·이전 예정 목록·검사 예외)은 `.claude-plugin/desk.local.json`.
+- **★ 방법론 층(사용자 지시)**: 다섯 분야와 편집장에 `*-methods` 스킬. 각 분야의 검증된 방법론을
+  "언제 쓰는지" 표와 함께 정리. 방법론 이름은 항상 한 줄 풀이를 붙인다.
+- **분야는 따로 돌지 않는다**: `chief`의 `brief`가 착수 전 의도 6칸을 `brief.md`로 고정하고
+  (결정권자·받아낼 결정·성공 기준·아는 것·모르는 것·안 할 것), `weave`가 순서와 접합을 정한다.
+  기획이 범위를, 콘텐츠가 뼈대를, 나머지가 병행해 채우고, 콘텐츠가 다시 쓴 뒤 검사역을 통과한다.
+  분야별 결론이 어긋나면 한쪽을 지우지 말고 둘 다 적어 판단을 올린다.
+- **말 검사역이 실제로 막는다**: 측정기·용어사전·훅을 부서 안에 들고 다닌다
+  (`plugins/plain/scripts/`, `plugins/plain/hooks/hooks.json`). Stop 시점에 자동 실행.
+  ①용어사전(83개)에 있는 말이 풀이 없이 쓰였는지 ②`ko_ai_score --mj` 위험 판정.
+  실측: `analysis/2026-06_월간보고_wiki챗봇.md`가 줄표 13개로 막힘.
+- **진행**: 스킬 15개. 남은 일은 CLAUDE.md 장을 각 부서로 옮기는 것(계획은 desk.local.json).
+  ⚠️ **장을 지우는 건 그 스킬이 실제로 발동하는 걸 확인한 뒤.** 지우고 안 뜨면 지식이 사라진다.
