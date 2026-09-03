@@ -31,6 +31,7 @@ def strip_markup(text: str) -> str:
     text = re.sub(r'```.*?```', ' ', text, flags=re.S)      # 코드블록
     text = re.sub(r'^\|.*\|\s*$', ' ', text, flags=re.M)     # 표 행
     text = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text)     # 링크
+    text = re.sub(r'`[^`\n]*`', ' ', text)                  # 인라인 코드(견본 문자를 실사용으로 세지 않게)
     text = re.sub(r'https?://\S+', ' ', text)
     text = re.sub(r'[#>*_`]', ' ', text)                     # md 기호
     return text

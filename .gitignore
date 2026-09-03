@@ -78,3 +78,6 @@ tools/design-audit/admin/_*.cjs
 
 # Supabase CLI 로컬 임시 파일 (커밋 대상 아님)
 supabase/.temp/
+
+# 현장기록의 사람 칸은 이력에 올리지 않는다
+현장기록.사람.md
