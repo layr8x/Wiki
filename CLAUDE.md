@@ -547,29 +547,24 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
 
 ---
 
-# 24. ★★ desk = 개인 편집국, 부서 9개 (2026-09 착수)
+# 24. ★★ desk = 개인 편집국 (별도 저장소 github.com/layr8x/desk, 2026-09)
 
 > CLAUDE.md 546줄이 세션마다 통째로 로드되던 걸 부서 단위 스킬로 나눈다. 21장 "절차는 스킬로"를
 > 실제로 집행하는 구조. 참고 사례 cbrock84/headcount(부서 16 · 스킬 172).
 
-- **정본**: `.claude-plugin/marketplace.json` + `plugins/<부서>/`. 사용법 `plugins/README.md`.
-  조직도는 `public/org-chart.html`(자동 생성·배포 경로 `/org-chart.html`, 직접 고치지 말 것.
-  생성기 `scripts/build-org-chart.py`).
+- **★ 여기(Wiki)에 두지 않는다**: 회사를 옮겨도 그대로 쓰려고 개인 저장소로 분리했다.
+  정본은 **`layr8x/desk`**. 이 저장소에는 설치해서 쓴다.
+  ```
+  /plugin marketplace add layr8x/desk
+  /plugin install plain@desk      # 말 검사역. 설치하면 Stop 훅이 자동으로 붙는다
+  ```
 - **부서 9개**: 묶는 층 `chief`(편집장) / 다섯 분야 `persuade`(콘텐츠)·`product`(기획)·
   `screens`(디자인)·`numbers`(분석)·`build`(개발) / 막는 쪽 `plain`(말 검사역)·`verify`(검사역)
-  / 교체 `site`(현장).
-- **★ 어디서든 돈다(사용자 지시)**: 다른 회사·다른 환경에서도 쓸 것이므로 `site`를 뺀 여덟 부서에
-  회사명·제품명·파일 식별자를 넣지 않는다. 회사를 옮기면 틀리게 되는 것은 전부 `site`로.
-  저장소별 값(설치 주소·이전 예정 목록·검사 예외)은 `.claude-plugin/desk.local.json`.
-- **★ 방법론 층(사용자 지시)**: 다섯 분야와 편집장에 `*-methods` 스킬. 각 분야의 검증된 방법론을
-  "언제 쓰는지" 표와 함께 정리. 방법론 이름은 항상 한 줄 풀이를 붙인다.
-- **분야는 따로 돌지 않는다**: `chief`의 `brief`가 착수 전 의도 6칸을 `brief.md`로 고정하고
-  (결정권자·받아낼 결정·성공 기준·아는 것·모르는 것·안 할 것), `weave`가 순서와 접합을 정한다.
-  기획이 범위를, 콘텐츠가 뼈대를, 나머지가 병행해 채우고, 콘텐츠가 다시 쓴 뒤 검사역을 통과한다.
-  분야별 결론이 어긋나면 한쪽을 지우지 말고 둘 다 적어 판단을 올린다.
-- **말 검사역이 실제로 막는다**: 측정기·용어사전·훅을 부서 안에 들고 다닌다
-  (`plugins/plain/scripts/`, `plugins/plain/hooks/hooks.json`). Stop 시점에 자동 실행.
-  ①용어사전(83개)에 있는 말이 풀이 없이 쓰였는지 ②`ko_ai_score --mj` 위험 판정.
-  실측: `analysis/2026-06_월간보고_wiki챗봇.md`가 줄표 13개로 막힘.
-- **진행**: 스킬 15개. 남은 일은 CLAUDE.md 장을 각 부서로 옮기는 것(계획은 desk.local.json).
+  / 교체 `site`(현장). 조직도는 desk 저장소의 `docs/org-chart.html`.
+- **회사 고유 값은 `site` 부서에만**. 제품·저장소·도구·채널·사람·그곳의 규칙.
+  하이컨시 관련(카카오 수집·마이클래스·Astryx)은 전부 여기로 간다. 나머지 여덟 부서는 중립.
+- **말 검사역이 실제로 막는다**: 용어사전(83개)에 있는 말이 풀이 없이 쓰였는지, `ko_ai_score --mj`
+  위험 판정이 있는지. 실측: `analysis/2026-06_월간보고_wiki챗봇.md`가 줄표 13개로 막힘.
+- **이 저장소에서 옮길 것(아직 안 함)**: 16장·1장 → `numbers` / 13장·18장·23장·8장 → `screens` /
+  15장·14장·9장 → `verify` / 22장·17장 → `site`.
   ⚠️ **장을 지우는 건 그 스킬이 실제로 발동하는 걸 확인한 뒤.** 지우고 안 뜨면 지식이 사라진다.

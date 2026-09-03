@@ -2,8 +2,15 @@
   "name": "chief",
   "description": "착수 전 의도를 한 장으로 고정하고, 콘텐츠·분석·디자인 세 축의 결과를 하나의 산출물로 묶는다.",
   "version": "0.1.0",
-  "author": { "name": "김명준" },
-  "repository": "https://github.com/layr8x/Wiki",
+  "author": {
+    "name": "김명준"
+  },
   "license": "MIT",
-  "keywords": ["편집장", "의도", "브리프", "결합", "오케스트레이션"]
+  "keywords": [
+    "편집장",
+    "의도",
+    "브리프",
+    "결합",
+    "오케스트레이션"
+  ]
 }

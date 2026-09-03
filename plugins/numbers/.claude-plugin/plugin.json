@@ -5,13 +5,12 @@
   "author": {
     "name": "김명준"
   },
-  "repository": "https://github.com/layr8x/Wiki",
   "license": "MIT",
   "keywords": [
     "분석",
     "지표",
-    "카카오",
-    "상담",
-    "데이터"
+    "데이터",
+    "인과추론",
+    "측정"
   ]
 }
