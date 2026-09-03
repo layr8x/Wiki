@@ -544,3 +544,25 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
 
 **함께 만든 안전장치**: 알럿봇에 쿠키 만료 예고 감시 신설(v15). _kawlt<6h 🟠 / _karmt<3일 🔴.
 종전엔 만료 후 401 이 나야 알았다(감시 0건이었음).
+
+---
+
+# 24. ★★ desk = 개인 편집국 (부서 6개 · 2026-09 착수)
+
+> 배경: CLAUDE.md 546줄이 세션마다 통째로 로드돼 왔다. 21장의 "절차는 스킬로"를 실제로
+> 집행하는 구조. 참고 사례는 cbrock84/headcount(부서 16 · 스킬 172).
+
+- **정본 위치**: `.claude-plugin/marketplace.json` + `plugins/<부서>/`. 조직도는
+  `docs/org-chart.html`(자동 생성, 직접 고치지 말 것. 생성기 `scripts/build-org-chart.py`).
+- **부서 6개**: 만드는 쪽 `persuade`(설득)·`numbers`(숫자)·`screens`(화면),
+  막는 쪽 `plain`(말 검사역)·`verify`(검사역), 운영 `keepalive`(유지).
+- **설치**: `/plugin marketplace add layr8x/Wiki` 후 `/plugin install persuade@desk` 형태.
+  hiconsy·portfolio_mj 등 다른 저장소에서도 같은 규칙을 쓰려고 부서로 뺐다.
+- **말 검사역이 실제로 막는다**: Stop 훅이 `scripts/hooks/check-writing.py`를 돌려
+  ①용어사전에 있는 말이 풀이 없이 쓰였는지 ②`ko_ai_score --mj` 위험 판정을 검사한다.
+  실측 확인: `analysis/2026-06_월간보고_wiki챗봇.md`가 줄표 13개로 막힘(종료코드 1).
+- **용어사전**: `plugins/plain/skills/jargon-gate/용어사전.md` 83개. 낯선 말을 쓰게 되면
+  여기 먼저 추가하고 풀이한다.
+- **진행**: 완료=persuade(4스킬)·plain(2스킬). 남음=numbers·screens·verify·keepalive.
+  ⚠️ **CLAUDE.md 장을 지우는 건 그 스킬이 실제로 발동하는 걸 확인한 뒤**. 지우고 안 뜨면
+  그 지식은 사라진 것처럼 동작한다.

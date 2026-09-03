@@ -1,0 +1,16 @@
+{
+  "name": "screens",
+  "description": "디자인시스템 토큰, 챗봇과 관리자 화면, Figma 작업 규칙.",
+  "version": "0.1.0",
+  "author": {
+    "name": "김명준"
+  },
+  "repository": "https://github.com/layr8x/Wiki",
+  "license": "MIT",
+  "keywords": [
+    "디자인시스템",
+    "figma",
+    "토큰",
+    "화면"
+  ]
+}

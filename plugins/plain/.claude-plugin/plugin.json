@@ -1,0 +1,9 @@
+{
+  "name": "plain",
+  "description": "안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다.",
+  "version": "0.1.0",
+  "author": { "name": "김명준" },
+  "repository": "https://github.com/layr8x/Wiki",
+  "license": "MIT",
+  "keywords": ["용어", "번역투", "쉬운말", "문체", "검사역"]
+}
