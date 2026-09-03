@@ -10,7 +10,7 @@
 
 1. **챗봇은 4단계 로드맵으로 점진 출시** (컨플 위클리 2072379811 확정): ① FAQ 하드코딩 → ② 위키 RAG → ③ 게시판 자동등록 → ④ NL2SQL.
 2. **메인 벤치마크 = Intercom Fin** (Resolution Rate 50%+, ROI 3-6개월). 박미혜의 "답 못하면 Slack" 요구가 Fin 표준 fallback 패턴과 정확히 일치.
-3. **브랜드 #161616 + 포인트 #0043CE + Pretendard** (Onyx 정책). shadcn/ui 28개 컴포넌트와 100% 호환. 별도 토큰 추가 없이 인라인 컬러로 처리 (`src/components/chatbot/Chatbot.jsx`).
+3. **브랜드 #161616 + 포인트 #0043CE + Pretendard** (Lumen 정책). shadcn/ui 28개 컴포넌트와 100% 호환. 별도 토큰 추가 없이 인라인 컬러로 처리 (`src/components/chatbot/Chatbot.jsx`).
 4. **회원병합 가이드 효과 -77%로 입증** (4/27 배포, 일평균 3.1→0.7건). 본 챗봇 정당성의 데이터 증거.
 5. **5/26 위키 1차 노출에 챗봇 미포함 권장** (콘텐츠 25개 마감 5/25 위험). 챗봇 1차 베타 6월 1주.
 
