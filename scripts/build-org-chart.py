@@ -15,6 +15,14 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'org-chart.html'
 BLOCKERS = {'plain', 'verify'}   # 막을 권한이 있는 부서
 
+# 조직도의 단 구성. 세 축(콘텐츠·분석·디자인)이 가운데, 위에 묶는 층, 아래에 검사역
+GROUPS = [
+    ('편집장', 'chief desk', ['chief'], '의도를 고정하고 세 축을 묶는다'),
+    ('세 축', 'three axes', ['persuade', 'numbers', 'screens'], '병행해서 만든다'),
+    ('검사역', 'gatekeepers', ['plain', 'verify'], '통과 못 하면 산출물이 나가지 않는다'),
+    ('운영', 'ops', ['keepalive'], '멈추면 곤란한 것'),
+]
+
 # 아직 안 옮긴 부서에 들어갈 CLAUDE.md 장. 카드의 빈 자리를 이걸로 채운다
 PLANNED = {
     'numbers':   [('16장', '카카오 상담 5채널 정본'), ('1장', '분석 방법론과 측정·추정 구분')],
@@ -88,6 +96,25 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
   letter-spacing:.08em;cursor:pointer}
 .toolbar button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
+/* 공정도 */
+.flow{display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr auto;align-items:center;
+  gap:0;margin:36px 0 0;padding:22px 0;border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule)}
+.flow .st{text-align:center;padding:0 14px}
+.flow .st b{display:block;font-size:13.5px;font-weight:700;letter-spacing:-.01em}
+.flow .st span{display:block;margin-top:3px;font-size:11px;color:var(--faint);
+  letter-spacing:.06em}
+.flow .st.trio b{color:var(--ink)}
+.flow .st.gate b{color:var(--stamp)}
+.flow .arm{height:1px;background:var(--rule2);position:relative}
+.flow .arm::after{content:'';position:absolute;right:0;top:-3px;width:6px;height:6px;
+  border-top:1px solid var(--rule2);border-right:1px solid var(--rule2);transform:rotate(45deg)}
+@media(max-width:760px){
+  .flow{grid-template-columns:1fr;gap:14px;text-align:center}
+  .flow .arm{width:1px;height:16px;margin:0 auto}
+  .flow .arm::after{right:-3px;top:auto;bottom:0;transform:rotate(135deg)}
+}
+
 /* 단 제목 */
 .band{margin-top:52px}
 .band-title{display:flex;align-items:baseline;gap:14px;margin:0 0 22px;
@@ -99,6 +126,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 
 /* 부서 카드 */
 .grid{display:grid;gap:0}
+.grid.one{grid-template-columns:1fr}
 .grid.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid.four{grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 .dept{position:relative;background:var(--sheet);padding:26px 24px 24px;
@@ -121,6 +149,17 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
   white-space:nowrap;overflow-x:auto;letter-spacing:-.01em}
 .cmd:hover{border-style:solid;color:var(--ink)}
 .cmd.done{border-style:solid;border-color:var(--stamp);color:var(--stamp)}
+
+/* 부서가 하나뿐인 단은 가로로 편다. 세로로 두면 빈 자리가 의도 없이 남는다 */
+.dept.wide{display:grid;grid-template-columns:minmax(240px,.95fr) minmax(320px,1.35fr);
+  column-gap:48px;padding:30px 28px 28px;align-items:start}
+.dept.wide .skills,.dept.wide .planned{margin:0;padding:0;border-top:0}
+.dept.wide .folio{top:24px}
+@media(max-width:760px){
+  .dept.wide{grid-template-columns:1fr}
+  .dept.wide .skills,.dept.wide .planned{margin-top:20px;padding-top:16px;
+    border-top:1px solid var(--rule)}
+}
 
 /* 스킬 색인 */
 .skills{list-style:none;counter-reset:s;margin:20px 0 0;padding:16px 0 0;
@@ -200,7 +239,7 @@ def read_skills(slug):
     return out
 
 
-def card(d, folio):
+def card(d, folio, wide=False):
     e = html.escape
     if d['skills']:
         body = '<ol class="skills">' + ''.join(
@@ -213,15 +252,18 @@ def card(d, folio):
     find = ' '.join([d['name'], d['displayName'], d['description']] +
                     [n + ' ' + s for n, s, _ in d['skills']]).lower()
     meta = f"스킬 {len(d['skills'])}" + (' · 막을 권한' if d['blocker'] else '')
-    cls = 'dept' + (' blocker' if d['blocker'] else '') + ('' if d['skills'] else ' pending')
+    cls = ('dept' + (' blocker' if d['blocker'] else '') + ('' if d['skills'] else ' pending')
+           + (' wide' if wide else ''))
+    head = (f'''<h3 class="name">{e(d['displayName'])}<span class="slug">{e(d['name'])}</span></h3>
+        <p class="meta">{e(meta)}</p>
+        <p class="desc">{e(d['description'])}</p>
+        <button class="cmd" data-copy="/plugin install {e(d['name'])}@desk">'''
+            f'''/plugin install {e(d['name'])}@desk</button>''')
+    inner = f'<div class="col">{head}</div>{body}' if wide else head + body
     return f'''
       <article class="{cls}" data-find="{e(find)}">
         <span class="folio">{folio:02d}</span>
-        <h3 class="name">{e(d['displayName'])}<span class="slug">{e(d['name'])}</span></h3>
-        <p class="meta">{e(meta)}</p>
-        <p class="desc">{e(d['description'])}</p>
-        <button class="cmd" data-copy="/plugin install {e(d['name'])}@desk">/plugin install {e(d['name'])}@desk</button>
-        {body}
+        {inner}
       </article>'''
 
 
@@ -232,12 +274,30 @@ def build():
         s = read_skills(p['name'])
         depts.append({**p, 'skills': s, 'blocker': p['name'] in BLOCKERS})
     total = sum(len(d['skills']) for d in depts)
-    order = {d['name']: i + 1 for i, d in enumerate(depts)}
 
+    by = {d['name']: d for d in depts}
+    folio = {}
+    n = 0
+    for _, _, names, _ in GROUPS:
+        for nm in names:
+            if nm in by:
+                n += 1
+                folio[nm] = n
+    bands = []
+    for title, latin, names, note in GROUPS:
+        got = [by[nm] for nm in names if nm in by]
+        if not got:
+            continue
+        cols = {1: 'one', 2: 'two'}.get(len(got), 'four')
+        cards_html = ''.join(card(d, folio[d['name']], wide=len(got) == 1) for d in got)
+        bands.append(f'''
+<section class="band">
+  <h2 class="band-title"><span>{html.escape(title)}</span><em>{html.escape(latin)}</em>
+    <span class="tick">{html.escape(note)}</span></h2>
+  <div class="grid {cols}">{cards_html}</div>
+</section>''')
+    bands_html = ''.join(bands)
     blockers = [d for d in depts if d['blocker']]
-    makers = [d for d in depts if not d['blocker']]
-    b_html = ''.join(card(d, order[d['name']]) for d in blockers)
-    m_html = ''.join(card(d, order[d['name']]) for d in makers)
     ver = mk.get('version', '0.1.0')
 
     page = f'''<!doctype html>
@@ -262,22 +322,19 @@ def build():
     검사역 둘이 통과시켜야 밖으로 나갑니다.</p>
 </section>
 
+<div class="flow" aria-label="산출물이 만들어지는 순서">
+  <div class="st"><b>의도 고정</b><span>brief</span></div><div class="arm"></div>
+  <div class="st trio"><b>콘텐츠 · 분석 · 디자인</b><span>병행</span></div><div class="arm"></div>
+  <div class="st"><b>하나로 묶기</b><span>weave</span></div><div class="arm"></div>
+  <div class="st gate"><b>검사역 통과</b><span>2</span></div>
+</div>
+
 <div class="toolbar">
   <input type="search" id="q" placeholder="부서나 스킬 검색" aria-label="부서나 스킬 검색">
   <button id="only" aria-pressed="false">검사역만</button>
 </div>
 
-<section class="band">
-  <h2 class="band-title"><span>검사역</span><em>gatekeepers</em>
-    <span class="tick">통과 못 하면 산출물이 나가지 않는다</span></h2>
-  <div class="grid two">{b_html}</div>
-</section>
-
-<section class="band">
-  <h2 class="band-title"><span>만드는 부서</span><em>desks</em>
-    <span class="tick">산출물을 낸다</span></h2>
-  <div class="grid four">{m_html}</div>
-</section>
+{bands_html}
 
 <p class="none" id="none" hidden>맞는 부서나 스킬이 없습니다.</p>
 

@@ -66,6 +66,25 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
   letter-spacing:.08em;cursor:pointer}
 .toolbar button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
+/* 공정도 */
+.flow{display:grid;grid-template-columns:auto 1fr auto 1fr auto 1fr auto;align-items:center;
+  gap:0;margin:36px 0 0;padding:22px 0;border-top:1px solid var(--rule);
+  border-bottom:1px solid var(--rule)}
+.flow .st{text-align:center;padding:0 14px}
+.flow .st b{display:block;font-size:13.5px;font-weight:700;letter-spacing:-.01em}
+.flow .st span{display:block;margin-top:3px;font-size:11px;color:var(--faint);
+  letter-spacing:.06em}
+.flow .st.trio b{color:var(--ink)}
+.flow .st.gate b{color:var(--stamp)}
+.flow .arm{height:1px;background:var(--rule2);position:relative}
+.flow .arm::after{content:'';position:absolute;right:0;top:-3px;width:6px;height:6px;
+  border-top:1px solid var(--rule2);border-right:1px solid var(--rule2);transform:rotate(45deg)}
+@media(max-width:760px){
+  .flow{grid-template-columns:1fr;gap:14px;text-align:center}
+  .flow .arm{width:1px;height:16px;margin:0 auto}
+  .flow .arm::after{right:-3px;top:auto;bottom:0;transform:rotate(135deg)}
+}
+
 /* 단 제목 */
 .band{margin-top:52px}
 .band-title{display:flex;align-items:baseline;gap:14px;margin:0 0 22px;
@@ -77,6 +96,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
 
 /* 부서 카드 */
 .grid{display:grid;gap:0}
+.grid.one{grid-template-columns:1fr}
 .grid.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .grid.four{grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 .dept{position:relative;background:var(--sheet);padding:26px 24px 24px;
@@ -99,6 +119,17 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
   white-space:nowrap;overflow-x:auto;letter-spacing:-.01em}
 .cmd:hover{border-style:solid;color:var(--ink)}
 .cmd.done{border-style:solid;border-color:var(--stamp);color:var(--stamp)}
+
+/* 부서가 하나뿐인 단은 가로로 편다. 세로로 두면 빈 자리가 의도 없이 남는다 */
+.dept.wide{display:grid;grid-template-columns:minmax(240px,.95fr) minmax(320px,1.35fr);
+  column-gap:48px;padding:30px 28px 28px;align-items:start}
+.dept.wide .skills,.dept.wide .planned{margin:0;padding:0;border-top:0}
+.dept.wide .folio{top:24px}
+@media(max-width:760px){
+  .dept.wide{grid-template-columns:1fr}
+  .dept.wide .skills,.dept.wide .planned{margin-top:20px;padding-top:16px;
+    border-top:1px solid var(--rule)}
+}
 
 /* 스킬 색인 */
 .skills{list-style:none;counter-reset:s;margin:20px 0 0;padding:16px 0 0;
@@ -140,7 +171,7 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
   <p class="kicker">개인 편집국 · personal desk</p>
   <h1>desk</h1>
   <div class="rule-double"></div>
-  <p class="edition"><span>제0.1.0판</span><span>부서 6</span><span>스킬 6</span>
+  <p class="edition"><span>제0.1.0판</span><span>부서 7</span><span>스킬 8</span>
     <span>막을 권한 2</span><span>2026-09-03</span></p>
 </header>
 
@@ -150,68 +181,86 @@ input[type=search]:focus{outline:2px solid var(--ink);outline-offset:-1px}
     검사역 둘이 통과시켜야 밖으로 나갑니다.</p>
 </section>
 
+<div class="flow" aria-label="산출물이 만들어지는 순서">
+  <div class="st"><b>의도 고정</b><span>brief</span></div><div class="arm"></div>
+  <div class="st trio"><b>콘텐츠 · 분석 · 디자인</b><span>병행</span></div><div class="arm"></div>
+  <div class="st"><b>하나로 묶기</b><span>weave</span></div><div class="arm"></div>
+  <div class="st gate"><b>검사역 통과</b><span>2</span></div>
+</div>
+
 <div class="toolbar">
   <input type="search" id="q" placeholder="부서나 스킬 검색" aria-label="부서나 스킬 검색">
   <button id="only" aria-pressed="false">검사역만</button>
 </div>
 
+
+<section class="band">
+  <h2 class="band-title"><span>편집장</span><em>chief desk</em>
+    <span class="tick">의도를 고정하고 세 축을 묶는다</span></h2>
+  <div class="grid one">
+      <article class="dept wide" data-find="chief 편집장 착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다. brief 산출물 작업을 시작할 때 가장 먼저 쓴다. weave 콘텐츠·분석·디자인 두 축 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.">
+        <span class="folio">01</span>
+        <div class="col"><h3 class="name">편집장<span class="slug">chief</span></h3>
+        <p class="meta">스킬 2</p>
+        <p class="desc">착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다.</p>
+        <button class="cmd" data-copy="/plugin install chief@desk">/plugin install chief@desk</button></div><ol class="skills"><li><a href="../plugins/chief/skills/brief/SKILL.md">brief</a><p>산출물 작업을 시작할 때 가장 먼저 쓴다.</p></li><li><a href="../plugins/chief/skills/weave/SKILL.md">weave</a><p>콘텐츠·분석·디자인 두 축 이상이 들어가는 산출물을 만들 때 순서와 접합을 정한다.</p></li></ol>
+      </article></div>
+</section>
+<section class="band">
+  <h2 class="band-title"><span>세 축</span><em>three axes</em>
+    <span class="tick">병행해서 만든다</span></h2>
+  <div class="grid four">
+      <article class="dept" data-find="persuade 콘텐츠 보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다. number-tags 문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다. objection-first 승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다. report-blueprint 보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다. slack-notice 슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.">
+        <span class="folio">02</span>
+        <h3 class="name">콘텐츠<span class="slug">persuade</span></h3>
+        <p class="meta">스킬 4</p>
+        <p class="desc">보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다.</p>
+        <button class="cmd" data-copy="/plugin install persuade@desk">/plugin install persuade@desk</button><ol class="skills"><li><a href="../plugins/persuade/skills/number-tags/SKILL.md">number-tags</a><p>문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다.</p></li><li><a href="../plugins/persuade/skills/objection-first/SKILL.md">objection-first</a><p>승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다.</p></li><li><a href="../plugins/persuade/skills/report-blueprint/SKILL.md">report-blueprint</a><p>보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다.</p></li><li><a href="../plugins/persuade/skills/slack-notice/SKILL.md">slack-notice</a><p>슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.</p></li></ol>
+      </article>
+      <article class="dept pending" data-find="numbers 분석 상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.">
+        <span class="folio">03</span>
+        <h3 class="name">분석<span class="slug">numbers</span></h3>
+        <p class="meta">스킬 0</p>
+        <p class="desc">상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.</p>
+        <button class="cmd" data-copy="/plugin install numbers@desk">/plugin install numbers@desk</button><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>16장</b>카카오 상담 5채널 정본</li><li><b>1장</b>분석 방법론과 측정·추정 구분</li></ul>
+      </article>
+      <article class="dept pending" data-find="screens 디자인 디자인시스템 토큰, 챗봇과 관리자 화면, figma 작업 규칙.">
+        <span class="folio">04</span>
+        <h3 class="name">디자인<span class="slug">screens</span></h3>
+        <p class="meta">스킬 0</p>
+        <p class="desc">디자인시스템 토큰, 챗봇과 관리자 화면, Figma 작업 규칙.</p>
+        <button class="cmd" data-copy="/plugin install screens@desk">/plugin install screens@desk</button><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>13장</b>챗봇 디자인시스템 토큰</li><li><b>18장</b>Astryx 컴포넌트 규칙</li><li><b>23장</b>관리자 표가 잘리는 두 원인</li><li><b>8장</b>텍스트 넘침 함정</li></ul>
+      </article></div>
+</section>
 <section class="band">
   <h2 class="band-title"><span>검사역</span><em>gatekeepers</em>
     <span class="tick">통과 못 하면 산출물이 나가지 않는다</span></h2>
   <div class="grid two">
       <article class="dept blocker" data-find="plain 말 검사역 안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다. jargon-gate 개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다. no-translationese 한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 ai 티를 검사한다.">
-        <span class="folio">02</span>
+        <span class="folio">05</span>
         <h3 class="name">말 검사역<span class="slug">plain</span></h3>
         <p class="meta">스킬 2 · 막을 권한</p>
         <p class="desc">안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다.</p>
-        <button class="cmd" data-copy="/plugin install plain@desk">/plugin install plain@desk</button>
-        <ol class="skills"><li><a href="../plugins/plain/skills/jargon-gate/SKILL.md">jargon-gate</a><p>개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다.</p></li><li><a href="../plugins/plain/skills/no-translationese/SKILL.md">no-translationese</a><p>한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 AI 티를 검사한다.</p></li></ol>
+        <button class="cmd" data-copy="/plugin install plain@desk">/plugin install plain@desk</button><ol class="skills"><li><a href="../plugins/plain/skills/jargon-gate/SKILL.md">jargon-gate</a><p>개발 용어나 데이터 분석 용어가 들어간 답변, 보고서, 문서를 쓸 때 그 자리에서 풀어쓴다.</p></li><li><a href="../plugins/plain/skills/no-translationese/SKILL.md">no-translationese</a><p>한국어 문서나 보고서, 공지를 쓰거나 고친 뒤 번역투와 AI 티를 검사한다.</p></li></ol>
       </article>
       <article class="dept blocker pending" data-find="verify 검사역 완료 보고 전 실제 검증. 눈대중과 죽은 참조를 막는다.">
-        <span class="folio">05</span>
+        <span class="folio">06</span>
         <h3 class="name">검사역<span class="slug">verify</span></h3>
         <p class="meta">스킬 0 · 막을 권한</p>
         <p class="desc">완료 보고 전 실제 검증. 눈대중과 죽은 참조를 막는다.</p>
-        <button class="cmd" data-copy="/plugin install verify@desk">/plugin install verify@desk</button>
-        <ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>15장</b>화면 정합 실패의 근본 원인</li><li><b>14장</b>디자인 대조 툴킷</li><li><b>9장</b>실제 웹 화면 재현</li></ul>
+        <button class="cmd" data-copy="/plugin install verify@desk">/plugin install verify@desk</button><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>15장</b>화면 정합 실패의 근본 원인</li><li><b>14장</b>디자인 대조 툴킷</li><li><b>9장</b>실제 웹 화면 재현</li></ul>
       </article></div>
 </section>
-
 <section class="band">
-  <h2 class="band-title"><span>만드는 부서</span><em>desks</em>
-    <span class="tick">산출물을 낸다</span></h2>
-  <div class="grid four">
-      <article class="dept" data-find="persuade 설득 보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다. number-tags 문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다. objection-first 승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다. report-blueprint 보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다. slack-notice 슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.">
-        <span class="folio">01</span>
-        <h3 class="name">설득<span class="slug">persuade</span></h3>
-        <p class="meta">스킬 4</p>
-        <p class="desc">보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다.</p>
-        <button class="cmd" data-copy="/plugin install persuade@desk">/plugin install persuade@desk</button>
-        <ol class="skills"><li><a href="../plugins/persuade/skills/number-tags/SKILL.md">number-tags</a><p>문서나 대시보드에 숫자, 지표, 비율, 금액을 넣을 때 출처와 신뢰도를 표시한다.</p></li><li><a href="../plugins/persuade/skills/objection-first/SKILL.md">objection-first</a><p>승인이나 예산, 인력, 일정 변경을 요청하는 문서를 쓸 때 예상 반론을 미리 적어 답한다.</p></li><li><a href="../plugins/persuade/skills/report-blueprint/SKILL.md">report-blueprint</a><p>보고서, 기획서, 제안서, 분석 결과 문서의 뼈대를 잡는다.</p></li><li><a href="../plugins/persuade/skills/slack-notice/SKILL.md">slack-notice</a><p>슬랙 공지, 요청, 질문, 사내 메시지 초안을 쓸 때 사용한다.</p></li></ol>
-      </article>
-      <article class="dept pending" data-find="numbers 숫자 상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.">
-        <span class="folio">03</span>
-        <h3 class="name">숫자<span class="slug">numbers</span></h3>
-        <p class="meta">스킬 0</p>
-        <p class="desc">상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.</p>
-        <button class="cmd" data-copy="/plugin install numbers@desk">/plugin install numbers@desk</button>
-        <ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>16장</b>카카오 상담 5채널 정본</li><li><b>1장</b>분석 방법론과 측정·추정 구분</li></ul>
-      </article>
-      <article class="dept pending" data-find="screens 화면 디자인시스템 토큰, 챗봇과 관리자 화면, figma 작업 규칙.">
-        <span class="folio">04</span>
-        <h3 class="name">화면<span class="slug">screens</span></h3>
-        <p class="meta">스킬 0</p>
-        <p class="desc">디자인시스템 토큰, 챗봇과 관리자 화면, Figma 작업 규칙.</p>
-        <button class="cmd" data-copy="/plugin install screens@desk">/plugin install screens@desk</button>
-        <ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>13장</b>챗봇 디자인시스템 토큰</li><li><b>18장</b>Astryx 컴포넌트 규칙</li><li><b>23장</b>관리자 표가 잘리는 두 원인</li><li><b>8장</b>텍스트 넘침 함정</li></ul>
-      </article>
-      <article class="dept pending" data-find="keepalive 유지 수집이 멈췄을 때 원인을 찾는 순서. 겉지표가 초록이어도 산출물부터 본다.">
-        <span class="folio">06</span>
-        <h3 class="name">유지<span class="slug">keepalive</span></h3>
+  <h2 class="band-title"><span>운영</span><em>ops</em>
+    <span class="tick">멈추면 곤란한 것</span></h2>
+  <div class="grid one">
+      <article class="dept pending wide" data-find="keepalive 유지 수집이 멈췄을 때 원인을 찾는 순서. 겉지표가 초록이어도 산출물부터 본다.">
+        <span class="folio">07</span>
+        <div class="col"><h3 class="name">유지<span class="slug">keepalive</span></h3>
         <p class="meta">스킬 0</p>
         <p class="desc">수집이 멈췄을 때 원인을 찾는 순서. 겉지표가 초록이어도 산출물부터 본다.</p>
-        <button class="cmd" data-copy="/plugin install keepalive@desk">/plugin install keepalive@desk</button>
-        <ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>22장</b>수집이 멈췄을 때 진단 순서</li><li><b>17장</b>수집 기기와 인프라</li></ul>
+        <button class="cmd" data-copy="/plugin install keepalive@desk">/plugin install keepalive@desk</button></div><ul class="planned"><li class="head">CLAUDE.md에서 이전 예정</li><li><b>22장</b>수집이 멈췄을 때 진단 순서</li><li><b>17장</b>수집 기기와 인프라</li></ul>
       </article></div>
 </section>
 

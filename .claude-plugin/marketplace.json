@@ -8,12 +8,31 @@
   },
   "plugins": [
     {
+      "name": "chief",
+      "source": "./plugins/chief",
+      "displayName": "편집장",
+      "description": "착수 전 의도를 한 장으로 고정하고, 세 축의 결과를 하나의 산출물로 묶는다.",
+      "category": "묶는 층",
+      "keywords": [
+        "의도",
+        "브리프",
+        "결합",
+        "순서"
+      ]
+    },
+    {
       "name": "persuade",
       "source": "./plugins/persuade",
-      "displayName": "설득",
+      "displayName": "콘텐츠",
       "description": "보고서·기획서·슬랙 공지의 뼈대, 숫자 꼬리표, 예상 반론. 결정을 받아내는 문서를 만든다.",
       "category": "산출물",
-      "keywords": ["보고서", "기획서", "설득", "두괄식", "슬랙"]
+      "keywords": [
+        "보고서",
+        "기획서",
+        "설득",
+        "두괄식",
+        "슬랙"
+      ]
     },
     {
       "name": "plain",
@@ -21,23 +40,39 @@
       "displayName": "말 검사역",
       "description": "안 풀어쓴 전문용어와 번역투를 잡는다. 통과 못 하면 산출물이 나가지 않는다.",
       "category": "검사역",
-      "keywords": ["용어", "번역투", "쉬운말", "문체"]
+      "keywords": [
+        "용어",
+        "번역투",
+        "쉬운말",
+        "문체"
+      ]
     },
     {
       "name": "numbers",
       "source": "./plugins/numbers",
-      "displayName": "숫자",
+      "displayName": "분석",
       "description": "상담 데이터와 지표 정의, 분석 방법론. 근거가 되는 숫자를 만든다.",
       "category": "산출물",
-      "keywords": ["분석", "지표", "카카오", "상담", "데이터"]
+      "keywords": [
+        "분석",
+        "지표",
+        "카카오",
+        "상담",
+        "데이터"
+      ]
     },
     {
       "name": "screens",
       "source": "./plugins/screens",
-      "displayName": "화면",
+      "displayName": "디자인",
       "description": "디자인시스템 토큰, 챗봇과 관리자 화면, Figma 작업 규칙.",
       "category": "산출물",
-      "keywords": ["디자인시스템", "figma", "토큰", "화면"]
+      "keywords": [
+        "디자인시스템",
+        "figma",
+        "토큰",
+        "화면"
+      ]
     },
     {
       "name": "verify",
@@ -45,7 +80,11 @@
       "displayName": "검사역",
       "description": "완료 보고 전 실제 검증. 눈대중과 죽은 참조를 막는다.",
       "category": "검사역",
-      "keywords": ["검증", "정합", "QA"]
+      "keywords": [
+        "검증",
+        "정합",
+        "QA"
+      ]
     },
     {
       "name": "keepalive",
@@ -53,7 +92,12 @@
       "displayName": "유지",
       "description": "수집이 멈췄을 때 원인을 찾는 순서. 겉지표가 초록이어도 산출물부터 본다.",
       "category": "운영",
-      "keywords": ["수집", "장애", "쿠키", "인프라"]
+      "keywords": [
+        "수집",
+        "장애",
+        "쿠키",
+        "인프라"
+      ]
     }
   ]
 }

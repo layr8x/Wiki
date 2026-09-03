@@ -554,8 +554,13 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
 
 - **정본 위치**: `.claude-plugin/marketplace.json` + `plugins/<부서>/`. 조직도는
   `docs/org-chart.html`(자동 생성, 직접 고치지 말 것. 생성기 `scripts/build-org-chart.py`).
-- **부서 6개**: 만드는 쪽 `persuade`(설득)·`numbers`(숫자)·`screens`(화면),
-  막는 쪽 `plain`(말 검사역)·`verify`(검사역), 운영 `keepalive`(유지).
+- **부서 7개**: 묶는 층 `chief`(편집장) / 세 축 `persuade`(콘텐츠)·`numbers`(분석)·`screens`(디자인)
+  / 막는 쪽 `plain`(말 검사역)·`verify`(검사역) / 운영 `keepalive`(유지).
+- **세 축은 따로 돌지 않는다**(사용자 지시): 콘텐츠 작성·빅데이터 분석·프로덕트 UIUX 디자인이
+  유기적으로 연동돼 하나의 산출물이 돼야 한다. 묶는 방법은 `chief` 부서 2스킬.
+  `brief`=착수 전 의도 6칸을 `brief.md` 한 장으로 고정(결정권자·받아낼 결정·성공 기준·아는 것·
+  모르는 것·안 할 것). `weave`=순서와 접합(콘텐츠가 뼈대만 먼저, 분석·디자인 병행, 콘텐츠가 재작성,
+  검사역 통과). 세 축 결과가 어긋나면 한쪽을 지우지 말고 둘 다 적어 판단을 올린다.
 - **설치**: `/plugin marketplace add layr8x/Wiki` 후 `/plugin install persuade@desk` 형태.
   hiconsy·portfolio_mj 등 다른 저장소에서도 같은 규칙을 쓰려고 부서로 뺐다.
 - **말 검사역이 실제로 막는다**: Stop 훅이 `scripts/hooks/check-writing.py`를 돌려
@@ -563,6 +568,6 @@ violates foreign key constraint "kakao_partner_messages_chat_id_fkey"
   실측 확인: `analysis/2026-06_월간보고_wiki챗봇.md`가 줄표 13개로 막힘(종료코드 1).
 - **용어사전**: `plugins/plain/skills/jargon-gate/용어사전.md` 83개. 낯선 말을 쓰게 되면
   여기 먼저 추가하고 풀이한다.
-- **진행**: 완료=persuade(4스킬)·plain(2스킬). 남음=numbers·screens·verify·keepalive.
+- **진행**: 완료=chief(2스킬)·persuade(4스킬)·plain(2스킬). 남음=numbers·screens·verify·keepalive.
   ⚠️ **CLAUDE.md 장을 지우는 건 그 스킬이 실제로 발동하는 걸 확인한 뒤**. 지우고 안 뜨면
   그 지식은 사라진 것처럼 동작한다.
